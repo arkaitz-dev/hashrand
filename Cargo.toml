@@ -1,0 +1,12 @@
+[package]
+name = "hashrand"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.42", features = ["derive"] }
+nanoid = "0.4.0"
+walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.13.0"
