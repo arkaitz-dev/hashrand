@@ -37,6 +37,8 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 - `--file-mode <MODE>`: Set file permissions when creating files (Unix-style octal, e.g., 644, 600)
 - `--dir-mode <MODE>`: Set directory permissions when creating directories (Unix-style octal, e.g., 755, 700)
 - `--audit-log`: Enable audit logging (outputs operations to stderr with timestamps)
+- `-s, --serve <PORT>`: Start HTTP server on specified port to expose API endpoints (binds to localhost by default)
+- `--listen-all-ips`: Listen on all network interfaces (0.0.0.0) instead of localhost only (requires --serve)
 
 Notes:
 - The alphabet options (`--no-look-alike`, `--full`, `--full-with-symbols`, `--api-key`, and `--password`) are mutually exclusive
@@ -147,6 +149,97 @@ Generate a password without newline:
 ```bash
 hashrand --password -r
 ```
+
+Start HTTP server for API access:
+```bash
+# Start server on port 8080 (localhost only by default)
+hashrand --serve 8080
+
+# Use short form
+hashrand -s 3000
+
+# Listen on all network interfaces
+hashrand --serve 8080 --listen-all-ips
+```
+
+## HTTP Server Mode
+
+When started with `--serve PORT`, hashrand runs as an HTTP server exposing REST API endpoints that provide the same functionality as the CLI (excluding file system operations like `--touch` and `--mkdir`).
+
+For complete API documentation, see [docs/API.md](docs/API.md).
+
+### Server Configuration
+
+- **Default binding**: `127.0.0.1` (localhost only) for security
+- **All interfaces**: Use `--listen-all-ips` to bind to `0.0.0.0`
+- **Default response format**: Raw text (no newline) - use `raw=false` query parameter to add newline
+
+### Available API Endpoints
+
+All endpoints return plain text responses (raw by default) and support the following query parameters:
+
+#### GET /api/generate
+Generate a random hash with customizable options.
+
+**Query Parameters:**
+- `length` (optional): Hash length, 2-128, default 21
+- `alphabet` (optional): Alphabet type - "base58" (default), "no-look-alike", "full", "full-with-symbols"  
+- `raw` (optional): Boolean, if false adds newline, default true
+- `prefix` (optional): String prefix to add before hash
+- `suffix` (optional): String suffix to add after hash
+
+**Examples:**
+```bash
+curl "http://localhost:8080/api/generate"
+curl "http://localhost:8080/api/generate?length=16&alphabet=full"
+curl "http://localhost:8080/api/generate?length=32&alphabet=no-look-alike&raw=false"
+curl "http://localhost:8080/api/generate?prefix=user_&suffix=_id&length=12"
+```
+
+#### GET /api/api-key
+Generate a secure API key (format: ak_ + 44 characters).
+
+**Query Parameters:**
+- `raw` (optional): Boolean, if false adds newline, default true
+
+**Examples:**
+```bash
+curl "http://localhost:8080/api/api-key"
+curl "http://localhost:8080/api/api-key?raw=false"
+```
+
+#### GET /api/password
+Generate a secure password using full alphabet with symbols.
+
+**Query Parameters:**
+- `length` (optional): Password length, 21-44, default 21
+- `raw` (optional): Boolean, if false adds newline, default true
+
+**Examples:**
+```bash
+curl "http://localhost:8080/api/password"
+curl "http://localhost:8080/api/password?length=30"
+curl "http://localhost:8080/api/password?length=44&raw=false"
+```
+
+### Server Usage Examples
+
+```bash
+# Start server
+hashrand --serve 8080
+
+# In another terminal, make requests
+curl "http://localhost:8080/api/generate?length=16"
+# Output: a1B2c3D4e5F6g7H8
+
+curl "http://localhost:8080/api/api-key"
+# Output: ak_X1y2Z3a4B5c6D7e8F9g0H1i2J3k4L5m6N7o8P9q0R1s2
+
+curl "http://localhost:8080/api/password?length=25"
+# Output: aB3*fG7$hI9@kL2#mN5^pQ8!
+```
+
+**Note:** The HTTP server mode excludes file system operations (`--touch`, `--mkdir`) for security reasons. These operations are only available in CLI mode.
 
 ## Alphabet Options
 
@@ -281,6 +374,8 @@ hashrand --password -r
 - **Unix file permissions control** for secure file/directory creation
 - **Audit logging system** for tracking operations and compliance
 - **Security hardening** with path validation and resource limits
+- **HTTP server mode** with REST API endpoints for integration
+- **Plain text API responses** for easy integration with any language
 - **Fast and lightweight** with minimal dependencies
 - **Comprehensive test suite** ensuring reliability
 
@@ -301,12 +396,20 @@ hashrand --password -r
   - Generating auditable random identifiers for compliance
   - Setting up secure directories for sensitive data processing
   - Creating trackable session directories with audit trails
+- **HTTP API scenarios:**
+  - Microservices requiring random identifier generation
+  - Web applications needing secure token generation
+  - CI/CD pipelines generating unique build identifiers
+  - Container orchestration with random naming requirements
 
 ## Dependencies
 
 - [nanoid](https://crates.io/crates/nanoid) - For secure random string generation
 - [clap](https://crates.io/crates/clap) - For command-line argument parsing
 - [walkdir](https://crates.io/crates/walkdir) - For recursive directory traversal (used with --check flag)
+- [tokio](https://crates.io/crates/tokio) - Async runtime for HTTP server (server mode only)
+- [axum](https://crates.io/crates/axum) - Web framework for REST API endpoints (server mode only)
+- [serde](https://crates.io/crates/serde) - Serialization/deserialization for query parameters (server mode only)
 
 ## Security
 
@@ -316,4 +419,4 @@ To report security vulnerabilities, email: me@arkaitz.dev
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is open source and available under the [MIT License](LICENSE).

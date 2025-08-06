@@ -2,17 +2,28 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Latest Session
-- **Date**: 2025-08-06
-- **Branch**: master (merged from security-fixes)
-- **Status**: Complete ✅ - Pushed to GitHub
-- **Security Scan**: Complete - Addressed 8/9 vulnerabilities (89%)
-  - ✅ All MEDIUM vulnerabilities fixed (3/3)
-  - ✅ All LOW vulnerabilities addressed (4/4)
-  - ⬆️ Test coverage improved
-  - 📝 1 optional documentation item remains
-- **Session Files**: security-scan/plan.md, security-scan/state.json
-- **Commit**: 079b189 - feat: add comprehensive security features and documentation
+## Session History
+
+### 2025-08-06 - HTTP Server Implementation & Security Improvements
+- **Status**: Complete ✅ - Full HTTP server functionality with security enhancements
+- **Version**: 0.2.0 → 0.2.1
+- **Major Accomplishments**:
+  1. **HTTP Server Mode (v0.2.0)**:
+     - Added `-s/--serve PORT` option for HTTP server
+     - Implemented 3 REST API endpoints
+     - Plain text responses for all endpoints
+     - Added tokio, axum, serde dependencies
+  2. **Security Improvements (v0.2.1)**:
+     - Changed default binding to localhost-only (127.0.0.1)
+     - Added `--listen-all-ips` flag for explicit network exposure
+     - API responses now raw by default (no newline)
+     - Removed filesystem operations from API
+  3. **Dependency Updates**:
+     - Updated axum 0.7.9 → 0.8.4
+     - All dependencies at latest Rust 1.88 compatible versions
+- **Tests**: 36/36 passing
+- **Documentation**: Fully updated (README, CHANGELOG, CLAUDE.md)
+- **Session Files**: implement/ directory with plans and state tracking
 
 ## Overview
 
@@ -43,6 +54,7 @@ cargo run -- --password 30           # Generate 30-char password (21-44 chars al
 cargo run -- --touch --file-mode 600 # Create file with specific permissions
 cargo run -- --mkdir --dir-mode 700  # Create directory with restricted permissions
 cargo run -- --audit-log 16          # Generate with audit logging
+cargo run -- --serve 8080            # Start HTTP server on port 8080
 ```
 
 ### Test

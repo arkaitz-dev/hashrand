@@ -2,6 +2,15 @@ use clap::Parser;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+use axum::{
+    extract::Query,
+    http::StatusCode,
+    response::Response,
+    routing::get,
+    Router,
+};
+use serde::Deserialize;
+use tokio::net::TcpListener;
 
 #[derive(Parser)]
 #[command(name = "hashrand")]
@@ -73,6 +82,14 @@ struct Args {
     /// Enable audit logging (outputs operations to stderr)
     #[arg(long = "audit-log")]
     audit_log: bool,
+
+    /// Start HTTP server on specified port
+    #[arg(short = 's', long = "serve", value_name = "PORT")]
+    serve: Option<u16>,
+
+    /// Listen on all network interfaces (0.0.0.0) instead of localhost only (requires --serve)
+    #[arg(long = "listen-all-ips", requires = "serve")]
+    listen_all_ips: bool,
 }
 
 fn parse_length(s: &str) -> Result<usize, String> {
@@ -151,15 +168,59 @@ fn generate_unique_name(
     }
 }
 
-fn main() {
-    if let Err(e) = run() {
+#[derive(Debug, Clone)]
+pub enum AlphabetType {
+    Base58,
+    NoLookAlike,
+    Full,
+    FullWithSymbols,
+}
+
+#[derive(Debug)]
+pub struct HashRequest {
+    pub length: usize,
+    pub alphabet: AlphabetType,
+    pub raw: bool,
+    pub check: bool,
+    pub prefix: Option<String>,
+    pub suffix: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct GenerateQuery {
+    length: Option<usize>,
+    alphabet: Option<String>,
+    raw: Option<bool>,
+    prefix: Option<String>,
+    suffix: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct ApiKeyQuery {
+    raw: Option<bool>,
+}
+
+#[derive(Deserialize)]
+struct PasswordQuery {
+    length: Option<usize>,
+    raw: Option<bool>,
+}
+
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args::parse();
+    
+    // If server mode is enabled, start the HTTP server
+    if let Some(port) = args.serve {
+        return start_server(port, args.listen_all_ips).await;
+    }
     
     // Check environment variable for audit logging
     if !args.audit_log && std::env::var("HASHRAND_AUDIT_LOG").is_ok() {
@@ -196,53 +257,22 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Base58 alphabet (Bitcoin alphabet) - default
-    const BASE58_ALPHABET: [char; 58] = [
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
-        'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c',
-        'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-        'w', 'x', 'y', 'z',
-    ];
-
-    // No look-alike alphabet (excludes: 0, O, I, l, 1)
-    const NO_LOOK_ALIKE_ALPHABET: [char; 57] = [
-        '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
-        'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-        'x', 'y', 'z',
-    ];
-
-    // Full alphanumeric alphabet
-    const FULL_ALPHABET: [char; 62] = [
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
-
-    // Full alphabet with symbols
-    const FULL_WITH_SYMBOLS_ALPHABET: [char; 73] = [
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', '_', '*', '^', '@', '#', '+', '!', '?', '$',
-        '%',
-    ];
-
     // Select alphabet based on arguments
-    let alphabet: &[char] = if args.no_look_alike {
-        &NO_LOOK_ALIKE_ALPHABET
+    let alphabet_type = if args.no_look_alike {
+        AlphabetType::NoLookAlike
     } else if args.full {
-        &FULL_ALPHABET
+        AlphabetType::Full
     } else if args.full_with_symbols {
-        &FULL_WITH_SYMBOLS_ALPHABET
+        AlphabetType::FullWithSymbols
     } else if args.api_key {
-        &FULL_ALPHABET
+        AlphabetType::Full
     } else if args.password {
-        &FULL_WITH_SYMBOLS_ALPHABET
+        AlphabetType::FullWithSymbols
     } else {
-        &BASE58_ALPHABET
+        AlphabetType::Base58
     };
+
+    let alphabet = get_alphabet(&alphabet_type);
 
     // Determine the base path for operations with validation
     let base_path = if let Some(ref p) = args.path {
@@ -361,6 +391,181 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             println!("{full_name}");
         }
     }
+    
+    Ok(())
+}
+
+fn get_alphabet(alphabet_type: &AlphabetType) -> &'static [char] {
+    // Base58 alphabet (Bitcoin alphabet) - default
+    const BASE58_ALPHABET: [char; 58] = [
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
+        'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c',
+        'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z',
+    ];
+
+    // No look-alike alphabet (excludes: 0, O, I, l, 1)
+    const NO_LOOK_ALIKE_ALPHABET: [char; 57] = [
+        '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
+        'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+        'x', 'y', 'z',
+    ];
+
+    // Full alphanumeric alphabet
+    const FULL_ALPHABET: [char; 62] = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    ];
+
+    // Full alphabet with symbols
+    const FULL_WITH_SYMBOLS_ALPHABET: [char; 73] = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', '_', '*', '^', '@', '#', '+', '!', '?', '$',
+        '%',
+    ];
+
+    match alphabet_type {
+        AlphabetType::Base58 => &BASE58_ALPHABET,
+        AlphabetType::NoLookAlike => &NO_LOOK_ALIKE_ALPHABET,
+        AlphabetType::Full => &FULL_ALPHABET,
+        AlphabetType::FullWithSymbols => &FULL_WITH_SYMBOLS_ALPHABET,
+    }
+}
+
+fn generate_hash_from_request(request: &HashRequest) -> Result<String, Box<dyn std::error::Error>> {
+    let alphabet = get_alphabet(&request.alphabet);
+    let current_dir = std::env::current_dir()?;
+    
+    let hash = if request.check {
+        generate_unique_name(
+            alphabet,
+            request.length,
+            request.prefix.as_deref(),
+            request.suffix.as_deref(),
+            &current_dir,
+        )
+    } else {
+        nanoid::format(nanoid::rngs::default, alphabet, request.length)
+    };
+
+    let full_name = format!(
+        "{}{}{}",
+        request.prefix.as_deref().unwrap_or(""),
+        hash,
+        request.suffix.as_deref().unwrap_or("")
+    );
+
+    Ok(if request.raw {
+        full_name
+    } else {
+        format!("{}\n", full_name)
+    })
+}
+
+fn generate_api_key_response(raw: bool) -> Result<String, Box<dyn std::error::Error>> {
+    let alphabet = get_alphabet(&AlphabetType::Full);
+    let hash = nanoid::format(nanoid::rngs::default, alphabet, 44);
+    let api_key = format!("ak_{}", hash);
+    
+    Ok(if raw {
+        api_key
+    } else {
+        format!("{}\n", api_key)
+    })
+}
+
+fn generate_password_response(length: Option<usize>, raw: bool) -> Result<String, Box<dyn std::error::Error>> {
+    let length = length.unwrap_or(21);
+    
+    if length < 21 || length > 44 {
+        return Err("Password length must be between 21 and 44 characters".into());
+    }
+    
+    let alphabet = get_alphabet(&AlphabetType::FullWithSymbols);
+    let password = nanoid::format(nanoid::rngs::default, alphabet, length);
+    
+    Ok(if raw {
+        password
+    } else {
+        format!("{}\n", password)
+    })
+}
+
+async fn handle_generate(Query(params): Query<GenerateQuery>) -> Result<Response<String>, StatusCode> {
+    let length = params.length.unwrap_or(21);
+    
+    if !(2..=128).contains(&length) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    
+    let alphabet = match params.alphabet.as_deref() {
+        Some("base58") | None => AlphabetType::Base58,
+        Some("no-look-alike") => AlphabetType::NoLookAlike,
+        Some("full") => AlphabetType::Full,
+        Some("full-with-symbols") => AlphabetType::FullWithSymbols,
+        _ => return Err(StatusCode::BAD_REQUEST),
+    };
+    
+    let request = HashRequest {
+        length,
+        alphabet,
+        raw: params.raw.unwrap_or(true),  // Default to true in server mode
+        check: false,  // Never check in server mode (no filesystem access)
+        prefix: params.prefix,
+        suffix: params.suffix,
+    };
+    
+    match generate_hash_from_request(&request) {
+        Ok(result) => Ok(Response::builder()
+            .header("content-type", "text/plain")
+            .body(result)
+            .unwrap()),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+async fn handle_api_key(Query(params): Query<ApiKeyQuery>) -> Result<Response<String>, StatusCode> {
+    match generate_api_key_response(params.raw.unwrap_or(true)) {  // Default to true in server mode
+        Ok(result) => Ok(Response::builder()
+            .header("content-type", "text/plain")
+            .body(result)
+            .unwrap()),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+async fn handle_password(Query(params): Query<PasswordQuery>) -> Result<Response<String>, StatusCode> {
+    match generate_password_response(params.length, params.raw.unwrap_or(true)) {  // Default to true in server mode
+        Ok(result) => Ok(Response::builder()
+            .header("content-type", "text/plain")
+            .body(result)
+            .unwrap()),
+        Err(_) => Err(StatusCode::BAD_REQUEST),
+    }
+}
+
+async fn start_server(port: u16, listen_all_ips: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let app = Router::new()
+        .route("/api/generate", get(handle_generate))
+        .route("/api/api-key", get(handle_api_key))
+        .route("/api/password", get(handle_password));
+
+    let host = if listen_all_ips { "0.0.0.0" } else { "127.0.0.1" };
+    let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
+    
+    println!("hashrand server listening on http://{}:{}", host, port);
+    println!("Available endpoints:");
+    println!("  GET /api/generate?length=21&alphabet=base58");
+    println!("  GET /api/api-key");
+    println!("  GET /api/password?length=21");
+    println!("Note: All endpoints return raw text by default (no newline)");
+    
+    axum::serve(listener, app).await?;
     
     Ok(())
 }
@@ -704,5 +909,118 @@ mod tests {
         let args = Args::try_parse_from(&args_vec).unwrap();
         assert!(args.api_key);
         // The actual prefix logic is tested through integration tests
+    }
+
+    #[test]
+    fn test_serve_option_parsing() {
+        // Test that --serve option parses correctly
+        let args_vec = vec!["hashrand", "--serve", "8080"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.serve, Some(8080));
+        assert!(!args.listen_all_ips);
+        
+        // Test short form
+        let args_vec = vec!["hashrand", "-s", "3000"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.serve, Some(3000));
+        assert!(!args.listen_all_ips);
+        
+        // Test with --listen-all-ips flag
+        let args_vec = vec!["hashrand", "--serve", "8080", "--listen-all-ips"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.serve, Some(8080));
+        assert!(args.listen_all_ips);
+        
+        // Test that --listen-all-ips requires --serve
+        let args_vec = vec!["hashrand", "--listen-all-ips"];
+        let result = Args::try_parse_from(&args_vec);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_alphabet_type_selection() {
+        assert!(matches!(
+            get_alphabet(&AlphabetType::Base58),
+            &[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+        ));
+        assert_eq!(get_alphabet(&AlphabetType::Base58).len(), 58);
+        assert_eq!(get_alphabet(&AlphabetType::NoLookAlike).len(), 57);
+        assert_eq!(get_alphabet(&AlphabetType::Full).len(), 62);
+        assert_eq!(get_alphabet(&AlphabetType::FullWithSymbols).len(), 73);
+    }
+
+    #[test]
+    fn test_generate_hash_from_request() {
+        let request = HashRequest {
+            length: 10,
+            alphabet: AlphabetType::Base58,
+            raw: true,
+            check: false,
+            prefix: Some("test_".to_string()),
+            suffix: Some("_end".to_string()),
+        };
+        
+        let result = generate_hash_from_request(&request).unwrap();
+        assert!(result.starts_with("test_"));
+        assert!(result.ends_with("_end"));
+        assert_eq!(result.len(), 10 + 5 + 4); // length + prefix + suffix
+        assert!(!result.contains('\n')); // raw output
+    }
+
+    #[test]
+    fn test_generate_hash_from_request_with_newline() {
+        let request = HashRequest {
+            length: 8,
+            alphabet: AlphabetType::Full,
+            raw: false,
+            check: false,
+            prefix: None,
+            suffix: None,
+        };
+        
+        let result = generate_hash_from_request(&request).unwrap();
+        assert_eq!(result.len(), 9); // 8 chars + newline
+        assert!(result.ends_with('\n'));
+    }
+
+    #[test]
+    fn test_generate_api_key_response() {
+        let result = generate_api_key_response(true).unwrap();
+        assert!(result.starts_with("ak_"));
+        assert_eq!(result.len(), 47); // ak_ + 44 chars
+        assert!(!result.contains('\n')); // raw output
+        
+        let result = generate_api_key_response(false).unwrap();
+        assert!(result.starts_with("ak_"));
+        assert!(result.ends_with('\n'));
+        assert_eq!(result.len(), 48); // ak_ + 44 chars + newline
+    }
+
+    #[test]
+    fn test_generate_password_response() {
+        // Default length
+        let result = generate_password_response(None, true).unwrap();
+        assert_eq!(result.len(), 21);
+        assert!(!result.contains('\n'));
+        
+        // Custom length within range
+        let result = generate_password_response(Some(30), false).unwrap();
+        assert_eq!(result.len(), 31); // 30 chars + newline
+        assert!(result.ends_with('\n'));
+        
+        // Length too short
+        let result = generate_password_response(Some(15), true);
+        assert!(result.is_err());
+        
+        // Length too long
+        let result = generate_password_response(Some(50), true);
+        assert!(result.is_err());
+        
+        // Boundary values
+        let result = generate_password_response(Some(21), true).unwrap();
+        assert_eq!(result.len(), 21);
+        
+        let result = generate_password_response(Some(44), true).unwrap();
+        assert_eq!(result.len(), 44);
     }
 }
