@@ -2,9 +2,21 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current Session
+- **Date**: 2025-08-06
+- **Branch**: security-fixes
+- **Modified Files**: CLAUDE.md, src/main.rs, security-scan/*
+- **Session Status**: Complete ✅
+- **Security Scan**: Complete - Addressed 8/9 vulnerabilities (89%)
+  - ✅ All MEDIUM vulnerabilities fixed (3/3)
+  - ✅ All LOW vulnerabilities addressed (4/4)
+  - ⬆️ Test coverage improved
+  - 📝 1 optional documentation item remains
+- **Session Files**: security-scan/plan.md, security-scan/state.json
+
 ## Overview
 
-`hashrand` is a versatile CLI tool that generates cryptographically secure random strings with multiple alphabet options and safety features. The tool is written in Rust and provides various options for different use cases, from generating file-safe identifiers to creating secure tokens.
+`hashrand` is a versatile CLI tool that generates cryptographically secure random strings with multiple alphabet options and safety features. The tool is written in Rust and provides various options for different use cases, from generating file-safe identifiers to creating secure tokens, API keys, and passwords.
 
 ## Development Commands
 
@@ -25,6 +37,12 @@ cargo run -- -c 20                   # 20-char hash that doesn't match existing 
 cargo run -- --mkdir                 # Create directory with random name
 cargo run -- --touch --prefix "tmp_" # Create file with prefix
 cargo run -- --mkdir --path /tmp --suffix "_session" # Create dir in /tmp
+cargo run -- --api-key               # Generate API key (ak_ + 44 chars)
+cargo run -- --password              # Generate 21-char password
+cargo run -- --password 30           # Generate 30-char password (21-44 chars allowed)
+cargo run -- --touch --file-mode 600 # Create file with specific permissions
+cargo run -- --mkdir --dir-mode 700  # Create directory with restricted permissions
+cargo run -- --audit-log 16          # Generate with audit logging
 ```
 
 ### Test
@@ -70,37 +88,47 @@ The project consists of a single binary crate with carefully chosen dependencies
 
 ### Code Structure (src/main.rs)
 
-1. **CLI Definition** (lines 6-54)
+1. **CLI Definition** (lines 6-62)
    - `Args` struct with clap derive macros
    - ArgGroup for mutually exclusive actions (mkdir/touch)
    - Mutually exclusive alphabet options via `conflicts_with_all`
    - Custom validation for length parameter
    - File system action flags with prefix/suffix/path options
+   - Special modes: `--api-key` (format: ak_ + 44 chars) and `--password` (default 21 chars, range 21-44)
+   - Security options: `--file-mode`, `--dir-mode` for Unix permissions, `--audit-log` for operation tracking
 
 2. **Core Functions**
-   - `parse_length` (lines 56-64): Validates length is between 2-128
-   - `check_name_exists` (lines 66-75): Checks for exact filename matches recursively
-   - `generate_unique_name` (lines 77-96): Generates hash with prefix/suffix guaranteed not to collide
+   - `parse_length` (lines 64-72): Validates length is between 2-128
+   - `check_name_exists` (lines 74-83): Checks for exact filename matches recursively
+   - `generate_unique_name` (lines 85-104): Generates hash with prefix/suffix guaranteed not to collide
 
-3. **Alphabet Constants** (lines 101-120)
+3. **Alphabet Constants** (lines 117-147)
    - `BASE58_ALPHABET`: Bitcoin alphabet (default) - 58 chars
    - `NO_LOOK_ALIKE_ALPHABET`: Excludes 0, O, I, l, 1 - 57 chars
-   - `FULL_ALPHABET`: All alphanumeric - 62 chars
-   - `FULL_WITH_SYMBOLS_ALPHABET`: Alphanumeric + symbols - 73 chars
+   - `FULL_ALPHABET`: All alphanumeric - 62 chars (used for API keys)
+   - `FULL_WITH_SYMBOLS_ALPHABET`: Alphanumeric + symbols - 73 chars (used for passwords)
 
-4. **Main Logic** (lines 133-175)
+4. **Main Logic** (lines 106-201)
+   - Special handling for api-key (ak_ prefix + 44 chars) and password (default 21 chars, validates 21-44 range)
+   - Security enhancements: path validation, resource limits, audit logging
+   - Unix permissions handling with proper error management
    - Path determination (custom or current directory)
    - Implicit collision checking for mkdir/touch operations
-   - Alphabet selection based on CLI flags
-   - Full name construction with prefix/suffix
+   - Alphabet selection based on CLI flags (including api-key/password modes)
+   - Full name construction with prefix/suffix (API keys get automatic ak_ prefix)
    - Directory/file creation with error handling
    - Conditional output formatting
 
-5. **Test Suite** (lines 177-289)
+5. **Test Suite** (lines 203-421)
    - Comprehensive tests for all functions
    - Edge cases for validation
    - File system interaction tests using tempfile
    - Tests for prefix/suffix functionality
+   - Tests for api-key mode (fixed length, no customization)
+   - Tests for password mode (default 21 chars and custom lengths 21-44)
+   - Tests for Unix permissions parsing and validation
+   - Tests for resource limits and security features
+   - Conflict tests for new modes
 
 ## Key Implementation Details
 
@@ -108,17 +136,25 @@ The project consists of a single binary crate with carefully chosen dependencies
 - Uses clap's derive API for type-safe argument parsing
 - Conflicts between alphabet options enforced at compile time
 - Help text auto-generated from struct documentation
+- Special modes (api-key, password) have restricted option combinations
 
 ### Security Considerations
 - Uses `nanoid::rngs::default` for cryptographic randomness
 - No predictable patterns in generated strings
 - Alphabet options designed for different security/usability tradeoffs
+- API keys use ak_ prefix + 44 characters for 256-bit entropy (quantum-resistant security)
+- Passwords default to 21 characters with full symbol set for strength (range: 21-44)
+- Path validation prevents directory traversal attacks
+- Resource limits prevent DoS attacks (depth: 10 levels, files: 100,000)
+- Audit logging provides operation tracking without exposing sensitive data
 
 ### Performance Characteristics
 - O(1) hash generation without collision checking
-- O(n) with collision checking where n = number of files in directory tree
-- WalkDir is lazy, so large directories are handled efficiently
+- O(n) with collision checking where n = number of files in directory tree (limited to 100,000 entries)
+- WalkDir is lazy with depth limits (10 levels) for performance and security
 - File/directory creation is atomic with proper error handling
+- Unix permission setting adds minimal overhead
+- Audit logging uses efficient stderr output with timestamps
 
 ### Error Handling
 - Custom error messages for invalid length
@@ -161,11 +197,30 @@ The test suite covers:
 - **File collision detection**: Exact matches, subdirectories
 - **Unique generation**: Ensures algorithm finds available hashes
 - **Prefix/suffix handling**: Tests full name generation with various combinations
+- **API key mode**: Fixed format (ak_ + 44 chars), conflict with all other options
+- **Password mode**: Default 21-character generation (128-bit entropy), custom lengths (21-44), limited conflicts
+- **Security features**: Path validation, resource limits, audit logging, error handling
+- **Unix permissions**: File and directory permission control with proper validation
 
 Run tests with coverage:
 ```bash
 cargo install cargo-tarpaulin
 cargo tarpaulin --out Html
+```
+
+### Security Testing
+
+Test security features:
+```bash
+# Test audit logging
+HASHRAND_AUDIT_LOG=1 target/debug/hashrand 12
+
+# Test Unix permissions
+target/debug/hashrand --touch --file-mode 600
+target/debug/hashrand --mkdir --dir-mode 700
+
+# Test resource limits (large directory)
+mkdir -p deep/{1..15} && target/debug/hashrand --check --path deep
 ```
 
 ## Future Enhancement Ideas

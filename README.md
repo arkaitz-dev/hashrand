@@ -22,7 +22,7 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 
 ### Options
 
-- `-r, --raw`: Output without newline character (useful for piping or scripting)
+- `-r, --raw`: Output without newline character (useful for piping or scripting, works with all options)
 - `--no-look-alike`: Use an alphabet that excludes commonly confused characters (0, O, I, l, 1)
 - `--full`: Use full alphanumeric alphabet (uppercase, lowercase, and numbers 0-9)
 - `--full-with-symbols`: Use full alphabet including symbols (-_*^@#+!?$%)
@@ -32,12 +32,21 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 - `--prefix <PREFIX>`: Add a prefix before the generated hash
 - `--suffix <SUFFIX>`: Add a suffix after the generated hash
 - `--path <PATH>`: Specify the path where to create the file or directory
+- `--api-key`: Generate a secure API key using full alphanumeric alphabet (format: ak_xxxxxxxx, 47 characters total, no customization allowed)
+- `--password`: Generate a secure password using full alphabet with symbols (21 characters by default, length can be customized between 21-44)
+- `--file-mode <MODE>`: Set file permissions when creating files (Unix-style octal, e.g., 644, 600)
+- `--dir-mode <MODE>`: Set directory permissions when creating directories (Unix-style octal, e.g., 755, 700)
+- `--audit-log`: Enable audit logging (outputs operations to stderr with timestamps)
 
 Notes:
-- The alphabet options (`--no-look-alike`, `--full`, and `--full-with-symbols`) are mutually exclusive
+- The alphabet options (`--no-look-alike`, `--full`, `--full-with-symbols`, `--api-key`, and `--password`) are mutually exclusive
 - `--mkdir` and `--touch` are mutually exclusive
 - When using `--mkdir` or `--touch`, the `--check` flag is automatically enabled to prevent naming conflicts
 - `--prefix`, `--suffix`, and `--path` options require either `--mkdir` or `--touch`
+- `--api-key` cannot be combined with any other options (it generates a fixed 44-character key with ak_ prefix)
+- `--password` can only be combined with a custom length parameter (21-44 characters)
+- Permission options (`--file-mode`, `--dir-mode`) only work with `--touch` and `--mkdir` respectively
+- `--audit-log` can be used with any operation and also controlled via `HASHRAND_AUDIT_LOG` environment variable
 
 ### Examples
 
@@ -96,6 +105,49 @@ Create a directory with no-look-alike alphabet and custom path:
 hashrand --mkdir --no-look-alike --path ./backups --suffix "_backup"
 ```
 
+Generate a secure API key (format: ak_xxxxxxxx, 47 characters total):
+```bash
+hashrand --api-key
+```
+
+Generate a secure password with default length (21 characters):
+```bash
+hashrand --password
+```
+
+Generate a secure password with custom length:
+```bash
+hashrand --password 30
+```
+
+Create a file with specific permissions (Unix only):
+```bash
+hashrand --touch --file-mode 600
+```
+
+Create a directory with restricted permissions:
+```bash
+hashrand --mkdir --dir-mode 700 --prefix "secure_"
+```
+
+Generate with audit logging enabled:
+```bash
+hashrand --audit-log --mkdir
+# Or via environment variable:
+HASHRAND_AUDIT_LOG=1 hashrand --touch
+```
+
+Generate an API key without newline (for scripts):
+```bash
+hashrand --api-key --raw
+# Output: ak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Generate a password without newline:
+```bash
+hashrand --password -r
+```
+
 ## Alphabet Options
 
 1. **Base58 (default)**: Bitcoin alphabet excluding 0, O, I, l
@@ -115,6 +167,45 @@ hashrand --mkdir --no-look-alike --path ./backups --suffix "_backup"
    - Characters: All alphanumeric plus `-_*^@#+!?$%`
    - 73 characters total
 
+5. **API Key Mode** (`--api-key`): Secure API key generation
+   - Format: `ak_` + 44 random characters (47 total)
+   - Uses full alphanumeric alphabet (62 characters)
+   - Provides 256 bits of entropy for quantum-resistant security
+   - Cannot be customized or combined with other options
+   - Follows modern API key identification standards
+
+6. **Password Mode** (`--password`): Secure password generation
+   - Uses full alphabet with symbols (73 characters)
+   - Default length: 21 characters (128 bits entropy)
+   - Length can be customized (21-44 characters)
+   - Cannot be combined with other options except length
+   - Minimum 21 characters ensures cryptographic security
+
+## Security Features
+
+`hashrand` includes several security enhancements to ensure safe operation:
+
+### Path Security
+- **Path validation and canonicalization** prevents directory traversal attacks
+- **Base path verification** ensures files/directories are created within intended locations
+- **Permission validation** checks that target paths exist and are accessible
+
+### Resource Protection
+- **Directory traversal limits** (10 levels deep) prevent resource exhaustion
+- **File count limits** (100,000 entries) protect against DoS during collision checking
+- **Generation attempt limits** (1,000 tries) prevent infinite loops
+
+### Audit and Compliance
+- **Comprehensive audit logging** tracks all operations with timestamps
+- **Environment variable support** (`HASHRAND_AUDIT_LOG`) for automated environments
+- **No sensitive data logging** follows security best practices
+- **Unix permissions control** allows setting specific file/directory permissions
+
+### Error Handling
+- **Graceful error handling** with informative messages instead of panics
+- **Input validation** ensures all parameters are within safe ranges
+- **Secure defaults** maintain security when optional parameters aren't specified
+
 ## Features
 
 - **Multiple alphabet options** for different use cases
@@ -125,6 +216,9 @@ hashrand --mkdir --no-look-alike --path ./backups --suffix "_backup"
 - **Directory and file creation** with random names
 - **Prefix and suffix support** for structured naming
 - **Custom path support** for organizing generated items
+- **Unix file permissions control** for secure file/directory creation
+- **Audit logging system** for tracking operations and compliance
+- **Security hardening** with path validation and resource limits
 - **Fast and lightweight** with minimal dependencies
 - **Comprehensive test suite** ensuring reliability
 
@@ -138,6 +232,13 @@ hashrand --mkdir --no-look-alike --path ./backups --suffix "_backup"
 - Creating organized temporary directories with prefixes/suffixes
 - Batch file/directory creation with guaranteed unique names
 - Session file management with structured naming
+- Generating secure API keys for authentication
+- Creating strong passwords for user accounts or services
+- **Security-focused scenarios:**
+  - Creating secure temporary files with restricted permissions
+  - Generating auditable random identifiers for compliance
+  - Setting up secure directories for sensitive data processing
+  - Creating trackable session directories with audit trails
 
 ## Dependencies
 

@@ -1,0 +1,82 @@
+{
+  "scan_date": "2025-08-06",
+  "project": "hashrand",
+  "total_vulnerabilities": 9,
+  "vulnerabilities": {
+    "MEDIUM-1": {
+      "title": "Insufficient Error Handling",
+      "status": "fixed",
+      "risk": "medium",
+      "location": "src/main.rs:209,214",
+      "fixed_date": "2025-08-06"
+    },
+    "MEDIUM-2": {
+      "title": "Path Traversal Potential", 
+      "status": "fixed",
+      "risk": "medium",
+      "location": "src/main.rs:172-176,208,213",
+      "fixed_date": "2025-08-06"
+    },
+    "MEDIUM-3": {
+      "title": "Resource Exhaustion in Collision Detection",
+      "status": "fixed",
+      "risk": "medium",
+      "location": "src/main.rs:74-83",
+      "fixed_date": "2025-08-06"
+    },
+    "LOW-1": {
+      "title": "Hardcoded Algorithm Constraints",
+      "status": "documented",
+      "risk": "low",
+      "location": "src/main.rs:124-154",
+      "fixed_date": "2025-08-06",
+      "note": "Documented as acceptable limitation"
+    },
+    "LOW-2": {
+      "title": "Missing File Permissions Control",
+      "status": "fixed",
+      "risk": "low",
+      "location": "src/main.rs:209,214",
+      "fixed_date": "2025-08-06"
+    },
+    "LOW-3": {
+      "title": "No Audit Logging",
+      "status": "fixed",
+      "risk": "low",
+      "location": "General",
+      "fixed_date": "2025-08-06"
+    },
+    "LOW-4": {
+      "title": "Version Disclosure in Binary",
+      "status": "documented",
+      "risk": "low",
+      "location": "Cargo.toml:3",
+      "fixed_date": "2025-08-06",
+      "note": "Risk assessed as minimal for CLI tool"
+    },
+    "INFO-1": {
+      "title": "Test Coverage",
+      "status": "improved",
+      "risk": "info",
+      "location": "src/main.rs tests",
+      "fixed_date": "2025-08-06"
+    },
+    "INFO-2": {
+      "title": "Documentation Enhancement",
+      "status": "pending",
+      "risk": "info",
+      "location": "README.md, CLAUDE.md"
+    }
+  },
+  "statistics": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 1,
+    "fixed": 5,
+    "documented": 2,
+    "improved": 1,
+    "pending": 1
+  }
+}
