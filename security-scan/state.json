@@ -63,9 +63,11 @@
     },
     "INFO-2": {
       "title": "Documentation Enhancement",
-      "status": "pending",
+      "status": "completed",
       "risk": "info",
-      "location": "README.md, CLAUDE.md"
+      "location": "README.md, CLAUDE.md, SECURITY.md",
+      "fixed_date": "2025-08-06",
+      "note": "Added comprehensive threat model and responsible disclosure policy"
     }
   },
   "statistics": {
@@ -73,10 +75,11 @@
     "high": 0,
     "medium": 0,
     "low": 0,
-    "info": 1,
+    "info": 0,
     "fixed": 5,
     "documented": 2,
     "improved": 1,
-    "pending": 1
+    "completed": 1,
+    "pending": 0
   }
 }

@@ -206,6 +206,68 @@ hashrand --password -r
 - **Input validation** ensures all parameters are within safe ranges
 - **Secure defaults** maintain security when optional parameters aren't specified
 
+## Threat Model
+
+`hashrand` addresses the following security threats:
+
+### Threat Categories
+
+#### 1. **Path Traversal Attacks**
+- **Threat**: Malicious users providing paths like `../../sensitive/location` to create files outside intended directories
+- **Mitigation**: Path canonicalization and validation ensure all operations stay within base directories
+- **Risk Level**: Medium → **Mitigated** ✅
+
+#### 2. **Resource Exhaustion (DoS)**
+- **Threat**: Attackers causing system resource exhaustion through deep directory traversal or large file structures
+- **Mitigation**: Directory depth limits (10 levels), file count limits (100,000 entries), generation attempt limits (1,000)
+- **Risk Level**: Medium → **Mitigated** ✅
+
+#### 3. **Information Disclosure**
+- **Threat**: Accidental logging of sensitive information or verbose error messages revealing system details
+- **Mitigation**: Audit logging excludes sensitive data, error messages are informative but not revealing
+- **Risk Level**: Low → **Mitigated** ✅
+
+#### 4. **Privilege Escalation**
+- **Threat**: Created files/directories having overly broad permissions allowing unauthorized access
+- **Mitigation**: Unix permission controls (`--file-mode`, `--dir-mode`) allow explicit permission setting
+- **Risk Level**: Low → **Mitigated** ✅
+
+#### 5. **Cryptographic Weaknesses**
+- **Threat**: Predictable random generation allowing attackers to guess generated values
+- **Mitigation**: Uses `nanoid` with cryptographically secure randomness (ChaCha20), 256-bit entropy for API keys
+- **Risk Level**: Critical → **Not Applicable** (Secure by design) ✅
+
+### Attack Surface Analysis
+
+#### **Inputs**
+- Command-line arguments (validated with clap)
+- Environment variables (`HASHRAND_AUDIT_LOG` - safe boolean flag)
+- File system paths (canonicalized and validated)
+
+#### **Outputs**
+- Generated random strings (no sensitive data)
+- File/directory creation (permissions controlled)
+- Audit logs (no sensitive information logged)
+
+#### **External Dependencies**
+- **nanoid**: Cryptographically secure random generation (audited library)
+- **clap**: CLI parsing (well-established, type-safe)
+- **walkdir**: Directory traversal (limited depth/count to prevent DoS)
+
+### Security Assumptions
+
+1. **File System**: Assumes standard Unix-like permissions model
+2. **Runtime Environment**: Assumes legitimate use by authorized users
+3. **Cryptographic Randomness**: Relies on OS-provided entropy via nanoid
+4. **Path Validation**: Assumes canonical paths correctly represent actual file locations
+
+### Out of Scope
+
+- **Network Security**: Application is local-only, no network components
+- **Authentication/Authorization**: Relies on file system and OS-level controls  
+- **Data Encryption**: Generated strings are public identifiers, not encrypted secrets
+- **Social Engineering**: User education about secure usage patterns
+
 ## Features
 
 - **Multiple alphabet options** for different use cases
@@ -245,6 +307,12 @@ hashrand --password -r
 - [nanoid](https://crates.io/crates/nanoid) - For secure random string generation
 - [clap](https://crates.io/crates/clap) - For command-line argument parsing
 - [walkdir](https://crates.io/crates/walkdir) - For recursive directory traversal (used with --check flag)
+
+## Security
+
+For security-related issues, please see our [Security Policy](SECURITY.md).
+
+To report security vulnerabilities, email: me@arkaitz.dev
 
 ## License
 
