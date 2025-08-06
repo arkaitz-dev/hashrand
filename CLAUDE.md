@@ -5,8 +5,9 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 ## Session History
 
 ### 2025-08-06 - HTTP Server Implementation & Security Improvements
-- **Status**: Complete ✅ - Full HTTP server functionality with security enhancements
+- **Status**: Complete ✅ - Full HTTP server functionality with security enhancements  
 - **Version**: 0.2.0 → 0.2.1
+- **Repository**: Pushed to github.com/arkaitz-dev/hashrand
 - **Major Accomplishments**:
   1. **HTTP Server Mode (v0.2.0)**:
      - Added `-s/--serve PORT` option for HTTP server
