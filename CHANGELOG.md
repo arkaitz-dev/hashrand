@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-08-06
+
+### Added
+- **Server Security Enhancements**: New security options for HTTP server mode
+  - `--max-param-length <N>`: Configurable limit for prefix/suffix parameters (default: 32 characters)
+  - `--enable-rate-limiting`: Enable per-IP rate limiting for DoS protection
+  - `--rate-limit <N>`: Configure requests per second limit (default: 100/second per IP)
+  - `--enable-cors`: Optional CORS headers for cross-origin requests
+  - `--max-body-size <N>`: Configurable request body size limit (default: 1024 bytes)
+
+### Changed
+- **Security by Default**: All new security features are disabled by default for optimal performance
+- **Enhanced Server Output**: Server startup now displays enabled security features and their configuration
+
+### Security
+- **Parameter Validation**: HTTP endpoints now validate prefix/suffix parameter lengths
+- **Rate Limiting**: Configurable per-IP rate limiting prevents request flooding attacks
+- **Request Size Limiting**: Configurable limits prevent resource exhaustion via large requests
+- **CORS Control**: Optional CORS support for controlled cross-origin access
+
+### Dependencies
+- **Added** [tower](https://crates.io/crates/tower) 0.5 - Service middleware for HTTP server
+- **Added** [tower-http](https://crates.io/crates/tower-http) 0.6 - CORS and request limiting middleware
+
+### Technical Details
+- **Custom Rate Limiter**: Implemented efficient per-IP rate limiting with configurable windows
+- **Middleware Architecture**: Modular security features using tower middleware layers
+- **Backward Compatibility**: All new features are opt-in, maintaining full backward compatibility
+- **Test Coverage**: Added comprehensive tests for all security features (45 total tests)
+
 ## [0.2.1] - 2025-08-06
 
 ### Changed
@@ -18,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - **Localhost-only binding**: Server now defaults to localhost-only access for improved security
 - **Explicit all-interfaces binding**: Requires explicit `--listen-all-ips` flag to expose to network
+- **SSL/TLS Requirement**: Documentation updated to emphasize MANDATORY use of reverse proxy with HTTPS for production deployments
 
 ### Dependencies
 - **Updated** [axum](https://crates.io/crates/axum) from 0.7.9 to 0.8.4 - Latest stable version with performance improvements

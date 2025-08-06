@@ -1,7 +1,8 @@
 {
   "scan_date": "2025-08-06",
+  "last_update": "2025-08-06-post-http",
   "project": "hashrand",
-  "total_vulnerabilities": 9,
+  "total_vulnerabilities": 12,
   "vulnerabilities": {
     "MEDIUM-1": {
       "title": "Insufficient Error Handling",
@@ -68,6 +69,33 @@
       "location": "README.md, CLAUDE.md, SECURITY.md",
       "fixed_date": "2025-08-06",
       "note": "Added comprehensive threat model and responsible disclosure policy"
+    },
+    "LOW-5": {
+      "title": "HTTP Server - No Query Parameter Length Limits",
+      "status": "fixed",
+      "risk": "low",
+      "location": "src/main.rs:GenerateQuery struct",
+      "found_date": "2025-08-06",
+      "fixed_date": "2025-08-06",
+      "note": "Implemented --max-param-length option with validation in handle_generate"
+    },
+    "LOW-6": {
+      "title": "HTTP Server - No Rate Limiting", 
+      "status": "fixed",
+      "risk": "low",
+      "location": "src/main.rs:start_server",
+      "found_date": "2025-08-06",
+      "fixed_date": "2025-08-06",
+      "note": "Implemented --enable-rate-limiting with configurable --rate-limit option"
+    },
+    "INFO-3": {
+      "title": "HTTP Server - No CORS Headers",
+      "status": "fixed", 
+      "risk": "info",
+      "location": "src/main.rs:axum Router",
+      "found_date": "2025-08-06",
+      "fixed_date": "2025-08-06",
+      "note": "Implemented optional --enable-cors flag with tower-http CorsLayer"
     }
   },
   "statistics": {
@@ -76,7 +104,7 @@
     "medium": 0,
     "low": 0,
     "info": 0,
-    "fixed": 5,
+    "fixed": 8,
     "documented": 2,
     "improved": 1,
     "completed": 1,

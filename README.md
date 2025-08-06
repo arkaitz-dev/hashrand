@@ -39,6 +39,11 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 - `--audit-log`: Enable audit logging (outputs operations to stderr with timestamps)
 - `-s, --serve <PORT>`: Start HTTP server on specified port to expose API endpoints (binds to localhost by default)
 - `--listen-all-ips`: Listen on all network interfaces (0.0.0.0) instead of localhost only (requires --serve)
+- `--max-param-length <N>`: Maximum length for prefix and suffix parameters in server mode (default: 32)
+- `--enable-rate-limiting`: Enable rate limiting for server mode (default: disabled for better performance)
+- `--rate-limit <N>`: Requests per second limit when rate limiting is enabled (default: 100)
+- `--enable-cors`: Enable CORS headers for cross-origin requests (default: disabled)
+- `--max-body-size <N>`: Maximum request body size in bytes (default: 1024)
 
 Notes:
 - The alphabet options (`--no-look-alike`, `--full`, `--full-with-symbols`, `--api-key`, and `--password`) are mutually exclusive
@@ -49,6 +54,8 @@ Notes:
 - `--password` can only be combined with a custom length parameter (21-44 characters)
 - Permission options (`--file-mode`, `--dir-mode`) only work with `--touch` and `--mkdir` respectively
 - `--audit-log` can be used with any operation and also controlled via `HASHRAND_AUDIT_LOG` environment variable
+- Server security options (`--max-param-length`, `--enable-rate-limiting`, `--rate-limit`, `--enable-cors`, `--max-body-size`) only work with `--serve`
+- `--rate-limit` requires `--enable-rate-limiting` to be effective
 
 ### Examples
 
@@ -160,6 +167,11 @@ hashrand -s 3000
 
 # Listen on all network interfaces
 hashrand --serve 8080 --listen-all-ips
+
+# Enable security features
+hashrand --serve 8080 --enable-rate-limiting --rate-limit 50
+hashrand --serve 8080 --enable-cors --max-param-length 64
+hashrand --serve 8080 --enable-rate-limiting --enable-cors --max-body-size 2048
 ```
 
 ## HTTP Server Mode
@@ -173,6 +185,30 @@ For complete API documentation, see [docs/API.md](docs/API.md).
 - **Default binding**: `127.0.0.1` (localhost only) for security
 - **All interfaces**: Use `--listen-all-ips` to bind to `0.0.0.0`
 - **Default response format**: Raw text (no newline) - use `raw=false` query parameter to add newline
+
+**⚠️ IMPORTANT SECURITY WARNING**: The HTTP server should **ALWAYS** be deployed behind a reverse proxy (nginx, Apache, Caddy, etc.) that enforces SSL/TLS encryption. Never expose the server directly to the internet without HTTPS protection. The built-in server does not provide SSL/TLS encryption and transmits all data in plain text.
+
+### Security Features
+
+The server includes several configurable security features:
+
+- **Parameter Validation**: `--max-param-length N` limits prefix/suffix parameter length (default: 32 characters)
+- **Rate Limiting**: `--enable-rate-limiting` with `--rate-limit N` (default: 100 requests/second per IP)
+- **CORS Control**: `--enable-cors` enables cross-origin requests (disabled by default)
+- **Request Size Limiting**: `--max-body-size N` limits request body size (default: 1024 bytes)
+
+All security features are **disabled by default** for optimal performance. Enable them based on your deployment requirements:
+
+```bash
+# Production-ready configuration with security enabled
+hashrand --serve 8080 \
+  --enable-rate-limiting --rate-limit 100 \
+  --max-param-length 32 \
+  --max-body-size 1024
+
+# Development configuration with CORS for testing
+hashrand --serve 8080 --enable-cors
+```
 
 ### Available API Endpoints
 
@@ -410,6 +446,8 @@ curl "http://localhost:8080/api/password?length=25"
 - [tokio](https://crates.io/crates/tokio) - Async runtime for HTTP server (server mode only)
 - [axum](https://crates.io/crates/axum) - Web framework for REST API endpoints (server mode only)
 - [serde](https://crates.io/crates/serde) - Serialization/deserialization for query parameters (server mode only)
+- [tower](https://crates.io/crates/tower) - Service middleware for HTTP server (server mode only)
+- [tower-http](https://crates.io/crates/tower-http) - HTTP-specific middleware for CORS and request limiting (server mode only)
 
 ## Security
 

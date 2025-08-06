@@ -125,7 +125,7 @@ Security updates will be:
 - File permission bypass
 
 ### Out of Scope
-- Network-based attacks (application is local-only)
+- Network-based attacks (except for HTTP server mode security)
 - Physical access attacks
 - Social engineering
 - Issues requiring OS-level privileges
@@ -144,6 +144,38 @@ Security updates will be:
 - Dependency vulnerability scanning
 - Documentation review for security implications
 - Coordinated disclosure of any identified issues
+
+### HTTP Server Deployment
+
+**⚠️ CRITICAL**: When deploying the HTTP server mode (`--serve`), the following security practices are **MANDATORY**:
+
+1. **Always use SSL/TLS**: The server must be deployed behind a reverse proxy that enforces HTTPS
+2. **Never expose directly to internet**: The built-in server does not provide encryption
+3. **Recommended deployment**:
+   ```
+   Internet → HTTPS → Reverse Proxy (nginx/Apache/Caddy) → HTTP → hashrand server (localhost)
+   ```
+4. **Example nginx configuration**:
+   ```nginx
+   server {
+       listen 443 ssl http2;
+       server_name api.example.com;
+       
+       ssl_certificate /path/to/cert.pem;
+       ssl_certificate_key /path/to/key.pem;
+       
+       location /api/ {
+           proxy_pass http://127.0.0.1:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+5. **Security headers**: Configure your reverse proxy to add security headers (HSTS, CSP, etc.)
+6. **Rate limiting**: Implement rate limiting at the reverse proxy level
+7. **Access control**: Use firewall rules to ensure the hashrand server only accepts connections from localhost
 
 ---
 

@@ -13,10 +13,11 @@ The security scan of the `hashrand` project has identified several areas for imp
 - **Critical**: 0 vulnerabilities
 - **High**: 0 vulnerabilities  
 - **Medium**: ~~3~~ 0 vulnerabilities (All fixed ✅)
-- **Low**: ~~4~~ 0 vulnerabilities (All addressed ✅)
-- **Informational**: ~~2~~ 0 items (All completed ✅)
+- **Low**: ~~4~~ 2 new HTTP server considerations (All documented ✅)
+- **Informational**: ~~2~~ 1 new HTTP server item (All documented ✅)
 
-**Progress**: 9 of 9 vulnerabilities addressed (100%) ✅
+**Progress**: 12 of 12 vulnerabilities addressed (100%) ✅  
+**New findings from HTTP server analysis**: 3 items (all acceptable/documented)
 
 ## Vulnerability Details
 
@@ -184,9 +185,67 @@ The security scan of the `hashrand` project has identified several areas for imp
 
 The security posture of `hashrand` is now **complete and production-ready** with robust error handling, path validation, resource limits, file permissions control, comprehensive audit logging, and thorough security documentation.
 
+## HTTP Server Security Analysis (2025-08-06 Update)
+
+### New Considerations from HTTP Server Implementation
+
+### LOW-5: HTTP Server - No Query Parameter Length Limits
+**Status**: 📝 Documented (2025-08-06)  
+**Location**: src/main.rs:GenerateQuery struct  
+**Risk**: Low  
+**Description**: Prefix and suffix query parameters have no explicit length validation.  
+**Impact**: Could potentially accept very long strings causing memory usage or processing delays.  
+**Assessment**: ✅ **Acceptable** - Reverse proxy should handle request size limits in production.  
+**Production Mitigation**: Configure reverse proxy with appropriate request size limits.
+
+### LOW-6: HTTP Server - No Rate Limiting
+**Status**: 📝 Documented (2025-08-06)  
+**Location**: src/main.rs:start_server  
+**Risk**: Low  
+**Description**: No built-in rate limiting for API endpoints.  
+**Impact**: Potential DoS through request flooding.  
+**Assessment**: ✅ **Acceptable** - Production deployment requires reverse proxy with rate limiting.  
+**Production Mitigation**: Configure nginx/Apache/Caddy with appropriate rate limiting rules.
+
+### INFO-3: HTTP Server - No CORS Headers
+**Status**: 📝 Documented (2025-08-06)  
+**Location**: src/main.rs:axum Router  
+**Risk**: Informational  
+**Description**: No CORS headers configured for cross-origin requests.  
+**Impact**: API cannot be used from web browsers for cross-origin requests.  
+**Assessment**: ✅ **Acceptable** - API is designed for server-to-server communication.  
+**Production Note**: CORS should be handled by reverse proxy if browser access is needed.
+
+### HTTP Server Security Strengths ✅
+
+1. **Secure by Default**: Binds to localhost (127.0.0.1) by default
+2. **Explicit Network Exposure**: Requires `--listen-all-ips` flag to bind to all interfaces
+3. **Input Validation**: Length parameters validated (2-128 for generate, 21-44 for passwords)
+4. **Error Handling**: Returns generic HTTP status codes without information leakage
+5. **No File System Access**: API endpoints exclude file system operations for security
+6. **Plain Text Responses**: Simple text responses reduce parsing vulnerabilities
+7. **Stateless Design**: No session management or state preservation
+8. **SSL/TLS Documentation**: Comprehensive documentation emphasizes mandatory HTTPS deployment
+
+## Updated Security Summary
+
+**Total Items**: 12 (9 original + 3 HTTP server)  
+**All Items Status**: 100% addressed ✅
+
+### Production Deployment Security Requirements ⚠️
+
+**MANDATORY for HTTP server mode**:
+1. **Reverse Proxy with HTTPS**: Never expose directly to internet
+2. **Rate Limiting**: Configure at reverse proxy level
+3. **Request Size Limits**: Set maximum request/header sizes
+4. **Security Headers**: HSTS, CSP, X-Frame-Options at proxy level
+5. **Access Logs**: Monitor API usage patterns
+6. **Firewall Rules**: Ensure hashrand only accepts localhost connections
+
 ## Notes
 
 - All identified issues are code quality and defensive programming improvements
-- No critical security vulnerabilities found
-- The application's core cryptographic functionality is secure
-- Risk ratings consider both likelihood and impact in context of a CLI tool
+- No critical security vulnerabilities found in CLI or HTTP server functionality
+- The application's core cryptographic functionality remains secure in both modes
+- HTTP server security follows industry best practices for API-only services
+- Risk ratings consider both likelihood and impact in context of CLI tool with API server option

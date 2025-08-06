@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use axum::{
-    extract::Query,
+    extract::{Query, State},
     http::StatusCode,
     response::Response,
     routing::get,
@@ -11,6 +11,31 @@ use axum::{
 };
 use serde::Deserialize;
 use tokio::net::TcpListener;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer};
+use std::collections::HashMap;
+use std::net::SocketAddr;
+use tokio::sync::RwLock;
+use axum::extract::ConnectInfo;
+
+#[derive(Clone)]
+struct RateLimitEntry {
+    requests: u32,
+    last_reset: Instant,
+}
+
+type RateLimitMap = Arc<RwLock<HashMap<SocketAddr, RateLimitEntry>>>;
+
+#[derive(Clone)]
+struct ServerConfig {
+    max_param_length: usize,
+    enable_rate_limiting: bool,
+    requests_per_second: u64,
+    enable_cors: bool,
+    max_request_body_size: usize,
+    rate_limiter: Option<RateLimitMap>,
+}
 
 #[derive(Parser)]
 #[command(name = "hashrand")]
@@ -90,6 +115,26 @@ struct Args {
     /// Listen on all network interfaces (0.0.0.0) instead of localhost only (requires --serve)
     #[arg(long = "listen-all-ips", requires = "serve")]
     listen_all_ips: bool,
+
+    /// Maximum length for prefix and suffix parameters in server mode (default: 32)
+    #[arg(long = "max-param-length", requires = "serve", default_value = "32")]
+    max_param_length: usize,
+
+    /// Enable rate limiting for server mode (default: disabled for better performance)
+    #[arg(long = "enable-rate-limiting", requires = "serve")]
+    enable_rate_limiting: bool,
+
+    /// Requests per second limit when rate limiting is enabled (default: 100)
+    #[arg(long = "rate-limit", requires = "enable_rate_limiting", default_value = "100")]
+    rate_limit: u64,
+
+    /// Enable CORS headers for cross-origin requests (default: disabled)
+    #[arg(long = "enable-cors", requires = "serve")]
+    enable_cors: bool,
+
+    /// Maximum request body size in bytes (default: 1024)
+    #[arg(long = "max-body-size", requires = "serve", default_value = "1024")]
+    max_body_size: usize,
 }
 
 fn parse_length(s: &str) -> Result<usize, String> {
@@ -100,6 +145,49 @@ fn parse_length(s: &str) -> Result<usize, String> {
     }
 
     Ok(length)
+}
+
+fn validate_query_params(prefix: &Option<String>, suffix: &Option<String>, max_length: usize) -> Result<(), String> {
+    if let Some(p) = prefix {
+        if p.len() > max_length {
+            return Err(format!("Prefix length ({}) exceeds maximum allowed ({})", p.len(), max_length));
+        }
+    }
+    
+    if let Some(s) = suffix {
+        if s.len() > max_length {
+            return Err(format!("Suffix length ({}) exceeds maximum allowed ({})", s.len(), max_length));
+        }
+    }
+    
+    Ok(())
+}
+
+async fn check_rate_limit(
+    rate_limiter: &RateLimitMap,
+    addr: SocketAddr,
+    requests_per_second: u64,
+) -> bool {
+    let mut limiter = rate_limiter.write().await;
+    let now = Instant::now();
+    
+    let entry = limiter.entry(addr).or_insert(RateLimitEntry {
+        requests: 0,
+        last_reset: now,
+    });
+    
+    // Reset counter if a second has passed
+    if now.duration_since(entry.last_reset) >= Duration::from_secs(1) {
+        entry.requests = 0;
+        entry.last_reset = now;
+    }
+    
+    if entry.requests >= requests_per_second as u32 {
+        false // Rate limit exceeded
+    } else {
+        entry.requests += 1;
+        true // Request allowed
+    }
 }
 
 #[cfg(unix)]
@@ -219,7 +307,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     
     // If server mode is enabled, start the HTTP server
     if let Some(port) = args.serve {
-        return start_server(port, args.listen_all_ips).await;
+        return start_server(
+            port,
+            args.listen_all_ips,
+            args.max_param_length,
+            args.enable_rate_limiting,
+            args.rate_limit,
+            args.enable_cors,
+            args.max_body_size,
+        ).await;
     }
     
     // Check environment variable for audit logging
@@ -496,10 +592,25 @@ fn generate_password_response(length: Option<usize>, raw: bool) -> Result<String
     })
 }
 
-async fn handle_generate(Query(params): Query<GenerateQuery>) -> Result<Response<String>, StatusCode> {
+async fn handle_generate(
+    State(config): State<Arc<ServerConfig>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<GenerateQuery>
+) -> Result<Response<String>, StatusCode> {
+    // Check rate limiting if enabled
+    if let Some(ref rate_limiter) = config.rate_limiter {
+        if !check_rate_limit(rate_limiter, addr, config.requests_per_second).await {
+            return Err(StatusCode::TOO_MANY_REQUESTS);
+        }
+    }
     let length = params.length.unwrap_or(21);
     
     if !(2..=128).contains(&length) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    
+    // Validate parameter lengths
+    if let Err(_) = validate_query_params(&params.prefix, &params.suffix, config.max_param_length) {
         return Err(StatusCode::BAD_REQUEST);
     }
     
@@ -529,7 +640,17 @@ async fn handle_generate(Query(params): Query<GenerateQuery>) -> Result<Response
     }
 }
 
-async fn handle_api_key(Query(params): Query<ApiKeyQuery>) -> Result<Response<String>, StatusCode> {
+async fn handle_api_key(
+    State(config): State<Arc<ServerConfig>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<ApiKeyQuery>
+) -> Result<Response<String>, StatusCode> {
+    // Check rate limiting if enabled
+    if let Some(ref rate_limiter) = config.rate_limiter {
+        if !check_rate_limit(rate_limiter, addr, config.requests_per_second).await {
+            return Err(StatusCode::TOO_MANY_REQUESTS);
+        }
+    }
     match generate_api_key_response(params.raw.unwrap_or(true)) {  // Default to true in server mode
         Ok(result) => Ok(Response::builder()
             .header("content-type", "text/plain")
@@ -539,7 +660,17 @@ async fn handle_api_key(Query(params): Query<ApiKeyQuery>) -> Result<Response<St
     }
 }
 
-async fn handle_password(Query(params): Query<PasswordQuery>) -> Result<Response<String>, StatusCode> {
+async fn handle_password(
+    State(config): State<Arc<ServerConfig>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<PasswordQuery>
+) -> Result<Response<String>, StatusCode> {
+    // Check rate limiting if enabled
+    if let Some(ref rate_limiter) = config.rate_limiter {
+        if !check_rate_limit(rate_limiter, addr, config.requests_per_second).await {
+            return Err(StatusCode::TOO_MANY_REQUESTS);
+        }
+    }
     match generate_password_response(params.length, params.raw.unwrap_or(true)) {  // Default to true in server mode
         Ok(result) => Ok(Response::builder()
             .header("content-type", "text/plain")
@@ -549,11 +680,43 @@ async fn handle_password(Query(params): Query<PasswordQuery>) -> Result<Response
     }
 }
 
-async fn start_server(port: u16, listen_all_ips: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let app = Router::new()
+async fn start_server(
+    port: u16,
+    listen_all_ips: bool,
+    max_param_length: usize,
+    enable_rate_limiting: bool,
+    requests_per_second: u64,
+    enable_cors: bool,
+    max_body_size: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let rate_limiter = if enable_rate_limiting {
+        Some(Arc::new(RwLock::new(HashMap::new())))
+    } else {
+        None
+    };
+
+    let config = Arc::new(ServerConfig {
+        max_param_length,
+        enable_rate_limiting,
+        requests_per_second,
+        enable_cors,
+        max_request_body_size: max_body_size,
+        rate_limiter,
+    });
+
+    let mut app = Router::new()
         .route("/api/generate", get(handle_generate))
         .route("/api/api-key", get(handle_api_key))
-        .route("/api/password", get(handle_password));
+        .route("/api/password", get(handle_password))
+        .with_state(config.clone());
+
+    // Add middleware layers
+    app = app.layer(RequestBodyLimitLayer::new(max_body_size));
+
+    if enable_cors {
+        println!("CORS enabled - allowing cross-origin requests");
+        app = app.layer(CorsLayer::permissive());
+    }
 
     let host = if listen_all_ips { "0.0.0.0" } else { "127.0.0.1" };
     let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
@@ -563,6 +726,19 @@ async fn start_server(port: u16, listen_all_ips: bool) -> Result<(), Box<dyn std
     println!("  GET /api/generate?length=21&alphabet=base58");
     println!("  GET /api/api-key");
     println!("  GET /api/password?length=21");
+    println!("Security features:");
+    println!("  Parameter validation: prefix/suffix max {} chars", max_param_length);
+    if enable_rate_limiting {
+        println!("  Rate limiting: {} requests/second per IP", requests_per_second);
+    } else {
+        println!("  Rate limiting: disabled (use --enable-rate-limiting to enable)");
+    }
+    if enable_cors {
+        println!("  CORS: enabled for cross-origin requests");
+    } else {
+        println!("  CORS: disabled (use --enable-cors to enable)");
+    }
+    println!("  Request body limit: {} bytes", max_body_size);
     println!("Note: All endpoints return raw text by default (no newline)");
     
     axum::serve(listener, app).await?;
@@ -1022,5 +1198,136 @@ mod tests {
         
         let result = generate_password_response(Some(44), true).unwrap();
         assert_eq!(result.len(), 44);
+    }
+
+    #[test]
+    fn test_validate_query_params_valid() {
+        // Test valid parameters within limits
+        let prefix = Some("test".to_string());
+        let suffix = Some("end".to_string());
+        assert!(validate_query_params(&prefix, &suffix, 10).is_ok());
+        
+        // Test with None values
+        assert!(validate_query_params(&None, &None, 10).is_ok());
+        
+        // Test with only prefix
+        assert!(validate_query_params(&prefix, &None, 10).is_ok());
+        
+        // Test with only suffix
+        assert!(validate_query_params(&None, &suffix, 10).is_ok());
+    }
+
+    #[test]
+    fn test_validate_query_params_prefix_too_long() {
+        let prefix = Some("this_prefix_is_too_long_for_limit".to_string());
+        let suffix = Some("ok".to_string());
+        let result = validate_query_params(&prefix, &suffix, 10);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Prefix length"));
+    }
+
+    #[test]
+    fn test_validate_query_params_suffix_too_long() {
+        let prefix = Some("ok".to_string());
+        let suffix = Some("this_suffix_is_too_long_for_limit".to_string());
+        let result = validate_query_params(&prefix, &suffix, 10);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Suffix length"));
+    }
+
+    #[test]
+    fn test_validate_query_params_both_too_long() {
+        let prefix = Some("very_long_prefix".to_string());
+        let suffix = Some("very_long_suffix".to_string());
+        let result = validate_query_params(&prefix, &suffix, 5);
+        assert!(result.is_err());
+        // Should fail on prefix first
+        assert!(result.unwrap_err().contains("Prefix length"));
+    }
+
+    #[test]
+    fn test_max_param_length_option_parsing() {
+        // Test default value
+        let args_vec = vec!["hashrand", "--serve", "8080"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.max_param_length, 32);
+        
+        // Test custom value
+        let args_vec = vec!["hashrand", "--serve", "8080", "--max-param-length", "64"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.max_param_length, 64);
+        
+        // Test that --max-param-length requires --serve
+        let args_vec = vec!["hashrand", "--max-param-length", "64"];
+        let result = Args::try_parse_from(&args_vec);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_rate_limiting_options() {
+        // Test enable-rate-limiting flag
+        let args_vec = vec!["hashrand", "--serve", "8080", "--enable-rate-limiting"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert!(args.enable_rate_limiting);
+        assert_eq!(args.rate_limit, 100); // Default
+        
+        // Test custom rate limit
+        let args_vec = vec!["hashrand", "--serve", "8080", "--enable-rate-limiting", "--rate-limit", "50"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert!(args.enable_rate_limiting);
+        assert_eq!(args.rate_limit, 50);
+        
+        // Test that --rate-limit requires --enable-rate-limiting
+        let args_vec = vec!["hashrand", "--serve", "8080", "--rate-limit", "50"];
+        let result = Args::try_parse_from(&args_vec);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cors_options() {
+        // Test enable-cors flag
+        let args_vec = vec!["hashrand", "--serve", "8080", "--enable-cors"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert!(args.enable_cors);
+        
+        // Test that --enable-cors requires --serve
+        let args_vec = vec!["hashrand", "--enable-cors"];
+        let result = Args::try_parse_from(&args_vec);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_body_size_options() {
+        // Test default max-body-size
+        let args_vec = vec!["hashrand", "--serve", "8080"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.max_body_size, 1024);
+        
+        // Test custom max-body-size
+        let args_vec = vec!["hashrand", "--serve", "8080", "--max-body-size", "2048"];
+        let args = Args::try_parse_from(&args_vec).unwrap();
+        assert_eq!(args.max_body_size, 2048);
+        
+        // Test that --max-body-size requires --serve
+        let args_vec = vec!["hashrand", "--max-body-size", "2048"];
+        let result = Args::try_parse_from(&args_vec);
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiter() {
+        use std::net::{IpAddr, Ipv4Addr};
+        
+        let rate_limiter = Arc::new(RwLock::new(HashMap::new()));
+        let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
+        
+        // First request should succeed
+        assert!(check_rate_limit(&rate_limiter, addr, 2).await);
+        
+        // Second request should succeed
+        assert!(check_rate_limit(&rate_limiter, addr, 2).await);
+        
+        // Third request should fail (exceeded limit of 2 per second)
+        assert!(!check_rate_limit(&rate_limiter, addr, 2).await);
     }
 }

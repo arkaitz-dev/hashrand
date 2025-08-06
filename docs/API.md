@@ -14,6 +14,12 @@ hashrand --serve 8080
 
 # Start on all network interfaces (use with caution)
 hashrand --serve 8080 --listen-all-ips
+
+# Enable security features for production
+hashrand --serve 8080 --enable-rate-limiting --rate-limit 100 --max-param-length 32
+
+# Development with CORS enabled
+hashrand --serve 8080 --enable-cors
 ```
 
 ### Configuration Options
@@ -23,6 +29,11 @@ hashrand --serve 8080 --listen-all-ips
 | Port | Required | TCP port number for the server to listen on |
 | Host | `127.0.0.1` | Default binding to localhost only |
 | `--listen-all-ips` | `false` | When enabled, binds to `0.0.0.0` for network access |
+| `--max-param-length` | `32` | Maximum length for prefix and suffix parameters |
+| `--enable-rate-limiting` | `false` | Enable per-IP rate limiting |
+| `--rate-limit` | `100` | Requests per second limit (requires `--enable-rate-limiting`) |
+| `--enable-cors` | `false` | Enable CORS headers for cross-origin requests |
+| `--max-body-size` | `1024` | Maximum request body size in bytes |
 
 ### Security Considerations
 
@@ -30,6 +41,10 @@ hashrand --serve 8080 --listen-all-ips
 - **Explicit network binding**: Use `--listen-all-ips` only when you need network access and understand the security implications
 - **No authentication**: The API has no built-in authentication; use a reverse proxy if authentication is needed
 - **No file system access**: API endpoints cannot create files or directories for security
+- **Parameter validation**: Prefix and suffix parameters are validated against configured length limits
+- **Rate limiting**: Optional per-IP rate limiting prevents request flooding (disabled by default for performance)
+- **Request size limits**: Configurable request body size limits prevent resource exhaustion
+- **CORS control**: CORS is disabled by default; enable only when cross-origin access is required
 
 ## API Endpoints
 
@@ -71,7 +86,8 @@ Generate a random hash with customizable options.
 
 **Status Codes**:
 - `200 OK`: Successful generation
-- `400 Bad Request`: Invalid parameters (e.g., length out of range, invalid alphabet)
+- `400 Bad Request`: Invalid parameters (e.g., length out of range, invalid alphabet, parameter too long)
+- `429 Too Many Requests`: Rate limit exceeded (when rate limiting is enabled)
 - `500 Internal Server Error`: Server error during generation
 
 ### Examples
@@ -244,6 +260,12 @@ Example scenarios:
 - Length parameter outside valid range (2-128 for generate, 21-44 for password)
 - Invalid alphabet name
 - Malformed query parameters
+- Prefix or suffix parameter exceeds configured maximum length
+
+#### 429 Too Many Requests
+Returned when the client exceeds the configured rate limit (only when rate limiting is enabled).
+
+This response indicates that the client should wait before making additional requests. The specific rate limits are configured via the `--rate-limit` server option.
 
 #### 500 Internal Server Error
 Returned when the server encounters an unexpected error during processing.
