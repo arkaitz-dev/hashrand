@@ -2,6 +2,36 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current Session - 2025-08-07 (Active 🚀)
+
+**Start Time**: New session started
+**Git Branch**: master (clean working tree)
+**Test Status**: 45/45 tests passing
+**Focus**: Web Interface Menu Navigation Enhancement
+**Session Goal**: Implement menu-based navigation for web interface
+
+### Session Progress
+✅ **Completed Tasks**:
+1. Created menu-based navigation with three options (Generic Hash, Password, API Key)
+2. Implemented separate views for each generation mode
+3. Added smooth transitions between views
+4. Created mode-specific forms with appropriate options
+5. Fixed bug where successive generations showed "Generating..." without updating
+6. Ensured no automatic API calls on page load
+
+### Technical Implementation
+- **Architecture**: Web Components with view management
+- **Navigation**: Menu cards → Mode-specific forms → Back to menu
+- **Bug Fix**: Preserved DOM structure to prevent copy button loss
+- **Styling**: Responsive grid layout with hover effects and animations
+
+### Files Modified
+- `src/main.rs`: Updated HTML template and JavaScript logic
+- `implement/menu-navigation-plan.md`: Created implementation plan
+- `implement/menu-navigation-state.json`: Session state tracking
+
+---
+
 ## Session Summary - 2025-08-07 (Complete ✅)
 
 **Focus**: Web Interface Implementation & Code Quality Improvements

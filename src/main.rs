@@ -586,6 +586,109 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
             padding: 2rem;
         }
         
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .menu-card {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        
+        .menu-card:hover::before {
+            opacity: 0.05;
+        }
+        
+        .menu-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .menu-card h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .menu-card p {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .view-container {
+            display: none;
+        }
+        
+        .view-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .back-button {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            width: auto;
+            padding: 10px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
         .form-section {
             margin-bottom: 2rem;
         }
@@ -825,6 +928,7 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
             constructor() {
                 super();
                 this.attachShadow({ mode: 'open' });
+                this.currentView = 'menu';
                 this.render();
                 this.bindEvents();
             }
@@ -837,126 +941,231 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
                         }
                     </style>
                     
-                    <div class="form-section">
-                        <h2>⚙️ Generator Options</h2>
-                        <div class="form-group">
-                            <label for="length">Hash Length (2-128):</label>
-                            <div class="range-group">
-                                <input type="range" id="length" min="2" max="128" value="21">
-                                <div class="range-value" id="lengthValue">21</div>
+                    <!-- Menu View -->
+                    <div id="menuView" class="view-container active">
+                        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 2rem;">Choose Generation Mode</h2>
+                        <div class="menu-grid">
+                            <div class="menu-card" data-mode="generic">
+                                <div class="menu-icon">🎲</div>
+                                <h3>Generic Hash</h3>
+                                <p>Customizable random strings with various alphabets and options</p>
                             </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="alphabet">Alphabet Type:</label>
-                            <select id="alphabet">
-                                <option value="base58">Base58 (Bitcoin) - Default</option>
-                                <option value="no-look-alike">No Look-Alike (No 0,O,I,l,1)</option>
-                                <option value="full">Full Alphanumeric</option>
-                                <option value="full-with-symbols">Full with Symbols</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="prefix">Prefix (optional):</label>
-                            <input type="text" id="prefix" placeholder="e.g., tmp_, file_">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="suffix">Suffix (optional):</label>
-                            <input type="text" id="suffix" placeholder="e.g., _temp, .tmp">
-                        </div>
-                        
-                        <div class="info-box">
-                            <strong>💡 Tip:</strong> Base58 avoids confusing characters. Full with symbols provides maximum entropy for passwords.
-                        </div>
-                        
-                        <div class="button-group">
-                            <button id="generateBtn">🎲 Generate Hash</button>
-                        </div>
-                        
-                        <div class="special-buttons">
-                            <button id="apiKeyBtn" class="api-key-btn">🔑 Generate API Key</button>
-                            <button id="passwordBtn" class="password-btn">🔐 Generate Password</button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-section" id="passwordSection" style="display: none;">
-                        <h2>🔐 Password Options</h2>
-                        <div class="form-group">
-                            <label for="passwordLength">Password Length (21-44):</label>
-                            <div class="range-group">
-                                <input type="range" id="passwordLength" min="21" max="44" value="21">
-                                <div class="range-value" id="passwordLengthValue">21</div>
+                            <div class="menu-card" data-mode="password">
+                                <div class="menu-icon">🔐</div>
+                                <h3>Password</h3>
+                                <p>Strong passwords with symbols (21-44 characters)</p>
+                            </div>
+                            <div class="menu-card" data-mode="apikey">
+                                <div class="menu-icon">🔑</div>
+                                <h3>API Key</h3>
+                                <p>Secure API keys with ak_ prefix (256-bit entropy)</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="result-section">
-                        <h3>📋 Generated Result</h3>
-                        <div class="result-display" id="result">
-                            Click a button above to generate a hash
-                            <button class="copy-btn" id="copyBtn" style="display: none;">Copy</button>
+                    <!-- Generic Hash View -->
+                    <div id="genericView" class="view-container">
+                        <button class="back-button" data-target="menu">← Back to Menu</button>
+                        <div class="form-section">
+                            <h2>🎲 Generic Hash Generator</h2>
+                            <div class="form-group">
+                                <label for="length">Hash Length (2-128):</label>
+                                <div class="range-group">
+                                    <input type="range" id="length" min="2" max="128" value="21">
+                                    <div class="range-value" id="lengthValue">21</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="alphabet">Alphabet Type:</label>
+                                <select id="alphabet">
+                                    <option value="base58">Base58 (Bitcoin) - Default</option>
+                                    <option value="no-look-alike">No Look-Alike (No 0,O,I,l,1)</option>
+                                    <option value="full">Full Alphanumeric</option>
+                                    <option value="full-with-symbols">Full with Symbols</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="prefix">Prefix (optional):</label>
+                                <input type="text" id="prefix" placeholder="e.g., tmp_, file_">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="suffix">Suffix (optional):</label>
+                                <input type="text" id="suffix" placeholder="e.g., _temp, .tmp">
+                            </div>
+                            
+                            <div class="info-box">
+                                <strong>💡 Tip:</strong> Base58 avoids confusing characters. Choose alphabet based on your use case.
+                            </div>
+                            
+                            <div class="button-group">
+                                <button id="generateBtn" class="generate-button">🎲 Generate Hash</button>
+                            </div>
+                        </div>
+                        
+                        <div class="result-section" style="display: none;" id="genericResult">
+                            <h3>📋 Generated Result</h3>
+                            <div class="result-display" id="genericResultDisplay">
+                                <button class="copy-btn" id="genericCopyBtn" style="display: none;">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Password View -->
+                    <div id="passwordView" class="view-container">
+                        <button class="back-button" data-target="menu">← Back to Menu</button>
+                        <div class="form-section">
+                            <h2>🔐 Password Generator</h2>
+                            <div class="form-group">
+                                <label for="passwordLength">Password Length (21-44):</label>
+                                <div class="range-group">
+                                    <input type="range" id="passwordLength" min="21" max="44" value="21">
+                                    <div class="range-value" id="passwordLengthValue">21</div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-box">
+                                <strong>🔒 Security:</strong> Uses full alphabet with symbols for maximum entropy. Minimum 21 characters ensures strong security.
+                            </div>
+                            
+                            <div class="button-group">
+                                <button id="passwordBtn" class="password-btn">🔐 Generate Password</button>
+                            </div>
+                        </div>
+                        
+                        <div class="result-section" style="display: none;" id="passwordResult">
+                            <h3>📋 Generated Password</h3>
+                            <div class="result-display" id="passwordResultDisplay">
+                                <button class="copy-btn" id="passwordCopyBtn" style="display: none;">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Key View -->
+                    <div id="apiKeyView" class="view-container">
+                        <button class="back-button" data-target="menu">← Back to Menu</button>
+                        <div class="form-section">
+                            <h2>🔑 API Key Generator</h2>
+                            
+                            <div class="info-box">
+                                <strong>📐 Format:</strong> ak_ prefix + 44 random characters<br>
+                                <strong>🔒 Security:</strong> 256-bit entropy, quantum-resistant<br>
+                                <strong>📝 Alphabet:</strong> Full alphanumeric (A-Z, a-z, 0-9)
+                            </div>
+                            
+                            <div class="button-group">
+                                <button id="apiKeyBtn" class="api-key-btn">🔑 Generate API Key</button>
+                            </div>
+                        </div>
+                        
+                        <div class="result-section" style="display: none;" id="apiKeyResult">
+                            <h3>📋 Generated API Key</h3>
+                            <div class="result-display" id="apiKeyResultDisplay">
+                                <button class="copy-btn" id="apiKeyCopyBtn" style="display: none;">Copy</button>
+                            </div>
                         </div>
                     </div>
                 `;
             }
             
             bindEvents() {
+                // Menu navigation
+                this.shadowRoot.querySelectorAll('.menu-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const mode = card.dataset.mode;
+                        this.switchView(mode);
+                    });
+                });
+                
+                // Back buttons
+                this.shadowRoot.querySelectorAll('.back-button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.switchView('menu');
+                    });
+                });
+                
+                // Generic Hash controls
                 const lengthSlider = this.shadowRoot.getElementById('length');
                 const lengthValue = this.shadowRoot.getElementById('lengthValue');
+                if (lengthSlider) {
+                    lengthSlider.addEventListener('input', (e) => {
+                        lengthValue.textContent = e.target.value;
+                    });
+                }
+                
+                // Password controls
                 const passwordLengthSlider = this.shadowRoot.getElementById('passwordLength');
                 const passwordLengthValue = this.shadowRoot.getElementById('passwordLengthValue');
-                const passwordSection = this.shadowRoot.getElementById('passwordSection');
+                if (passwordLengthSlider) {
+                    passwordLengthSlider.addEventListener('input', (e) => {
+                        passwordLengthValue.textContent = e.target.value;
+                    });
+                }
                 
-                lengthSlider.addEventListener('input', (e) => {
-                    lengthValue.textContent = e.target.value;
-                });
+                // Generate buttons
+                const generateBtn = this.shadowRoot.getElementById('generateBtn');
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', () => {
+                        this.generateHash();
+                    });
+                }
                 
-                passwordLengthSlider.addEventListener('input', (e) => {
-                    passwordLengthValue.textContent = e.target.value;
-                });
-                
-                this.shadowRoot.getElementById('generateBtn').addEventListener('click', () => {
-                    this.generateHash();
-                });
-                
-                this.shadowRoot.getElementById('apiKeyBtn').addEventListener('click', () => {
-                    this.generateApiKey();
-                });
-                
-                this.shadowRoot.getElementById('passwordBtn').addEventListener('click', () => {
-                    passwordSection.style.display = passwordSection.style.display === 'none' ? 'block' : 'none';
-                    if (passwordSection.style.display === 'block') {
-                        this.shadowRoot.getElementById('passwordBtn').textContent = '🔐 Generate Password';
-                    } else {
-                        this.generatePassword();
-                    }
-                });
-                
-                this.shadowRoot.getElementById('copyBtn').addEventListener('click', () => {
-                    this.copyResult();
-                });
-                
-                // Generate password when options are visible and button clicked again
                 const passwordBtn = this.shadowRoot.getElementById('passwordBtn');
-                passwordBtn.addEventListener('click', (e) => {
-                    if (passwordSection.style.display !== 'none') {
-                        setTimeout(() => {
-                            passwordBtn.textContent = '🔐 Generate Password';
-                            passwordBtn.addEventListener('click', () => {
-                                this.generatePassword();
-                            }, { once: true });
-                        }, 100);
-                    }
+                if (passwordBtn) {
+                    passwordBtn.addEventListener('click', () => {
+                        this.generatePassword();
+                    });
+                }
+                
+                const apiKeyBtn = this.shadowRoot.getElementById('apiKeyBtn');
+                if (apiKeyBtn) {
+                    apiKeyBtn.addEventListener('click', () => {
+                        this.generateApiKey();
+                    });
+                }
+                
+                // Copy buttons
+                this.shadowRoot.querySelectorAll('.copy-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const resultId = btn.id.replace('CopyBtn', 'ResultDisplay');
+                        this.copyResult(resultId, btn.id);
+                    });
                 });
             }
             
-            async makeRequest(url) {
-                const resultDiv = this.shadowRoot.getElementById('result');
-                const copyBtn = this.shadowRoot.getElementById('copyBtn');
+            switchView(viewName) {
+                // Hide all views
+                this.shadowRoot.querySelectorAll('.view-container').forEach(view => {
+                    view.classList.remove('active');
+                });
                 
-                resultDiv.innerHTML = '<div class="loading"></div>Generating...';
+                // Show the selected view
+                const targetView = this.shadowRoot.getElementById(`${viewName}View`);
+                if (targetView) {
+                    targetView.classList.add('active');
+                }
+                
+                this.currentView = viewName;
+            }
+            
+            async makeRequest(url, resultSectionId, resultDisplayId, copyBtnId) {
+                const resultSection = this.shadowRoot.getElementById(resultSectionId);
+                const resultDiv = this.shadowRoot.getElementById(resultDisplayId);
+                const copyBtn = this.shadowRoot.getElementById(copyBtnId);
+                
+                resultSection.style.display = 'block';
+                
+                // Create or update loading indicator without destroying the copy button
+                let loadingSpan = resultDiv.querySelector('.result-text');
+                if (!loadingSpan) {
+                    loadingSpan = document.createElement('span');
+                    loadingSpan.className = 'result-text';
+                    resultDiv.insertBefore(loadingSpan, copyBtn);
+                }
+                
+                loadingSpan.innerHTML = '<div class="loading"></div>Generating...';
                 resultDiv.className = 'result-display';
                 copyBtn.style.display = 'none';
                 
@@ -965,16 +1174,16 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
                     const text = await response.text();
                     
                     if (response.ok) {
-                        resultDiv.textContent = text;
+                        loadingSpan.textContent = text;
                         resultDiv.className = 'result-display success';
                         copyBtn.style.display = 'block';
                     } else {
-                        resultDiv.textContent = `Error: ${response.status} - ${text || 'Request failed'}`;
+                        loadingSpan.textContent = `Error: ${response.status} - ${text || 'Request failed'}`;
                         resultDiv.className = 'result-display error';
                         copyBtn.style.display = 'none';
                     }
                 } catch (error) {
-                    resultDiv.textContent = `Network error: ${error.message}`;
+                    loadingSpan.textContent = `Network error: ${error.message}`;
                     resultDiv.className = 'result-display error';
                     copyBtn.style.display = 'none';
                 }
@@ -990,28 +1199,33 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
                 if (prefix) url += `&prefix=${encodeURIComponent(prefix)}`;
                 if (suffix) url += `&suffix=${encodeURIComponent(suffix)}`;
                 
-                this.makeRequest(url);
+                this.makeRequest(url, 'genericResult', 'genericResultDisplay', 'genericCopyBtn');
             }
             
             generateApiKey() {
-                this.makeRequest('/api/api-key');
+                this.makeRequest('/api/api-key', 'apiKeyResult', 'apiKeyResultDisplay', 'apiKeyCopyBtn');
             }
             
             generatePassword() {
                 const length = this.shadowRoot.getElementById('passwordLength').value;
-                this.makeRequest(`/api/password?length=${length}`);
+                this.makeRequest(`/api/password?length=${length}`, 'passwordResult', 'passwordResultDisplay', 'passwordCopyBtn');
             }
             
-            copyResult() {
-                const resultText = this.shadowRoot.getElementById('result').textContent;
-                navigator.clipboard.writeText(resultText).then(() => {
-                    const copyBtn = this.shadowRoot.getElementById('copyBtn');
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = 'Copied!';
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                    }, 2000);
-                });
+            copyResult(resultDisplayId, copyBtnId) {
+                const resultDiv = this.shadowRoot.getElementById(resultDisplayId);
+                const resultSpan = resultDiv.querySelector('.result-text');
+                const resultText = resultSpan ? resultSpan.textContent : '';
+                
+                if (resultText && resultText !== 'Generating...') {
+                    navigator.clipboard.writeText(resultText).then(() => {
+                        const copyBtn = this.shadowRoot.getElementById(copyBtnId);
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    });
+                }
             }
         }
         
