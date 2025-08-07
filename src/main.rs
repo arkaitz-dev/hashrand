@@ -1265,7 +1265,7 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
                                 <h3>Password</h3>
                                 <p>Strong passwords with symbols (21-44 characters)</p>
                             </div>
-                            <div class="menu-card" data-mode="apikey">
+                            <div class="menu-card" data-mode="apiKey">
                                 <div class="menu-icon">🔑</div>
                                 <h3>API Key</h3>
                                 <p>Secure API keys with ak_ prefix (256-bit entropy)</p>
