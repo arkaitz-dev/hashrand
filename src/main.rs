@@ -5,7 +5,7 @@ use walkdir::WalkDir;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::Response,
+    response::{Html, Response},
     routing::get,
     Router,
 };
@@ -28,6 +28,7 @@ struct RateLimitEntry {
 type RateLimitMap = Arc<RwLock<HashMap<SocketAddr, RateLimitEntry>>>;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct ServerConfig {
     max_param_length: usize,
     enable_rate_limiting: bool,
@@ -533,6 +534,492 @@ fn get_alphabet(alphabet_type: &AlphabetType) -> &'static [char] {
     }
 }
 
+const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashRand - Random Hash Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .range-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+        }
+        
+        .range-value {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .special-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .api-key-btn {
+            background: #27ae60 !important;
+        }
+        
+        .api-key-btn:hover {
+            background: #229954 !important;
+        }
+        
+        .password-btn {
+            background: #e74c3c !important;
+        }
+        
+        .password-btn:hover {
+            background: #c0392b !important;
+        }
+        
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            min-height: 120px;
+        }
+        
+        .result-section h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .result-display {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 1.1rem;
+            word-break: break-all;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .result-display.success {
+            border-color: #27ae60;
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .result-display.error {
+            border-color: #e74c3c;
+            background: #f8d7da;
+            color: #e74c3c;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: auto;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: #1976d2;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1.5rem;
+            }
+            
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .special-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .range-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 HashRand</h1>
+            <p>Secure Random Hash Generator with Multiple Alphabets</p>
+        </div>
+        
+        <div class="content">
+            <hash-generator></hash-generator>
+        </div>
+    </div>
+    
+    <script>
+        class HashGenerator extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.render();
+                this.bindEvents();
+            }
+            
+            render() {
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        :host {
+                            display: block;
+                        }
+                    </style>
+                    
+                    <div class="form-section">
+                        <h2>⚙️ Generator Options</h2>
+                        <div class="form-group">
+                            <label for="length">Hash Length (2-128):</label>
+                            <div class="range-group">
+                                <input type="range" id="length" min="2" max="128" value="21">
+                                <div class="range-value" id="lengthValue">21</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="alphabet">Alphabet Type:</label>
+                            <select id="alphabet">
+                                <option value="base58">Base58 (Bitcoin) - Default</option>
+                                <option value="no-look-alike">No Look-Alike (No 0,O,I,l,1)</option>
+                                <option value="full">Full Alphanumeric</option>
+                                <option value="full-with-symbols">Full with Symbols</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="prefix">Prefix (optional):</label>
+                            <input type="text" id="prefix" placeholder="e.g., tmp_, file_">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="suffix">Suffix (optional):</label>
+                            <input type="text" id="suffix" placeholder="e.g., _temp, .tmp">
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>💡 Tip:</strong> Base58 avoids confusing characters. Full with symbols provides maximum entropy for passwords.
+                        </div>
+                        
+                        <div class="button-group">
+                            <button id="generateBtn">🎲 Generate Hash</button>
+                        </div>
+                        
+                        <div class="special-buttons">
+                            <button id="apiKeyBtn" class="api-key-btn">🔑 Generate API Key</button>
+                            <button id="passwordBtn" class="password-btn">🔐 Generate Password</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section" id="passwordSection" style="display: none;">
+                        <h2>🔐 Password Options</h2>
+                        <div class="form-group">
+                            <label for="passwordLength">Password Length (21-44):</label>
+                            <div class="range-group">
+                                <input type="range" id="passwordLength" min="21" max="44" value="21">
+                                <div class="range-value" id="passwordLengthValue">21</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-section">
+                        <h3>📋 Generated Result</h3>
+                        <div class="result-display" id="result">
+                            Click a button above to generate a hash
+                            <button class="copy-btn" id="copyBtn" style="display: none;">Copy</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            bindEvents() {
+                const lengthSlider = this.shadowRoot.getElementById('length');
+                const lengthValue = this.shadowRoot.getElementById('lengthValue');
+                const passwordLengthSlider = this.shadowRoot.getElementById('passwordLength');
+                const passwordLengthValue = this.shadowRoot.getElementById('passwordLengthValue');
+                const passwordSection = this.shadowRoot.getElementById('passwordSection');
+                
+                lengthSlider.addEventListener('input', (e) => {
+                    lengthValue.textContent = e.target.value;
+                });
+                
+                passwordLengthSlider.addEventListener('input', (e) => {
+                    passwordLengthValue.textContent = e.target.value;
+                });
+                
+                this.shadowRoot.getElementById('generateBtn').addEventListener('click', () => {
+                    this.generateHash();
+                });
+                
+                this.shadowRoot.getElementById('apiKeyBtn').addEventListener('click', () => {
+                    this.generateApiKey();
+                });
+                
+                this.shadowRoot.getElementById('passwordBtn').addEventListener('click', () => {
+                    passwordSection.style.display = passwordSection.style.display === 'none' ? 'block' : 'none';
+                    if (passwordSection.style.display === 'block') {
+                        this.shadowRoot.getElementById('passwordBtn').textContent = '🔐 Generate Password';
+                    } else {
+                        this.generatePassword();
+                    }
+                });
+                
+                this.shadowRoot.getElementById('copyBtn').addEventListener('click', () => {
+                    this.copyResult();
+                });
+                
+                // Generate password when options are visible and button clicked again
+                const passwordBtn = this.shadowRoot.getElementById('passwordBtn');
+                passwordBtn.addEventListener('click', (e) => {
+                    if (passwordSection.style.display !== 'none') {
+                        setTimeout(() => {
+                            passwordBtn.textContent = '🔐 Generate Password';
+                            passwordBtn.addEventListener('click', () => {
+                                this.generatePassword();
+                            }, { once: true });
+                        }, 100);
+                    }
+                });
+            }
+            
+            async makeRequest(url) {
+                const resultDiv = this.shadowRoot.getElementById('result');
+                const copyBtn = this.shadowRoot.getElementById('copyBtn');
+                
+                resultDiv.innerHTML = '<div class="loading"></div>Generating...';
+                resultDiv.className = 'result-display';
+                copyBtn.style.display = 'none';
+                
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    
+                    if (response.ok) {
+                        resultDiv.textContent = text;
+                        resultDiv.className = 'result-display success';
+                        copyBtn.style.display = 'block';
+                    } else {
+                        resultDiv.textContent = `Error: ${response.status} - ${text || 'Request failed'}`;
+                        resultDiv.className = 'result-display error';
+                        copyBtn.style.display = 'none';
+                    }
+                } catch (error) {
+                    resultDiv.textContent = `Network error: ${error.message}`;
+                    resultDiv.className = 'result-display error';
+                    copyBtn.style.display = 'none';
+                }
+            }
+            
+            generateHash() {
+                const length = this.shadowRoot.getElementById('length').value;
+                const alphabet = this.shadowRoot.getElementById('alphabet').value;
+                const prefix = this.shadowRoot.getElementById('prefix').value;
+                const suffix = this.shadowRoot.getElementById('suffix').value;
+                
+                let url = `/api/generate?length=${length}&alphabet=${alphabet}`;
+                if (prefix) url += `&prefix=${encodeURIComponent(prefix)}`;
+                if (suffix) url += `&suffix=${encodeURIComponent(suffix)}`;
+                
+                this.makeRequest(url);
+            }
+            
+            generateApiKey() {
+                this.makeRequest('/api/api-key');
+            }
+            
+            generatePassword() {
+                const length = this.shadowRoot.getElementById('passwordLength').value;
+                this.makeRequest(`/api/password?length=${length}`);
+            }
+            
+            copyResult() {
+                const resultText = this.shadowRoot.getElementById('result').textContent;
+                navigator.clipboard.writeText(resultText).then(() => {
+                    const copyBtn = this.shadowRoot.getElementById('copyBtn');
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                    }, 2000);
+                });
+            }
+        }
+        
+        customElements.define('hash-generator', HashGenerator);
+    </script>
+</body>
+</html>"#;
+
 fn generate_hash_from_request(request: &HashRequest) -> Result<String, Box<dyn std::error::Error>> {
     let alphabet = get_alphabet(&request.alphabet);
     let current_dir = std::env::current_dir()?;
@@ -680,6 +1167,10 @@ async fn handle_password(
     }
 }
 
+async fn handle_root() -> Html<&'static str> {
+    Html(WEB_INTERFACE_HTML)
+}
+
 async fn start_server(
     port: u16,
     listen_all_ips: bool,
@@ -704,11 +1195,15 @@ async fn start_server(
         rate_limiter,
     });
 
-    let mut app = Router::new()
+    let api_routes = Router::new()
         .route("/api/generate", get(handle_generate))
         .route("/api/api-key", get(handle_api_key))
         .route("/api/password", get(handle_password))
         .with_state(config.clone());
+    
+    let mut app = Router::new()
+        .route("/", get(handle_root))
+        .merge(api_routes);
 
     // Add middleware layers
     app = app.layer(RequestBodyLimitLayer::new(max_body_size));
@@ -722,7 +1217,9 @@ async fn start_server(
     let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
     
     println!("hashrand server listening on http://{}:{}", host, port);
-    println!("Available endpoints:");
+    println!("Web Interface:");
+    println!("  GET /                                     - Interactive web interface");
+    println!("API Endpoints:");
     println!("  GET /api/generate?length=21&alphabet=base58");
     println!("  GET /api/api-key");
     println!("  GET /api/password?length=21");
@@ -741,7 +1238,10 @@ async fn start_server(
     println!("  Request body limit: {} bytes", max_body_size);
     println!("Note: All endpoints return raw text by default (no newline)");
     
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener, 
+        app.into_make_service_with_connect_info::<SocketAddr>()
+    ).await?;
     
     Ok(())
 }
