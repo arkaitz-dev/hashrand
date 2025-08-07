@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2025-08-07
+
+### Added
+- **Interactive Web Interface**: Complete web UI for hash generation with menu navigation
+  - Main menu with three card-based options (Generic Hash, Password, API Key)
+  - Separate views for each generation mode with specific controls
+  - Smooth transitions and animations between views
+  - Copy-to-clipboard functionality for all generated results
+  - Responsive design with mobile-first approach
+  - Web Components architecture with Shadow DOM encapsulation
+
+### Fixed
+- **Web Interface Navigation**: Resolved multiple navigation and display issues
+  - Fixed Shadow DOM CSS encapsulation preventing styles from applying
+  - Corrected successive generation bug showing "Generating..." without updating
+  - Fixed API Key view not displaying due to incorrect data-mode attribute
+  - Ensured only one view is visible at a time
+  - Fixed back-to-menu buttons functionality
+
+### Changed
+- **Web Interface UX**: Improved user experience with menu-based navigation
+  - No automatic API calls on initial page load
+  - Clear separation between generation modes
+  - Mode-specific forms with appropriate options
+
+### Technical Details
+- **Web Components**: Implemented using standard Web Components with Shadow DOM
+- **CSS Architecture**: All styles properly encapsulated within Shadow DOM
+- **State Management**: View switching managed through active class system
+- **DOM Preservation**: Fixed result display to preserve copy button during updates
+
 ## [0.2.2] - 2025-08-06
 
 ### Added

@@ -178,6 +178,17 @@ hashrand --serve 8080 --enable-rate-limiting --enable-cors --max-body-size 2048
 
 When started with `--serve PORT`, hashrand runs as an HTTP server exposing REST API endpoints that provide the same functionality as the CLI (excluding file system operations like `--touch` and `--mkdir`).
 
+### Web Interface
+
+The HTTP server includes an interactive web interface accessible at the root URL (`http://localhost:PORT/`). Features include:
+
+- **Menu-based Navigation**: Choose between Generic Hash, Password, or API Key generation modes
+- **Mode-specific Forms**: Each generation mode has its own dedicated interface with appropriate options
+- **Real-time Generation**: Generate hashes directly from the web interface with instant results
+- **Copy to Clipboard**: One-click copy functionality for all generated results
+- **Responsive Design**: Mobile-friendly interface that works on all devices
+- **No External Dependencies**: Built with standard Web Components and Shadow DOM
+
 For complete API documentation, see [docs/API.md](docs/API.md).
 
 ### Server Configuration
