@@ -939,6 +939,316 @@ const WEB_INTERFACE_HTML: &str = r#"<!DOCTYPE html>
                         :host {
                             display: block;
                         }
+                        
+                        /* Menu styles */
+                        .menu-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                            gap: 2rem;
+                            margin: 2rem 0;
+                        }
+                        
+                        .menu-card {
+                            background: white;
+                            border: 2px solid #e1e8ed;
+                            border-radius: 12px;
+                            padding: 2rem;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        
+                        .menu-card::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            opacity: 0;
+                            transition: opacity 0.3s ease;
+                        }
+                        
+                        .menu-card:hover {
+                            transform: translateY(-5px);
+                            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+                            border-color: #667eea;
+                        }
+                        
+                        .menu-card:hover::before {
+                            opacity: 0.05;
+                        }
+                        
+                        .menu-icon {
+                            font-size: 3rem;
+                            margin-bottom: 1rem;
+                            position: relative;
+                            z-index: 1;
+                        }
+                        
+                        .menu-card h3 {
+                            color: #2c3e50;
+                            margin-bottom: 0.5rem;
+                            font-size: 1.5rem;
+                            position: relative;
+                            z-index: 1;
+                        }
+                        
+                        .menu-card p {
+                            color: #7f8c8d;
+                            font-size: 0.95rem;
+                            position: relative;
+                            z-index: 1;
+                            margin: 0;
+                        }
+                        
+                        /* View container styles */
+                        .view-container {
+                            display: none;
+                        }
+                        
+                        .view-container.active {
+                            display: block;
+                            animation: fadeIn 0.3s ease;
+                        }
+                        
+                        @keyframes fadeIn {
+                            from { 
+                                opacity: 0; 
+                                transform: translateY(10px); 
+                            }
+                            to { 
+                                opacity: 1; 
+                                transform: translateY(0); 
+                            }
+                        }
+                        
+                        /* Back button styles */
+                        .back-button {
+                            background: transparent;
+                            border: 2px solid #667eea;
+                            color: #667eea;
+                            margin-bottom: 1.5rem;
+                            width: auto;
+                            padding: 10px 20px;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            border-radius: 8px;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        .back-button:hover {
+                            background: #667eea;
+                            color: white;
+                            transform: translateY(0);
+                            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                        }
+                        
+                        /* Form styles */
+                        .form-section {
+                            margin-bottom: 2rem;
+                        }
+                        
+                        .form-section h2 {
+                            color: #2c3e50;
+                            margin-bottom: 1.5rem;
+                            font-size: 1.5rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                        }
+                        
+                        .form-group {
+                            margin-bottom: 1.5rem;
+                        }
+                        
+                        label {
+                            display: block;
+                            margin-bottom: 0.5rem;
+                            font-weight: 600;
+                            color: #34495e;
+                        }
+                        
+                        input, select, button {
+                            width: 100%;
+                            padding: 12px 16px;
+                            border: 2px solid #e1e8ed;
+                            border-radius: 8px;
+                            font-size: 1rem;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        input:focus, select:focus {
+                            outline: none;
+                            border-color: #667eea;
+                            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                        }
+                        
+                        .range-group {
+                            display: flex;
+                            align-items: center;
+                            gap: 1rem;
+                        }
+                        
+                        input[type="range"] {
+                            flex: 1;
+                        }
+                        
+                        .range-value {
+                            background: #667eea;
+                            color: white;
+                            padding: 8px 12px;
+                            border-radius: 6px;
+                            font-weight: 600;
+                            min-width: 60px;
+                            text-align: center;
+                        }
+                        
+                        .button-group {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 1rem;
+                            margin-top: 1.5rem;
+                        }
+                        
+                        button {
+                            background: #667eea;
+                            color: white;
+                            border: none;
+                            cursor: pointer;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        button:hover:not(:disabled) {
+                            background: #5a67d8;
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+                        }
+                        
+                        button:active {
+                            transform: translateY(0);
+                        }
+                        
+                        button:disabled {
+                            opacity: 0.6;
+                            cursor: not-allowed;
+                        }
+                        
+                        .api-key-btn {
+                            background: #27ae60 !important;
+                        }
+                        
+                        .api-key-btn:hover {
+                            background: #229954 !important;
+                        }
+                        
+                        .password-btn {
+                            background: #e74c3c !important;
+                        }
+                        
+                        .password-btn:hover {
+                            background: #c0392b !important;
+                        }
+                        
+                        .info-box {
+                            background: #e3f2fd;
+                            border: 1px solid #bbdefb;
+                            border-radius: 6px;
+                            padding: 1rem;
+                            margin: 1rem 0;
+                            font-size: 0.9rem;
+                            color: #1976d2;
+                        }
+                        
+                        .result-section {
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                            padding: 1.5rem;
+                            margin-top: 2rem;
+                            min-height: 120px;
+                        }
+                        
+                        .result-section h3 {
+                            color: #2c3e50;
+                            margin-bottom: 1rem;
+                        }
+                        
+                        .result-display {
+                            background: white;
+                            border: 2px solid #e1e8ed;
+                            border-radius: 6px;
+                            padding: 1rem;
+                            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                            font-size: 1.1rem;
+                            word-break: break-all;
+                            min-height: 60px;
+                            display: flex;
+                            align-items: center;
+                            position: relative;
+                        }
+                        
+                        .result-display.success {
+                            border-color: #27ae60;
+                            background: #d5f4e6;
+                            color: #27ae60;
+                        }
+                        
+                        .result-display.error {
+                            border-color: #e74c3c;
+                            background: #f8d7da;
+                            color: #e74c3c;
+                        }
+                        
+                        .copy-btn {
+                            position: absolute;
+                            top: 8px;
+                            right: 8px;
+                            width: auto;
+                            padding: 6px 12px;
+                            font-size: 0.8rem;
+                            background: #667eea;
+                            border-radius: 4px;
+                        }
+                        
+                        .loading {
+                            display: inline-block;
+                            width: 20px;
+                            height: 20px;
+                            border: 3px solid #f3f3f3;
+                            border-top: 3px solid #667eea;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                            margin-right: 10px;
+                        }
+                        
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .menu-grid {
+                                grid-template-columns: 1fr;
+                            }
+                            
+                            .button-group {
+                                grid-template-columns: 1fr;
+                            }
+                            
+                            .range-group {
+                                flex-direction: column;
+                                align-items: stretch;
+                            }
+                        }
                     </style>
                     
                     <!-- Menu View -->
