@@ -1,112 +1,68 @@
-# Implementation Plan - HTTP Server Feature
+# Implementation Plan - Test Reorganization
 
 ## Source Analysis
-- **Source Type**: Feature Description  
-- **Core Features**: HTTP server with API endpoints for hashrand CLI functionality
-- **Dependencies**: tokio (async runtime), axum (HTTP framework)
-- **Complexity**: Medium - Adding server capability to existing CLI tool
+- **Source Type**: Local file (`src/tests.rs`)
+- **Core Features**: 45 tests covering CLI parsing, generators, server logic, and utilities
+- **Dependencies**: tempfile, tokio, clap, std libraries
+- **Complexity**: Simple - just reorganizing existing code without modification
 
-## Target Integration
-- **Integration Points**: 
-  - CLI argument parsing (new --serve/-s option)
-  - Core hash generation logic (extract for reuse)
-  - All existing CLI functions except --touch and --mkdir
-- **Affected Files**: 
-  - `src/main.rs` (main integration)
-  - `Cargo.toml` (new dependencies)
-  - `README.md` (documentation updates)
-- **Pattern Matching**: 
-  - Follow existing clap derive patterns
-  - Maintain current error handling style
-  - Use existing alphabet and generation functions
+## Test Categories Identified
+
+### 1. CLI Tests (cli_tests.rs)
+- `test_parse_length_*` (4 tests) - Length parameter validation
+- `test_parse_mode_*` (2 tests) - Unix file mode parsing
+- `test_api_key_*` (7 tests) - API key CLI option tests
+- `test_password_*` (7 tests) - Password CLI option tests  
+- `test_raw_*` (6 tests) - Raw output flag tests
+- `test_serve_*` (1 test) - Server option parsing
+- `test_*_options` (4 tests) - Various server option parsing
+
+### 2. Generator Tests (generator_tests.rs)  
+- `test_alphabet_type_selection` (1 test) - Alphabet selection
+- `test_generate_hash_from_request*` (2 tests) - Hash generation
+- `test_generate_api_key_response` (1 test) - API key generation
+- `test_generate_password_response` (1 test) - Password generation
+
+### 3. Utils Tests (utils_tests.rs)
+- `test_check_name_exists_*` (4 tests) - File existence checking
+- `test_generate_unique_name_*` (2 tests) - Unique name generation
+
+### 4. Server Tests (server_tests.rs)
+- `test_validate_query_params_*` (4 tests) - Query parameter validation
+- `test_rate_limiter` (1 test) - Rate limiting functionality
+
+## Target Structure
+```
+src/
+├── tests/
+│   ├── mod.rs              # Module declarations
+│   ├── cli_tests.rs        # 24 CLI-related tests  
+│   ├── generator_tests.rs  # 5 generator tests
+│   ├── utils_tests.rs      # 6 utility tests
+│   └── server_tests.rs     # 5 server tests
+└── main.rs                 # Update test module reference
+```
 
 ## Implementation Tasks
 
-### Phase 1: Architecture & Dependencies
-- [ ] Add HTTP server dependencies (tokio, axum) to Cargo.toml
-- [ ] Refactor existing logic into reusable functions
-- [ ] Add CLI server option (-s, --serve PORT)
+### Phase 1: Setup
+- [x] Create src/tests/ directory
+- [ ] Create mod.rs with module declarations
+- [ ] Update main.rs to reference new test module structure
 
-### Phase 2: HTTP Server Implementation  
-- [ ] Create HTTP server with /api/ routing
-- [ ] Map CLI functions to API endpoints:
-  - GET /api/generate?length=N&alphabet=type&raw=bool&check=bool
-  - GET /api/api-key?raw=bool
-  - GET /api/password?length=N&raw=bool
-  - All return plain text responses
-- [ ] Exclude file system operations (--touch, --mkdir)
+### Phase 2: Extract Tests
+- [ ] Extract CLI tests to cli_tests.rs (tests 1-24)
+- [ ] Extract generator tests to generator_tests.rs (tests 25-29)
+- [ ] Extract utils tests to utils_tests.rs (tests 30-35)
+- [ ] Extract server tests to server_tests.rs (tests 36-40)
 
-### Phase 3: API Endpoint Design
-```
-GET /api/generate?length=21&alphabet=base58&raw=false&check=false
-GET /api/generate?length=16&alphabet=no-look-alike&raw=true
-GET /api/generate?length=32&alphabet=full&check=true
-GET /api/generate?length=20&alphabet=full-with-symbols
-GET /api/api-key?raw=false
-GET /api/password?length=21&raw=true
-```
+### Phase 3: Cleanup
+- [ ] Remove original tests.rs file
+- [ ] Verify all 45 tests still pass
+- [ ] Ensure proper imports in each test file
 
-### Phase 4: Testing & Documentation
-- [ ] Add comprehensive tests for server functionality
-- [ ] Update README.md with server usage examples
-- [ ] Test integration with existing CLI functionality
-
-## Validation Checklist
-- [ ] Server starts on specified port
-- [ ] All API endpoints respond with plain text
-- [ ] API preserves all CLI function behavior
-- [ ] File system operations properly excluded
-- [ ] Tests written and passing
-- [ ] Documentation updated
-- [ ] No conflicts with existing CLI functionality
-
-## Risk Mitigation
-- **Potential Issues**: 
-  - Port conflicts
-  - Async/sync integration complexity
-  - Maintaining CLI behavior parity
-- **Rollback Strategy**: Git checkpoints after each major phase
-
-## Technical Architecture
-
-### Current CLI Structure
-```rust
-struct Args {
-    length: usize,
-    raw: bool,
-    // ... alphabet options
-    // ... file operations (exclude from API)
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
-    // Business logic mixed with CLI logic
-}
-```
-
-### Target Structure
-```rust
-struct Args {
-    // ... existing fields
-    serve: Option<u16>, // New server port option
-}
-
-struct HashRequest {
-    length: usize,
-    alphabet: AlphabetType,
-    raw: bool,
-    check: bool,
-}
-
-// Extracted business logic
-fn generate_hash(req: HashRequest) -> Result<String, Error> {}
-fn generate_api_key(raw: bool) -> Result<String, Error> {}
-fn generate_password(length: Option<usize>, raw: bool) -> Result<String, Error> {}
-
-// Server implementation
-async fn start_server(port: u16) -> Result<(), Error> {}
-```
-
-## Implementation Status
-- **Session Files**: plan.md created
-- **Next Steps**: Add dependencies and start Phase 1
+## Notes
+- All code will be moved exactly as-is, no modifications
+- Preserve all imports and test attributes
+- Maintain test function names and logic
+- Each test file will have its own import section
