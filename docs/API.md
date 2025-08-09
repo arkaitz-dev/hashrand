@@ -356,10 +356,81 @@ The API focuses on generation functionality while excluding file system operatio
 
 ---
 
+## Web Interface Development
+
+### Modern Frontend Architecture
+
+The web interface is built with modern web technologies:
+
+- **Framework**: Lit 3.3.1 (Web Components library)
+- **Build Tool**: Vite 7.1.1 (Fast build system with HMR)
+- **Architecture**: Component-based with Shadow DOM encapsulation
+- **Styling**: External CSS with "wc-" prefixed classes for reusability
+
+### Development Workflow
+
+**Development Mode** (with live reloading):
+```bash
+# Terminal 1: Start Vite dev server
+npm run dev                    # Runs on http://localhost:3000
+
+# Terminal 2: Start API server  
+cargo run -- --serve 8080     # API proxied by Vite
+```
+
+**Production Mode**:
+```bash
+# Build optimized files
+npm run build                  # Generates files in dist/
+
+# Serve both UI and API
+cargo run -- --serve 8080     # Serves web UI from dist/ + API endpoints
+```
+
+### File Structure
+```
+├── static/                    # Source files (development)
+│   ├── index.html            # Main HTML template
+│   ├── css/main.css          # Shared CSS styles
+│   └── js/                   # Original Web Components (legacy)
+├── src/                      # Lit components (current)
+│   ├── index.js              # Entry point
+│   └── components/           # Lit Web Components
+│       ├── hash-generator.js # Main menu component
+│       ├── generic-hash-view.js
+│       ├── password-view.js
+│       └── api-key-view.js
+├── dist/                     # Compiled files (production)
+│   ├── index.html
+│   └── assets/
+│       ├── index-*.js        # Bundled JavaScript (11.53 kB gzipped)
+│       └── index-*.css       # Bundled CSS (1.24 kB gzipped)
+└── vite.config.js            # Vite configuration
+```
+
+### Component Architecture
+
+Each view is a Lit component with:
+- **@state** reactive properties for UI state
+- **@query** decorators for DOM element access
+- **Event handlers** using modern `@click`, `@input` syntax
+- **Render methods** returning `html` template literals
+- **CSS-in-JS** with external CSS file loading for shared styles
+
+### Development Tools
+
+- **Hot Module Replacement**: Instant updates during development
+- **API Proxy**: Seamless integration between frontend and backend
+- **Bundle Optimization**: Production builds are optimized and minified
+- **TypeScript-style**: Uses decorators and modern JavaScript patterns
+
+---
+
 ## Versioning
 
 The API version corresponds to the hashrand tool version:
-- Current version: 0.2.1
+- Current version: 0.2.5
+- Web Interface: Lit 3.3.1 + Vite 7.1.1  
 - API stability: Stable
 - Backward compatibility: Maintained within major versions
 

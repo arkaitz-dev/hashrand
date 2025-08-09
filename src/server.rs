@@ -214,8 +214,8 @@ pub async fn start_server(
         rate_limiter,
     });
 
-    // Serve static files from the static directory
-    let static_files = ServeDir::new("static");
+    // Serve production build files from the dist directory
+    let static_files = ServeDir::new("dist");
     
     let api_routes = Router::new()
         .route("/api/generate", get(handle_generate))
@@ -239,8 +239,8 @@ pub async fn start_server(
     let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
     
     println!("hashrand server listening on http://{}:{}", host, port);
-    println!("Web Interface:");
-    println!("  GET /                                     - Interactive web interface");
+    println!("Web Interface (served from dist/):");
+    println!("  GET /                                     - Interactive web interface (production build)");
     println!("API Endpoints:");
     println!("  GET /api/generate?length=21&alphabet=base58");
     println!("  GET /api/api-key");
@@ -259,6 +259,8 @@ pub async fn start_server(
     }
     println!("  Request body limit: {} bytes", max_body_size);
     println!("Note: All endpoints return raw text by default (no newline)");
+    println!("Development: Use 'npm run dev' for development server with HMR");
+    println!("Production: Run 'npm run build' first to generate dist/ files");
     
     axum::serve(
         listener, 

@@ -180,7 +180,7 @@ When started with `--serve PORT`, hashrand runs as an HTTP server exposing REST 
 
 ### Web Interface
 
-The HTTP server includes an interactive web interface accessible at the root URL (`http://localhost:PORT/`). Features include:
+The HTTP server includes an interactive web interface (served from `dist/` directory) accessible at the root URL (`http://localhost:PORT/`). Features include:
 
 - **Menu-based Navigation**: Choose between Generic Hash, Password, or API Key generation modes
 - **Mode-specific Forms**: Each generation mode has its own dedicated interface with appropriate options
@@ -189,6 +189,23 @@ The HTTP server includes an interactive web interface accessible at the root URL
 - **Responsive Design**: Mobile-friendly interface that works on all devices
 - **No External Dependencies**: Built with standard Web Components and Shadow DOM
 - **Optimized CSS Architecture**: Centralized styling with external CSS files for better performance and maintainability
+
+#### Development Workflow
+
+The web interface is built with modern web technologies (Lit framework + Vite build tool):
+
+- **Development**: Use `npm run dev` for development server with Hot Module Replacement (HMR) on `http://localhost:3000`
+- **Production**: Run `npm run build` to generate optimized files in `dist/`, then start the Rust server with `--serve`
+
+```bash
+# Development workflow (separate servers)
+npm run dev                    # Vite dev server on localhost:3000
+cargo run -- --serve 8080     # API server on localhost:8080 (proxied by Vite)
+
+# Production workflow 
+npm run build                  # Build optimized files to dist/
+cargo run -- --serve 8080     # Serves both web UI (from dist/) and API
+```
 
 For complete API documentation, see [docs/API.md](docs/API.md).
 

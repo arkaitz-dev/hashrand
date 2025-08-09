@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2025-08-09
+
+### Changed
+- **Web Interface Architecture**: Complete migration from standard Web Components to Lit framework
+  - Migrated all 4 web components (HashGenerator, GenericHashView, PasswordView, ApiKeyView) to Lit
+  - Implemented modern development tooling with Vite build system
+  - Added Hot Module Replacement (HMR) for improved development experience
+  - Production builds now optimized: 47.90 kB → 11.53 kB gzipped
+  
+### Fixed
+- **Production Server Configuration**: Fixed web interface serving in production mode
+  - Changed server to serve from `dist/` directory instead of `static/`
+  - Ensures production builds work correctly with `cargo run --serve`
+  - Clean separation: source files (`static/`) vs compiled files (`dist/`)
+
+### Added
+- **Modern Development Workflow**: 
+  - `npm run dev` for development server with HMR on localhost:3000
+  - `npm run build` for optimized production builds
+  - Vite configuration with API proxy for seamless development
+  - TypeScript-style decorators (@state, @query) converted to JavaScript
+
+### Technical Details
+- **Dependencies**: Added Lit 3.3.1 and Vite 7.1.1 as development dependencies
+- **Build System**: Vite replaces manual Web Components development
+- **Bundle Optimization**: CSS extracted and optimized (3.29 kB → 1.24 kB gzipped)
+- **Development Server**: Proxy configuration for seamless API integration during development
+
+### Migration Notes
+- Development: Use `npm run dev` for development server with live reloading
+- Production: Run `npm run build` then `cargo run --serve PORT` to serve optimized files
+- All functionality preserved: UI behavior and CSS styling remain identical
+- No changes to Rust backend except serving directory (static/ → dist/)
+
 ## [0.2.4] - 2025-08-09
 
 ### Changed

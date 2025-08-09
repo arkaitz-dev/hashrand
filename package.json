@@ -1,0 +1,30 @@
+{
+  "name": "hashrand",
+  "version": "0.2.5",
+  "description": "A versatile CLI tool that generates cryptographically secure random strings with multiple alphabet options and safety features.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arkaitz-dev/hashrand.git"
+  },
+  "keywords": ["random", "hash", "cli", "api", "generator", "lit", "vite", "web-components"],
+  "author": "Arkaitz Dev <me@arkaitz.dev>",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/arkaitz-dev/hashrand/issues"
+  },
+  "homepage": "https://github.com/arkaitz-dev/hashrand#readme",
+  "devDependencies": {
+    "lit": "^3.3.1",
+    "vite": "^7.1.1"
+  }
+}
