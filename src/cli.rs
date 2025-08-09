@@ -6,8 +6,8 @@ use std::path::PathBuf;
 #[command(about = "Generate random hash using base58 alphabet", long_about = None)]
 #[command(group = clap::ArgGroup::new("action").args(&["mkdir", "touch"]))]
 pub struct Args {
-    /// Length of the hash (between 2 and 128, default: 21)
-    #[arg(value_parser = parse_length, default_value = "21", conflicts_with = "api_key")]
+    /// Length of the hash (between 2 and 128, default: 21, or 44-64 for API keys)
+    #[arg(value_parser = parse_length, default_value = "21")]
     pub length: usize,
 
     /// Output without newline character
@@ -50,8 +50,8 @@ pub struct Args {
     #[arg(long = "path")]
     pub path: Option<PathBuf>,
 
-    /// Generate API key using full alphabet (ak_ + 44 characters, no customization allowed)
-    #[arg(long = "api-key", conflicts_with_all = &["length", "no_look_alike", "full", "full_with_symbols", "password", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
+    /// Generate API key using full alphabet (ak_ + 44-64 characters, default 44)
+    #[arg(long = "api-key", conflicts_with_all = &["no_look_alike", "full", "full_with_symbols", "password", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
     pub api_key: bool,
 
     /// Generate password using full alphabet with symbols (21 characters by default)
@@ -99,6 +99,18 @@ pub struct Args {
     /// Maximum request body size in bytes (default: 1024)
     #[arg(long = "max-body-size", requires = "serve", default_value = "1024")]
     pub max_body_size: usize,
+}
+
+impl Args {
+    /// Validate arguments after parsing
+    pub fn validate(&self) -> Result<(), String> {
+        // Validate API key length if api-key flag is used
+        if self.api_key && !(44..=64).contains(&self.length) {
+            return Err("API key length must be between 44 and 64 characters".to_string());
+        }
+        
+        Ok(())
+    }
 }
 
 pub fn parse_length(s: &str) -> Result<usize, String> {

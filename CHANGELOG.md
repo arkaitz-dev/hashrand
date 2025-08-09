@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Configurable API Key Length**: API keys can now be generated with custom lengths between 44-64 characters
+  - CLI: `hashrand --api-key 60` generates a 60-character API key (plus ak_ prefix)
+  - Web UI: Added length slider (44-64) in API Key configuration view
+  - API: `/api/api-key?length=60` endpoint accepts length parameter
+  - Default remains 44 characters for backward compatibility
+
+### Changed
+- **Web Interface Navigation Improvements**:
+  - Separated configuration views from result display
+  - Created dedicated result view with improved navigation
+  - Added three-button navigation in result view (Back to Config, Back to Menu, Regenerate)
+  - Fixed event propagation issues with `composed: true` for Shadow DOM events
+  
+### Fixed
+- **Navigation Bug Fixes**: 
+  - Fixed "Back to Menu" button not working in configuration views
+  - Fixed "Generate" buttons not navigating to result view
+  - Added proper event composition for cross-Shadow DOM communication
+
 ## [0.2.6] - 2025-08-09
 
 ### Fixed

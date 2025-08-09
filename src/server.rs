@@ -46,6 +46,7 @@ pub struct GenerateQuery {
 
 #[derive(Deserialize)]
 pub struct ApiKeyQuery {
+    pub length: Option<usize>,
     pub raw: Option<bool>,
 }
 
@@ -160,7 +161,7 @@ pub async fn handle_api_key(
         }
     }
     
-    match generators::generate_api_key_response(params.raw.unwrap_or(true)) {
+    match generators::generate_api_key_response(params.length.unwrap_or(44), params.raw.unwrap_or(true)) {
         Ok(result) => Ok(Response::builder()
             .header("content-type", "text/plain")
             .body(result)

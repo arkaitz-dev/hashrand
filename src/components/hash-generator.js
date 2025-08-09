@@ -2,7 +2,10 @@ import { LitElement, html, css } from 'lit';
 
 export class HashGenerator extends LitElement {
     static properties = {
-        currentView: { type: String, state: true }
+        currentView: { type: String, state: true },
+        lastHashType: { type: String, state: true },
+        lastParameters: { type: Object, state: true },
+        lastResult: { type: String, state: true }
     };
 
     static styles = css`
@@ -100,9 +103,40 @@ export class HashGenerator extends LitElement {
     constructor() {
         super();
         this.currentView = 'menu';
-        // Listen for back-to-menu events from child components
-        this.addEventListener('back-to-menu', () => {
+        this.lastHashType = '';
+        this.lastParameters = {};
+        this.lastResult = '';
+    }
+    
+    connectedCallback() {
+        super.connectedCallback();
+        
+        // Listen for navigation events
+        this.addEventListener('back-to-menu', (e) => {
+            e.stopPropagation();
             this.switchView('menu');
+        });
+        
+        this.addEventListener('back-to-config', (e) => {
+            e.stopPropagation();
+            const hashType = e.detail?.hashType || this.lastHashType;
+            if (hashType) {
+                this.switchView(hashType);
+            }
+        });
+        
+        // Listen for generation events from config views
+        this.addEventListener('generate-hash', async (e) => {
+            e.stopPropagation();
+            const { hashType, parameters } = e.detail;
+            await this.generateHash(hashType, parameters);
+        });
+        
+        // Listen for regenerate event from result view
+        this.addEventListener('regenerate', async (e) => {
+            e.stopPropagation();
+            const { hashType, parameters } = e.detail;
+            await this.generateHash(hashType, parameters);
         });
     }
 
@@ -131,10 +165,19 @@ export class HashGenerator extends LitElement {
                 </div>
             </div>
             
-            <!-- Views will be inserted here by other components -->
+            <!-- Configuration Views -->
             <generic-hash-view id="generate-view" class="view-container ${this.currentView === 'generate' ? 'active' : ''}"></generic-hash-view>
             <password-view id="password-view" class="view-container ${this.currentView === 'password' ? 'active' : ''}"></password-view>
             <api-key-view id="apikey-view" class="view-container ${this.currentView === 'apiKey' ? 'active' : ''}"></api-key-view>
+            
+            <!-- Result View -->
+            <hash-result 
+                id="result-view" 
+                class="view-container ${this.currentView === 'result' ? 'active' : ''}"
+                .hashType=${this.lastHashType}
+                .generatedHash=${this.lastResult}
+                .parameters=${this.lastParameters}>
+            </hash-result>
         `;
     }
 
@@ -148,6 +191,76 @@ export class HashGenerator extends LitElement {
 
     switchView(viewName) {
         this.currentView = viewName;
+    }
+    
+    async generateHash(hashType, parameters) {
+        // Store the parameters for regeneration
+        this.lastHashType = hashType;
+        this.lastParameters = parameters;
+        
+        // Switch to result view and show loading
+        this.currentView = 'result';
+        
+        // Wait for the next frame to ensure the view is rendered
+        await this.updateComplete;
+        
+        // Update result component to show loading
+        const resultView = this.shadowRoot.querySelector('#result-view');
+        if (resultView) {
+            resultView.isLoading = true;
+            resultView.error = null;
+        }
+        
+        try {
+            let response;
+            let url;
+            
+            // Build the appropriate API call based on hash type
+            if (hashType === 'apiKey') {
+                const params = new URLSearchParams({ 
+                    length: parameters.length || 44,
+                    raw: 'true'
+                });
+                url = `/api/api-key?${params}`;
+                response = await fetch(url);
+            } else if (hashType === 'password') {
+                const params = new URLSearchParams({ 
+                    length: parameters.length || 21 
+                });
+                url = `/api/password?${params}`;
+                response = await fetch(url);
+            } else {
+                // Generic hash
+                const params = new URLSearchParams({
+                    length: parameters.length || 21,
+                    alphabet: parameters.alphabet || 'base58',
+                    raw: 'true'
+                });
+                
+                if (parameters.prefix) params.append('prefix', parameters.prefix);
+                if (parameters.suffix) params.append('suffix', parameters.suffix);
+                
+                url = `/api/generate?${params}`;
+                response = await fetch(url);
+            }
+            
+            const result = await response.text();
+            
+            if (response.ok) {
+                this.lastResult = result;
+                if (resultView) {
+                    resultView.generatedHash = result;
+                    resultView.isLoading = false;
+                }
+            } else {
+                throw new Error(response.statusText);
+            }
+        } catch (error) {
+            if (resultView) {
+                resultView.error = error.message;
+                resultView.isLoading = false;
+            }
+        }
     }
 }
 

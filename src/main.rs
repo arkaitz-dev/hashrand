@@ -25,6 +25,16 @@ async fn main() {
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args::parse();
     
+    // Set default length for API key before validation
+    if args.api_key && args.length == 21 {
+        args.length = 44;
+    }
+    
+    // Validate arguments
+    if let Err(e) = args.validate() {
+        return Err(e.into());
+    }
+    
     // If server mode is enabled, start the HTTP server
     if let Some(port) = args.serve {
         return start_server(
@@ -49,10 +59,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     audit_log(&format!("hashrand started with args: length={}, check={}, mkdir={}, touch={}, api_key={}, password={}",
         args.length, args.check, args.mkdir, args.touch, args.api_key, args.password));
 
-    // Set fixed length for api-key and default for password
-    if args.api_key {
-        args.length = 44;
-    } else if args.password {
+    // Validate password length
+    if args.password {
         // For password mode, validate the length range (21-44)
         if args.length == 21 {
             // Use default password length (already 21)

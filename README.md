@@ -1,10 +1,15 @@
 # hashrand
 
-A versatile CLI tool that generates cryptographically secure random strings with multiple alphabet options and safety features.
+A versatile tool for generating cryptographically secure random strings, available both as a CLI application and as an HTTP server with web interface, featuring multiple alphabet options and safety features.
 
 ## Description
 
-`hashrand` generates cryptographically secure random strings using various alphabets. By default, it uses the base58 alphabet (Bitcoin alphabet), which excludes similar-looking characters like 0, O, I, and l for better readability. The tool also supports other alphabet configurations and can ensure generated strings don't collide with existing filenames.
+`hashrand` generates cryptographically secure random strings using various alphabets, available through:
+
+- **Command-Line Interface (CLI)**: Direct command-line usage for scripts, automation, and terminal workflows
+- **HTTP Server with Web Interface**: Interactive web UI and REST API endpoints for integration with web applications
+
+By default, it uses the base58 alphabet (Bitcoin alphabet), which excludes similar-looking characters like 0, O, I, and l for better readability. The tool also supports other alphabet configurations and can ensure generated strings don't collide with existing filenames (CLI mode only).
 
 ## Installation
 
@@ -32,7 +37,7 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 - `--prefix <PREFIX>`: Add a prefix before the generated hash
 - `--suffix <SUFFIX>`: Add a suffix after the generated hash
 - `--path <PATH>`: Specify the path where to create the file or directory
-- `--api-key`: Generate a secure API key using full alphanumeric alphabet (format: ak_xxxxxxxx, 47 characters total, no customization allowed)
+- `--api-key`: Generate a secure API key using full alphanumeric alphabet (ak_ + 44-64 characters, default 44)
 - `--password`: Generate a secure password using full alphabet with symbols (21 characters by default, length can be customized between 21-44)
 - `--file-mode <MODE>`: Set file permissions when creating files (Unix-style octal, e.g., 644, 600)
 - `--dir-mode <MODE>`: Set directory permissions when creating directories (Unix-style octal, e.g., 755, 700)
@@ -50,7 +55,7 @@ Notes:
 - `--mkdir` and `--touch` are mutually exclusive
 - When using `--mkdir` or `--touch`, the `--check` flag is automatically enabled to prevent naming conflicts
 - `--prefix`, `--suffix`, and `--path` options require either `--mkdir` or `--touch`
-- `--api-key` cannot be combined with any other options (it generates a fixed 44-character key with ak_ prefix)
+- `--api-key` can be combined with custom length parameter (44-64 characters) but conflicts with alphabet and file system options
 - `--password` can only be combined with a custom length parameter (21-44 characters)
 - Permission options (`--file-mode`, `--dir-mode`) only work with `--touch` and `--mkdir` respectively
 - `--audit-log` can be used with any operation and also controlled via `HASHRAND_AUDIT_LOG` environment variable
@@ -114,9 +119,14 @@ Create a directory with no-look-alike alphabet and custom path:
 hashrand --mkdir --no-look-alike --path ./backups --suffix "_backup"
 ```
 
-Generate a secure API key (format: ak_xxxxxxxx, 47 characters total):
+Generate a secure API key with default length (ak_ + 44 characters = 47 total):
 ```bash
 hashrand --api-key
+```
+
+Generate a secure API key with custom length:
+```bash
+hashrand --api-key 60
 ```
 
 Generate a secure password with default length (21 characters):
@@ -183,12 +193,19 @@ When started with `--serve PORT`, hashrand runs as an HTTP server exposing REST 
 The HTTP server includes an interactive web interface (served from `dist/` directory) accessible at the root URL (`http://localhost:PORT/`). Features include:
 
 - **Menu-based Navigation**: Choose between Generic Hash, Password, or API Key generation modes
-- **Mode-specific Forms**: Each generation mode has its own dedicated interface with appropriate options
+- **Dedicated Configuration Views**: Each generation mode has its own interface with mode-specific options:
+  - **Generic Hash**: Length slider (2-128), alphabet selection, prefix/suffix options
+  - **Password**: Length slider (21-44) with strength indication
+  - **API Key**: Length slider (44-64) with format preview
+- **Separated Result View**: Clean result display with three navigation options:
+  - Back to configuration (modify parameters)
+  - Back to main menu (start over)
+  - Regenerate with same configuration
 - **Real-time Generation**: Generate hashes directly from the web interface with instant results
 - **Copy to Clipboard**: One-click copy functionality for all generated results
 - **Responsive Design**: Mobile-friendly interface that works on all devices
-- **No External Dependencies**: Built with standard Web Components and Shadow DOM
-- **Optimized CSS Architecture**: Centralized styling with external CSS files for better performance and maintainability
+- **Modern Architecture**: Built with Lit framework and Vite build system
+- **Optimized Performance**: Production builds are highly optimized (~11 kB gzipped)
 
 #### Development Workflow
 
@@ -262,15 +279,17 @@ curl "http://localhost:8080/api/generate?prefix=user_&suffix=_id&length=12"
 ```
 
 #### GET /api/api-key
-Generate a secure API key (format: ak_ + 44 characters).
+Generate a secure API key with configurable length (format: ak_ + 44-64 characters).
 
 **Query Parameters:**
+- `length` (optional): API key length, 44-64, default 44
 - `raw` (optional): Boolean, if false adds newline, default true
 
 **Examples:**
 ```bash
 curl "http://localhost:8080/api/api-key"
-curl "http://localhost:8080/api/api-key?raw=false"
+curl "http://localhost:8080/api/api-key?length=60"
+curl "http://localhost:8080/api/api-key?length=50&raw=false"
 ```
 
 #### GET /api/password
@@ -300,6 +319,9 @@ curl "http://localhost:8080/api/generate?length=16"
 curl "http://localhost:8080/api/api-key"
 # Output: ak_X1y2Z3a4B5c6D7e8F9g0H1i2J3k4L5m6N7o8P9q0R1s2
 
+curl "http://localhost:8080/api/api-key?length=60"
+# Output: ak_A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6a7b8
+
 curl "http://localhost:8080/api/password?length=25"
 # Output: aB3*fG7$hI9@kL2#mN5^pQ8!
 ```
@@ -326,10 +348,10 @@ curl "http://localhost:8080/api/password?length=25"
    - 73 characters total
 
 5. **API Key Mode** (`--api-key`): Secure API key generation
-   - Format: `ak_` + 44 random characters (47 total)
+   - Format: `ak_` + 44-64 random characters (47-67 total)
    - Uses full alphanumeric alphabet (62 characters)
-   - Provides 256 bits of entropy for quantum-resistant security
-   - Cannot be customized or combined with other options
+   - Default 44 characters provides 256 bits of entropy
+   - Length can be customized between 44-64 characters
    - Follows modern API key identification standards
 
 6. **Password Mode** (`--password`): Secure password generation
@@ -428,21 +450,35 @@ curl "http://localhost:8080/api/password?length=25"
 
 ## Features
 
+### Core Features
 - **Multiple alphabet options** for different use cases
 - **Cryptographically secure** random generation using nanoid
-- **Customizable hash length** (2-128 characters)
+- **Customizable hash length** (2-128 characters for generic, 21-44 for passwords, 44-64 for API keys)
+- **Prefix and suffix support** for structured naming
+
+### CLI Features
 - **Raw output mode** for scripting and piping
 - **Collision detection** to avoid matching existing filenames
 - **Directory and file creation** with random names
-- **Prefix and suffix support** for structured naming
 - **Custom path support** for organizing generated items
 - **Unix file permissions control** for secure file/directory creation
 - **Audit logging system** for tracking operations and compliance
 - **Security hardening** with path validation and resource limits
-- **HTTP server mode** with REST API endpoints for integration
+
+### Web/API Features
+- **Interactive web interface** with modern UI for all generation modes
+- **REST API endpoints** for programmatic access
+- **Real-time generation** with instant results
+- **Copy to clipboard** functionality
+- **Responsive design** for all devices
+- **Configuration views** for each generation type
+- **Result view** with regeneration options
 - **Plain text API responses** for easy integration with any language
+
+### Technical Features
 - **Fast and lightweight** with minimal dependencies
 - **Comprehensive test suite** ensuring reliability
+- **Modern web stack** using Lit framework and Vite build system
 
 ## Use Cases
 

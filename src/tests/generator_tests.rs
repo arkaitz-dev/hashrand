@@ -49,15 +49,23 @@ fn test_generate_hash_from_request_with_newline() {
 
 #[test]
 fn test_generate_api_key_response() {
-    let result = generate_api_key_response(true).unwrap();
+    let result = generate_api_key_response(44, true).unwrap();
     assert!(result.starts_with("ak_"));
     assert_eq!(result.len(), 47); // ak_ + 44 chars
     assert!(!result.contains('\n')); // raw output
     
-    let result = generate_api_key_response(false).unwrap();
+    let result = generate_api_key_response(44, false).unwrap();
     assert!(result.starts_with("ak_"));
     assert!(result.ends_with('\n'));
-    assert_eq!(result.len(), 48); // ak_ + 44 chars + newline
+
+    // Test custom length
+    let result = generate_api_key_response(60, true).unwrap();
+    assert!(result.starts_with("ak_"));
+    assert_eq!(result.len(), 63); // ak_ + 60 characters
+
+    // Test validation
+    assert!(generate_api_key_response(43, true).is_err()); // Too short
+    assert!(generate_api_key_response(65, true).is_err()); // Too long
 }
 
 #[test]

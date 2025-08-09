@@ -45,13 +45,14 @@ fn test_parse_mode_invalid() {
 }
 
 #[test]
-fn test_api_key_fixed_length() {
-    // Test that api-key option uses fixed 44 characters
+fn test_api_key_default_length() {
+    // Test that api-key option uses default 44 characters
     let args_vec = vec!["hashrand", "--api-key"];
     let args = Args::try_parse_from(&args_vec).unwrap();
     assert!(args.api_key);
     assert!(!args.password);
-    assert_eq!(args.length, 21); // Original default before modification in main
+    assert_eq!(args.length, 21); // Default before modification in main (becomes 44)
+    // Validation should pass after length is changed to 44 in main
 }
 
 #[test]
@@ -65,11 +66,22 @@ fn test_password_default_length() {
 }
 
 #[test]
-fn test_api_key_cannot_have_custom_length() {
-    // Test that api-key option cannot have custom length
-    let args_vec = vec!["hashrand", "--api-key", "20"];
-    let result = Args::try_parse_from(&args_vec);
-    assert!(result.is_err());
+fn test_api_key_with_custom_length() {
+    // Test that api-key option can have valid custom length (44-64)
+    let args_vec = vec!["hashrand", "--api-key", "60"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.api_key);
+    assert_eq!(args.length, 60);
+    assert!(args.validate().is_ok());
+    
+    // Test invalid lengths
+    let args_vec = vec!["hashrand", "--api-key", "30"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_err()); // Too short
+    
+    let args_vec = vec!["hashrand", "--api-key", "65"];  
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_err()); // Too long
 }
 
 #[test]
@@ -136,6 +148,27 @@ fn test_api_key_conflicts_with_alphabets() {
         let result = Args::try_parse_from(&args_vec);
         assert!(result.is_err());
     }
+}
+
+#[test]
+fn test_api_key_length_boundaries() {
+    // Test API key length boundaries (44 and 64 should pass)
+    let args_vec = vec!["hashrand", "--api-key", "44"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_ok());
+    
+    let args_vec = vec!["hashrand", "--api-key", "64"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_ok());
+    
+    // Test just outside boundaries (43 and 65 should fail)
+    let args_vec = vec!["hashrand", "--api-key", "43"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_err());
+    
+    let args_vec = vec!["hashrand", "--api-key", "65"];
+    let args = Args::try_parse_from(&args_vec).unwrap();
+    assert!(args.validate().is_err());
 }
 
 #[test]
