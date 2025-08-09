@@ -6,7 +6,8 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 
 **Duration**: ~1.5 hours
 **Git Branch**: master
-**Version**: 0.2.6 → 0.2.7 (Unreleased)
+**Version**: 0.2.6 → 0.2.7 (Released)  
+**Git Commit**: dd36b5d
 **Focus**: Complete Project Restructuring - Frontend/Backend Separation & Rust Modularization
 **Status**: Successfully completed major architectural refactoring
 
