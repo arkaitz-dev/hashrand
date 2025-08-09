@@ -1,7 +1,11 @@
 import { LitElement, html, css } from 'lit';
-import { state, query } from 'lit/decorators.js';
 
 export class PasswordView extends LitElement {
+    static properties = {
+        lengthValue: { type: Number, state: true },
+        resultContent: { type: String, state: true },
+        resultClass: { type: String, state: true }
+    };
     static styles = css`
         :host {
             display: block;
@@ -199,17 +203,12 @@ export class PasswordView extends LitElement {
         }
     `;
 
-    @state()
-    lengthValue = 21;
-
-    @state()
-    resultContent = 'Generated password will appear here';
-
-    @state()
-    resultClass = 'wc-result-display';
-
-    @query('#password-length')
-    lengthInput;
+    constructor() {
+        super();
+        this.lengthValue = 21;
+        this.resultContent = 'Generated password will appear here';
+        this.resultClass = 'wc-result-display';
+    }
 
     render() {
         return html`
@@ -265,7 +264,7 @@ export class PasswordView extends LitElement {
     }
 
     async generatePassword() {
-        const length = this.lengthInput.value;
+        const length = this.shadowRoot.querySelector('#password-length').value;
         
         // Show loading
         this.resultContent = 'Generating...';

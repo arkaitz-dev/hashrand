@@ -1,7 +1,11 @@
 import { LitElement, html, css } from 'lit';
-import { state, query } from 'lit/decorators.js';
 
 export class GenericHashView extends LitElement {
+    static properties = {
+        lengthValue: { type: Number, state: true },
+        resultContent: { type: String, state: true },
+        resultClass: { type: String, state: true }
+    };
     static styles = css`
         :host {
             display: block;
@@ -206,26 +210,12 @@ export class GenericHashView extends LitElement {
         }
     `;
 
-    @state()
-    lengthValue = 21;
-
-    @state()
-    resultContent = 'Generated hash will appear here';
-
-    @state()
-    resultClass = 'wc-result-display';
-
-    @query('#generate-length')
-    lengthInput;
-
-    @query('#generate-alphabet')
-    alphabetSelect;
-
-    @query('#generate-prefix')
-    prefixInput;
-
-    @query('#generate-suffix')
-    suffixInput;
+    constructor() {
+        super();
+        this.lengthValue = 21;
+        this.resultContent = 'Generated hash will appear here';
+        this.resultClass = 'wc-result-display';
+    }
 
     render() {
         return html`
@@ -297,10 +287,10 @@ export class GenericHashView extends LitElement {
     }
 
     async generateHash() {
-        const length = this.lengthInput.value;
-        const alphabet = this.alphabetSelect.value;
-        const prefix = this.prefixInput.value;
-        const suffix = this.suffixInput.value;
+        const length = this.shadowRoot.querySelector('#generate-length').value;
+        const alphabet = this.shadowRoot.querySelector('#generate-alphabet').value;
+        const prefix = this.shadowRoot.querySelector('#generate-prefix').value;
+        const suffix = this.shadowRoot.querySelector('#generate-suffix').value;
         
         // Show loading
         this.resultContent = 'Generating...';

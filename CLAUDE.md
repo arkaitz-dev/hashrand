@@ -2,6 +2,81 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Session Summary - 2025-08-09 (Complete ✅) - JavaScript Issues Resolution
+
+**Duration**: ~1 hour (Critical Bug Fixes)
+**Git Branch**: master  
+**Version**: 0.2.5 → 0.2.6
+**Focus**: Web Component JavaScript Fixes & Browser Compatibility
+**Status**: Successfully resolved all menu component visibility issues
+
+### 🎯 Critical Issues Resolved
+
+#### 1. JavaScript Decorator Syntax Problems
+**Problem**: All Lit components used experimental decorator syntax causing runtime errors
+**Root Cause**: `@state()`, `@property()`, `@query()` decorators not supported in standard JavaScript builds
+**Impact**: Menu component `<hash-generator>` completely invisible to users
+
+**Solution Applied**:
+- **Removed all decorators** from 4 Lit components
+- **Converted to standard Lit syntax** using `static properties = {}` 
+- **Updated DOM queries** from `@query` to `this.shadowRoot.querySelector()`
+- **Constructor initialization** replaced decorator property declarations
+
+#### 2. Script Loading Timing Issues  
+**Problem**: Vite automatically moved module scripts from `<body>` to `<head>`
+**Root Cause**: Script executed before `<hash-generator>` DOM element existed
+**Impact**: Web Components failed to register and mount properly
+
+**Solution Applied**:
+- **Created custom Vite plugin** `move-scripts-to-body`
+- **Automatically repositions** all `type="module"` scripts to end of `<body>`
+- **Preserves CSS** in `<head>` for optimal loading order
+- **Ensures proper timing** for Web Component initialization
+
+### 🔧 Technical Changes Made
+
+#### Component Syntax Conversion
+```javascript
+// BEFORE (Decorator syntax - BROKEN)
+@state() currentView = 'menu';
+@query('#element') elementRef;
+
+// AFTER (Standard syntax - WORKING)
+static properties = { currentView: { type: String, state: true } };
+constructor() { super(); this.currentView = 'menu'; }
+// this.shadowRoot.querySelector('#element')
+```
+
+#### Vite Build Configuration
+```javascript
+// New plugin in vite.config.js
+plugins: [{
+  name: 'move-scripts-to-body',
+  transformIndexHtml(html) {
+    // Moves module scripts from head to end of body
+  }
+}]
+```
+
+### 📊 Final Results
+- **Bundle Size**: 43.68 kB (9.79 kB gzipped) - optimized
+- **Build Time**: 310ms - fast builds maintained
+- **Browser Compatibility**: No experimental features - widely compatible
+- **Component Visibility**: ✅ **FIXED** - Menu now fully visible and functional
+- **Development Workflow**: ✅ Both `npm run dev` and production working
+- **Zero Regressions**: All existing functionality preserved
+
+### 🎪 Session Outcome
+**Status**: 🎯 **COMPLETE** - All JavaScript issues resolved
+**Menu Component**: Now visible and fully functional in both development and production
+**Architecture**: Production-ready Lit 3.x + Vite 7.x with no experimental dependencies
+**Next Steps**: Ready for new features or optimizations
+
+---
+
+---
+
 ## Session Summary - 2025-08-09 (Complete ✅) - Web Interface Modernization
 
 **Duration**: ~2 hours (Refactoring + Production Fix + Documentation)

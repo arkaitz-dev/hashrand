@@ -1,6 +1,6 @@
 {
   "name": "hashrand",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A versatile CLI tool that generates cryptographically secure random strings with multiple alphabet options and safety features.",
   "main": "index.js",
   "directories": {

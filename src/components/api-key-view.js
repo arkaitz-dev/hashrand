@@ -1,7 +1,10 @@
 import { LitElement, html, css } from 'lit';
-import { state } from 'lit/decorators.js';
 
 export class ApiKeyView extends LitElement {
+    static properties = {
+        resultContent: { type: String, state: true },
+        resultClass: { type: String, state: true }
+    };
     static styles = css`
         :host {
             display: block;
@@ -147,11 +150,11 @@ export class ApiKeyView extends LitElement {
         }
     `;
 
-    @state()
-    resultContent = 'Generated API key will appear here';
-
-    @state()
-    resultClass = 'wc-result-display';
+    constructor() {
+        super();
+        this.resultContent = 'Generated API key will appear here';
+        this.resultClass = 'wc-result-display';
+    }
 
     render() {
         return html`

@@ -1,7 +1,10 @@
 import { LitElement, html, css } from 'lit';
-import { property, state, query } from 'lit/decorators.js';
 
 export class HashGenerator extends LitElement {
+    static properties = {
+        currentView: { type: String, state: true }
+    };
+
     static styles = css`
         :host {
             display: block;
@@ -94,11 +97,9 @@ export class HashGenerator extends LitElement {
         }
     `;
 
-    @state()
-    currentView = 'menu';
-
     constructor() {
         super();
+        this.currentView = 'menu';
         // Listen for back-to-menu events from child components
         this.addEventListener('back-to-menu', () => {
             this.switchView('menu');

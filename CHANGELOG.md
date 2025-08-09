@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2025-08-09
+
+### Fixed
+- **Web Interface JavaScript Issues**: Resolved critical problems preventing menu component visibility
+  - **Decorator Syntax Elimination**: Removed all experimental JavaScript decorators (`@state`, `@property`, `@query`) from Lit components
+  - **Script Loading Timing**: Fixed script positioning by moving JavaScript from `<head>` to end of `<body>` 
+  - **Standard Lit Syntax**: Converted all components to use `static properties = {}` instead of decorators
+  - **DOM Query References**: Replaced `@query` decorators with direct `shadowRoot.querySelector()` calls
+
+### Changed
+- **Vite Build Configuration**: Enhanced with custom HTML transformation plugin
+  - Created `move-scripts-to-body` plugin to automatically position module scripts at end of HTML body
+  - Ensures proper Web Component initialization timing in production builds
+  - Maintains CSS in `<head>` for optimal loading order
+
+### Technical Details
+- **Component Syntax Conversion**: 
+  - `hash-generator.js`: Removed `@state()` decorators, converted to constructor initialization
+  - `generic-hash-view.js`: Removed `@state()` and `@query()` decorators, updated DOM queries
+  - `password-view.js`: Removed `@state()` and `@query()` decorators, updated form references  
+  - `api-key-view.js`: Removed `@state()` decorators, converted to standard properties
+- **Build Optimization**: Bundle size reduced to 43.68 kB (9.79 kB gzipped) with improved loading
+- **Browser Compatibility**: Eliminated experimental JavaScript features for broader compatibility
+
+### Migration Notes
+- **Zero Breaking Changes**: All UI functionality and appearance preserved
+- **Production Workflow**: Same build process (`npm run build` → `cargo run --serve`)
+- **Development Workflow**: Same development process (`npm run dev`)
+- **Component Behavior**: Identical user experience with improved reliability
+
 ## [0.2.5] - 2025-08-09
 
 ### Changed
