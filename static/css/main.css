@@ -43,6 +43,204 @@ body {
     padding: 2rem;
 }
 
+/* Web Component Shared Styles */
+.wc-shared-styles {
+    /* This class will be used to apply shared styles to web components */
+}
+
+/* Back button shared styles */
+.wc-back-button {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+    margin-bottom: 1.5rem;
+    width: auto;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.wc-back-button:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Form section shared styles */
+.wc-form-section {
+    margin-bottom: 2rem;
+}
+
+.wc-form-section h2 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wc-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.wc-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #34495e;
+}
+
+/* Input and button shared styles */
+.wc-input, .wc-select, .wc-button {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.wc-input:focus, .wc-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.wc-button {
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wc-button:hover:not(:disabled) {
+    background: #5a67d8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.wc-button:active {
+    transform: translateY(0);
+}
+
+.wc-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Range input shared styles */
+.wc-range-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.wc-range-group input[type="range"] {
+    flex: 1;
+}
+
+.wc-range-value {
+    background: #667eea;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Info box shared styles */
+.wc-info-box {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #1976d2;
+}
+
+/* Result section shared styles */
+.wc-result-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    min-height: 120px;
+}
+
+.wc-result-section h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    margin-top: 0;
+}
+
+.wc-result-display {
+    background: white;
+    border: 2px solid #e1e8ed;
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 1.1rem;
+    word-break: break-all;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.wc-result-display.success {
+    border-color: #27ae60;
+    background: #d5f4e6;
+    color: #27ae60;
+}
+
+.wc-result-display.error {
+    border-color: #e74c3c;
+    background: #f8d7da;
+    color: #e74c3c;
+}
+
+.wc-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: #667eea;
+    border-radius: 4px;
+}
+
+/* Loading spinner shared styles */
+.wc-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: wc-spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes wc-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
     body {
         padding: 10px;
@@ -58,5 +256,10 @@ body {
     
     .content {
         padding: 1.5rem;
+    }
+    
+    .wc-range-group {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

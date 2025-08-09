@@ -188,6 +188,7 @@ The HTTP server includes an interactive web interface accessible at the root URL
 - **Copy to Clipboard**: One-click copy functionality for all generated results
 - **Responsive Design**: Mobile-friendly interface that works on all devices
 - **No External Dependencies**: Built with standard Web Components and Shadow DOM
+- **Optimized CSS Architecture**: Centralized styling with external CSS files for better performance and maintainability
 
 For complete API documentation, see [docs/API.md](docs/API.md).
 

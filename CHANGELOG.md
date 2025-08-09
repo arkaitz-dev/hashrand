@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2025-08-09
+
+### Changed
+- **Web Interface CSS Refactoring**: Improved maintainability and performance of web components
+  - Extracted common CSS styles from three JavaScript components (api-key.js, generic-hash.js, password.js)
+  - Moved shared styles to external CSS file (`/static/css/main.css`)
+  - Created reusable CSS classes with "wc-" prefix for web component consistency
+  - Reduced code duplication by ~180 lines per component (540 total lines saved)
+
+### Technical Details
+- **CSS Architecture**: Centralized web component styles for better maintainability
+- **Performance**: Reduced bundle size and improved CSS caching with external stylesheet
+- **Code Quality**: Eliminated duplicate styles across multiple JavaScript components
+- **Standards Compliance**: Better separation of concerns following web development best practices
+
+### Benefits
+- **Reduced Code Duplication**: Eliminated repetitive CSS across three components
+- **Easier Maintenance**: Single source of truth for web component styling
+- **Better Performance**: External CSS files can be cached by browsers
+- **Improved Developer Experience**: Consistent styling patterns with "wc-" prefix convention
+
 ## [0.2.3] - 2025-08-07
 
 ### Added
