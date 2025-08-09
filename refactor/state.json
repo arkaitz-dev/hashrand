@@ -1,53 +1,109 @@
 {
-  "session_id": "refactor_2025_08_09_1600",
-  "started_at": "2025-08-09T16:00:00Z",
-  "status": "in_progress",
-  "current_phase": "planning",
-  "refactoring_goal": "Separate configuration views from result display with improved navigation",
-  "components": {
-    "hash_result": {
-      "new": "/src/components/hash-result.js",
-      "status": "pending",
-      "description": "Common result display component"
+  "session_id": "refactor_web_ui_restructure_2025_08_09",
+  "started_at": "2025-08-09T18:30:00Z",
+  "status": "planning_complete",
+  "current_phase": "ready_to_execute",
+  "refactoring_goal": "Separate web UI files from Rust source code by moving frontend assets to web-ui/ directory while keeping npm commands executable from project root",
+  "target_structure": {
+    "web_ui_directory": "/web-ui/",
+    "keep_dist_in_root": true,
+    "rust_src_clean": true
+  },
+  "files_to_move": {
+    "index_html": {
+      "from": "/index.html",
+      "to": "/web-ui/index.html",
+      "status": "pending"
     },
-    "generic_hash_view": {
-      "file": "/src/components/generic-hash-view.js",
+    "components": {
+      "from": "/src/components/",
+      "to": "/web-ui/src/components/",
       "status": "pending",
-      "changes": "Remove result section"
+      "count": 5
     },
-    "password_view": {
-      "file": "/src/components/password-view.js", 
-      "status": "pending",
-      "changes": "Remove result section"
+    "js_entry": {
+      "from": "/src/index.js",
+      "to": "/web-ui/src/index.js",
+      "status": "pending"
     },
-    "api_key_view": {
-      "file": "/src/components/api-key-view.js",
-      "status": "pending",
-      "changes": "Remove result section"
+    "css": {
+      "from": "/static/css/main.css",
+      "to": "/web-ui/src/css/main.css",
+      "status": "pending"
     },
-    "hash_generator": {
-      "file": "/src/components/hash-generator.js",
+    "package_json": {
+      "from": "/package.json",
+      "to": "KEEP_IN_ROOT",
+      "status": "no_action_needed",
+      "reason": "User wants npm commands from root"
+    },
+    "package_lock": {
+      "from": "/package-lock.json", 
+      "to": "KEEP_IN_ROOT",
+      "status": "no_action_needed",
+      "reason": "User wants npm commands from root"
+    },
+    "vite_config": {
+      "from": "/vite.config.js",
+      "to": "KEEP_IN_ROOT",
       "status": "pending",
-      "changes": "Add result view and state management"
+      "needs_path_updates": true,
+      "reason": "User wants npm commands from root, but needs path updates"
+    }
+  },
+  "files_to_remove": {
+    "legacy_js": {
+      "path": "/static/js/",
+      "files": ["api-key.js", "generic-hash.js", "menu.js", "password.js"],
+      "status": "pending",
+      "reason": "Old Web Components, replaced by Lit components"
+    },
+    "legacy_html": {
+      "path": "/static/index.html",
+      "status": "pending",
+      "reason": "Old HTML entry point, replaced by root index.html"
+    }
+  },
+  "config_updates": {
+    "vite_config": {
+      "build_output": "Update to '../dist' to keep dist in project root",
+      "status": "pending"
+    },
+    "html_paths": {
+      "script_src": "Update to '/src/index.js'",
+      "css_href": "Update to '/src/css/main.css'",
+      "status": "pending"
     }
   },
   "tasks_completed": [
-    "Analyze current component structure",
-    "Create refactoring plan"
+    "Analyze current project structure",
+    "Identify web UI files vs Rust files",
+    "Create comprehensive refactoring plan",
+    "Map file movements and path updates"
   ],
   "tasks_pending": [
-    "Create hash-result.js component",
-    "Update hash-generator.js with result view",
-    "Refactor generic-hash-view.js",
-    "Refactor password-view.js",
-    "Refactor api-key-view.js",
-    "Test navigation flow",
-    "Validate all functionality"
+    "Create web-ui directory structure",
+    "Move web UI files to new locations",
+    "Update configuration file paths",
+    "Remove legacy files",
+    "Test development workflow",
+    "Test production build",
+    "Update documentation"
+  ],
+  "validation_checklist": [
+    "Development mode: cd web-ui && npm run dev",
+    "Production build: cd web-ui && npm run build",
+    "Server test: cargo run -- --serve 8080",
+    "API endpoints functional",
+    "All three generation modes working",
+    "CSS styles preserved",
+    "No broken imports or references"
   ],
   "notes": [
-    "User reported Back to Menu button not working - needs investigation",
-    "Result areas are duplicated across all views - extracting to common component",
-    "New navigation flow: Menu -> Config -> Result with 3 options",
-    "Regenerate feature will use stored parameters"
+    "This restructure separates concerns clearly: Rust in /src/, Web UI in /web-ui/",
+    "Build output remains in /dist/ so Rust server needs no changes",
+    "Legacy files in /static/js/ are unused since Lit migration",
+    "New structure matches modern full-stack project conventions",
+    "After refactor: development requires cd web-ui before npm commands"
   ]
 }

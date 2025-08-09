@@ -7,25 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2025-08-09
+
+### Changed
+- **Complete Project Restructuring**: Major architectural reorganization for better maintainability
+  - **Frontend Separation**: All web UI files moved to dedicated `web-ui/` directory
+    - Components: `web-ui/src/components/`
+    - CSS: `web-ui/src/css/`
+    - Entry points: `web-ui/index.html`, `web-ui/src/index.js`
+  - **Rust Code Modularization**: Backend code organized into logical modules
+    - CLI module: `src/cli/` (args.rs, mod.rs)  
+    - Server module: `src/server/` (routes.rs, config.rs, mod.rs)
+    - Utils module: `src/utils/` (validation.rs, file_ops.rs, audit.rs, mod.rs)
+  - **Configuration Updates**: Vite configured to work with new directory structure
+    - Root: `web-ui` for clean source separation
+    - Build output: `../dist` to maintain production workflow
+  - **Preserved Workflow**: All commands still run from project root
+    - `npm run dev` and `npm run build` work from project root
+    - `cargo build`, `cargo run`, `cargo test` work from project root
+
 ### Added
 - **Configurable API Key Length**: API keys can now be generated with custom lengths between 44-64 characters
   - CLI: `hashrand --api-key 60` generates a 60-character API key (plus ak_ prefix)
   - Web UI: Added length slider (44-64) in API Key configuration view
   - API: `/api/api-key?length=60` endpoint accepts length parameter
   - Default remains 44 characters for backward compatibility
-
-### Changed
 - **Web Interface Navigation Improvements**:
   - Separated configuration views from result display
   - Created dedicated result view with improved navigation
   - Added three-button navigation in result view (Back to Config, Back to Menu, Regenerate)
   - Fixed event propagation issues with `composed: true` for Shadow DOM events
-  
+
 ### Fixed
 - **Navigation Bug Fixes**: 
   - Fixed "Back to Menu" button not working in configuration views
   - Fixed "Generate" buttons not navigating to result view
   - Added proper event composition for cross-Shadow DOM communication
+
+### Technical Details
+- **Code Organization**: Clean separation between frontend (web-ui/) and backend (src/)
+- **Module Structure**: Rust code split into focused modules for better maintainability
+- **Build Process**: Maintained existing build workflow with improved internal organization
+- **Legacy Cleanup**: Removed old unused Web Component files from static/
+- **Zero Breaking Changes**: All existing functionality preserved and tested (46/46 tests passing)
 
 ## [0.2.6] - 2025-08-09
 

@@ -1,5 +1,6 @@
 use crate::cli::{AlphabetType, HashRequest};
 use crate::generators;
+use super::config::{ServerConfig, RateLimitMap, RateLimitEntry};
 use axum::{
     extract::{ConnectInfo, Query, State},
     http::StatusCode,
@@ -15,25 +16,6 @@ use std::time::{Duration, Instant};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer, services::ServeDir};
-
-#[derive(Clone)]
-pub struct RateLimitEntry {
-    pub requests: u32,
-    pub last_reset: Instant,
-}
-
-pub type RateLimitMap = Arc<RwLock<HashMap<SocketAddr, RateLimitEntry>>>;
-
-#[derive(Clone)]
-#[allow(dead_code)]
-pub struct ServerConfig {
-    pub max_param_length: usize,
-    pub enable_rate_limiting: bool,
-    pub requests_per_second: u64,
-    pub enable_cors: bool,
-    pub max_request_body_size: usize,
-    pub rate_limiter: Option<RateLimitMap>,
-}
 
 #[derive(Deserialize)]
 pub struct GenerateQuery {
@@ -98,8 +80,6 @@ pub async fn check_rate_limit(
         true // Request allowed
     }
 }
-
-
 
 pub async fn handle_generate(
     State(config): State<Arc<ServerConfig>>,

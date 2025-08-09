@@ -209,19 +209,43 @@ The HTTP server includes an interactive web interface (served from `dist/` direc
 
 #### Development Workflow
 
-The web interface is built with modern web technologies (Lit framework + Vite build tool):
+The web interface is built with modern web technologies (Lit framework + Vite build tool) and organized in a dedicated `web-ui/` directory:
 
+**Project Structure:**
+```
+hashrand/
+├── src/                    # Rust backend code (modularized)
+│   ├── cli/               # CLI argument handling
+│   ├── server/            # HTTP server & routes  
+│   ├── generators/        # Hash generation logic
+│   └── utils/             # Common utilities
+├── web-ui/                # Frontend code (separated)
+│   ├── index.html
+│   └── src/
+│       ├── components/    # Lit components
+│       └── css/          # Stylesheets
+├── package.json           # npm configuration (root level)
+├── vite.config.js         # Vite configuration (root level)
+└── dist/                  # Production build output
+```
+
+**Development Commands (all from project root):**
 - **Development**: Use `npm run dev` for development server with Hot Module Replacement (HMR) on `http://localhost:3000`
 - **Production**: Run `npm run build` to generate optimized files in `dist/`, then start the Rust server with `--serve`
 
 ```bash
-# Development workflow (separate servers)
+# Development workflow (all commands from project root)
 npm run dev                    # Vite dev server on localhost:3000
 cargo run -- --serve 8080     # API server on localhost:8080 (proxied by Vite)
 
-# Production workflow 
+# Production workflow (all commands from project root)
 npm run build                  # Build optimized files to dist/
 cargo run -- --serve 8080     # Serves both web UI (from dist/) and API
+
+# Rust development (all commands from project root)
+cargo build                    # Build Rust code
+cargo test                     # Run test suite (46 tests)
+cargo run -- --help           # Run CLI directly
 ```
 
 For complete API documentation, see [docs/API.md](docs/API.md).
