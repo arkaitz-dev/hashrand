@@ -1,68 +1,97 @@
-# Implementation Plan - Test Reorganization
+# Implementation Plan - Static Assets Embedding
 
 ## Source Analysis
-- **Source Type**: Local file (`src/tests.rs`)
-- **Core Features**: 45 tests covering CLI parsing, generators, server logic, and utilities
-- **Dependencies**: tempfile, tokio, clap, std libraries
-- **Complexity**: Simple - just reorganizing existing code without modification
+- **Source Type**: Feature request - Embed dist/ files in release binary
+- **Core Features**: 
+  - Development: API-only server (no static files, Vite handles frontend)
+  - Production: Self-contained binary with embedded web assets
+  - Build-time asset embedding using Rust macros
+- **Dependencies**: `include_dir` crate for embedding directories
+- **Complexity**: Medium - requires build-time logic and conditional compilation
 
-## Test Categories Identified
+## Current Architecture Analysis
+- **Development Flow**: 
+  - `npm run dev` → Vite dev server (port 3000) with HMR
+  - `cargo run -- --serve 8080` → API server only
+- **Production Flow**: 
+  - `npm run build` → Generates optimized files in `dist/`
+  - `cargo run -- --serve 8080` → Serves from `dist/` directory
+- **Problem**: Production requires `dist/` directory alongside binary
 
-### 1. CLI Tests (cli_tests.rs)
-- `test_parse_length_*` (4 tests) - Length parameter validation
-- `test_parse_mode_*` (2 tests) - Unix file mode parsing
-- `test_api_key_*` (7 tests) - API key CLI option tests
-- `test_password_*` (7 tests) - Password CLI option tests  
-- `test_raw_*` (6 tests) - Raw output flag tests
-- `test_serve_*` (1 test) - Server option parsing
-- `test_*_options` (4 tests) - Various server option parsing
-
-### 2. Generator Tests (generator_tests.rs)  
-- `test_alphabet_type_selection` (1 test) - Alphabet selection
-- `test_generate_hash_from_request*` (2 tests) - Hash generation
-- `test_generate_api_key_response` (1 test) - API key generation
-- `test_generate_password_response` (1 test) - Password generation
-
-### 3. Utils Tests (utils_tests.rs)
-- `test_check_name_exists_*` (4 tests) - File existence checking
-- `test_generate_unique_name_*` (2 tests) - Unique name generation
-
-### 4. Server Tests (server_tests.rs)
-- `test_validate_query_params_*` (4 tests) - Query parameter validation
-- `test_rate_limiter` (1 test) - Rate limiting functionality
-
-## Target Structure
-```
-src/
-├── tests/
-│   ├── mod.rs              # Module declarations
-│   ├── cli_tests.rs        # 24 CLI-related tests  
-│   ├── generator_tests.rs  # 5 generator tests
-│   ├── utils_tests.rs      # 6 utility tests
-│   └── server_tests.rs     # 5 server tests
-└── main.rs                 # Update test module reference
-```
+## Target Integration
+- **Integration Points**: 
+  - Server routes (routes.rs) - conditional static serving
+  - Build system (Cargo.toml) - build dependencies
+  - Asset embedding - compile-time directory inclusion
+- **Affected Files**: 
+  - `Cargo.toml` - add build dependencies
+  - `src/server/routes.rs` - conditional static file serving
+  - `build.rs` - build script for asset processing (if needed)
+- **Pattern Matching**: Follow existing server architecture patterns
 
 ## Implementation Tasks
 
-### Phase 1: Setup
-- [x] Create src/tests/ directory
-- [ ] Create mod.rs with module declarations
-- [ ] Update main.rs to reference new test module structure
+### Phase 1: Setup Build System
+- [ ] Add `include_dir` dependency for asset embedding
+- [ ] Add `mime_guess` for MIME type detection
+- [ ] Add conditional compilation setup
 
-### Phase 2: Extract Tests
-- [ ] Extract CLI tests to cli_tests.rs (tests 1-24)
-- [ ] Extract generator tests to generator_tests.rs (tests 25-29)
-- [ ] Extract utils tests to utils_tests.rs (tests 30-35)
-- [ ] Extract server tests to server_tests.rs (tests 36-40)
+### Phase 2: Asset Embedding Logic
+- [ ] Implement embedded asset serving handler
+- [ ] Create conditional routing based on build profile
+- [ ] Handle MIME type detection for embedded files
+- [ ] Ensure proper HTTP headers for assets
 
-### Phase 3: Cleanup
-- [ ] Remove original tests.rs file
-- [ ] Verify all 45 tests still pass
-- [ ] Ensure proper imports in each test file
+### Phase 3: Development/Production Split
+- [ ] Debug mode: API-only server (no static routes)
+- [ ] Release mode: API + embedded static assets  
+- [ ] Update server startup messages for clarity
+- [ ] Preserve existing API functionality
 
-## Notes
-- All code will be moved exactly as-is, no modifications
-- Preserve all imports and test attributes
-- Maintain test function names and logic
-- Each test file will have its own import section
+### Phase 4: Testing & Documentation
+- [ ] Test development mode (API-only, works with Vite)
+- [ ] Test release mode (embedded assets work standalone)
+- [ ] Update documentation for new build process
+- [ ] Verify binary size and performance impact
+
+## Validation Checklist
+- [ ] Development: `cargo run` serves only APIs (Vite handles frontend)
+- [ ] Production: `cargo build --release` includes embedded assets
+- [ ] All existing API functionality preserved
+- [ ] No dist/ directory required with release binary
+- [ ] Documentation updated with new deployment process
+- [ ] Performance acceptable
+
+## Technical Implementation Strategy
+
+### Development Mode (Debug Build)
+```rust
+#[cfg(debug_assertions)]
+// Only API routes, no static file serving
+// Vite dev server handles frontend assets
+let app = Router::new().merge(api_routes);
+```
+
+### Production Mode (Release Build)
+```rust
+#[cfg(not(debug_assertions))]
+// Embed dist/ directory at compile time
+use include_dir::{include_dir, Dir};
+static ASSETS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/dist");
+
+// API routes + embedded static asset fallback
+let app = Router::new()
+    .merge(api_routes)
+    .fallback(serve_embedded_assets);
+```
+
+## Risk Mitigation
+- **Potential Issues**: 
+  - Binary size increase (assets embedded)
+  - Build time increase
+  - MIME type detection complexity
+  - Missing dist/ directory in development
+- **Rollback Strategy**: 
+  - Git checkpoint before implementation
+  - Feature flag for easy disable/revert
+  - Preserve existing development workflow

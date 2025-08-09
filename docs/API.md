@@ -8,10 +8,27 @@ The HashRand HTTP API provides programmatic access to all hash generation functi
 
 ### Starting the Server
 
-```bash
-# Start on localhost only (default, recommended for development)
-hashrand --serve 8080
+Server behavior differs based on build type:
 
+**Development Mode (Debug Build)**:
+```bash
+# API-only server (frontend handled by Vite dev server)
+cargo run -- --serve 8080
+
+# Vite dev server (separate terminal)
+npm run dev  # Runs on http://localhost:3000 with HMR
+```
+
+**Production Mode (Release Build)**:
+```bash
+# Self-contained binary with embedded web assets
+npm run build                           # Generate optimized assets
+cargo build --release                  # Embed assets in binary
+./target/release/hashrand --serve 8080 # Serves both API and web UI
+```
+
+**General Options**:
+```bash
 # Start on all network interfaces (use with caution)
 hashrand --serve 8080 --listen-all-ips
 
@@ -147,6 +164,7 @@ Generate a secure API key in the standard format.
 
 | Parameter | Type | Default | Description | Valid Values |
 |-----------|------|---------|-------------|--------------|
+| `length` | integer | `44` | Length of the random part (excludes ak_ prefix) | `44-64` |
 | `raw` | boolean | `true` | If false, adds a newline character | `true`, `false` |
 
 ### Response
@@ -167,6 +185,11 @@ curl "http://localhost:8080/api/api-key"
 # Response: ak_x7K9mN3pQ5vB8zL2jH6tR4wY1sE9aF0cD6bG4hM7n
 ```
 
+#### Generate API key with custom length
+```bash
+curl "http://localhost:8080/api/api-key?length=60"
+# Response: ak_x7K9mN3pQ5vB8zL2jH6tR4wY1sE9aF0cD6bG4hM7nQ9kF5mD3pT8zL
+
 #### Generate API key with newline
 ```bash
 curl "http://localhost:8080/api/api-key?raw=false"
@@ -175,10 +198,11 @@ curl "http://localhost:8080/api/api-key?raw=false"
 
 ### API Key Characteristics
 
-- **Format**: `ak_` prefix followed by 44 random characters
-- **Length**: Always 47 characters total
+- **Format**: `ak_` prefix followed by 44-64 configurable random characters
+- **Length**: 47-67 characters total (3 char prefix + configurable suffix)
 - **Alphabet**: Full alphanumeric (62 characters)
-- **Entropy**: 256 bits (quantum-resistant)
+- **Entropy**: 256-384 bits (quantum-resistant)
+- **Default**: 44 characters (256-bit entropy)
 - **Use Case**: Authentication tokens, service keys
 
 ---
@@ -367,45 +391,56 @@ The web interface is built with modern web technologies:
 - **Architecture**: Component-based with Shadow DOM encapsulation
 - **Styling**: External CSS with "wc-" prefixed classes for reusability
 
-### Development Workflow
+### Development & Production Workflows
 
-**Development Mode** (with live reloading):
+**Development Mode (Debug Build)**:
 ```bash
-# Terminal 1: Start Vite dev server
+# Terminal 1: Start Vite dev server (frontend with HMR)
 npm run dev                    # Runs on http://localhost:3000
 
-# Terminal 2: Start API server  
-cargo run -- --serve 8080     # API proxied by Vite
+# Terminal 2: Start API-only server  
+cargo run -- --serve 8080     # API endpoints only (no static files)
 ```
 
-**Production Mode**:
+**Production Mode (Release Build)**:
 ```bash
-# Build optimized files
-npm run build                  # Generates files in dist/
+# Step 1: Build optimized assets
+npm run build                         # Generates optimized files in dist/
 
-# Serve both UI and API
-cargo run -- --serve 8080     # Serves web UI from dist/ + API endpoints
+# Step 2: Build release binary with embedded assets  
+cargo build --release                # Embeds dist/ assets in binary
+
+# Step 3: Deploy single binary
+./target/release/hashrand --serve 8080  # Self-contained server (~3.1MB binary)
 ```
+
+**Benefits of Embedded Assets**:
+- ✅ **Single file deployment**: No external dependencies
+- ✅ **Version consistency**: Assets always match binary version
+- ✅ **Zero configuration**: Works anywhere without setup
+- ✅ **Simplified distribution**: Just copy the binary
 
 ### File Structure
 ```
-├── static/                    # Source files (development)
-│   ├── index.html            # Main HTML template
-│   ├── css/main.css          # Shared CSS styles
-│   └── js/                   # Original Web Components (legacy)
-├── src/                      # Lit components (current)
-│   ├── index.js              # Entry point
-│   └── components/           # Lit Web Components
-│       ├── hash-generator.js # Main menu component
-│       ├── generic-hash-view.js
-│       ├── password-view.js
-│       └── api-key-view.js
-├── dist/                     # Compiled files (production)
+├── web-ui/                          # Frontend source (development)
+│   ├── index.html                  # Main HTML template
+│   └── src/
+│       ├── index.js                # Entry point
+│       ├── css/main.css            # Shared CSS styles
+│       └── components/             # Lit Web Components
+│           ├── hash-generator.js   # Main menu component
+│           ├── hash-result.js      # Unified result display
+│           ├── generic-hash-view.js
+│           ├── password-view.js
+│           └── api-key-view.js
+├── dist/                           # Compiled files (embedded in release)
 │   ├── index.html
 │   └── assets/
-│       ├── index-*.js        # Bundled JavaScript (11.53 kB gzipped)
-│       └── index-*.css       # Bundled CSS (1.24 kB gzipped)
-└── vite.config.js            # Vite configuration
+│       ├── index-*.js              # Bundled JavaScript (~11 kB gzipped)
+│       └── index-*.css             # Bundled CSS (~1.2 kB gzipped)
+├── src/server/                     # Rust backend with embedded assets
+│   └── routes.rs                   # Asset embedding logic
+└── vite.config.js                  # Build configuration
 ```
 
 ### Component Architecture
@@ -429,10 +464,12 @@ Each view is a Lit component with:
 ## Versioning
 
 The API version corresponds to the hashrand tool version:
-- Current version: 0.2.5
-- Web Interface: Lit 3.3.1 + Vite 7.1.1  
+- Current version: 0.2.8
+- Web Interface: Lit 3.3.1 + Vite 7.1.1 with embedded assets support
+- Binary distribution: Self-contained (~3.1MB with embedded frontend)
 - API stability: Stable
 - Backward compatibility: Maintained within major versions
+- Embedded assets: Available since v0.2.8
 
 ---
 

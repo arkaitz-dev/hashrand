@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2025-08-09
+
+### Added
+- **Embedded Static Assets**: Production builds now embed web assets directly in the binary
+  - Development mode: API-only server (Vite handles frontend)
+  - Release mode: Self-contained binary with embedded web interface
+  - Zero external file dependencies for production deployment
+  - Single ~3.1MB binary includes complete web UI functionality
+  
+### Changed  
+- **Build Process Enhancement**: Conditional compilation based on build profile
+  - Debug builds serve only API endpoints (no static files)
+  - Release builds include embedded assets from `dist/` directory
+  - Simplified production deployment (single binary file)
+  
+### Dependencies
+- Added `include_dir ^0.7` for compile-time directory embedding
+- Added `mime_guess ^2.0` for proper MIME type detection of embedded assets
+
+### Technical
+- Implemented compile-time asset embedding using `include_dir` macro
+- Added conditional routing logic with `#[cfg(debug_assertions)]`
+- Custom service function for serving embedded assets with proper headers
+- SPA routing support (fallback to index.html for unknown routes)
+
 ## [0.2.7] - 2025-08-09
 
 ### Changed

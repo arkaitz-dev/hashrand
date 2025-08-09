@@ -169,11 +169,15 @@ hashrand --password -r
 
 Start HTTP server for API access:
 ```bash
-# Start server on port 8080 (localhost only by default)
-hashrand --serve 8080
+# Development mode (debug build) - API-only server
+cargo run -- --serve 8080    # Vite dev server needed for frontend
+
+# Production mode (release build) - Self-contained with embedded assets
+cargo build --release
+./target/release/hashrand --serve 8080    # No external files needed
 
 # Use short form
-hashrand -s 3000
+hashrand -s 8080
 
 # Listen on all network interfaces
 hashrand --serve 8080 --listen-all-ips
@@ -190,7 +194,12 @@ When started with `--serve PORT`, hashrand runs as an HTTP server exposing REST 
 
 ### Web Interface
 
-The HTTP server includes an interactive web interface (served from `dist/` directory) accessible at the root URL (`http://localhost:PORT/`). Features include:
+The HTTP server includes an interactive web interface with different serving strategies depending on build mode:
+
+**Development Mode** (`cargo run`): API-only server (frontend handled by Vite dev server)
+**Production Mode** (`cargo build --release`): Self-contained binary with embedded web assets
+
+The web interface accessible at the root URL (`http://localhost:PORT/`) features include:
 
 - **Menu-based Navigation**: Choose between Generic Hash, Password, or API Key generation modes
 - **Dedicated Configuration Views**: Each generation mode has its own interface with mode-specific options:
@@ -207,9 +216,24 @@ The HTTP server includes an interactive web interface (served from `dist/` direc
 - **Modern Architecture**: Built with Lit framework and Vite build system
 - **Optimized Performance**: Production builds are highly optimized (~11 kB gzipped)
 
-#### Development Workflow
+#### Development & Production Workflows
 
-The web interface is built with modern web technologies (Lit framework + Vite build tool) and organized in a dedicated `web-ui/` directory:
+The web interface is built with modern web technologies (Lit framework + Vite build tool) and organized in a dedicated `web-ui/` directory with different workflows for development and production:
+
+**Development Workflow:**
+1. `npm run dev` → Vite dev server with HMR on port 3000  
+2. `cargo run -- --serve 8080` → API-only server (no static files)
+
+**Production Workflow:**
+1. `npm run build` → Generate optimized assets in `dist/`
+2. `cargo build --release` → Embed assets in binary at compile time (~3.1MB total)
+3. Deploy single binary → No external files needed
+
+**Benefits of Embedded Assets:**
+- ✅ **Single file deployment** - Just copy the binary, no additional setup
+- ✅ **Zero external dependencies** - Web interface included in binary
+- ✅ **Simplified distribution** - No need to manage `dist/` directory
+- ✅ **Version consistency** - Assets always match binary version
 
 **Project Structure:**
 ```

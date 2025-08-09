@@ -15,7 +15,18 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer, services::ServeDir};
+use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer};
+#[cfg(not(debug_assertions))]
+use tower::service_fn;
+
+// Embedded assets for release builds
+#[cfg(not(debug_assertions))]
+use include_dir::{include_dir, Dir};
+#[cfg(not(debug_assertions))]
+use mime_guess::from_path;
+
+#[cfg(not(debug_assertions))]
+static ASSETS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/dist");
 
 #[derive(Deserialize)]
 pub struct GenerateQuery {
@@ -171,6 +182,48 @@ pub async fn handle_password(
     }
 }
 
+// Embedded asset serving handler for release builds
+#[cfg(not(debug_assertions))]
+async fn serve_embedded_assets(
+    request: axum::http::Request<axum::body::Body>
+) -> Result<axum::http::Response<axum::body::Body>, std::convert::Infallible> {
+    let path = request.uri().path();
+    let path = if path.is_empty() || path == "/" {
+        "index.html"
+    } else {
+        path.strip_prefix('/').unwrap_or(path)
+    };
+    
+    let response = match ASSETS_DIR.get_file(path) {
+        Some(file) => {
+            let mime_type = from_path(path).first_or_octet_stream();
+            
+            axum::http::Response::builder()
+                .status(axum::http::StatusCode::OK)
+                .header(axum::http::header::CONTENT_TYPE, mime_type.as_ref())
+                .body(axum::body::Body::from(file.contents().to_vec()))
+                .unwrap()
+        }
+        None => {
+            // For SPA routing, serve index.html for unknown routes
+            if let Some(index) = ASSETS_DIR.get_file("index.html") {
+                axum::http::Response::builder()
+                    .status(axum::http::StatusCode::OK)
+                    .header(axum::http::header::CONTENT_TYPE, "text/html")
+                    .body(axum::body::Body::from(index.contents().to_vec()))
+                    .unwrap()
+            } else {
+                axum::http::Response::builder()
+                    .status(axum::http::StatusCode::NOT_FOUND)
+                    .body(axum::body::Body::empty())
+                    .unwrap()
+            }
+        }
+    };
+    
+    Ok(response)
+}
+
 pub async fn start_server(
     port: u16,
     listen_all_ips: bool,
@@ -195,9 +248,6 @@ pub async fn start_server(
         rate_limiter,
     });
 
-    // Serve production build files from the dist directory
-    let static_files = ServeDir::new("dist");
-    
     let api_routes = Router::new()
         .route("/api/generate", get(handle_generate))
         .route("/api/api-key", get(handle_api_key))
@@ -205,8 +255,20 @@ pub async fn start_server(
         .with_state(config.clone());
     
     let mut app = Router::new()
-        .merge(api_routes)
-        .fallback_service(static_files);
+        .merge(api_routes);
+
+    // Conditional static file serving based on build type
+    #[cfg(debug_assertions)]
+    {
+        // Development mode: API-only server (Vite handles frontend)
+        // No static file serving
+    }
+    
+    #[cfg(not(debug_assertions))]
+    {
+        // Release mode: Serve embedded assets
+        app = app.fallback_service(service_fn(serve_embedded_assets));
+    }
 
     // Add middleware layers
     app = app.layer(RequestBodyLimitLayer::new(max_body_size));
@@ -220,8 +282,20 @@ pub async fn start_server(
     let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
     
     println!("hashrand server listening on http://{}:{}", host, port);
-    println!("Web Interface (served from dist/):");
-    println!("  GET /                                     - Interactive web interface (production build)");
+    
+    #[cfg(debug_assertions)]
+    {
+        println!("Development Mode: API-only server");
+        println!("Note: Use 'npm run dev' for frontend development server with HMR");
+    }
+    
+    #[cfg(not(debug_assertions))]
+    {
+        println!("Production Mode: Self-contained server with embedded web assets");
+        println!("Web Interface (embedded assets):");
+        println!("  GET /                                     - Interactive web interface");
+    }
+    
     println!("API Endpoints:");
     println!("  GET /api/generate?length=21&alphabet=base58");
     println!("  GET /api/api-key");
@@ -240,8 +314,21 @@ pub async fn start_server(
     }
     println!("  Request body limit: {} bytes", max_body_size);
     println!("Note: All endpoints return raw text by default (no newline)");
-    println!("Development: Use 'npm run dev' for development server with HMR");
-    println!("Production: Run 'npm run build' first to generate dist/ files");
+    
+    #[cfg(debug_assertions)]
+    {
+        println!("Development workflow:");
+        println!("  1. npm run dev (frontend with HMR on port 3000)");
+        println!("  2. cargo run -- --serve {} (API server)", port);
+    }
+    
+    #[cfg(not(debug_assertions))]
+    {
+        println!("Production deployment:");
+        println!("  1. npm run build (generate optimized assets)");
+        println!("  2. cargo build --release (embed assets in binary)");
+        println!("  3. Deploy single binary - no external files needed");
+    }
     
     axum::serve(
         listener, 
