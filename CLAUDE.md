@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## Project: hashrand (v0.2.9)
+## Project: hashrand (v0.3.0)
 CLI/Web tool for cryptographically secure random string generation (Rust + Lit + Vite)
 
 ## Architecture
@@ -28,17 +28,19 @@ just build && just serve    # Production build & serve
 
 ## Key Implementation Notes
 
-### Current State (v0.2.9)
+### Current State (v0.3.0)
 - **Stack**: Rust 1.89.0 + Lit 3.3.1 (standard decorators) + Vite 7.1.1
 - **Architecture**: Self-contained binary (3.1MB) with embedded web assets
 - **Testing**: 46/46 tests passing
 - **Security**: Rate limiting, CORS, audit logging, path validation
 
-### Recent Changes
+### Recent Changes (v0.3.0)
+- **Alphabet Selection**: Custom alphabets for passwords and API keys
 - **Version Display**: New `/api/version` endpoint + frontend header display
-- **Justfile**: Complete workflow automation (dev, build, test, serve)
+- **CLI Enhancement**: Version option + comprehensive justfile workflow
 - **Lit Migration**: Official decorators syntax `@state() accessor property = value`
 - **Asset Embedding**: Conditional compilation (dev: API-only, prod: embedded assets)
+- **Architecture**: Complete frontend/backend separation with improved navigation
 
 ## Next Priorities
 1. Component testing (@web/test-runner)
