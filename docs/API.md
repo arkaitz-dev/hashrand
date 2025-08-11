@@ -386,9 +386,11 @@ The API focuses on generation functionality while excluding file system operatio
 
 The web interface is built with modern web technologies:
 
-- **Framework**: Lit 3.3.1 (Web Components library)
+- **Backend**: Rust 1.89.0 (latest stable) with tokio async runtime and axum web framework
+- **Frontend Framework**: Lit 3.3.1 (Web Components library with standard decorators)
 - **Build Tool**: Vite 7.1.1 (Fast build system with HMR)
-- **Architecture**: Component-based with Shadow DOM encapsulation
+- **Decorators**: Official Lit + Babel configuration using "@babel/plugin-proposal-decorators" version "2023-05"
+- **Architecture**: Component-based with Shadow DOM encapsulation using modern `@property/@state` syntax
 - **Styling**: External CSS with "wc-" prefixed classes for reusability
 
 ### Development & Production Workflows
@@ -464,8 +466,8 @@ Each view is a Lit component with:
 ## Versioning
 
 The API version corresponds to the hashrand tool version:
-- Current version: 0.2.8
-- Web Interface: Lit 3.3.1 + Vite 7.1.1 with embedded assets support
+- Current version: 0.2.9
+- Web Interface: Lit 3.3.1 + Vite 7.1.1 with standard decorators and embedded assets support
 - Binary distribution: Self-contained (~3.1MB with embedded frontend)
 - API stability: Stable
 - Backward compatibility: Maintained within major versions

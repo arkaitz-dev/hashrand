@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2025-08-11
+
+### Changed
+- **Lit Framework Upgrade**: Successfully migrated from static properties to official Lit 3 decorator syntax
+  - **Modern Syntax**: All 5 Web Components now use standard decorators with `accessor` keyword
+  - **Official Configuration**: Implemented Lit's recommended Vite + Babel setup for JavaScript decorators
+  - **Standard Decorators**: Using Babel plugin version "2023-05" (officially supported by Lit)
+  - **Syntax Example**: `@state() accessor lengthValue = 44;` and `@property({ type: String }) accessor hashType = 'generic';`
+  
+### Technical Details  
+- **Rust Version**: Updated to Rust 1.89.0 (latest stable) for optimal performance and modern language features
+- **Dependencies**: Updated Rust crates to latest compatible versions (clap, libc, proc-macro2, etc.)
+- **Vite Configuration**: Streamlined Babel configuration following Lit official documentation
+  - Removed experimental decorator versions and custom configurations
+  - Simplified to official `@babel/plugin-proposal-decorators` with version "2023-05"
+  - Proper plugin ordering with Babel placed after HTML transformation plugins
+- **Component Modernization**: All components updated to use modern Lit 3 patterns
+  - `hash-generator.js`: Migrated 4 state properties to accessor syntax
+  - `hash-result.js`: Migrated 2 properties and 3 state properties to accessor syntax  
+  - `api-key-view.js`, `password-view.js`, `generic-hash-view.js`: Migrated 1 state property each
+  - Removed constructor initialization (handled automatically by decorators)
+- **Production Compatibility**: Resolved component visibility issues in release builds
+  - Components now render correctly in both development and production modes
+  - Fixed decorator transpilation for embedded asset serving
+  - Maintained all functionality while upgrading to modern syntax
+
+### Benefits
+- **Modern Development**: Up-to-date with latest Lit 3 best practices and official recommendations
+- **Cleaner Code**: Reduced boilerplate with decorator syntax eliminating manual property definitions
+- **Future-Proof**: Using official Lit configuration ensures compatibility with future framework updates  
+- **Better DX**: Improved developer experience with modern JavaScript patterns
+- **Production Ready**: Fully tested and verified working in both development and release modes
+
 ## [0.2.8] - 2025-08-09
 
 ### Added

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import babel from 'vite-plugin-babel'
 
 export default defineConfig({
   root: 'web-ui',
@@ -43,6 +44,19 @@ export default defineConfig({
         
         return html;
       }
-    }
+    },
+    babel({
+      babelConfig: {
+        babelrc: false,
+        configFile: false,
+        plugins: [
+          ["@babel/plugin-proposal-decorators", { 
+            version: "2023-05"
+          }]
+        ]
+      },
+      filter: /\.(js|jsx)$/,
+      include: 'web-ui/**'
+    })
   ]
 })

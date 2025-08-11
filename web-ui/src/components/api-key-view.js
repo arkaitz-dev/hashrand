@@ -1,9 +1,9 @@
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 
 export class ApiKeyView extends LitElement {
-    static properties = {
-        lengthValue: { type: Number, state: true }
-    };
+    @state()
+    accessor lengthValue = 44;
     static styles = css`
         :host {
             display: block;
@@ -129,12 +129,6 @@ export class ApiKeyView extends LitElement {
         }
 
     `;
-
-    constructor() {
-        super();
-        this.lengthValue = 44; // Default API key length
-    }
-
 
     render() {
         return html`

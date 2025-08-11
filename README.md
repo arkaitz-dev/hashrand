@@ -213,12 +213,13 @@ The web interface accessible at the root URL (`http://localhost:PORT/`) features
 - **Real-time Generation**: Generate hashes directly from the web interface with instant results
 - **Copy to Clipboard**: One-click copy functionality for all generated results
 - **Responsive Design**: Mobile-friendly interface that works on all devices
-- **Modern Architecture**: Built with Lit framework and Vite build system
-- **Optimized Performance**: Production builds are highly optimized (~11 kB gzipped)
+- **Modern Architecture**: Built with Lit 3 framework using standard decorators and Vite build system
+- **Official Configuration**: Uses Lit's recommended setup for JavaScript with Babel decorator support
+- **Optimized Performance**: Production builds are highly optimized (~14 kB gzipped)
 
 #### Development & Production Workflows
 
-The web interface is built with modern web technologies (Lit framework + Vite build tool) and organized in a dedicated `web-ui/` directory with different workflows for development and production:
+The web interface is built with modern web technologies (Lit 3 framework with standard decorators + Vite build tool) and organized in a dedicated `web-ui/` directory with different workflows for development and production:
 
 **Development Workflow:**
 1. `npm run dev` → Vite dev server with HMR on port 3000  
@@ -525,8 +526,10 @@ curl "http://localhost:8080/api/password?length=25"
 
 ### Technical Features
 - **Fast and lightweight** with minimal dependencies
+- **Modern Rust** built with Rust 1.89.0 (latest stable) for optimal performance and safety
 - **Comprehensive test suite** ensuring reliability
-- **Modern web stack** using Lit framework and Vite build system
+- **Modern web stack** using Lit 3 framework with standard decorators and Vite build system
+- **Official Configuration** following Lit's recommended JavaScript + Babel setup for decorators
 
 ## Use Cases
 
@@ -553,6 +556,10 @@ curl "http://localhost:8080/api/password?length=25"
 
 ## Dependencies
 
+**Runtime Requirements:**
+- **Rust**: 1.89.0 (latest stable) - Modern Rust with latest language features and performance improvements
+
+**Crate Dependencies:**
 - [nanoid](https://crates.io/crates/nanoid) - For secure random string generation
 - [clap](https://crates.io/crates/clap) - For command-line argument parsing
 - [walkdir](https://crates.io/crates/walkdir) - For recursive directory traversal (used with --check flag)

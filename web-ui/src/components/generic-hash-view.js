@@ -1,9 +1,9 @@
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 
 export class GenericHashView extends LitElement {
-    static properties = {
-        lengthValue: { type: Number, state: true }
-    };
+    @state()
+    accessor lengthValue = 21;
     static styles = css`
         :host {
             display: block;
@@ -136,11 +136,6 @@ export class GenericHashView extends LitElement {
         }
 
     `;
-
-    constructor() {
-        super();
-        this.lengthValue = 21;
-    }
 
     render() {
         return html`

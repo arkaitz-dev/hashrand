@@ -1,12 +1,18 @@
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 
 export class HashGenerator extends LitElement {
-    static properties = {
-        currentView: { type: String, state: true },
-        lastHashType: { type: String, state: true },
-        lastParameters: { type: Object, state: true },
-        lastResult: { type: String, state: true }
-    };
+    @state()
+    accessor currentView = 'menu';
+    
+    @state()
+    accessor lastHashType = '';
+    
+    @state()
+    accessor lastParameters = {};
+    
+    @state()
+    accessor lastResult = '';
 
     static styles = css`
         :host {
@@ -99,14 +105,6 @@ export class HashGenerator extends LitElement {
             }
         }
     `;
-
-    constructor() {
-        super();
-        this.currentView = 'menu';
-        this.lastHashType = '';
-        this.lastParameters = {};
-        this.lastResult = '';
-    }
     
     connectedCallback() {
         super.connectedCallback();

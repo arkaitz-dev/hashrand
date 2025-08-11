@@ -1,13 +1,21 @@
 import { LitElement, html, css } from 'lit';
+import { property, state } from 'lit/decorators.js';
 
 export class HashResult extends LitElement {
-    static properties = {
-        hashType: { type: String },      // 'generic', 'password', 'apiKey'
-        generatedHash: { type: String },  // The generated result
-        parameters: { type: Object },     // Generation parameters for regeneration
-        isLoading: { type: Boolean, state: true },     // Loading state
-        error: { type: String, state: true }           // Error message if any
-    };
+    @property({ type: String })
+    accessor hashType = 'generic';      // 'generic', 'password', 'apiKey'
+    
+    @property({ type: String })
+    accessor generatedHash = '';  // The generated result
+    
+    @property({ type: Object })
+    accessor parameters = {};     // Generation parameters for regeneration
+    
+    @state()
+    accessor isLoading = false;     // Loading state
+    
+    @state()
+    accessor error = null;           // Error message if any
 
     static styles = css`
         :host {
@@ -205,15 +213,6 @@ export class HashResult extends LitElement {
             100% { transform: rotate(360deg); }
         }
     `;
-
-    constructor() {
-        super();
-        this.hashType = 'generic';
-        this.generatedHash = '';
-        this.parameters = {};
-        this.isLoading = false;
-        this.error = null;
-    }
 
     render() {
         return html`
