@@ -28,6 +28,7 @@ Where `LENGTH` is an optional number between 2 and 128 that specifies the desire
 ### Options
 
 - `-r, --raw`: Output without newline character (useful for piping or scripting, works with all options)
+- `-V, --version`: Display version information
 - `--no-look-alike`: Use an alphabet that excludes commonly confused characters (0, O, I, l, 1)
 - `--full`: Use full alphanumeric alphabet (uppercase, lowercase, and numbers 0-9)
 - `--full-with-symbols`: Use full alphabet including symbols (-_*^@#+!?$%)
@@ -255,22 +256,45 @@ hashrand/
 ```
 
 **Development Commands (all from project root):**
-- **Development**: Use `npm run dev` for development server with Hot Module Replacement (HMR) on `http://localhost:3000`
-- **Production**: Run `npm run build` to generate optimized files in `dist/`, then start the Rust server with `--serve`
+- **Just (Recommended)**: Use `just dev` for complete development environment setup
+- **Manual**: Use `npm run dev` for development server with Hot Module Replacement (HMR) on `http://localhost:3000`
 
 ```bash
-# Development workflow (all commands from project root)
+# Development workflow (recommended - uses justfile)
+just dev                       # Complete setup: backend + frontend servers
+just status                    # Check server status
+just stop-dev                  # Stop all development servers
+
+# Individual server control
+just dev-cargo                 # Start only API server (localhost:8080)
+just dev-npm                   # Start only Vite dev server (localhost:3000)
+
+# Testing
+just test                      # Run all tests (npm + cargo)
+just cargo-test               # Run only Rust tests (46 tests)
+just npm-test                  # Run only frontend tests (if configured)
+
+# Manual development workflow (alternative)
 npm run dev                    # Vite dev server on localhost:3000
 cargo run -- --serve 8080     # API server on localhost:8080 (proxied by Vite)
 
-# Production workflow (all commands from project root)
+# Production workflow
+just build                     # Build both frontend and backend
+just serve                     # Run production server
+# Or manually:
 npm run build                  # Build optimized files to dist/
 cargo run -- --serve 8080     # Serves both web UI (from dist/) and API
+
+# Installation
+just install                   # Test → Build → Install binary locally
+# Or manually:
+cargo install --path .        # Install binary
 
 # Rust development (all commands from project root)
 cargo build                    # Build Rust code
 cargo test                     # Run test suite (46 tests)
 cargo run -- --help           # Run CLI directly
+cargo run -- --version        # Show version information
 ```
 
 For complete API documentation, see [docs/API.md](docs/API.md).

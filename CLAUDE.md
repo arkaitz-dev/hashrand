@@ -3,7 +3,7 @@
 ## Project: hashrand
 CLI/Web tool for cryptographically secure random string generation (Rust + Lit + Vite)
 
-## Current Architecture (v0.2.8)
+## Current Architecture (v0.2.9)
 ```
 hashrand/
 ├── src/                 # Rust backend (modular)
@@ -23,21 +23,51 @@ hashrand/
 - **Production**: Self-contained binary (3.1MB) with embedded assets
 
 ## Commands
-```bash
-# Development
-Before launching these commands ensure that they are not already running (check ports 3000 and 8080). Both commands will keep running and compiling changes in the background.
 
+### Development (Preferred: use just)
+```bash
+# Complete development environment (recommended)
+just dev                    # Launch both frontend + backend servers
+just status                 # Check server status
+just stop-dev              # Stop all development servers
+
+# Individual servers (if needed)
+just dev-npm               # Vite HMR on :3000
+just dev-cargo             # API server on :8080
+
+# Alternative (manual)
 npm run dev                 # Vite HMR on :3000
 cargo watch -x 'run -- --serve 8080'   # API server
+```
 
-# Production
-Before running these commands ensure that development servers are not running in background, checking ports 3000 and 8080: if running kill those development servers.
+### Production (Preferred: use just)
+```bash
+# Complete production build and serve (recommended)
+just build                  # Build frontend + backend
+just serve                  # Run production server on :8080
 
+# Alternative (manual)
 npm run build               # Build to dist/
 cargo build --release       # Embed dist/ in binary
 ./target/release/hashrand --serve 8080
+```
 
-# Examples
+### Just Commands Overview
+Our project uses a `justfile` for streamlined development workflows:
+
+- **`just dev`**: Complete development setup (both servers)
+- **`just dev-npm`**: Frontend only (port 3000)
+- **`just dev-cargo`**: Backend only (port 8080) 
+- **`just status`**: Check running servers
+- **`just stop-dev`**: Stop all development servers
+- **`just build`**: Production build (frontend + backend)
+- **`just serve`**: Run production server
+- **`just --list`**: Show all available commands
+
+Features: automatic port conflict detection, background process management, logging to `/tmp/hashrand-*.log`, clean process termination.
+
+### CLI Examples
+```bash
 cargo run -- --help         # Show help about available options 
 cargo run -- 16             # 16-char base58 hash
 cargo run -- --api-key 60   # API key (44-64 chars)
@@ -46,7 +76,17 @@ cargo run -- --password     # Secure password
 
 ## Recent Sessions Summary
 
-### v0.2.9 - Official Lit Decorators Migration
+### v0.2.9 - Development Workflow & CLI Enhancements
+- **Date:** 2025-08-11
+- **Justfile Integration:** Complete development workflow with `just` commands
+  - `just dev` (full environment), `just dev-npm`, `just dev-cargo`
+  - `just test`, `just npm-test`, `just cargo-test` with smart detection
+  - `just install` (tests → build → install), `just build`, `just serve`
+  - Port conflict detection, background process management, logging
+- **CLI Version Option:** Added `-V` / `--version` support showing current version
+- **Features:** Automated testing prerequisites, graceful error handling, clean process termination
+
+### v0.2.8 - Official Lit Decorators Migration
 - **Date:** 2025-08-11
 - **Change:** Migrated to official Lit 3 decorator syntax with `accessor` keyword
 - **Rust Version:** Updated to Rust 1.89.0 (latest stable) for modern language features

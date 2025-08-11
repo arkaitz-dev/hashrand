@@ -402,6 +402,7 @@ npm run dev                    # Runs on http://localhost:3000
 
 # Terminal 2: Start API-only server  
 cargo run -- --serve 8080     # API endpoints only (no static files)
+cargo run -- --version        # Check version
 ```
 
 **Production Mode (Release Build)**:
@@ -467,7 +468,9 @@ Each view is a Lit component with:
 
 The API version corresponds to the hashrand tool version:
 - Current version: 0.2.9
+- **CLI Version Option**: Use `hashrand --version` or `hashrand -V` to check current version
 - Web Interface: Lit 3.3.1 + Vite 7.1.1 with standard decorators and embedded assets support
+- **Development Workflow**: Justfile commands available (`just --list` to see all options)
 - Binary distribution: Self-contained (~3.1MB with embedded frontend)
 - API stability: Stable
 - Backward compatibility: Maintained within major versions

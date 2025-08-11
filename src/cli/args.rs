@@ -4,6 +4,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "hashrand")]
 #[command(about = "Generate random hash using base58 alphabet", long_about = None)]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(group = clap::ArgGroup::new("action").args(&["mkdir", "touch"]))]
 pub struct Args {
     /// Length of the hash (between 2 and 128, default: 21, or 44-64 for API keys)
