@@ -4,6 +4,10 @@ import { state } from 'lit/decorators.js';
 export class PasswordView extends LitElement {
     @state()
     accessor lengthValue = 21;
+    
+    @state()
+    accessor alphabetType = 'full-with-symbols';
+    
     static styles = css`
         :host {
             display: block;
@@ -56,6 +60,23 @@ export class PasswordView extends LitElement {
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: #34495e;
+        }
+
+        .wc-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .wc-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .wc-range-group {
@@ -131,6 +152,14 @@ export class PasswordView extends LitElement {
     `;
 
     render() {
+        // Dynamic minimum length based on alphabet for same entropy (~130 bits)
+        const minLength = this.alphabetType === 'no-look-alike' ? 24 : 21;
+        
+        // Adjust length if switching alphabets and current length is below minimum
+        if (this.lengthValue < minLength) {
+            this.lengthValue = minLength;
+        }
+        
         return html`
             <button class="wc-back-button" @click=${this.handleBackClick}>← Back to Menu</button>
             
@@ -138,15 +167,30 @@ export class PasswordView extends LitElement {
                 <h2>🔐 Generate Password</h2>
                 
                 <div class="wc-form-group">
-                    <label for="password-length">Length (21-44 characters)</label>
+                    <label for="password-alphabet">Alphabet Type</label>
+                    <select id="password-alphabet" class="wc-select" @change=${this.handleAlphabetChange}>
+                        <option value="full-with-symbols" ?selected=${this.alphabetType === 'full-with-symbols'}>
+                            Full with Symbols (Maximum Security)
+                        </option>
+                        <option value="no-look-alike" ?selected=${this.alphabetType === 'no-look-alike'}>
+                            No Look-alike (Easy to Type)
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="wc-form-group">
+                    <label for="password-length">Length (${minLength}-44 characters)</label>
                     <div class="wc-range-group">
-                        <input type="range" id="password-length" min="21" max="44" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
+                        <input type="range" id="password-length" min="${minLength}" max="44" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
                         <span class="wc-range-value">${this.lengthValue}</span>
                     </div>
                 </div>
                 
                 <div class="wc-info-box">
-                    <strong>Password Strength:</strong> Uses full alphanumeric alphabet with symbols for maximum security.
+                    <strong>Security Note:</strong> 
+                    ${this.alphabetType === 'no-look-alike' 
+                        ? 'No Look-alike alphabet excludes confusable characters. Minimum 24 characters for equivalent security.'
+                        : 'Full alphabet with symbols provides maximum entropy. Minimum 21 characters for strong security.'}
                 </div>
                 
                 <button id="password-btn" class="wc-button" @click=${this.handleGenerate}>Generate Password</button>
@@ -166,11 +210,24 @@ export class PasswordView extends LitElement {
         this.lengthValue = parseInt(target.value);
     }
 
+    handleAlphabetChange(e) {
+        const target = e.target;
+        this.alphabetType = target.value;
+        
+        // Adjust length to minimum if needed when switching alphabets
+        const minLength = this.alphabetType === 'no-look-alike' ? 24 : 21;
+        if (this.lengthValue < minLength) {
+            this.lengthValue = minLength;
+        }
+    }
+
     handleGenerate() {
         const length = this.shadowRoot.querySelector('#password-length').value;
+        const alphabet = this.shadowRoot.querySelector('#password-alphabet').value;
         
         const parameters = {
-            length: parseInt(length)
+            length: parseInt(length),
+            alphabet: alphabet
         };
         
         // Emit event to parent component

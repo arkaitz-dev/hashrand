@@ -27,7 +27,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     
     // Set default length for API key before validation
     if args.api_key && args.length == 21 {
-        args.length = 44;
+        args.length = if args.no_look_alike { 47 } else { 44 };
     }
     
     // Validate arguments
@@ -61,12 +61,16 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate password length
     if args.password {
-        // For password mode, validate the length range (21-44)
-        if args.length == 21 {
-            // Use default password length (already 21)
-            // No need to change args.length
-        } else if args.length < 21 || args.length > 44 {
-            eprintln!("Error: Password length must be between 21 and 44 characters");
+        // Different minimum lengths based on alphabet for same entropy (~130 bits)
+        let min_length = if args.no_look_alike { 24 } else { 21 };
+        
+        // Adjust default length if using no_look_alike
+        if args.length == 21 && args.no_look_alike {
+            args.length = 24;  // Use 24 as default for no_look_alike passwords
+        } else if args.length < min_length || args.length > 44 {
+            eprintln!("Error: Password length must be between {} and 44 characters{}", 
+                min_length, 
+                if args.no_look_alike { " (using no-look-alike alphabet)" } else { "" });
             std::process::exit(1);
         }
     }
@@ -79,8 +83,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     } else if args.full_with_symbols {
         AlphabetType::FullWithSymbols
     } else if args.api_key {
+        // API key uses Full by default (unless no_look_alike was specified above)
         AlphabetType::Full
     } else if args.password {
+        // Password uses FullWithSymbols by default (unless no_look_alike was specified above)
         AlphabetType::FullWithSymbols
     } else {
         AlphabetType::Base58

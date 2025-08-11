@@ -4,6 +4,10 @@ import { state } from 'lit/decorators.js';
 export class ApiKeyView extends LitElement {
     @state()
     accessor lengthValue = 44;
+    
+    @state()
+    accessor alphabetType = 'full';
+    
     static styles = css`
         :host {
             display: block;
@@ -123,6 +127,23 @@ export class ApiKeyView extends LitElement {
             color: #34495e;
         }
 
+        .wc-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .wc-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
         .wc-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -131,6 +152,18 @@ export class ApiKeyView extends LitElement {
     `;
 
     render() {
+        // Dynamic minimum length based on alphabet for same entropy (~262 bits)
+        const minLength = this.alphabetType === 'no-look-alike' ? 47 : 44;
+        
+        // Adjust length if switching alphabets and current length is below minimum
+        if (this.lengthValue < minLength) {
+            this.lengthValue = minLength;
+        }
+        
+        const alphabetDescription = this.alphabetType === 'no-look-alike' 
+            ? 'no-look-alike alphabet (easy to type)'
+            : 'full alphanumeric alphabet';
+        
         return html`
             <button class="wc-back-button" @click=${this.handleBackClick}>← Back to Menu</button>
             
@@ -138,15 +171,31 @@ export class ApiKeyView extends LitElement {
                 <h2>🔑 Generate API Key</h2>
                 
                 <div class="wc-form-group">
-                    <label for="apikey-length">Length (44-64 characters)</label>
+                    <label for="apikey-alphabet">Alphabet Type</label>
+                    <select id="apikey-alphabet" class="wc-select" @change=${this.handleAlphabetChange}>
+                        <option value="full" ?selected=${this.alphabetType === 'full'}>
+                            Full Alphanumeric (Maximum Compatibility)
+                        </option>
+                        <option value="no-look-alike" ?selected=${this.alphabetType === 'no-look-alike'}>
+                            No Look-alike (Easy to Type)
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="wc-form-group">
+                    <label for="apikey-length">Length (${minLength}-64 characters)</label>
                     <div class="wc-range-group">
-                        <input type="range" id="apikey-length" min="44" max="64" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
+                        <input type="range" id="apikey-length" min="${minLength}" max="64" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
                         <span class="wc-range-value">${this.lengthValue}</span>
                     </div>
                 </div>
                 
                 <div class="wc-info-box">
-                    <strong>Format:</strong> ak_ prefix + ${this.lengthValue} random characters using full alphanumeric alphabet
+                    <strong>Format:</strong> ak_ prefix + ${this.lengthValue} random characters using ${alphabetDescription}
+                    <br><strong>Security:</strong> 
+                    ${this.alphabetType === 'no-look-alike' 
+                        ? 'No Look-alike excludes confusable characters. Minimum 47 characters for equivalent security.'
+                        : 'Full alphanumeric provides maximum compatibility. Minimum 44 characters for strong security.'}
                 </div>
                 
                 <button id="apikey-btn" class="wc-button" @click=${this.handleGenerate}>Generate API Key</button>
@@ -165,12 +214,25 @@ export class ApiKeyView extends LitElement {
         const target = e.target;
         this.lengthValue = parseInt(target.value);
     }
+
+    handleAlphabetChange(e) {
+        const target = e.target;
+        this.alphabetType = target.value;
+        
+        // Adjust length to minimum if needed when switching alphabets
+        const minLength = this.alphabetType === 'no-look-alike' ? 47 : 44;
+        if (this.lengthValue < minLength) {
+            this.lengthValue = minLength;
+        }
+    }
     
     handleGenerate() {
         const length = this.shadowRoot.querySelector('#apikey-length').value;
+        const alphabet = this.shadowRoot.querySelector('#apikey-alphabet').value;
         
         const parameters = {
-            length: parseInt(length)
+            length: parseInt(length),
+            alphabet: alphabet
         };
         
         // Emit event to parent component

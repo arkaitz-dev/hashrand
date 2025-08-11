@@ -40,12 +40,14 @@ pub struct GenerateQuery {
 #[derive(Deserialize)]
 pub struct ApiKeyQuery {
     pub length: Option<usize>,
+    pub alphabet: Option<String>,
     pub raw: Option<bool>,
 }
 
 #[derive(Deserialize)]
 pub struct PasswordQuery {
     pub length: Option<usize>,
+    pub alphabet: Option<String>,
     pub raw: Option<bool>,
 }
 
@@ -157,12 +159,19 @@ pub async fn handle_api_key(
         }
     }
     
-    match generators::generate_api_key_response(params.length.unwrap_or(44), params.raw.unwrap_or(true)) {
+    // Parse alphabet type (only no-look-alike and full allowed for API keys)
+    let alphabet_type = match params.alphabet.as_deref() {
+        Some("no-look-alike") => Some(AlphabetType::NoLookAlike),
+        Some("full") | None => Some(AlphabetType::Full),
+        _ => return Err(StatusCode::BAD_REQUEST),
+    };
+    
+    match generators::generate_api_key_response(params.length.unwrap_or(44), alphabet_type, params.raw.unwrap_or(true)) {
         Ok(result) => Ok(Response::builder()
             .header("content-type", "text/plain")
             .body(result)
             .unwrap()),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(_) => Err(StatusCode::BAD_REQUEST),
     }
 }
 
@@ -178,7 +187,14 @@ pub async fn handle_password(
         }
     }
     
-    match generators::generate_password_response(params.length, params.raw.unwrap_or(true)) {
+    // Parse alphabet type (only no-look-alike and full-with-symbols allowed for passwords)
+    let alphabet_type = match params.alphabet.as_deref() {
+        Some("no-look-alike") => Some(AlphabetType::NoLookAlike),
+        Some("full-with-symbols") | None => Some(AlphabetType::FullWithSymbols),
+        _ => return Err(StatusCode::BAD_REQUEST),
+    };
+    
+    match generators::generate_password_response(params.length, alphabet_type, params.raw.unwrap_or(true)) {
         Ok(result) => Ok(Response::builder()
             .header("content-type", "text/plain")
             .body(result)

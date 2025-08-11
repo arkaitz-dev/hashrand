@@ -7,13 +7,13 @@ pub const BASE58_ALPHABET: [char; 58] = [
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
 ];
 
-// No look-alike alphabet (removes: 0, O, I, l, 1)
-pub const NO_LOOK_ALIKE_ALPHABET: [char; 57] = [
-    '2', '3', '4', '5', '6', '7', '8', '9',
+// No look-alike alphabet (removes confusable characters: 0, O, I, l, 1, 2, 5, S, s, o, u, v, Z)
+pub const NO_LOOK_ALIKE_ALPHABET: [char; 49] = [
+    '3', '4', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
-    'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'N', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    'n', 'p', 'q', 'r', 't', 'w', 'x', 'y', 'z'
 ];
 
 // Full alphanumeric alphabet (uppercase, lowercase, and numbers)

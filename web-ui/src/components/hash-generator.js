@@ -219,12 +219,20 @@ export class HashGenerator extends LitElement {
                     length: parameters.length || 44,
                     raw: 'true'
                 });
+                // Add alphabet parameter if specified
+                if (parameters.alphabet) {
+                    params.append('alphabet', parameters.alphabet);
+                }
                 url = `/api/api-key?${params}`;
                 response = await fetch(url);
             } else if (hashType === 'password') {
                 const params = new URLSearchParams({ 
                     length: parameters.length || 21 
                 });
+                // Add alphabet parameter if specified
+                if (parameters.alphabet) {
+                    params.append('alphabet', parameters.alphabet);
+                }
                 url = `/api/password?${params}`;
                 response = await fetch(url);
             } else {

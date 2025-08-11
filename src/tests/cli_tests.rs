@@ -137,10 +137,9 @@ fn test_api_key_password_conflict() {
 
 #[test]
 fn test_api_key_conflicts_with_alphabets() {
-    // Test that api-key conflicts with other alphabet options
+    // Test that api-key conflicts with incompatible alphabet options
     let test_cases = vec![
         vec!["hashrand", "--api-key", "--full"],
-        vec!["hashrand", "--api-key", "--no-look-alike"],
         vec!["hashrand", "--api-key", "--full-with-symbols"],
     ];
     
@@ -148,6 +147,11 @@ fn test_api_key_conflicts_with_alphabets() {
         let result = Args::try_parse_from(&args_vec);
         assert!(result.is_err());
     }
+    
+    // Test that api-key DOES work with --no-look-alike
+    let args_vec = vec!["hashrand", "--api-key", "--no-look-alike"];
+    let result = Args::try_parse_from(&args_vec);
+    assert!(result.is_ok());
 }
 
 #[test]
@@ -173,10 +177,9 @@ fn test_api_key_length_boundaries() {
 
 #[test]
 fn test_password_conflicts_with_alphabets() {
-    // Test that password conflicts with other alphabet options
+    // Test that password conflicts with incompatible alphabet options
     let test_cases = vec![
         vec!["hashrand", "--password", "--full"],
-        vec!["hashrand", "--password", "--no-look-alike"],
         vec!["hashrand", "--password", "--full-with-symbols"],
     ];
     
@@ -184,6 +187,11 @@ fn test_password_conflicts_with_alphabets() {
         let result = Args::try_parse_from(&args_vec);
         assert!(result.is_err());
     }
+    
+    // Test that password DOES work with --no-look-alike
+    let args_vec = vec!["hashrand", "--password", "--no-look-alike"];
+    let result = Args::try_parse_from(&args_vec);
+    assert!(result.is_ok());
 }
 
 #[test]

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **NoLookAlike Alphabet Update**: Refined character set for better confusion prevention
+  - **New alphabet**: `346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz` (49 characters)
+  - **Additional exclusions**: 2, 5, S, s, o, u, v, Z (alongside original 0, O, I, l, 1)
+  - **Better readability**: Removes more commonly confused characters for improved clarity
+  
+- **Password Generation Enhancement**: Support for alphabet selection in password mode
+  - **CLI**: `--password` now works with both `--no-look-alike` and default `--full-with-symbols`
+  - **API**: New `alphabet` parameter for `/api/password` endpoint (accepts "no-look-alike" or "full-with-symbols")
+  - **Web UI**: Added alphabet selector in password view with automatic length adjustment
+  - **Equivalent Security**: Minimum lengths adjusted to maintain ~130 bits entropy
+    - NoLookAlike (49 chars): 24 characters minimum (default)
+    - FullWithSymbols (73 chars): 21 characters minimum (default)
+
+### Added
+- **Dynamic Password Length Validation**: Intelligent minimum length calculation
+  - **Context-aware validation**: Different minimums based on selected alphabet
+  - **Automatic adjustment**: Default length changes from 21→24 when using no-look-alike
+  - **Security preservation**: Maintains equivalent entropy (~130 bits) across alphabets
+
+- **API Key Generation Enhancement**: Support for alphabet selection in API key mode
+  - **CLI**: `--api-key` now works with both `--no-look-alike` and default `--full`
+  - **API**: New `alphabet` parameter for `/api/api-key` endpoint (accepts "no-look-alike" or "full")
+  - **Web UI**: Added alphabet selector in API key view with automatic length adjustment
+  - **Equivalent Security**: Minimum lengths adjusted to maintain ~262 bits entropy
+    - NoLookAlike (49 chars): 47 characters minimum (default)
+    - Full (62 chars): 44 characters minimum (default)
+
+### Fixed
+- **Test Suite Updates**: Updated all password and API key generation tests for new alphabet support
+  - **Expanded coverage**: Tests for both alphabet types with appropriate length validation
+  - **Boundary testing**: Verification of minimum length enforcement per alphabet
+  - **API parameter testing**: Coverage of new alphabet parameter in server endpoints
+  - **AlphabetType enum**: Added PartialEq derivation for proper comparison operations
+
 ## [0.2.9] - 2025-08-11
 
 ### Added

@@ -51,12 +51,12 @@ pub struct Args {
     #[arg(long = "path")]
     pub path: Option<PathBuf>,
 
-    /// Generate API key using full alphabet (ak_ + 44-64 characters, default 44)
-    #[arg(long = "api-key", conflicts_with_all = &["no_look_alike", "full", "full_with_symbols", "password", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
+    /// Generate API key (44-64 chars with full, or 47-64 with no-look-alike)
+    #[arg(long = "api-key", conflicts_with_all = &["full", "full_with_symbols", "password", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
     pub api_key: bool,
 
-    /// Generate password using full alphabet with symbols (21 characters by default)
-    #[arg(long = "password", conflicts_with_all = &["no_look_alike", "full", "full_with_symbols", "api_key", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
+    /// Generate password (21-44 chars with symbols, or 24-44 with no-look-alike)
+    #[arg(long = "password", conflicts_with_all = &["full", "full_with_symbols", "api_key", "check", "mkdir", "touch", "prefix", "suffix", "path"])]
     pub password: bool,
 
     /// File permissions to use when creating a file (Unix-style octal, e.g., 644)
@@ -106,8 +106,13 @@ impl Args {
     /// Validate arguments after parsing
     pub fn validate(&self) -> Result<(), String> {
         // Validate API key length if api-key flag is used
-        if self.api_key && !(44..=64).contains(&self.length) {
-            return Err("API key length must be between 44 and 64 characters".to_string());
+        if self.api_key {
+            let min_length = if self.no_look_alike { 47 } else { 44 };
+            if !(min_length..=64).contains(&self.length) {
+                return Err(format!("API key length must be between {} and 64 characters{}", 
+                    min_length, 
+                    if self.no_look_alike { " (using no-look-alike alphabet)" } else { "" }));
+            }
         }
         
         Ok(())
@@ -116,7 +121,7 @@ impl Args {
 
 pub use crate::utils::validation::{parse_length, parse_mode};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AlphabetType {
     Base58,
     NoLookAlike,
