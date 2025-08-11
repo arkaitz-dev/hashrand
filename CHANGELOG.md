@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.9] - 2025-08-11
 
+### Added
+- **Version Display in Web Interface**: Frontend now shows current API version in header
+  - New endpoint: `GET /api/version` returning JSON `{"version": "0.2.9"}`
+  - JavaScript loads version dynamically on page load via fetch API
+  - CSS styling for version display in header (small, subtle text)
+  - Automatic version synchronization between API and frontend
+
 ### Changed
 - **Lit Framework Upgrade**: Successfully migrated from static properties to official Lit 3 decorator syntax
   - **Modern Syntax**: All 5 Web Components now use standard decorators with `accessor` keyword

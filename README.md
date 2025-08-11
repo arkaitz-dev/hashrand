@@ -203,6 +203,7 @@ The HTTP server includes an interactive web interface with different serving str
 The web interface accessible at the root URL (`http://localhost:PORT/`) features include:
 
 - **Menu-based Navigation**: Choose between Generic Hash, Password, or API Key generation modes
+- **Version Display**: Shows current API version in the header (automatically loaded from /api/version)
 - **Dedicated Configuration Views**: Each generation mode has its own interface with mode-specific options:
   - **Generic Hash**: Length slider (2-128), alphabet selection, prefix/suffix options
   - **Password**: Length slider (21-44) with strength indication
@@ -397,6 +398,15 @@ curl "http://localhost:8080/api/api-key?length=60"
 
 curl "http://localhost:8080/api/password?length=25"
 # Output: aB3*fG7$hI9@kL2#mN5^pQ8!
+```
+
+#### GET /api/version
+Get current API version information (JSON format).
+
+**Examples:**
+```bash
+curl "http://localhost:8080/api/version"
+# Response: {"version":"0.2.9"}
 ```
 
 **Note:** The HTTP server mode excludes file system operations (`--touch`, `--mkdir`) for security reasons. These operations are only available in CLI mode.

@@ -4,11 +4,11 @@ use super::config::{ServerConfig, RateLimitMap, RateLimitEntry};
 use axum::{
     extract::{ConnectInfo, Query, State},
     http::StatusCode,
-    response::Response,
+    response::{Json, Response},
     routing::get,
     Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -47,6 +47,11 @@ pub struct ApiKeyQuery {
 pub struct PasswordQuery {
     pub length: Option<usize>,
     pub raw: Option<bool>,
+}
+
+#[derive(Serialize)]
+pub struct VersionResponse {
+    pub version: String,
 }
 
 pub fn validate_query_params(prefix: &Option<String>, suffix: &Option<String>, max_length: usize) -> Result<(), String> {
@@ -182,6 +187,12 @@ pub async fn handle_password(
     }
 }
 
+pub async fn handle_version() -> Json<VersionResponse> {
+    Json(VersionResponse {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+    })
+}
+
 // Embedded asset serving handler for release builds
 #[cfg(not(debug_assertions))]
 async fn serve_embedded_assets(
@@ -252,6 +263,7 @@ pub async fn start_server(
         .route("/api/generate", get(handle_generate))
         .route("/api/api-key", get(handle_api_key))
         .route("/api/password", get(handle_password))
+        .route("/api/version", get(handle_version))
         .with_state(config.clone());
     
     let mut app = Router::new()

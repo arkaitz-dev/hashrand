@@ -39,6 +39,12 @@ body {
     font-size: 1.1rem;
 }
 
+.version {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 400;
+}
+
 .content {
     padding: 2rem;
 }

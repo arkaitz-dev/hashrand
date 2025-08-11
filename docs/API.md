@@ -380,6 +380,41 @@ The API focuses on generation functionality while excluding file system operatio
 
 ---
 
+## GET /api/version
+
+Get the current API version information.
+
+### Request
+
+**URL**: `/api/version`
+
+**Method**: `GET`
+
+**Query Parameters**: None
+
+### Response
+
+**Content-Type**: `application/json`
+
+**Body**: JSON object with version information
+
+**Status Codes**:
+- `200 OK`: Always successful (no authentication or rate limiting applied)
+
+### Examples
+
+#### Get version information
+```bash
+curl "http://localhost:8080/api/version"
+# Response: {"version":"0.2.9"}
+```
+
+### Integration
+
+The version endpoint is used by the web interface to display the current API version in the header. This ensures the frontend always shows the correct version information matching the API.
+
+---
+
 ## Web Interface Development
 
 ### Modern Frontend Architecture
