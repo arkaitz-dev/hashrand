@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 
 export class HashResult extends LitElement {
     @property({ type: String })
@@ -214,16 +215,22 @@ export class HashResult extends LitElement {
         }
     `;
 
+    connectedCallback() {
+        super.connectedCallback();
+        // Enable automatic re-rendering when locale changes
+        updateWhenLocaleChanges(this);
+    }
+
     render() {
         return html`
             <div class="result-container">
                 <!-- Navigation buttons -->
                 <div class="nav-buttons">
                     <button class="nav-button" @click=${this.handleBackToConfig}>
-                        ← Back to Configuration
+                        ← ${msg('Back to Configuration')}
                     </button>
                     <button class="nav-button" @click=${this.handleBackToMenu}>
-                        ⌂ Back to Menu
+                        ⌂ ${msg('Back to Menu')}
                     </button>
                 </div>
 
@@ -237,20 +244,20 @@ export class HashResult extends LitElement {
                     <div class="result-display ${this.getResultClass()}">
                         ${this.isLoading ? html`
                             <span class="loading-spinner"></span>
-                            <span>Generating...</span>
+                            <span>${msg('Generating...')}</span>
                         ` : this.error ? html`
-                            <span class="result-text">Error: ${this.error}</span>
+                            <span class="result-text">${msg('Error')}: ${this.error}</span>
                         ` : html`
                             <span class="result-text">${this.generatedHash}</span>
                             <button class="copy-button" @click=${this.handleCopy}>
-                                Copy
+                                ${msg('Copy')}
                             </button>
                         `}
                     </div>
 
                     ${this.parameters && Object.keys(this.parameters).length > 0 ? html`
                         <div class="parameters-section">
-                            <div class="parameters-title">Configuration Used:</div>
+                            <div class="parameters-title">${msg('Configuration Used')}:</div>
                             ${this.renderParameters()}
                         </div>
                     ` : ''}
@@ -260,7 +267,7 @@ export class HashResult extends LitElement {
                 <button class="regenerate-button" @click=${this.handleRegenerate} ?disabled=${this.isLoading}>
                     ${this.isLoading ? html`
                         <span class="loading-spinner"></span>
-                        <span>Regenerating...</span>
+                        <span>${msg('Regenerating...')}</span>
                     ` : html`
                         <span>🔄</span>
                         <span>${this.getRegenerateButtonText()}</span>
@@ -280,9 +287,9 @@ export class HashResult extends LitElement {
 
     getTitle() {
         switch(this.hashType) {
-            case 'password': return 'Generated Password';
-            case 'apiKey': return 'Generated API Key';
-            default: return 'Generated Hash';
+            case 'password': return msg('Generated Password');
+            case 'apiKey': return msg('Generated API Key');
+            default: return msg('Generated Hash');
         }
     }
 
@@ -296,8 +303,8 @@ export class HashResult extends LitElement {
         switch(this.hashType) {
             case 'apiKey': 
                 // Check if there are parameters (length) configured
-                return Object.keys(this.parameters).length > 0 ? 'Regenerate with Same Configuration' : 'Regenerate';
-            default: return 'Regenerate with Same Configuration';
+                return Object.keys(this.parameters).length > 0 ? msg('Regenerate with Same Configuration') : msg('Regenerate');
+            default: return msg('Regenerate with Same Configuration');
         }
     }
 
@@ -307,7 +314,7 @@ export class HashResult extends LitElement {
         if (this.parameters.length) {
             params.push(html`
                 <div class="parameter-item">
-                    <span class="parameter-label">Length:</span>
+                    <span class="parameter-label">${msg('Length')}:</span>
                     <span class="parameter-value">${this.parameters.length}</span>
                 </div>
             `);
@@ -322,7 +329,7 @@ export class HashResult extends LitElement {
             };
             params.push(html`
                 <div class="parameter-item">
-                    <span class="parameter-label">Alphabet:</span>
+                    <span class="parameter-label">${msg('Alphabet')}:</span>
                     <span class="parameter-value">${alphabetNames[this.parameters.alphabet] || this.parameters.alphabet}</span>
                 </div>
             `);
@@ -331,7 +338,7 @@ export class HashResult extends LitElement {
         if (this.parameters.prefix) {
             params.push(html`
                 <div class="parameter-item">
-                    <span class="parameter-label">Prefix:</span>
+                    <span class="parameter-label">${msg('Prefix')}:</span>
                     <span class="parameter-value">${this.parameters.prefix}</span>
                 </div>
             `);
@@ -340,7 +347,7 @@ export class HashResult extends LitElement {
         if (this.parameters.suffix) {
             params.push(html`
                 <div class="parameter-item">
-                    <span class="parameter-label">Suffix:</span>
+                    <span class="parameter-label">${msg('Suffix')}:</span>
                     <span class="parameter-value">${this.parameters.suffix}</span>
                 </div>
             `);
@@ -355,10 +362,10 @@ export class HashResult extends LitElement {
             // Temporarily change button text
             const button = this.shadowRoot.querySelector('.copy-button');
             if (button) {
-                button.textContent = 'Copied!';
+                button.textContent = msg('Copied!');
                 button.classList.add('copied');
                 setTimeout(() => {
-                    button.textContent = 'Copy';
+                    button.textContent = msg('Copy');
                     button.classList.remove('copied');
                 }, 2000);
             }

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 
 export class ApiKeyView extends LitElement {
     @state()
@@ -151,6 +152,12 @@ export class ApiKeyView extends LitElement {
 
     `;
 
+    connectedCallback() {
+        super.connectedCallback();
+        // Enable automatic re-rendering when locale changes
+        updateWhenLocaleChanges(this);
+    }
+
     render() {
         // Dynamic minimum length based on alphabet for same entropy (~262 bits)
         const minLength = this.alphabetType === 'no-look-alike' ? 47 : 44;
@@ -161,29 +168,29 @@ export class ApiKeyView extends LitElement {
         }
         
         const alphabetDescription = this.alphabetType === 'no-look-alike' 
-            ? 'no-look-alike alphabet (easy to type)'
-            : 'full alphanumeric alphabet';
+            ? msg('no-look-alike alphabet (easy to type)')
+            : msg('full alphanumeric alphabet');
         
         return html`
-            <button class="wc-back-button" @click=${this.handleBackClick}>← Back to Menu</button>
+            <button class="wc-back-button" @click=${this.handleBackClick}>${msg('← Back to Menu')}</button>
             
             <div class="wc-form-section">
-                <h2>🔑 Generate API Key</h2>
+                <h2>${msg('🔑 Generate API Key')}</h2>
                 
                 <div class="wc-form-group">
-                    <label for="apikey-alphabet">Alphabet Type</label>
+                    <label for="apikey-alphabet">${msg('Alphabet Type')}</label>
                     <select id="apikey-alphabet" class="wc-select" @change=${this.handleAlphabetChange}>
                         <option value="full" ?selected=${this.alphabetType === 'full'}>
-                            Full Alphanumeric (Maximum Compatibility)
+                            ${msg('Full Alphanumeric (Maximum Compatibility)')}
                         </option>
                         <option value="no-look-alike" ?selected=${this.alphabetType === 'no-look-alike'}>
-                            No Look-alike (Easy to Type)
+                            ${msg('No Look-alike (Easy to Type)')}
                         </option>
                     </select>
                 </div>
                 
                 <div class="wc-form-group">
-                    <label for="apikey-length">Length (${minLength}-64 characters)</label>
+                    <label for="apikey-length">${msg('Length')} (${minLength}-64 ${msg('characters')})</label>
                     <div class="wc-range-group">
                         <input type="range" id="apikey-length" min="${minLength}" max="64" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
                         <span class="wc-range-value">${this.lengthValue}</span>
@@ -191,14 +198,14 @@ export class ApiKeyView extends LitElement {
                 </div>
                 
                 <div class="wc-info-box">
-                    <strong>Format:</strong> ak_ prefix + ${this.lengthValue} random characters using ${alphabetDescription}
-                    <br><strong>Security:</strong> 
+                    <strong>${msg('Format:')}:</strong> ak_ ${msg('prefix')} + ${this.lengthValue} ${msg('random characters using')} ${alphabetDescription}
+                    <br><strong>${msg('Security:')}:</strong> 
                     ${this.alphabetType === 'no-look-alike' 
-                        ? 'No Look-alike excludes confusable characters. Minimum 47 characters for equivalent security.'
-                        : 'Full alphanumeric provides maximum compatibility. Minimum 44 characters for strong security.'}
+                        ? msg('No Look-alike excludes confusable characters. Minimum 47 characters for equivalent security.')
+                        : msg('Full alphanumeric provides maximum compatibility. Minimum 44 characters for strong security.')}
                 </div>
                 
-                <button id="apikey-btn" class="wc-button" @click=${this.handleGenerate}>Generate API Key</button>
+                <button id="apikey-btn" class="wc-button" @click=${this.handleGenerate}>${msg('Generate API Key')}</button>
             </div>
         `;
     }

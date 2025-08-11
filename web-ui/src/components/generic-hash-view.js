@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 
 export class GenericHashView extends LitElement {
     @state()
@@ -137,15 +138,21 @@ export class GenericHashView extends LitElement {
 
     `;
 
+    connectedCallback() {
+        super.connectedCallback();
+        // Enable automatic re-rendering when locale changes
+        updateWhenLocaleChanges(this);
+    }
+
     render() {
         return html`
-            <button class="wc-back-button" @click=${this.handleBackClick}>← Back to Menu</button>
+            <button class="wc-back-button" @click=${this.handleBackClick}>${msg('← Back to Menu')}</button>
             
             <div class="wc-form-section">
-                <h2>🎲 Generate Custom Hash</h2>
+                <h2>${msg('🎲 Generate Custom Hash')}</h2>
                 
                 <div class="wc-form-group">
-                    <label for="generate-length">Length</label>
+                    <label for="generate-length">${msg('Length')}</label>
                     <div class="wc-range-group">
                         <input type="range" id="generate-length" min="2" max="128" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
                         <span class="wc-range-value">${this.lengthValue}</span>
@@ -153,26 +160,26 @@ export class GenericHashView extends LitElement {
                 </div>
                 
                 <div class="wc-form-group">
-                    <label for="generate-alphabet">Alphabet Type</label>
+                    <label for="generate-alphabet">${msg('Alphabet Type')}</label>
                     <select id="generate-alphabet" class="wc-select">
-                        <option value="base58">Base58 (Bitcoin)</option>
-                        <option value="no-look-alike">No Look-alike</option>
-                        <option value="full">Full Alphanumeric</option>
-                        <option value="full-with-symbols">Full with Symbols</option>
+                        <option value="base58">${msg('Base58 (Bitcoin)')}</option>
+                        <option value="no-look-alike">${msg('No Look-alike')}</option>
+                        <option value="full">${msg('Full Alphanumeric')}</option>
+                        <option value="full-with-symbols">${msg('Full with Symbols')}</option>
                     </select>
                 </div>
                 
                 <div class="wc-form-group">
-                    <label for="generate-prefix">Prefix (optional)</label>
-                    <input type="text" id="generate-prefix" class="wc-input" placeholder="e.g., user_">
+                    <label for="generate-prefix">${msg('Prefix (optional)')}</label>
+                    <input type="text" id="generate-prefix" class="wc-input" placeholder="${msg('e.g., user_')}">
                 </div>
                 
                 <div class="wc-form-group">
-                    <label for="generate-suffix">Suffix (optional)</label>
-                    <input type="text" id="generate-suffix" class="wc-input" placeholder="e.g., _temp">
+                    <label for="generate-suffix">${msg('Suffix (optional)')}</label>
+                    <input type="text" id="generate-suffix" class="wc-input" placeholder="${msg('e.g., _temp')}">
                 </div>
                 
-                <button id="generate-btn" class="wc-button" @click=${this.handleGenerate}>Generate Hash</button>
+                <button id="generate-btn" class="wc-button" @click=${this.handleGenerate}>${msg('Generate Hash')}</button>
             </div>
         `;
     }

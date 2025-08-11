@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I18n Test - HashRand</title>
+    <script type="module">
+        // Simple test to verify language switching works
+        import { localeService } from './web-ui/src/i18n/locale-service.js';
+        
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Testing i18n functionality...');
+            
+            // Test language detection
+            const currentLocale = localeService.getCurrentLocale();
+            console.log('Current locale:', currentLocale);
+            
+            // Test supported locales
+            const supportedLocales = localeService.getSupportedLocales();
+            console.log('Supported locales:', supportedLocales);
+            
+            // Test language switching
+            for (const locale of ['es', 'fr', 'de', 'zh', 'ar']) {
+                console.log(`Testing ${locale}...`);
+                try {
+                    await localeService.setLocale(locale);
+                    console.log(`✓ ${locale} loaded successfully`);
+                    console.log(`  Display name: ${localeService.getLocaleDisplayName(locale)}`);
+                    console.log(`  RTL: ${localeService.isRTL(locale)}`);
+                } catch (error) {
+                    console.error(`✗ Failed to load ${locale}:`, error);
+                }
+            }
+            
+            // Return to English
+            await localeService.setLocale('en');
+            console.log('I18n test completed!');
+        });
+    </script>
+</head>
+<body>
+    <h1>I18n Test Page</h1>
+    <p>Open browser console to see test results.</p>
+    <p>Visit <a href="http://localhost:3000">http://localhost:3000</a> to test the full UI.</p>
+</body>
+</html>

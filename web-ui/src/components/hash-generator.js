@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 
 export class HashGenerator extends LitElement {
     @state()
@@ -109,6 +110,9 @@ export class HashGenerator extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         
+        // Enable automatic re-rendering when locale changes
+        updateWhenLocaleChanges(this);
+        
         // Listen for navigation events
         this.addEventListener('back-to-menu', (e) => {
             e.stopPropagation();
@@ -145,20 +149,20 @@ export class HashGenerator extends LitElement {
                 <div class="menu-grid">
                     <div class="menu-card" data-mode="generate" @click=${this.handleMenuClick}>
                         <div class="menu-icon">🎲</div>
-                        <h3>Generic Hash</h3>
-                        <p>Generate customizable hashes with various alphabets</p>
+                        <h3>${msg('Generic Hash')}</h3>
+                        <p>${msg('Generate customizable hashes with various alphabets')}</p>
                     </div>
                     
                     <div class="menu-card" data-mode="password" @click=${this.handleMenuClick}>
                         <div class="menu-icon">🔐</div>
-                        <h3>Password</h3>
-                        <p>Create strong passwords with symbols</p>
+                        <h3>${msg('Password')}</h3>
+                        <p>${msg('Create strong passwords with symbols')}</p>
                     </div>
                     
                     <div class="menu-card" data-mode="apiKey" @click=${this.handleMenuClick}>
                         <div class="menu-icon">🔑</div>
-                        <h3>API Key</h3>
-                        <p>Generate secure API keys (ak_ prefix)</p>
+                        <h3>${msg('API Key')}</h3>
+                        <p>${msg('Generate secure API keys (ak_ prefix)')}</p>
                     </div>
                 </div>
             </div>

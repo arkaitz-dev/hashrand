@@ -1,0 +1,67 @@
+
+    // Do not modify this file by hand!
+    // Re-generate this file by running lit-localize
+
+    
+    
+
+    /* eslint-disable no-irregular-whitespace */
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
+    export const templates = {
+      's0a13e60adeced2c7': `使用相同配置重新生成`,
+      's15d0c0657c1ee08c': `API Key`,
+      's1c85b8d275e0c0ed': `完整字母数字提供最高兼容性。强安全性最少需要44个字符。`,
+      's202fffd5a2e1c595': `长度`,
+      's24ac855a22e91ed1': `🔑 生成 API Key`,
+      's27689c7297057a5a': `字母表`,
+      's28837159eb0f0e98': `🔐 生成密码`,
+      's2a94afd30870fd9e': `使用随机字符`,
+      's2df8e71fd77cbf19': `例如，user_`,
+      's3315e928cbdad1c3': `后缀（可选）`,
+      's3322dd5099cb42be': `无相似字符字母表（易于输入）`,
+      's3687049d1af562c4': `复制`,
+      's3b2c609c36fb81f9': `安全提示：`,
+      's40a858e1b8b4bbcd': `已生成的 API Key`,
+      's44fcd6d6af73753d': `返回配置`,
+      's4658fcaa4f2d868e': `字母表类型`,
+      's4cff43e01640e2c2': `完整字母数字（最高兼容性）`,
+      's5043982843fc81dc': `无相似字符（易于输入）`,
+      's550253c729ec9fc4': `Base58 (比特币)`,
+      's555ae2231a4ece23': `创建包含符号的强密码`,
+      's5f343a43e7ea9f91': `错误`,
+      's68995eb38bdd5eba': `生成哈希`,
+      's7d6ed23f1f594243': `使用不同字母表生成可定制的哈希`,
+      's7e12e42ab30f5ed0': `完整字母表含符号提供最大熄值。强安全性最少需要21个字符。`,
+      's80908076f581f5cf': `重新生成`,
+      's84b08debc4282721': `生成安全的 API Key（ak_ 前缀）`,
+      's8516328a7d42dd69': `完整含符号`,
+      's8afa1d476c1bc5b8': `格式：`,
+      's8bf481a0b5d8a689': `生成中...`,
+      's8cd232c30a84f37a': `使用的配置`,
+      's95717aadefd4e5b8': `无相似字符`,
+      's962e5749c5e7ac87': `无相似字符排除易混淆字符。等效安全性最少需要47个字符。`,
+      's96aabe6deeb93e1d': `生成 API Key`,
+      's97f8ccce3bc253a6': `完整字母数字字母表`,
+      's9b8b8d4f9cbdb2eb': `生成密码`,
+      'sa15f96fc571ecac6': `例如，_temp`,
+      'sa2f0f4c94c8e8409': `前缀`,
+      'sa377a07ec82006ec': `后缀`,
+      'sa9aea6d9b752c31b': `已生成的密码`,
+      'sba8821b572531e29': `前缀`,
+      'sbdf3cb0b26244ab3': `安全性：`,
+      'sc02d6bb2955a30aa': `已生成的哈希`,
+      'sc147738d5cee9199': `个字符`,
+      'sd08465fda7482738': `完整含符号（最高安全性）`,
+      'sd41f46d2de2689a5': `无相似字符字母表排除易混淆字符。等效安全性最少需要24个字符。`,
+      'sd49e2519fe26700e': `← 返回菜单`,
+      'sd6a8d2140232b344': `前缀（可选）`,
+      'sdb915124a21bff52': `通用哈希`,
+      'sdcfc06f98d8a83f6': `返回菜单`,
+      'sdfb2b12b255de30c': `已复制！`,
+      'se586330ca3df8703': `🎲 生成自定义哈希`,
+      'sf1ef9a1818620083': `完整字母数字`,
+      'sf47c0d35ab5e063e': `重新生成中...`,
+      'sf6e1665c7022a1f8': `密码`,
+    };
+  

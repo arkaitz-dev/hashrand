@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 
 export class PasswordView extends LitElement {
     @state()
@@ -151,6 +152,12 @@ export class PasswordView extends LitElement {
 
     `;
 
+    connectedCallback() {
+        super.connectedCallback();
+        // Enable automatic re-rendering when locale changes
+        updateWhenLocaleChanges(this);
+    }
+
     render() {
         // Dynamic minimum length based on alphabet for same entropy (~130 bits)
         const minLength = this.alphabetType === 'no-look-alike' ? 24 : 21;
@@ -161,25 +168,25 @@ export class PasswordView extends LitElement {
         }
         
         return html`
-            <button class="wc-back-button" @click=${this.handleBackClick}>← Back to Menu</button>
+            <button class="wc-back-button" @click=${this.handleBackClick}>${msg('← Back to Menu')}</button>
             
             <div class="wc-form-section">
-                <h2>🔐 Generate Password</h2>
+                <h2>${msg('🔐 Generate Password')}</h2>
                 
                 <div class="wc-form-group">
-                    <label for="password-alphabet">Alphabet Type</label>
+                    <label for="password-alphabet">${msg('Alphabet Type')}</label>
                     <select id="password-alphabet" class="wc-select" @change=${this.handleAlphabetChange}>
                         <option value="full-with-symbols" ?selected=${this.alphabetType === 'full-with-symbols'}>
-                            Full with Symbols (Maximum Security)
+                            ${msg('Full with Symbols (Maximum Security)')}
                         </option>
                         <option value="no-look-alike" ?selected=${this.alphabetType === 'no-look-alike'}>
-                            No Look-alike (Easy to Type)
+                            ${msg('No Look-alike (Easy to Type)')}
                         </option>
                     </select>
                 </div>
                 
                 <div class="wc-form-group">
-                    <label for="password-length">Length (${minLength}-44 characters)</label>
+                    <label for="password-length">${msg('Length')} (${minLength}-44 ${msg('characters')})</label>
                     <div class="wc-range-group">
                         <input type="range" id="password-length" min="${minLength}" max="44" .value=${this.lengthValue.toString()} @input=${this.handleLengthChange}>
                         <span class="wc-range-value">${this.lengthValue}</span>
@@ -187,13 +194,13 @@ export class PasswordView extends LitElement {
                 </div>
                 
                 <div class="wc-info-box">
-                    <strong>Security Note:</strong> 
+                    <strong>${msg('Security Note:')}:</strong> 
                     ${this.alphabetType === 'no-look-alike' 
-                        ? 'No Look-alike alphabet excludes confusable characters. Minimum 24 characters for equivalent security.'
-                        : 'Full alphabet with symbols provides maximum entropy. Minimum 21 characters for strong security.'}
+                        ? msg('No Look-alike alphabet excludes confusable characters. Minimum 24 characters for equivalent security.')
+                        : msg('Full alphabet with symbols provides maximum entropy. Minimum 21 characters for strong security.')}
                 </div>
                 
-                <button id="password-btn" class="wc-button" @click=${this.handleGenerate}>Generate Password</button>
+                <button id="password-btn" class="wc-button" @click=${this.handleGenerate}>${msg('Generate Password')}</button>
             </div>
         `;
     }

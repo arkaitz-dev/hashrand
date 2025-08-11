@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="es" source-language="en" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="sdb915124a21bff52">
+  <source>Generic Hash</source>
+  <target>Hash Genérico</target>
+</trans-unit>
+<trans-unit id="s7d6ed23f1f594243">
+  <source>Generate customizable hashes with various alphabets</source>
+  <target>Genera hashes personalizables con varios alfabetos</target>
+</trans-unit>
+<trans-unit id="sf6e1665c7022a1f8">
+  <source>Password</source>
+  <target>Contraseña</target>
+</trans-unit>
+<trans-unit id="s555ae2231a4ece23">
+  <source>Create strong passwords with symbols</source>
+  <target>Crea contraseñas robustas con símbolos</target>
+</trans-unit>
+<trans-unit id="s15d0c0657c1ee08c">
+  <source>API Key</source>
+  <target>Clave API</target>
+</trans-unit>
+<trans-unit id="s84b08debc4282721">
+  <source>Generate secure API keys (ak_ prefix)</source>
+  <target>Genera claves API seguras (prefijo ak_)</target>
+</trans-unit>
+<trans-unit id="sd49e2519fe26700e">
+  <source>← Back to Menu</source>
+  <target>← Volver al Menú</target>
+</trans-unit>
+<trans-unit id="se586330ca3df8703">
+  <source>🎲 Generate Custom Hash</source>
+  <target>🎲 Generar Hash Personalizado</target>
+</trans-unit>
+<trans-unit id="s202fffd5a2e1c595">
+  <source>Length</source>
+  <target>Longitud</target>
+</trans-unit>
+<trans-unit id="s4658fcaa4f2d868e">
+  <source>Alphabet Type</source>
+  <target>Tipo de Alfabeto</target>
+</trans-unit>
+<trans-unit id="s550253c729ec9fc4">
+  <source>Base58 (Bitcoin)</source>
+  <target>Base58 (Bitcoin)</target>
+</trans-unit>
+<trans-unit id="s95717aadefd4e5b8">
+  <source>No Look-alike</source>
+  <target>Sin Similitudes</target>
+</trans-unit>
+<trans-unit id="sf1ef9a1818620083">
+  <source>Full Alphanumeric</source>
+  <target>Alfanumérico Completo</target>
+</trans-unit>
+<trans-unit id="s8516328a7d42dd69">
+  <source>Full with Symbols</source>
+  <target>Completo con Símbolos</target>
+</trans-unit>
+<trans-unit id="sd6a8d2140232b344">
+  <source>Prefix (optional)</source>
+  <target>Prefijo (opcional)</target>
+</trans-unit>
+<trans-unit id="s2df8e71fd77cbf19">
+  <source>e.g., user_</source>
+  <target>ej., usuario_</target>
+</trans-unit>
+<trans-unit id="s3315e928cbdad1c3">
+  <source>Suffix (optional)</source>
+  <target>Sufijo (opcional)</target>
+</trans-unit>
+<trans-unit id="sa15f96fc571ecac6">
+  <source>e.g., _temp</source>
+  <target>ej., _temporal</target>
+</trans-unit>
+<trans-unit id="s68995eb38bdd5eba">
+  <source>Generate Hash</source>
+  <target>Generar Hash</target>
+</trans-unit>
+<trans-unit id="s28837159eb0f0e98">
+  <source>🔐 Generate Password</source>
+  <target>🔐 Generar Contraseña</target>
+</trans-unit>
+<trans-unit id="sd08465fda7482738">
+  <source>Full with Symbols (Maximum Security)</source>
+  <target>Completo con Símbolos (Máxima Seguridad)</target>
+</trans-unit>
+<trans-unit id="s5043982843fc81dc">
+  <source>No Look-alike (Easy to Type)</source>
+  <target>Sin Similitudes (Fácil de Escribir)</target>
+</trans-unit>
+<trans-unit id="sc147738d5cee9199">
+  <source>characters</source>
+  <target>caracteres</target>
+</trans-unit>
+<trans-unit id="s3b2c609c36fb81f9">
+  <source>Security Note:</source>
+  <target>Nota de Seguridad:</target>
+</trans-unit>
+<trans-unit id="sd41f46d2de2689a5">
+  <source>No Look-alike alphabet excludes confusable characters. Minimum 24 characters for equivalent security.</source>
+  <target>El alfabeto Sin Similitudes excluye caracteres confusos. Mínimo 24 caracteres para seguridad equivalente.</target>
+</trans-unit>
+<trans-unit id="s7e12e42ab30f5ed0">
+  <source>Full alphabet with symbols provides maximum entropy. Minimum 21 characters for strong security.</source>
+  <target>El alfabeto completo con símbolos proporciona máxima entropía. Mínimo 21 caracteres para seguridad fuerte.</target>
+</trans-unit>
+<trans-unit id="s9b8b8d4f9cbdb2eb">
+  <source>Generate Password</source>
+  <target>Generar Contraseña</target>
+</trans-unit>
+<trans-unit id="s3322dd5099cb42be">
+  <source>no-look-alike alphabet (easy to type)</source>
+  <target>alfabeto sin similitudes (fácil de escribir)</target>
+</trans-unit>
+<trans-unit id="s97f8ccce3bc253a6">
+  <source>full alphanumeric alphabet</source>
+  <target>alfabeto alfanumérico completo</target>
+</trans-unit>
+<trans-unit id="s24ac855a22e91ed1">
+  <source>🔑 Generate API Key</source>
+  <target>🔑 Generar Clave API</target>
+</trans-unit>
+<trans-unit id="s4cff43e01640e2c2">
+  <source>Full Alphanumeric (Maximum Compatibility)</source>
+  <target>Alfanumérico Completo (Máxima Compatibilidad)</target>
+</trans-unit>
+<trans-unit id="s8afa1d476c1bc5b8">
+  <source>Format:</source>
+  <target>Formato:</target>
+</trans-unit>
+<trans-unit id="sba8821b572531e29">
+  <source>prefix</source>
+  <target>prefijo</target>
+</trans-unit>
+<trans-unit id="s2a94afd30870fd9e">
+  <source>random characters using</source>
+  <target>caracteres aleatorios usando</target>
+</trans-unit>
+<trans-unit id="sbdf3cb0b26244ab3">
+  <source>Security:</source>
+  <target>Seguridad:</target>
+</trans-unit>
+<trans-unit id="s962e5749c5e7ac87">
+  <source>No Look-alike excludes confusable characters. Minimum 47 characters for equivalent security.</source>
+  <target>Sin Similitudes excluye caracteres confusos. Mínimo 47 caracteres para seguridad equivalente.</target>
+</trans-unit>
+<trans-unit id="s1c85b8d275e0c0ed">
+  <source>Full alphanumeric provides maximum compatibility. Minimum 44 characters for strong security.</source>
+  <target>Alfanumérico completo proporciona máxima compatibilidad. Mínimo 44 caracteres para seguridad fuerte.</target>
+</trans-unit>
+<trans-unit id="s96aabe6deeb93e1d">
+  <source>Generate API Key</source>
+  <target>Generar Clave API</target>
+</trans-unit>
+<trans-unit id="s44fcd6d6af73753d">
+  <source>Back to Configuration</source>
+  <target>Volver a Configuración</target>
+</trans-unit>
+<trans-unit id="sdcfc06f98d8a83f6">
+  <source>Back to Menu</source>
+  <target>Volver al Menú</target>
+</trans-unit>
+<trans-unit id="s8bf481a0b5d8a689">
+  <source>Generating...</source>
+  <target>Generando...</target>
+</trans-unit>
+<trans-unit id="s5f343a43e7ea9f91">
+  <source>Error</source>
+  <target>Error</target>
+</trans-unit>
+<trans-unit id="s3687049d1af562c4">
+  <source>Copy</source>
+  <target>Copiar</target>
+</trans-unit>
+<trans-unit id="s8cd232c30a84f37a">
+  <source>Configuration Used</source>
+  <target>Configuración Utilizada</target>
+</trans-unit>
+<trans-unit id="sf47c0d35ab5e063e">
+  <source>Regenerating...</source>
+  <target>Regenerando...</target>
+</trans-unit>
+<trans-unit id="sa9aea6d9b752c31b">
+  <source>Generated Password</source>
+  <target>Contraseña Generada</target>
+</trans-unit>
+<trans-unit id="s40a858e1b8b4bbcd">
+  <source>Generated API Key</source>
+  <target>Clave API Generada</target>
+</trans-unit>
+<trans-unit id="sc02d6bb2955a30aa">
+  <source>Generated Hash</source>
+  <target>Hash Generado</target>
+</trans-unit>
+<trans-unit id="s0a13e60adeced2c7">
+  <source>Regenerate with Same Configuration</source>
+  <target>Regenerar con la Misma Configuración</target>
+</trans-unit>
+<trans-unit id="s80908076f581f5cf">
+  <source>Regenerate</source>
+  <target>Regenerar</target>
+</trans-unit>
+<trans-unit id="s27689c7297057a5a">
+  <source>Alphabet</source>
+  <target>Alfabeto</target>
+</trans-unit>
+<trans-unit id="sa2f0f4c94c8e8409">
+  <source>Prefix</source>
+  <target>Prefijo</target>
+</trans-unit>
+<trans-unit id="sa377a07ec82006ec">
+  <source>Suffix</source>
+  <target>Sufijo</target>
+</trans-unit>
+<trans-unit id="sdfb2b12b255de30c">
+  <source>Copied!</source>
+  <target>¡Copiado!</target>
+</trans-unit>
+</body>
+</file>
+</xliff>
