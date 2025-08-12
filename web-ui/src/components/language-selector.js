@@ -19,7 +19,6 @@ export class LanguageSelector extends LitElement {
     static styles = css`
         :host {
             display: inline-block !important;
-            margin-left: 1rem;
             position: relative;
             visibility: visible !important;
         }
@@ -87,9 +86,30 @@ export class LanguageSelector extends LitElement {
         
         updateWhenLocaleChanges(this);
         
+        // Update currentLocale from actual locale
         this.currentLocale = getLocale();
+        
+        // Listen for locale changes
+        this.updateLocaleFromSystem();
 
         document.addEventListener('click', this.handleDocumentClick.bind(this));
+    }
+
+    updateLocaleFromSystem() {
+        // Check periodically for locale changes until it's properly set
+        const checkLocale = () => {
+            const actualLocale = getLocale();
+            if (this.currentLocale !== actualLocale) {
+                console.log(`LanguageSelector updating from ${this.currentLocale} to ${actualLocale}`);
+                this.currentLocale = actualLocale;
+                this.requestUpdate();
+            }
+        };
+        
+        // Check immediately and after a short delay to handle async locale setting
+        checkLocale();
+        setTimeout(checkLocale, 100);
+        setTimeout(checkLocale, 500);
     }
 
     disconnectedCallback() {
@@ -136,6 +156,20 @@ export class LanguageSelector extends LitElement {
             'ar': '🇸🇦'
         };
         return flags[locale] || '🌐';
+    }
+
+    getLocaleDisplayName(locale) {
+        const names = {
+            'en': 'English',
+            'es': 'Español',
+            'fr': 'Français',
+            'pt': 'Português',
+            'de': 'Deutsch',
+            'ru': 'Русский',
+            'zh': '中文',
+            'ar': 'العربية'
+        };
+        return names[locale] || locale;
     }
 
     render() {

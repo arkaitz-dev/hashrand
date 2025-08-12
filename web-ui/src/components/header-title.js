@@ -20,12 +20,19 @@ export class HeaderTitle extends LitElement {
         p {
             opacity: 0.9;
             font-size: 1.1rem;
+            margin-bottom: 1rem;
         }
 
         .version {
             font-size: 0.8rem;
             opacity: 0.7;
             font-weight: 400;
+        }
+
+        .language-selector-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -58,8 +65,11 @@ export class HeaderTitle extends LitElement {
 
     render() {
         return html`
-            <h1>🎲 HashRand ${this.version ? html`<span class="version">v${this.version}</span>` : ''}<slot name="language-selector"></slot></h1>
+            <h1>🎲 HashRand ${this.version ? html`<span class="version">v${this.version}</span>` : ''}</h1>
             <p>${msg('Secure Random Hash Generator with Multiple Alphabets')}</p>
+            <div class="language-selector-container">
+                <slot name="language-selector"></slot>
+            </div>
         `;
     }
 }
