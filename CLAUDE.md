@@ -15,25 +15,39 @@ hashrand/
 
 ### Quick Start
 ```bash
-just dev                    # Launch both servers (recommended)
-                           # Auto-configures Tailscale if available
-just build && just serve    # Production build & serve
+# Development (recommended)
+just dev                    # Launch both servers + Tailscale serve
 just stop-dev              # Stop all servers and cleanup
+
+# Production  
+just build && just serve    # Manual production build & serve
+just run-installed          # Install binary + run on port 3000 + Tailscale
+just stop-installed         # Stop production binary and Tailscale
 ```
 
 ### Commands
+
+#### Development
 - **`just dev`**: Development (frontend:3000 + API:8080) + Tailscale serve
 - **`just stop-dev`**: Stop all dev servers and Tailscale serve
-- **`just build`**: Production build (npm + cargo)
-- **`just serve`**: Run production server
-- **`just test`**: Run all tests (46 passing)
 - **`just status`**: Check server status
 
-### Remote Development
-- **Tailscale Integration**: `just dev` automatically configures Tailscale serve if installed
+#### Production
+- **`just build`**: Production build (npm + cargo)
+- **`just serve`**: Run production server
+- **`just install`**: Install binary locally (with tests)
+- **`just run-installed`**: Install binary + run on port 3000 + Tailscale serve
+- **`just stop-installed`**: Stop installed binary and Tailscale serve
+
+#### Testing
+- **`just test`**: Run all tests (46 passing)
+
+### Remote Development & Production
+- **Development**: `just dev` automatically configures Tailscale serve if installed
+- **Production**: `just run-installed` installs binary and serves on port 3000 with Tailscale
 - **Secure HTTPS Access**: Remote access via `https://machine-name.ts.net`
 - **Zero Configuration**: Works out-of-the-box, no manual setup required
-- **Auto-cleanup**: `just stop-dev` properly stops Tailscale configuration
+- **Auto-cleanup**: Both `just stop-dev` and `just stop-installed` properly clean up Tailscale
 
 ## Key Implementation Notes
 

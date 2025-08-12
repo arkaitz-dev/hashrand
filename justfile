@@ -130,3 +130,65 @@ test: npm-test cargo-test
 install: test
     npm run build
     cargo install --path .
+
+# Run installed binary with Tailscale
+run-installed: stop-dev
+    #!/bin/bash
+    echo "Installing hashrand binary..."
+    just install
+    
+    # Check if port 3000 is already in use
+    if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null; then
+        echo "Port 3000 already in use - killing existing process"
+        pkill -f "hashrand.*serve.*3000" || true
+        sleep 1
+    fi
+    
+    echo "Starting installed hashrand binary on port 3000..."
+    nohup hashrand --serve 3000 > /tmp/hashrand-installed.log 2>&1 & echo $! > /tmp/hashrand-installed.pid
+    echo "hashrand binary started (PID: $(cat /tmp/hashrand-installed.pid))"
+    echo "Logs: tail -f /tmp/hashrand-installed.log"
+    
+    # Configure Tailscale if available
+    if command -v tailscale &> /dev/null; then
+        echo "Configuring Tailscale serve..."
+        # First stop any existing serve configuration
+        tailscale serve --https=443 off 2>/dev/null || true
+        # Then start serving the binary
+        tailscale serve --bg http://localhost:3000
+        # Try to get the Tailscale hostname
+        if command -v jq &> /dev/null; then
+            TAILSCALE_URL="https://$(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
+            echo "Tailscale: $TAILSCALE_URL"
+        else
+            echo "Tailscale: https://elite.faun-pirate.ts.net/"
+            echo "(Note: Install jq for automatic hostname detection)"
+        fi
+    fi
+    
+    echo ""
+    echo "Production environment ready!"
+    echo "Local: http://localhost:3000"
+    echo "Stop with: just stop-installed"
+
+# Stop installed binary and Tailscale
+stop-installed:
+    #!/bin/bash
+    echo "Stopping installed binary and Tailscale..."
+    
+    # Stop Tailscale serve if available
+    if command -v tailscale &> /dev/null; then
+        echo "Stopping Tailscale serve..."
+        tailscale serve --https=443 off 2>/dev/null || true
+    fi
+    
+    # Stop installed binary
+    if [ -f /tmp/hashrand-installed.pid ]; then
+        kill $(cat /tmp/hashrand-installed.pid) 2>/dev/null || true
+        rm -f /tmp/hashrand-installed.pid
+        echo "hashrand binary stopped"
+    fi
+    
+    # Cleanup any remaining hashrand processes on port 3000
+    pkill -f "hashrand.*serve.*3000" 2>/dev/null || true
+    echo "Installed binary environment stopped"

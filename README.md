@@ -145,10 +145,12 @@ git clone <repo>
 cd hashrand
 
 # Development workflow (justfile recommended)
-just dev        # Start both servers
-just test       # Run all tests
-just build      # Build for production
-just install    # Install binary
+just dev              # Start both servers + Tailscale
+just test             # Run all tests
+just build            # Build for production
+just install          # Install binary
+just run-installed    # Install + run production + Tailscale
+just stop-installed   # Stop production binary
 
 # Manual workflow
 npm run dev     # Frontend dev server
