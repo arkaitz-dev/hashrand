@@ -218,6 +218,10 @@
   <source>Copied!</source>
   <target>已复制！</target>
 </trans-unit>
+<trans-unit id="sb6ad0fe925fa8e5c">
+  <source>Secure Random Hash Generator with Multiple Alphabets</source>
+  <target>安全随机哈希生成器，支持多种字母表</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

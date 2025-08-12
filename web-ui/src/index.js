@@ -6,6 +6,7 @@ import { sourceLocale, targetLocales } from './locales/locale-codes.js';
 import { apiFetch } from './utils/api.js';
 
 // Import all Lit components
+import './components/header-title.js';
 import './components/hash-generator.js';
 import './components/generic-hash-view.js';
 import './components/password-view.js';
@@ -13,21 +14,6 @@ import './components/api-key-view.js';
 import './components/hash-result.js';
 import './components/language-selector.js';
 
-// Load version from API
-async function loadVersion() {
-    try {
-        const response = await apiFetch('/api/version');
-        if (response.ok) {
-            const data = await response.json();
-            const versionElement = document.getElementById('version');
-            if (versionElement) {
-                versionElement.textContent = `v${data.version}`;
-            }
-        }
-    } catch (error) {
-        console.warn('Could not load version:', error);
-    }
-}
 
 // Initialize locale detection and persistence
 function determineInitialLocale() {
@@ -52,9 +38,8 @@ function determineInitialLocale() {
     return sourceLocale;
 }
 
-// Load version and initialize locale when DOM is ready  
+// Initialize locale when DOM is ready  
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadVersion();
     
     // Set initial locale
     const initialLocale = determineInitialLocale();

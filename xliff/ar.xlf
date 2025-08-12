@@ -218,6 +218,10 @@
   <source>Copied!</source>
   <target>تم النسخ!</target>
 </trans-unit>
+<trans-unit id="sb6ad0fe925fa8e5c">
+  <source>Secure Random Hash Generator with Multiple Alphabets</source>
+  <target>مولد هاش عشوائي آمن بأبجديات متعددة</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
