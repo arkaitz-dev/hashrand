@@ -3,9 +3,12 @@ import babel from 'vite-plugin-babel'
 
 export default defineConfig({
   root: 'web-ui',
+  base: '/',
   publicDir: 'public',
   server: {
     port: 3000,
+    host: true,
+    allowedHosts: ['elite.faun-pirate.ts.net', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8080',

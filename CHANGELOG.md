@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-08-12
+
+### Added
+- **Tailscale Integration**: Automatic Tailscale serve configuration in development workflow
+  - **Smart Detection**: `just dev` automatically detects and configures Tailscale if available
+  - **Secure Remote Access**: Enables HTTPS access from any device in your Tailscale network
+  - **Automatic Cleanup**: `just stop-dev` properly stops Tailscale serve configuration
+  - **Zero Configuration**: Works out-of-the-box without manual Tailscale setup
+  - **Hostname Detection**: Automatically displays Tailscale URL (requires `jq` for auto-detection)
+
 ### Changed
+- **Development Workflow Simplification**: Streamlined Vite and build configuration
+  - **Simplified Configuration**: Removed complex proxy prefixes and conditional logic from `vite.config.js`
+  - **Clean API Utils**: Simplified `buildApiUrl()` function to work reliably in all environments
+  - **Production-Ready Builds**: Ensured production builds work correctly without development-specific code
+  - **Reliable Remote Access**: Fixed Tailscale access issues by eliminating problematic URL prefixes
+
 - **NoLookAlike Alphabet Update**: Refined character set for better confusion prevention
   - **New alphabet**: `346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz` (49 characters)
   - **Additional exclusions**: 2, 5, S, s, o, u, v, Z (alongside original 0, O, I, l, 1)

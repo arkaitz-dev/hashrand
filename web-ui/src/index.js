@@ -2,6 +2,9 @@
 import { getLocale, setLocale } from './localization.js';
 import { sourceLocale, targetLocales } from './locales/locale-codes.js';
 
+// Import API utilities
+import { apiFetch } from './utils/api.js';
+
 // Import all Lit components
 import './components/hash-generator.js';
 import './components/generic-hash-view.js';
@@ -13,7 +16,7 @@ import './components/language-selector.js';
 // Load version from API
 async function loadVersion() {
     try {
-        const response = await fetch('/api/version');
+        const response = await apiFetch('/api/version');
         if (response.ok) {
             const data = await response.json();
             const versionElement = document.getElementById('version');

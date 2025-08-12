@@ -23,9 +23,10 @@ hashrand --password         # Generate secure password
 hashrand --api-key          # Generate API key
 
 # Development (with justfile)
-just dev                    # Start dev servers
+just dev                    # Start dev servers (auto-configures Tailscale if available)
 just build                  # Build for production
 just test                   # Run all tests
+just stop-dev               # Stop all dev servers and Tailscale serve
 ```
 
 ## CLI Usage
@@ -78,6 +79,7 @@ Start a web server with REST API and interactive web interface:
 ```bash
 # Development (with justfile)
 just dev                    # Starts both API server (8080) and frontend (3000)
+                           # Auto-configures Tailscale serve if available
 
 # Production
 just build                  # Build optimized version
@@ -87,8 +89,26 @@ just serve                  # Run production server
 hashrand --serve 8080       # Start server on port 8080
 ```
 
-**Web Interface**: Visit `http://localhost:8080` for the interactive UI
+**Web Interface**: Visit `http://localhost:3000` (dev) or `http://localhost:8080` (production)
 **API Endpoints**: `/api/generate`, `/api/password`, `/api/api-key`
+
+### Remote Development with Tailscale
+
+If you have Tailscale installed, `just dev` automatically configures secure remote access:
+
+```bash
+just dev
+# Output includes:
+# Configuring Tailscale serve...
+# Tailscale: https://your-machine.ts.net
+
+# Now accessible from any device in your Tailscale network
+```
+
+**Benefits**:
+- Secure HTTPS access from any device
+- No manual configuration needed
+- Automatically stops when running `just stop-dev`
 
 ## Documentation
 

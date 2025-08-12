@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { buildApiUrl } from '../utils/api.js';
 
 export class HashGenerator extends LitElement {
     @state()
@@ -227,7 +228,7 @@ export class HashGenerator extends LitElement {
                 if (parameters.alphabet) {
                     params.append('alphabet', parameters.alphabet);
                 }
-                url = `/api/api-key?${params}`;
+                url = buildApiUrl(`/api/api-key?${params}`);
                 response = await fetch(url);
             } else if (hashType === 'password') {
                 const params = new URLSearchParams({ 
@@ -237,7 +238,7 @@ export class HashGenerator extends LitElement {
                 if (parameters.alphabet) {
                     params.append('alphabet', parameters.alphabet);
                 }
-                url = `/api/password?${params}`;
+                url = buildApiUrl(`/api/password?${params}`);
                 response = await fetch(url);
             } else {
                 // Generic hash
@@ -250,7 +251,7 @@ export class HashGenerator extends LitElement {
                 if (parameters.prefix) params.append('prefix', parameters.prefix);
                 if (parameters.suffix) params.append('suffix', parameters.suffix);
                 
-                url = `/api/generate?${params}`;
+                url = buildApiUrl(`/api/generate?${params}`);
                 response = await fetch(url);
             }
             

@@ -13,6 +13,8 @@ dev-npm:
     echo "npm dev server started (PID: $(cat /tmp/hashrand-npm.pid))"
     echo "Logs: tail -f /tmp/hashrand-npm.log"
 
+
+
 # Launch cargo watch server in background
 dev-cargo:
     #!/bin/bash
@@ -28,16 +30,43 @@ dev-cargo:
 
 # Launch both development servers
 dev: dev-cargo dev-npm
-    @echo "Development environment ready!"
-    @echo "Frontend: http://localhost:3000"
-    @echo "Backend:  http://localhost:8080"
-    @echo ""
-    @echo "Stop servers with: just stop-dev"
+    #!/bin/bash
+    echo "Development environment ready!"
+    echo "Frontend: http://localhost:3000"
+    echo "Backend:  http://localhost:8080"
+    echo ""
+    
+    # Configure Tailscale if available
+    if command -v tailscale &> /dev/null; then
+        echo "Configuring Tailscale serve..."
+        # First stop any existing serve configuration
+        tailscale serve --https=443 off 2>/dev/null || true
+        # Then start serving the frontend
+        tailscale serve --bg http://localhost:3000
+        # Try to get the Tailscale hostname
+        if command -v jq &> /dev/null; then
+            TAILSCALE_URL="https://$(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
+            echo "Tailscale: $TAILSCALE_URL"
+        else
+            echo "Tailscale: https://elite.faun-pirate.ts.net/"
+            echo "(Note: Install jq for automatic hostname detection)"
+        fi
+    fi
+    
+    echo ""
+    echo "Stop servers with: just stop-dev"
 
 # Stop development servers
 stop-dev:
     #!/bin/bash
     echo "Stopping development servers..."
+    
+    # Stop Tailscale serve if available
+    if command -v tailscale &> /dev/null; then
+        echo "Stopping Tailscale serve..."
+        tailscale serve --https=443 off 2>/dev/null || true
+    fi
+    
     if [ -f /tmp/hashrand-npm.pid ]; then
         kill $(cat /tmp/hashrand-npm.pid) 2>/dev/null || true
         rm -f /tmp/hashrand-npm.pid
