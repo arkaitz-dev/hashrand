@@ -28,6 +28,7 @@ dev-cargo:
     echo "cargo watch server started (PID: $(cat /tmp/hashrand-cargo.pid))"
     echo "Logs: tail -f /tmp/hashrand-cargo.log"
 
+
 # Launch both development servers
 dev: dev-cargo dev-npm
     #!/bin/bash
