@@ -27,24 +27,24 @@ export class LanguageSelector extends LitElement {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.375rem;
         }
 
         .language-dropdown {
             position: absolute;
             top: 100%;
-            left: 0;
+            right: 0;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
-            min-width: 160px;
+            min-width: 180px;
             opacity: 0;
             pointer-events: none;
             margin-top: 0.25rem;
@@ -53,6 +53,12 @@ export class LanguageSelector extends LitElement {
         .language-dropdown.show {
             opacity: 1;
             pointer-events: auto;
+        }
+
+        /* RTL dropdown positioning - applied dynamically via class */
+        .language-dropdown.rtl-align {
+            right: auto !important;
+            left: 0 !important;
         }
 
         .language-option {
@@ -66,7 +72,7 @@ export class LanguageSelector extends LitElement {
             background: none;
             width: 100%;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .language-option:hover {
@@ -91,6 +97,9 @@ export class LanguageSelector extends LitElement {
         
         // Listen for locale changes
         this.updateLocaleFromSystem();
+        
+        // Set initial dropdown alignment
+        this.updateDropdownAlignment();
 
         document.addEventListener('click', this.handleDocumentClick.bind(this));
     }
@@ -102,6 +111,7 @@ export class LanguageSelector extends LitElement {
             if (this.currentLocale !== actualLocale) {
                 console.log(`LanguageSelector updating from ${this.currentLocale} to ${actualLocale}`);
                 this.currentLocale = actualLocale;
+                this.updateDropdownAlignment();
                 this.requestUpdate();
             }
         };
@@ -110,6 +120,21 @@ export class LanguageSelector extends LitElement {
         checkLocale();
         setTimeout(checkLocale, 100);
         setTimeout(checkLocale, 500);
+    }
+
+    updateDropdownAlignment() {
+        // Update dropdown alignment based on document direction
+        this.updateComplete.then(() => {
+            const dropdown = this.shadowRoot.querySelector('.language-dropdown');
+            if (dropdown) {
+                const isRTL = document.documentElement.dir === 'rtl';
+                if (isRTL) {
+                    dropdown.classList.add('rtl-align');
+                } else {
+                    dropdown.classList.remove('rtl-align');
+                }
+            }
+        });
     }
 
     disconnectedCallback() {
@@ -137,6 +162,9 @@ export class LanguageSelector extends LitElement {
             // Update document properties
             document.documentElement.lang = locale;
             document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+            
+            // Update dropdown alignment after direction change
+            this.updateDropdownAlignment();
             
             // Store preference
             localStorage.setItem('hashrand-locale', locale);
@@ -173,6 +201,7 @@ export class LanguageSelector extends LitElement {
     }
 
     render() {
+        const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
                 class="language-button" 
@@ -182,7 +211,7 @@ export class LanguageSelector extends LitElement {
                 <span>${this.getLocaleDisplayName(this.currentLocale)}</span>
             </button>
             
-            <div class="language-dropdown ${this.showDropdown ? 'show' : ''}">
+            <div class="language-dropdown ${this.showDropdown ? 'show' : ''} ${isRTL ? 'rtl-align' : ''}">
                 ${allLocales.map(locale => html`
                     <button
                         class="language-option ${locale === this.currentLocale ? 'current' : ''}"

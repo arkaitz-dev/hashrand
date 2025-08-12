@@ -26,6 +26,7 @@ body {
     color: white;
     padding: 2rem;
     text-align: center;
+    position: relative;
 }
 
 .header h1 {
@@ -43,6 +44,20 @@ body {
     font-size: 0.8rem;
     opacity: 0.7;
     font-weight: 400;
+}
+
+/* Language selector positioning */
+.language-selector-top-right {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 1001;
+}
+
+/* RTL positioning for Arabic */
+[dir="rtl"] .language-selector-top-right {
+    right: auto;
+    left: 1.5rem;
 }
 
 .content {
