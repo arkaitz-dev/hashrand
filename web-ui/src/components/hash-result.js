@@ -321,16 +321,25 @@ export class HashResult extends LitElement {
         }
         
         if (this.parameters.alphabet) {
-            const alphabetNames = {
-                'base58': 'Base58 (Bitcoin)',
-                'no-look-alike': 'No Look-alike',
-                'full': 'Full Alphanumeric',
-                'full-with-symbols': 'Full with Symbols'
-            };
+            let alphabetName = this.parameters.alphabet;
+            switch (this.parameters.alphabet) {
+                case 'base58':
+                    alphabetName = msg('Base58 (Bitcoin)');
+                    break;
+                case 'no-look-alike':
+                    alphabetName = msg('No Look-alike');
+                    break;
+                case 'full':
+                    alphabetName = msg('Full Alphanumeric');
+                    break;
+                case 'full-with-symbols':
+                    alphabetName = msg('Full with Symbols');
+                    break;
+            }
             params.push(html`
                 <div class="parameter-item">
                     <span class="parameter-label">${msg('Alphabet')}:</span>
-                    <span class="parameter-value">${alphabetNames[this.parameters.alphabet] || this.parameters.alphabet}</span>
+                    <span class="parameter-value">${alphabetName}</span>
                 </div>
             `);
         }
