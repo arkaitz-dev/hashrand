@@ -181,7 +181,11 @@ export class LanguageSelector extends LitElement {
             'de': '🇩🇪',
             'ru': '🇷🇺',
             'zh': '🇨🇳',
-            'ar': '🇸🇦'
+            'ar': '🇸🇦',
+            'eu': 'EUS',  // Euskara
+            'ca': 'CAT',  // Català  
+            'gl': 'GAL',  // Galego
+            'ja': '🇯🇵'
         };
         return flags[locale] || '🌐';
     }
@@ -195,7 +199,11 @@ export class LanguageSelector extends LitElement {
             'de': 'Deutsch',
             'ru': 'Русский',
             'zh': '中文',
-            'ar': 'العربية'
+            'ar': 'العربية',
+            'eu': 'Euskara',
+            'ca': 'Català',
+            'gl': 'Galego',
+            'ja': '日本語'
         };
         return names[locale] || locale;
     }
@@ -208,7 +216,7 @@ export class LanguageSelector extends LitElement {
                 @click=${this.toggleDropdown}
             >
                 <span>${this.getLanguageFlag(this.currentLocale)}</span>
-                <span>${this.getLocaleDisplayName(this.currentLocale)}</span>
+                <span>🌐</span>
             </button>
             
             <div class="language-dropdown ${this.showDropdown ? 'show' : ''} ${isRTL ? 'rtl-align' : ''}">

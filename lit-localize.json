@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/lit/lit/main/packages/localize-tools/config.schema.json",
   "sourceLocale": "en",
-  "targetLocales": ["es", "fr", "pt", "de", "ru", "zh", "ar"],
+  "targetLocales": ["es", "fr", "pt", "de", "ru", "zh", "ar", "eu", "ca", "gl", "ja"],
   "inputFiles": [
     "web-ui/src/**/*.js"
   ],

@@ -1,0 +1,68 @@
+
+    // Do not modify this file by hand!
+    // Re-generate this file by running lit-localize
+
+    
+    
+
+    /* eslint-disable no-irregular-whitespace */
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
+    export const templates = {
+      's0a13e60adeced2c7': `Berriro Sortu Konfigurazio Berarekin`,
+'s15d0c0657c1ee08c': `API Gakoa`,
+'s1c85b8d275e0c0ed': `Alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Gutxienez 44 karaktere segurtasun sendorako.`,
+'s202fffd5a2e1c595': `Luzera`,
+'s24ac855a22e91ed1': `🔑 Sortu API Gakoa`,
+'s27689c7297057a5a': `Alfabetoa`,
+'s28837159eb0f0e98': `🔐 Sortu Pasahitza`,
+'s2a94afd30870fd9e': `karaktere ausazkoak hau erabiliz`,
+'s2df8e71fd77cbf19': `adib., erabiltzaile_`,
+'s3315e928cbdad1c3': `Atzizkia (aukerakoa)`,
+'s3322dd5099cb42be': `antzekotasunik gabeko alfabetoa (idazteko erraza)`,
+'s3687049d1af562c4': `Kopiatu`,
+'s3b2c609c36fb81f9': `Segurtasun Oharra:`,
+'s40a858e1b8b4bbcd': `Sortutako API Gakoa`,
+'s44fcd6d6af73753d': `Konfiguraziora Itzuli`,
+'s4658fcaa4f2d868e': `Alfabeto Mota`,
+'s4cff43e01640e2c2': `Alfanumeriko Osoa (Bateragarritasun Maximoa)`,
+'s5043982843fc81dc': `Antzekotasunik Gabe (Idazteko Erraza)`,
+'s550253c729ec9fc4': `Base58 (Bitcoin)`,
+'s555ae2231a4ece23': `Sortu pasahitz sendoak simboloekin`,
+'s5f343a43e7ea9f91': `Errorea`,
+'s68995eb38bdd5eba': `Sortu Hash`,
+'s7d6ed23f1f594243': `Sortu hash pertsonalizatuak alfabeto ezberdinekin`,
+'s7e12e42ab30f5ed0': `Simbolodun alfabeto osoak entropia maximoa eskaintzen du. Gutxienez 21 karaktere segurtasun sendorako.`,
+'s80908076f581f5cf': `Berriro Sortu`,
+'s84b08debc4282721': `Sortu API gako seguruak (ak_ aurrizkia)`,
+'s8516328a7d42dd69': `Osoa Simboloekin`,
+'s8afa1d476c1bc5b8': `Formatua:`,
+'s8bf481a0b5d8a689': `Sortzen...`,
+'s8cd232c30a84f37a': `Erabilitako Konfigurazioa`,
+'s95717aadefd4e5b8': `Antzekotasunik Gabe`,
+'s962e5749c5e7ac87': `Antzekotasunik Gabeak karaktere nahasia baztertzen ditu. Gutxienez 47 karaktere segurtasun baliokiderako.`,
+'s96aabe6deeb93e1d': `Sortu API Gakoa`,
+'s97f8ccce3bc253a6': `alfabeto alfanumeriko osoa`,
+'s9b8b8d4f9cbdb2eb': `Sortu Pasahitza`,
+'sa15f96fc571ecac6': `adib., _tenporala`,
+'sa2f0f4c94c8e8409': `Aurrizkia`,
+'sa377a07ec82006ec': `Atzizkia`,
+'sa9aea6d9b752c31b': `Sortutako Pasahitza`,
+'sb6ad0fe925fa8e5c': `Ausazko Hash Sortzaile Segurua Alfabeto Anitzekin`,
+'sba8821b572531e29': `aurrizkia`,
+'sbdf3cb0b26244ab3': `Segurtasuna:`,
+'sc02d6bb2955a30aa': `Sortutako Hash`,
+'sc147738d5cee9199': `karaktere`,
+'sd08465fda7482738': `Osoa Simboloekin (Segurtasun Maximoa)`,
+'sd41f46d2de2689a5': `Antzekotasunik Gabeko alfabetoak karaktere nahasia baztertzen ditu. Gutxienez 24 karaktere segurtasun baliokiderako.`,
+'sd49e2519fe26700e': `← Menura Itzuli`,
+'sd6a8d2140232b344': `Aurrizkia (aukerakoa)`,
+'sdb915124a21bff52': `Hash Orokorra`,
+'sdcfc06f98d8a83f6': `Menura Itzuli`,
+'sdfb2b12b255de30c': `Kopiatuta!`,
+'se586330ca3df8703': `🎲 Sortu Hash Pertsonalizatua`,
+'sf1ef9a1818620083': `Alfanumeriko Osoa`,
+'sf47c0d35ab5e063e': `Berriro sortzen...`,
+'sf6e1665c7022a1f8': `Pasahitza`,
+    };
+  
