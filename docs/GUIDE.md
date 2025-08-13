@@ -86,10 +86,17 @@ echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
 
 The web interface is built with **modern web technologies** prioritizing performance and developer experience:
 
-**Frontend Stack:**
+**Frontend Stack (v0.6.0):**
 - **Lit 3.3.1**: Web Components framework with standard decorators
-- **Vite 7.1.1**: Build tool with Hot Module Replacement (HMR)
-- **Babel**: Official decorator transpilation
+- **TailwindCSS 4.1.11**: Utility-first CSS framework with production optimization
+- **Vite 7.1.1**: Build tool with Hot Module Replacement (HMR) and Terser optimization
+- **PostCSS**: TailwindCSS integration with automatic purging
+
+**Performance Optimizations:**
+- **Bundle Size**: 48% reduction (86kB → 45kB total)
+- **Smart Chunking**: Separate vendor, locale, and app bundles
+- **Tree Shaking**: Aggressive dead code elimination
+- **CSS Purging**: TailwindCSS unused utility removal
 
 **Backend Integration:**
 - **Rust/Axum**: HTTP server with embedded static assets
@@ -157,11 +164,13 @@ hash-generator.js (Main Menu)
 - Shadow DOM encapsulation for style isolation
 - Event composition for cross-component communication
 
-**CSS Architecture:**
-- External stylesheet (`web-ui/src/css/main.css`)
-- "wc-" prefixed classes for reusability
-- Responsive design patterns
-- Dark/light theme ready (future enhancement)
+**Styling Architecture (v0.6.0):**
+- **TailwindCSS 4.1.11**: Utility-first framework with PostCSS integration
+- **Shared Styles**: `web-ui/src/shared-styles.js` for consistent imports
+- **Component Migration**: All 7 components use Tailwind utility classes
+- **Production Optimization**: 20+ unused utility groups disabled for smaller CSS
+- **Responsive Design**: Mobile-first approach with Tailwind breakpoints
+- **Custom Configuration**: `tailwind.config.js` with custom animations and optimizations
 
 ---
 

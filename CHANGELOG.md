@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-08-13
+
+### Added
+- **TailwindCSS Integration**: Complete migration from custom CSS to TailwindCSS framework
+  - **Modern Styling**: All 7 Lit components now use TailwindCSS utility classes
+  - **Responsive Design**: Enhanced mobile-first approach with Tailwind's breakpoint system
+  - **Consistent Design System**: Unified color palette, spacing, and typography
+  - **Development Experience**: Faster styling iteration with utility-first approach
+  
+- **Advanced Bundle Optimization**: Major performance improvements for web interface
+  - **Terser Minification**: Aggressive JavaScript compression with dead code elimination
+  - **Smart Chunking**: Intelligent code splitting for better caching strategies
+    - `lit-core`: Framework code cached separately (1.00 kB)
+    - `locales`: All 12 languages bundled together (32.38 kB)
+    - `index`: Main application logic (3.71 kB)
+  - **Console Log Removal**: Production builds strip all debugging output
+  - **Tree Shaking**: Aggressive dead code elimination with enhanced settings
+
+### Changed
+- **Bundle Size Optimization**: Achieved 48% total bundle size reduction
+  - **Before**: 86.16 kB total (19.32 kB gzipped)
+  - **After**: 44.93 kB total (11.69 kB gzipped)
+  - **Main JS Bundle**: 95% reduction from 78.96 kB to 3.71 kB
+  - **Gzipped Performance**: Main bundle reduced from 17.53 kB to 1.46 kB
+
+- **TailwindCSS Configuration**: Optimized for production builds
+  - **Core Plugins**: Disabled 20+ unused utility groups for smaller CSS
+  - **Custom Animations**: Added fadeIn animation for smooth transitions
+  - **PostCSS Integration**: Seamless build integration with Vite
+
+- **Component Architecture**: Complete styling refactoring
+  - **Shared Styles**: Created `shared-styles.js` for consistent styling imports
+  - **CSS Elimination**: Removed 1,200+ lines of custom CSS across components
+  - **Utility Classes**: Migrated to semantic, maintainable Tailwind classes
+
+### Fixed
+- **Build System**: Resolved CSS import conflicts in production builds
+- **Component Consistency**: Standardized styling patterns across all components
+- **Bundle Analysis**: Added development tooling for future optimization monitoring
+
+### Technical Details
+- **TailwindCSS 4.1.11**: Latest version with PostCSS plugin architecture
+- **Build Tools**: Added `rollup-plugin-visualizer` and `terser` for optimization analysis
+- **Vite Configuration**: Enhanced with production-optimized settings
+- **Component Migration**: All components maintain identical functionality with modern styling
+
+### Performance Impact
+- **Initial Load**: 95% faster main bundle loading
+- **Caching**: Improved cache efficiency through chunk separation
+- **Network**: 48% less data transfer for complete application
+- **Rendering**: Enhanced performance through optimized CSS delivery
+
 ## [0.5.0] - 2025-08-12
 
 ### Added

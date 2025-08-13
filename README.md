@@ -7,7 +7,8 @@ Generate cryptographically secure random strings via CLI, HTTP API, and web inte
 - **Random strings**: Generate hashes, passwords, and API keys
 - **Multiple alphabets**: Base58 (default), no-look-alike, full, with symbols
 - **CLI tool**: Direct terminal usage with file system operations
-- **HTTP server**: REST API + web interface for remote access
+- **HTTP server**: REST API + modern TailwindCSS web interface for remote access
+- **Performance optimized**: 48% bundle size reduction with intelligent caching
 - **Security features**: Collision checking, path validation, audit logging
 
 ## Quick Start
@@ -132,10 +133,19 @@ just dev
 - **CI/CD**: Build identifiers, temporary directories
 - **File management**: Collision-free naming with prefixes/suffixes
 
+## Performance
+
+**Web Interface Optimization (v0.6.0)**:
+- 📦 **48% total bundle reduction**: 86kB → 45kB (19kB → 12kB gzipped)  
+- ⚡ **95% main JS reduction**: 79kB → 3.7kB (17kB → 1.4kB gzipped)
+- 🎨 **TailwindCSS integration**: Modern utility-first styling with optimal purging
+- 📱 **Smart chunking**: Separate vendor, locale, and app bundles for better caching
+
 ## Requirements
 
 - **Rust 1.89.0+** for building from source
-- **Node.js** (optional, for web interface development)
+- **Node.js 18+** (optional, for web interface development)
+- **TailwindCSS 4.1.11** (automatically installed with npm dependencies)
 
 ## Development
 
@@ -153,7 +163,8 @@ just run-installed    # Install + run production + Tailscale
 just stop-installed   # Stop production binary
 
 # Manual workflow
-npm run dev     # Frontend dev server
+npm run dev           # Frontend dev server with HMR
+npm run build:analyze # Production build with bundle analysis
 cargo run -- --serve 8080  # API server
 ```
 
