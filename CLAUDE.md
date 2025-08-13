@@ -149,25 +149,100 @@ Resolved persistent button focus issues across the application:
 - Navigation buttons eliminate focus after click events
 - Zero breaking changes maintained throughout
 
-## Current Session (2025-08-13)
+## Completed Session (2025-08-13)
 
-### Session Context
-- **Branch**: master (clean)
-- **Working Directory**: /home/arkaitz/proyectos/rust/hashrand
-- **Recent Commits**: Focus state improvements, multi-language support
+### Session Summary
+**Duration**: ~3 hours | **Branch**: master | **Version**: 0.5.0 → 0.6.0
 
-### Session Goals
-- Integrate TailwindCSS as the sole styling system
-- Remove all component-specific CSS styles  
-- Refactor all Lit components to use shared Tailwind styles
-- Maintain existing functionality and visual design
+**Primary Accomplishment**: Complete TailwindCSS integration with major performance optimization
 
-### Progress
-- Session initialized  
-- Memory system ready
-- **COMPLETED**: Full TailwindCSS integration
-- **COMPLETED**: All 7 Lit components refactored
-- **COMPLETED**: Both development and production builds tested successfully
+### Major Work Completed
+
+#### 1. TailwindCSS Migration (Phase 1-3)
+- **Installation & Configuration**: TailwindCSS v4.1.11 + @tailwindcss/postcss plugin
+- **Vite Integration**: Updated build system with PostCSS pipeline  
+- **CSS Entry Point**: Replaced `web-ui/src/css/main.css` with Tailwind directives
+- **Component Refactoring**: Migrated all 7 Lit components to utility classes
+  - `hash-generator.js`: Menu cards with responsive grid
+  - `hash-result.js`: Result display with navigation buttons
+  - `language-selector.js`: Dropdown with RTL support
+  - `header-title.js`: Title and version display
+  - `generic-hash-view.js`: Form inputs and controls
+  - `password-view.js`: Password generation interface
+  - `api-key-view.js`: API key generation interface
+- **HTML Container**: Updated main layout with Tailwind classes
+- **Shared Styles**: Created `web-ui/src/shared-styles.js` for consistent imports
+
+#### 2. Bundle Optimization (Advanced)
+- **Terser Configuration**: Aggressive JS minification with console.log removal
+- **Smart Chunking**: Separated vendor, locales, and app code
+  - `lit-core`: 1.00 kB (framework cache)
+  - `locales`: 32.38 kB (all 12 languages)  
+  - `index`: 3.71 kB (main app logic)
+- **TailwindCSS Optimization**: Disabled 20+ unused utility groups
+- **Tree Shaking**: Enhanced dead code elimination
+- **Bundle Analysis**: Added `npm run build:analyze` with visualizer
+
+#### 3. Performance Results
+- **Total Bundle**: 86.16 kB → 44.93 kB (48% reduction)
+- **Main JS**: 78.96 kB → 3.71 kB (95% reduction) 
+- **Gzipped Total**: 19.32 kB → 11.69 kB
+- **Main JS Gzipped**: 17.53 kB → 1.46 kB
+
+#### 4. Version Management & Documentation
+- **Version Bump**: 0.5.0 → 0.6.0 (semver minor)
+- **Files Updated**: package.json, Cargo.toml, CLAUDE.md
+- **CHANGELOG.md**: Comprehensive v0.6.0 entry with technical details
+- **README.md**: Added performance section and TailwindCSS mentions
+- **docs/GUIDE.md**: Updated web interface architecture section
+- **Git Commits**: 2 detailed commits with proper attribution
+
+### Technical Decisions Made
+
+1. **TailwindCSS v4 with PostCSS**: Chosen for latest features and build integration
+2. **Utility-First Approach**: Complete migration from component-specific CSS
+3. **Smart Chunking Strategy**: Optimized for caching and loading performance  
+4. **Shared Styles Pattern**: Centralized imports for maintainability
+5. **Production-Only Optimizations**: Terser and purging only in build mode
+
+### Files Created/Modified
+```
+Created:
++ tailwind.config.js (TailwindCSS configuration)
++ web-ui/src/shared-styles.js (Shared style imports)
+
+Modified:
+~ package.json (version, build scripts, dependencies)
+~ Cargo.toml (version bump)
+~ vite.config.js (PostCSS, optimization, chunking)
+~ web-ui/index.html (Tailwind layout classes)
+~ web-ui/src/css/main.css (Tailwind directives only)
+~ web-ui/src/components/*.js (7 components migrated)
+~ CLAUDE.md (session tracking, version)
+~ CHANGELOG.md (v0.6.0 entry)
+~ README.md (performance section, tech stack)
+~ docs/GUIDE.md (architecture updates)
+```
+
+### Testing & Validation
+- ✅ Development server: Functional on port 3019
+- ✅ Production build: Successful compilation (917ms)
+- ✅ Bundle analysis: Generated optimization metrics
+- ✅ All 46 tests: Passing
+- ✅ Functionality: Maintained across all features
+
+### Next Session Priorities
+1. Component testing (@web/test-runner) - original priority maintained
+2. Theme switching (dark/light) - enhanced by TailwindCSS
+3. TypeScript migration - easier with utility classes
+4. PWA features - improved by smaller bundles
+5. Batch generation - original roadmap item
+
+### Key Learnings
+- TailwindCSS v4 requires separate @tailwindcss/postcss plugin
+- CSS import attributes incompatible with Vite - use JS imports instead
+- Smart chunking more effective than manual chunk definitions
+- Bundle size optimization yields significant UX improvements
 
 ### Technical Implementation Summary
 - **TailwindCSS v4.1.11**: Installed with @tailwindcss/postcss plugin
