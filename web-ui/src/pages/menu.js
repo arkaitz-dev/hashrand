@@ -23,7 +23,7 @@ export class MenuPage extends LitElement {
         return html`
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-8">
                 <div class="bg-white border-2 border-gray-200 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500 group" 
-                     @click=${() => Router.go('/generic')} 
+                     @click=${() => Router.go('/custom')} 
                      @blur=${this.handleCardBlur} 
                      tabindex="0">
                     <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>

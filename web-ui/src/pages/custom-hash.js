@@ -5,7 +5,7 @@ import { Router } from '@vaadin/router';
 import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
-export class GenericHashView extends LitElement {
+export class CustomHashView extends LitElement {
     @state()
     accessor lengthValue = 21;
     static styles = [
@@ -87,7 +87,7 @@ export class GenericHashView extends LitElement {
         
         // Store parameters in sessionStorage for the result page
         sessionStorage.setItem('hashrand-last-params', JSON.stringify({
-            type: 'generic',
+            type: 'custom',
             parameters: parameters
         }));
         
@@ -109,16 +109,16 @@ export class GenericHashView extends LitElement {
             if (response.ok) {
                 // Store result and navigate to result page
                 sessionStorage.setItem('hashrand-last-result', result);
-                Router.go('/generic/result');
+                Router.go('/custom/result');
             } else {
                 throw new Error(response.statusText);
             }
         } catch (error) {
             // Store error and navigate to result page
             sessionStorage.setItem('hashrand-last-error', error.message);
-            Router.go('/generic/result');
+            Router.go('/custom/result');
         }
     }
 }
 
-customElements.define('generic-hash-page', GenericHashView);
+customElements.define('custom-hash-page', CustomHashView);

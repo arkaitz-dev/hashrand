@@ -149,6 +149,88 @@ Resolved persistent button focus issues across the application:
 - Navigation buttons eliminate focus after click events
 - Zero breaking changes maintained throughout
 
+## Session (2025-08-13 PM) - Route Renaming, SPA Improvements & Advanced Preloader
+
+### Session Summary
+**Duration**: ~3 hours | **Branch**: master | **Version**: 0.6.0 (no version change)
+
+**Primary Accomplishments**: 
+1. Route renaming from /generic to /custom
+2. SPA fallback configuration for development and production
+3. Vite build optimization simplification  
+4. Advanced preloader with real progress tracking and theme detection
+
+### Changes Made
+
+#### 1. Route Renaming (/generic → /custom)
+**Files modified:**
+- `web-ui/src/pages/generic-hash.js` → `web-ui/src/pages/custom-hash.js`
+- Updated class `GenericHashView` → `CustomHashView`
+- Updated all route references throughout the application
+- Files affected: `index.js`, `menu.js`, `hash-result.js`
+
+#### 2. SPA Fallback Configuration
+**Development (Vite):**
+- Added `historyApiFallback` to `vite.config.js`
+- All non-asset routes return `index.html` for router handling
+
+**Production (Axum):**
+- Verified existing fallback in `serve_embedded_assets` function
+- Already correctly returns `index.html` for unknown routes
+
+#### 3. Vite Configuration Simplification
+**Removed:**
+- Complex Terser optimizations
+- Manual chunking strategies
+- Custom move-scripts-to-body plugin
+
+**Result:**
+- Simpler, more maintainable configuration
+- Bundle size: ~33KB gzip (HTML + JS + CSS + 1 locale)
+- 15 total files vs previous multiple chunks
+
+#### 4. Advanced Preloader Implementation
+**Evolution stages:**
+1. **Basic version**: Simple text "0%" without styling
+2. **Progress tracking**: Real-time download monitoring using Fetch API
+3. **Visual bar**: Blue progress bar (200px wide)
+4. **Centered layout**: Perfect viewport centering
+5. **Theme detection**: Automatic dark/light mode support
+
+**Final features:**
+- Real-time progress using ReadableStream API
+- Visual progress bar with smooth transitions
+- System theme detection (`prefers-color-scheme`)
+- Fullscreen overlay during loading
+- Light mode: White background, blue bar (#4285f4)
+- Dark mode: Gray background (#2d3748), light blue bar (#63b3ed)
+
+### Technical Implementation Details
+
+**Preloader structure:**
+```javascript
+// Detect theme
+const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+// Track real download progress
+async function trackAssetDownload(url, weight = 1) {
+    const response = await fetch(url);
+    const reader = response.body.getReader();
+    // Read chunks and update progress
+}
+```
+
+**Files modified:**
+- `web-ui/index.html`: Added inline preloader script
+- HTML size increased: 0.86KB → 6.61KB (includes preloader code)
+
+### Next Session Priorities (unchanged)
+1. Component testing (@web/test-runner)
+2. Theme switching (dark/light) for main app
+3. TypeScript migration
+4. PWA features
+5. Batch generation
+
 ## Session (2025-08-13) - Frontend Architecture Reorganization
 
 ### Session Summary

@@ -7,7 +7,7 @@ import sharedStyles from '../shared-styles.js';
 
 export class HashResult extends LitElement {
     @property({ type: String })
-    accessor hashType = 'generic';      // 'generic', 'password', 'apiKey'
+    accessor hashType = 'custom';      // 'custom', 'password', 'apiKey'
     
     @property({ type: String })
     accessor generatedHash = '';  // The generated result
@@ -254,7 +254,7 @@ export class HashResult extends LitElement {
                 Router.go('/api-key');
                 break;
             default:
-                Router.go('/generic');
+                Router.go('/custom');
         }
     }
 

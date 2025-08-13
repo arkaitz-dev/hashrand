@@ -12,7 +12,7 @@ import { apiFetch } from './utils/api.js';
 import './components/header-title.js';
 import './components/language-selector.js';
 import './pages/menu.js';
-import './pages/generic-hash.js';
+import './pages/custom-hash.js';
 import './pages/password.js';
 import './pages/api-key.js';
 import './pages/hash-result.js';
@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             component: 'menu-page'
         },
         {
-            path: '/generic',
-            component: 'generic-hash-page'
+            path: '/custom',
+            component: 'custom-hash-page'
         },
         {
             path: '/password',
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             component: 'api-key-page'
         },
         {
-            path: '/generic/result',
+            path: '/custom/result',
             component: 'hash-result-page'
         },
         {
