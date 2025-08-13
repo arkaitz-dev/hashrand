@@ -1,39 +1,20 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import sharedStyles from '../shared-styles.js';
 
 export class HeaderTitle extends LitElement {
     @state()
     accessor version = '';
 
-    static styles = css`
-        :host {
-            display: block;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-        }
-
-        p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .version {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            font-weight: 400;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
+    static styles = [
+        sharedStyles,
+        css`
+            :host {
+                display: block;
             }
-        }
-    `;
+        `
+    ];
 
     constructor() {
         super();
@@ -58,8 +39,8 @@ export class HeaderTitle extends LitElement {
 
     render() {
         return html`
-            <h1>🎲 HashRand ${this.version ? html`<span class="version">v${this.version}</span>` : ''}</h1>
-            <p>${msg('Secure Random Hash Generator with Multiple Alphabets')}</p>
+            <h1 class="text-4xl md:text-5xl font-bold mb-2">🎲 HashRand ${this.version ? html`<span class="text-sm opacity-70 font-normal">v${this.version}</span>` : ''}</h1>
+            <p class="opacity-90 text-lg">${msg('Secure Random Hash Generator with Multiple Alphabets')}</p>
         `;
     }
 }

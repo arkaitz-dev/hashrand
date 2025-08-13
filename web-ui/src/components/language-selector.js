@@ -3,6 +3,7 @@ import { state } from 'lit/decorators.js';
 import { updateWhenLocaleChanges } from '@lit/localize';
 import { getLocale, setLocale } from '../localization.js';
 import { allLocales } from '../locales/locale-codes.js';
+import sharedStyles from '../shared-styles.js';
 
 export class LanguageSelector extends LitElement {
     static properties = {
@@ -16,85 +17,16 @@ export class LanguageSelector extends LitElement {
         this.showDropdown = false;
     }
 
-    static styles = css`
-        :host {
-            display: inline-block !important;
-            position: relative;
-            visibility: visible !important;
-        }
-
-        .language-button {
-            background: transparent;
-            border: 1px solid transparent;
-            color: white;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-            transition: all 0.2s ease;
-        }
-
-        .language-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .language-button:focus {
-            outline: none;
-        }
-
-        .language-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            min-width: 180px;
-            opacity: 0;
-            pointer-events: none;
-            margin-top: 0.25rem;
-        }
-
-        .language-dropdown.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* RTL dropdown positioning - applied dynamically via class */
-        .language-dropdown.rtl-align {
-            right: auto !important;
-            left: 0 !important;
-        }
-
-        .language-option {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            color: #2c3e50;
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 1rem;
-        }
-
-        .language-option:hover {
-            background: #f8f9fa;
-        }
-
-        .language-option.current {
-            background: #e3f2fd;
-            color: #1976d2;
-            font-weight: 500;
-        }
-    `;
+    static styles = [
+        sharedStyles,
+        css`
+            :host {
+                display: inline-block !important;
+                position: relative;
+                visibility: visible !important;
+            }
+        `
+    ];
 
     connectedCallback() {
         super.connectedCallback();
@@ -222,17 +154,17 @@ export class LanguageSelector extends LitElement {
         const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
-                class="language-button" 
+                class="bg-transparent border border-transparent text-white px-3 py-1.5 rounded-md cursor-pointer text-base flex items-center gap-1.5 transition-all duration-200 hover:bg-white hover:bg-opacity-10 hover:border-white hover:border-opacity-20 focus:outline-none" 
                 @click=${this.toggleDropdown}
             >
                 <span>${this.getLanguageFlag(this.currentLocale)}</span>
                 <span>🌐</span>
             </button>
             
-            <div class="language-dropdown ${this.showDropdown ? 'show' : ''} ${isRTL ? 'rtl-align' : ''}">
+            <div class="absolute top-full z-50 min-w-[180px] mt-1 bg-white rounded-lg shadow-xl transition-all duration-200 ${this.showDropdown ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} ${isRTL ? 'left-0' : 'right-0'}">
                 ${allLocales.map(locale => html`
                     <button
-                        class="language-option ${locale === this.currentLocale ? 'current' : ''}"
+                        class="flex items-center gap-2 w-full px-4 py-3 text-slate-700 cursor-pointer border-none bg-none text-left text-base hover:bg-gray-50 transition-colors duration-150 ${locale === this.currentLocale ? 'bg-blue-50 text-blue-600 font-medium' : ''}"
                         @click=${() => this.selectLanguage(locale)}
                     >
                         <span>${this.getLanguageFlag(locale)}</span>

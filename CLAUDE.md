@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## Project: hashrand (v0.5.0)
+## Project: hashrand (v0.6.0)
 CLI/Web tool for cryptographically secure random string generation (Rust + Lit + Vite)
 
 ## Architecture
@@ -51,11 +51,19 @@ just stop-installed         # Stop production binary and Tailscale
 
 ## Key Implementation Notes
 
-### Current State (v0.5.0)
-- **Stack**: Rust 1.89.0 + Lit 3.3.1 (standard decorators) + Vite 7.1.1
-- **Architecture**: Self-contained binary (3.1MB) with embedded web assets
+### Current State (v0.6.0)
+- **Stack**: Rust 1.89.0 + Lit 3.3.1 + Vite 7.1.1 + **TailwindCSS 4.1.11**
+- **Architecture**: Self-contained binary with embedded optimized web assets
 - **Testing**: 46/46 tests passing
 - **Security**: Rate limiting, CORS, audit logging, path validation
+- **Styling**: **Complete TailwindCSS migration** with 48% bundle size reduction
+
+### Major Changes (v0.6.0)
+- **TailwindCSS Integration**: Complete migration from custom CSS to TailwindCSS
+- **Bundle Optimization**: 48% total size reduction (86kB → 45kB)
+- **Component Refactoring**: All 7 Lit components migrated to Tailwind classes
+- **Build System**: Advanced Terser optimization + intelligent chunking
+- **Performance**: 95% reduction in main JS bundle (79kB → 3.7kB)
 
 ### Recent Changes (v0.5.0)
 - **Tailscale Integration**: Automatic HTTPS remote development access
@@ -140,3 +148,52 @@ Resolved persistent button focus issues across the application:
 - Menu cards properly handle tabindex and blur events
 - Navigation buttons eliminate focus after click events
 - Zero breaking changes maintained throughout
+
+## Current Session (2025-08-13)
+
+### Session Context
+- **Branch**: master (clean)
+- **Working Directory**: /home/arkaitz/proyectos/rust/hashrand
+- **Recent Commits**: Focus state improvements, multi-language support
+
+### Session Goals
+- Integrate TailwindCSS as the sole styling system
+- Remove all component-specific CSS styles  
+- Refactor all Lit components to use shared Tailwind styles
+- Maintain existing functionality and visual design
+
+### Progress
+- Session initialized  
+- Memory system ready
+- **COMPLETED**: Full TailwindCSS integration
+- **COMPLETED**: All 7 Lit components refactored
+- **COMPLETED**: Both development and production builds tested successfully
+
+### Technical Implementation Summary
+- **TailwindCSS v4.1.11**: Installed with @tailwindcss/postcss plugin
+- **Component Refactoring**: All 7 components migrated from custom CSS to Tailwind classes
+- **Shared Styles**: Created `shared-styles.js` for consistent cross-component styling
+- **Build System**: Successfully configured Vite + TailwindCSS + Lit integration
+- **Testing**: Dev server (localhost:3019) and production build both working correctly
+
+### Bundle Optimization Results (Completed)
+**BEFORE Optimization:**
+- Main JS: 78.96 kB (17.53 kB gzip)
+- CSS: 7.20 kB (1.79 kB gzip)
+- Total: ~86.16 kB (19.32 kB gzip)
+- 13 separate locale files (2.4-3.9 kB each)
+
+**AFTER Optimization:**
+- Main JS: 3.71 kB (1.46 kB gzip) - **95% reduction**
+- Lit Core: 1.00 kB (0.53 kB gzip) - **cached separately**
+- Locales: 32.38 kB (7.86 kB gzip) - **bundled together**
+- CSS: 7.84 kB (1.84 kB gzip) - **minimal increase**
+- Total: ~44.93 kB (11.69 kB gzip) - **48% total reduction**
+
+### Optimization Techniques Applied:
+1. **Terser with aggressive settings**: Removed console logs, 2-pass compression
+2. **Manual chunking**: Separate vendor, locales, and core chunks for better caching
+3. **Tree-shaking**: Aggressive dead code elimination
+4. **TailwindCSS pruning**: Disabled 20+ unused utility groups
+5. **CSS code splitting**: Independent CSS loading
+6. **Bundle analysis**: Configured for future monitoring

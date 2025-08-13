@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { buildApiUrl } from '../utils/api.js';
+import sharedStyles from '../shared-styles.js';
 
 export class HashGenerator extends LitElement {
     @state()
@@ -16,105 +17,14 @@ export class HashGenerator extends LitElement {
     @state()
     accessor lastResult = '';
 
-    static styles = css`
-        :host {
-            display: block;
-        }
-        
-        /* Menu styles */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-        
-        .menu-card {
-            background: white;
-            border: 2px solid #e1e8ed;
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .menu-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-            border-color: #667eea;
-        }
-        
-        .menu-card:hover::before {
-            opacity: 0.05;
-        }
-        
-        .menu-card:focus {
-            outline: none;
-        }
-        
-        .menu-card:active {
-            transform: translateY(-2px);
-        }
-        
-        .menu-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .menu-card h3 {
-            color: #2c3e50;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .menu-card p {
-            color: #7f8c8d;
-            font-size: 0.95rem;
-            position: relative;
-            z-index: 1;
-            margin: 0;
-        }
-        
-        /* View container styles */
-        .view-container {
-            display: none;
-        }
-        
-        .view-container.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(10px); 
+    static styles = [
+        sharedStyles,
+        css`
+            :host {
+                display: block;
             }
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-        }
-    `;
+        `
+    ];
     
     connectedCallback() {
         super.connectedCallback();
@@ -154,37 +64,52 @@ export class HashGenerator extends LitElement {
     render() {
         return html`
             <!-- Menu View -->
-            <div id="menu-view" class="view-container ${this.currentView === 'menu' ? 'active' : ''}">
-                <div class="menu-grid">
-                    <div class="menu-card" data-mode="generate" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
-                        <div class="menu-icon">🎲</div>
-                        <h3>${msg('Generic Hash')}</h3>
-                        <p>${msg('Generate customizable hashes with various alphabets')}</p>
+            <div id="menu-view" class="${this.currentView === 'menu' ? 'block' : 'hidden'}">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-8">
+                    <div class="bg-white border-2 border-gray-200 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500 group" 
+                         data-mode="generate" 
+                         @click=${this.handleMenuClick} 
+                         @blur=${this.handleCardBlur} 
+                         tabindex="0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+                        <div class="text-5xl mb-4 relative z-10">🎲</div>
+                        <h3 class="text-gray-800 mb-2 text-2xl font-semibold relative z-10">${msg('Generic Hash')}</h3>
+                        <p class="text-gray-500 text-sm relative z-10">${msg('Generate customizable hashes with various alphabets')}</p>
                     </div>
                     
-                    <div class="menu-card" data-mode="password" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
-                        <div class="menu-icon">🔐</div>
-                        <h3>${msg('Password')}</h3>
-                        <p>${msg('Create strong passwords with symbols')}</p>
+                    <div class="bg-white border-2 border-gray-200 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500 group" 
+                         data-mode="password" 
+                         @click=${this.handleMenuClick} 
+                         @blur=${this.handleCardBlur} 
+                         tabindex="0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+                        <div class="text-5xl mb-4 relative z-10">🔐</div>
+                        <h3 class="text-gray-800 mb-2 text-2xl font-semibold relative z-10">${msg('Password')}</h3>
+                        <p class="text-gray-500 text-sm relative z-10">${msg('Create strong passwords with symbols')}</p>
                     </div>
                     
-                    <div class="menu-card" data-mode="apiKey" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
-                        <div class="menu-icon">🔑</div>
-                        <h3>${msg('API Key')}</h3>
-                        <p>${msg('Generate secure API keys (ak_ prefix)')}</p>
+                    <div class="bg-white border-2 border-gray-200 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500 group" 
+                         data-mode="apiKey" 
+                         @click=${this.handleMenuClick} 
+                         @blur=${this.handleCardBlur} 
+                         tabindex="0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+                        <div class="text-5xl mb-4 relative z-10">🔑</div>
+                        <h3 class="text-gray-800 mb-2 text-2xl font-semibold relative z-10">${msg('API Key')}</h3>
+                        <p class="text-gray-500 text-sm relative z-10">${msg('Generate secure API keys (ak_ prefix)')}</p>
                     </div>
                 </div>
             </div>
             
             <!-- Configuration Views -->
-            <generic-hash-view id="generate-view" class="view-container ${this.currentView === 'generate' ? 'active' : ''}"></generic-hash-view>
-            <password-view id="password-view" class="view-container ${this.currentView === 'password' ? 'active' : ''}"></password-view>
-            <api-key-view id="apikey-view" class="view-container ${this.currentView === 'apiKey' ? 'active' : ''}"></api-key-view>
+            <generic-hash-view id="generate-view" class="${this.currentView === 'generate' ? 'block animate-fadeIn' : 'hidden'}"></generic-hash-view>
+            <password-view id="password-view" class="${this.currentView === 'password' ? 'block animate-fadeIn' : 'hidden'}"></password-view>
+            <api-key-view id="apikey-view" class="${this.currentView === 'apiKey' ? 'block animate-fadeIn' : 'hidden'}"></api-key-view>
             
             <!-- Result View -->
             <hash-result 
                 id="result-view" 
-                class="view-container ${this.currentView === 'result' ? 'active' : ''}"
+                class="${this.currentView === 'result' ? 'block animate-fadeIn' : 'hidden'}"
                 .hashType=${this.lastHashType}
                 .generatedHash=${this.lastResult}
                 .parameters=${this.lastParameters}>

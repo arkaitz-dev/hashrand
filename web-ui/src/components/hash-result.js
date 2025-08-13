@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import sharedStyles from '../shared-styles.js';
 
 export class HashResult extends LitElement {
     @property({ type: String })
@@ -18,206 +19,14 @@ export class HashResult extends LitElement {
     @state()
     accessor error = null;           // Error message if any
 
-    static styles = css`
-        :host {
-            display: block;
-        }
-
-        .result-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Navigation buttons */
-        .nav-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .nav-button {
-            background: transparent;
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 10px 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .nav-button:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        
-        .nav-button:focus {
-            outline: none;
-        }
-
-        /* Result display section */
-        .result-section {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .result-icon {
-            font-size: 2rem;
-        }
-
-        .result-title {
-            color: #2c3e50;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .result-display {
-            background: #f8f9fa;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            padding: 1.5rem;
-            font-family: 'Courier New', monospace;
-            font-size: 1.1rem;
-            word-break: break-all;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            min-height: 60px;
-        }
-
-        .result-display.success {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .result-display.error {
-            background: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
-
-        .result-text {
-            flex: 1;
-            overflow-wrap: break-word;
-        }
-
-        .copy-button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .copy-button:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-
-        .copy-button.copied {
-            background: #6c757d;
-        }
-
-        /* Parameters display */
-        .parameters-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .parameters-title {
-            color: #6c757d;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .parameter-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.25rem 0;
-            font-size: 0.9rem;
-        }
-
-        .parameter-label {
-            color: #6c757d;
-        }
-
-        .parameter-value {
-            color: #2c3e50;
-            font-weight: 500;
-        }
-
-        /* Regenerate button */
-        .regenerate-button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .regenerate-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .regenerate-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Loading spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    `;
+    static styles = [
+        sharedStyles,
+        css`
+            :host {
+                display: block;
+            }
+        `
+    ];
 
     connectedCallback() {
         super.connectedCallback();
@@ -227,50 +36,54 @@ export class HashResult extends LitElement {
 
     render() {
         return html`
-            <div class="result-container">
+            <div class="max-w-3xl mx-auto p-8">
                 <!-- Navigation buttons -->
-                <div class="nav-buttons">
-                    <button class="nav-button" @click=${this.handleBackToConfig}>
+                <div class="flex gap-4 mb-8">
+                    <button class="bg-transparent border-2 border-indigo-500 text-indigo-500 px-5 py-2.5 inline-flex items-center gap-2 font-semibold cursor-pointer rounded-lg text-base transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-0.5 hover:shadow-lg focus:outline-none" 
+                            @click=${this.handleBackToConfig}>
                         ← ${msg('Back to Configuration')}
                     </button>
-                    <button class="nav-button" @click=${this.handleBackToMenu}>
+                    <button class="bg-transparent border-2 border-indigo-500 text-indigo-500 px-5 py-2.5 inline-flex items-center gap-2 font-semibold cursor-pointer rounded-lg text-base transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-0.5 hover:shadow-lg focus:outline-none" 
+                            @click=${this.handleBackToMenu}>
                         ⌂ ${msg('Back to Menu')}
                     </button>
                 </div>
 
                 <!-- Result section -->
-                <div class="result-section">
-                    <div class="result-header">
-                        <span class="result-icon">${this.getIcon()}</span>
-                        <h2 class="result-title">${this.getTitle()}</h2>
+                <div class="bg-white rounded-xl p-8 shadow-md mb-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-3xl">${this.getIcon()}</span>
+                        <h2 class="text-gray-800 text-2xl font-semibold m-0">${this.getTitle()}</h2>
                     </div>
 
-                    <div class="result-display ${this.getResultClass()}">
+                    <div class="bg-gray-50 border-2 ${this.getResultClasses()} rounded-lg p-6 font-mono text-lg break-all flex items-center justify-between gap-4 min-h-[60px]">
                         ${this.isLoading ? html`
-                            <span class="loading-spinner"></span>
+                            <span class="inline-block w-5 h-5 border-[3px] border-gray-300 border-t-indigo-500 rounded-full animate-spin"></span>
                             <span>${msg('Generating...')}</span>
                         ` : this.error ? html`
-                            <span class="result-text">${msg('Error')}: ${this.error}</span>
+                            <span class="flex-1 break-words">${msg('Error')}: ${this.error}</span>
                         ` : html`
-                            <span class="result-text">${this.generatedHash}</span>
-                            <button class="copy-button" @click=${this.handleCopy}>
+                            <span class="flex-1 break-words">${this.generatedHash}</span>
+                            <button class="${this.getCopyButtonClasses()}" @click=${this.handleCopy}>
                                 ${msg('Copy')}
                             </button>
                         `}
                     </div>
 
                     ${this.parameters && Object.keys(this.parameters).length > 0 ? html`
-                        <div class="parameters-section">
-                            <div class="parameters-title">${msg('Configuration Used')}:</div>
+                        <div class="bg-gray-50 rounded-lg p-4 mt-4">
+                            <div class="text-gray-500 text-sm font-semibold mb-2">${msg('Configuration Used')}:</div>
                             ${this.renderParameters()}
                         </div>
                     ` : ''}
                 </div>
 
                 <!-- Regenerate button -->
-                <button class="regenerate-button" @click=${this.handleRegenerate} ?disabled=${this.isLoading}>
+                <button class="w-full p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none" 
+                        @click=${this.handleRegenerate} 
+                        ?disabled=${this.isLoading}>
                     ${this.isLoading ? html`
-                        <span class="loading-spinner"></span>
+                        <span class="inline-block w-5 h-5 border-[3px] border-gray-300 border-t-white rounded-full animate-spin"></span>
                         <span>${msg('Regenerating...')}</span>
                     ` : html`
                         <span>🔄</span>
@@ -297,10 +110,14 @@ export class HashResult extends LitElement {
         }
     }
 
-    getResultClass() {
-        if (this.error) return 'error';
-        if (this.generatedHash && !this.isLoading) return 'success';
-        return '';
+    getResultClasses() {
+        if (this.error) return 'border-red-300 bg-red-50 text-red-800';
+        if (this.generatedHash && !this.isLoading) return 'border-green-300 bg-green-50 text-green-800';
+        return 'border-gray-200';
+    }
+
+    getCopyButtonClasses() {
+        return 'bg-green-600 text-white border-none px-4 py-2 rounded-md cursor-pointer font-semibold transition-all duration-300 flex-shrink-0 hover:bg-green-700 hover:-translate-y-0.5 copied:bg-gray-500';
     }
 
     getRegenerateButtonText() {
@@ -317,9 +134,9 @@ export class HashResult extends LitElement {
         
         if (this.parameters.length) {
             params.push(html`
-                <div class="parameter-item">
-                    <span class="parameter-label">${msg('Length')}:</span>
-                    <span class="parameter-value">${this.parameters.length}</span>
+                <div class="flex justify-between py-1 text-sm">
+                    <span class="text-gray-500">${msg('Length')}:</span>
+                    <span class="text-gray-800 font-medium">${this.parameters.length}</span>
                 </div>
             `);
         }
@@ -341,27 +158,27 @@ export class HashResult extends LitElement {
                     break;
             }
             params.push(html`
-                <div class="parameter-item">
-                    <span class="parameter-label">${msg('Alphabet')}:</span>
-                    <span class="parameter-value">${alphabetName}</span>
+                <div class="flex justify-between py-1 text-sm">
+                    <span class="text-gray-500">${msg('Alphabet')}:</span>
+                    <span class="text-gray-800 font-medium">${alphabetName}</span>
                 </div>
             `);
         }
         
         if (this.parameters.prefix) {
             params.push(html`
-                <div class="parameter-item">
-                    <span class="parameter-label">${msg('Prefix')}:</span>
-                    <span class="parameter-value">${this.parameters.prefix}</span>
+                <div class="flex justify-between py-1 text-sm">
+                    <span class="text-gray-500">${msg('Prefix')}:</span>
+                    <span class="text-gray-800 font-medium">${this.parameters.prefix}</span>
                 </div>
             `);
         }
         
         if (this.parameters.suffix) {
             params.push(html`
-                <div class="parameter-item">
-                    <span class="parameter-label">${msg('Suffix')}:</span>
-                    <span class="parameter-value">${this.parameters.suffix}</span>
+                <div class="flex justify-between py-1 text-sm">
+                    <span class="text-gray-500">${msg('Suffix')}:</span>
+                    <span class="text-gray-800 font-medium">${this.parameters.suffix}</span>
                 </div>
             `);
         }
@@ -373,13 +190,15 @@ export class HashResult extends LitElement {
         try {
             await navigator.clipboard.writeText(this.generatedHash);
             // Temporarily change button text
-            const button = this.shadowRoot.querySelector('.copy-button');
+            const button = this.shadowRoot.querySelector('button[class*="bg-green"]');
             if (button) {
                 button.textContent = msg('Copied!');
-                button.classList.add('copied');
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-gray-500');
                 setTimeout(() => {
                     button.textContent = msg('Copy');
-                    button.classList.remove('copied');
+                    button.classList.remove('bg-gray-500');
+                    button.classList.add('bg-green-600', 'hover:bg-green-700');
                 }, 2000);
             }
         } catch (error) {
