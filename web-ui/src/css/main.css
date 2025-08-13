@@ -156,6 +156,10 @@ body {
     transform: translateY(0);
 }
 
+.wc-button:focus {
+    outline: none;
+}
+
 .wc-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;

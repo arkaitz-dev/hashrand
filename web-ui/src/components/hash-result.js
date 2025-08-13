@@ -57,6 +57,10 @@ export class HashResult extends LitElement {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
+        
+        .nav-button:focus {
+            outline: none;
+        }
 
         /* Result display section */
         .result-section {
@@ -383,7 +387,12 @@ export class HashResult extends LitElement {
         }
     }
 
-    handleBackToConfig() {
+    handleBackToConfig(e) {
+        // Remove focus from button after click
+        if (e && e.currentTarget) {
+            e.currentTarget.blur();
+        }
+        
         this.dispatchEvent(new CustomEvent('back-to-config', { 
             bubbles: true,
             composed: true,
@@ -391,7 +400,12 @@ export class HashResult extends LitElement {
         }));
     }
 
-    handleBackToMenu() {
+    handleBackToMenu(e) {
+        // Remove focus from button after click
+        if (e && e.currentTarget) {
+            e.currentTarget.blur();
+        }
+        
         this.dispatchEvent(new CustomEvent('back-to-menu', { 
             bubbles: true,
             composed: true 

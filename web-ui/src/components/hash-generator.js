@@ -63,6 +63,14 @@ export class HashGenerator extends LitElement {
             opacity: 0.05;
         }
         
+        .menu-card:focus {
+            outline: none;
+        }
+        
+        .menu-card:active {
+            transform: translateY(-2px);
+        }
+        
         .menu-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
@@ -148,19 +156,19 @@ export class HashGenerator extends LitElement {
             <!-- Menu View -->
             <div id="menu-view" class="view-container ${this.currentView === 'menu' ? 'active' : ''}">
                 <div class="menu-grid">
-                    <div class="menu-card" data-mode="generate" @click=${this.handleMenuClick}>
+                    <div class="menu-card" data-mode="generate" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
                         <div class="menu-icon">🎲</div>
                         <h3>${msg('Generic Hash')}</h3>
                         <p>${msg('Generate customizable hashes with various alphabets')}</p>
                     </div>
                     
-                    <div class="menu-card" data-mode="password" @click=${this.handleMenuClick}>
+                    <div class="menu-card" data-mode="password" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
                         <div class="menu-icon">🔐</div>
                         <h3>${msg('Password')}</h3>
                         <p>${msg('Create strong passwords with symbols')}</p>
                     </div>
                     
-                    <div class="menu-card" data-mode="apiKey" @click=${this.handleMenuClick}>
+                    <div class="menu-card" data-mode="apiKey" @click=${this.handleMenuClick} @blur=${this.handleCardBlur} tabindex="0">
                         <div class="menu-icon">🔑</div>
                         <h3>${msg('API Key')}</h3>
                         <p>${msg('Generate secure API keys (ak_ prefix)')}</p>
@@ -190,6 +198,13 @@ export class HashGenerator extends LitElement {
         if (mode) {
             this.switchView(mode);
         }
+        // Remove focus after click
+        target.blur();
+    }
+    
+    handleCardBlur(e) {
+        // Ensure the card loses focus
+        e.currentTarget.blur();
     }
 
     switchView(viewName) {

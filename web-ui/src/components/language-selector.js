@@ -24,8 +24,8 @@ export class LanguageSelector extends LitElement {
         }
 
         .language-button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            border: 1px solid transparent;
             color: white;
             padding: 0.375rem 0.75rem;
             border-radius: 6px;
@@ -34,6 +34,16 @@ export class LanguageSelector extends LitElement {
             display: flex;
             align-items: center;
             gap: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .language-button:focus {
+            outline: none;
         }
 
         .language-dropdown {
