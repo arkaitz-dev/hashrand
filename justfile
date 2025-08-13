@@ -68,20 +68,73 @@ stop-dev:
         tailscale serve --https=443 off 2>/dev/null || true
     fi
     
+    # Stop PID-tracked processes first
     if [ -f /tmp/hashrand-npm.pid ]; then
-        kill $(cat /tmp/hashrand-npm.pid) 2>/dev/null || true
+        PID=$(cat /tmp/hashrand-npm.pid)
+        if kill -0 $PID 2>/dev/null; then
+            echo "Stopping npm dev server (PID: $PID)..."
+            kill -TERM $PID 2>/dev/null || true
+            sleep 2
+            # Force kill if still running
+            if kill -0 $PID 2>/dev/null; then
+                kill -9 $PID 2>/dev/null || true
+            fi
+        fi
         rm -f /tmp/hashrand-npm.pid
-        echo "npm dev server stopped"
     fi
+    
     if [ -f /tmp/hashrand-cargo.pid ]; then
-        kill $(cat /tmp/hashrand-cargo.pid) 2>/dev/null || true
+        PID=$(cat /tmp/hashrand-cargo.pid)
+        if kill -0 $PID 2>/dev/null; then
+            echo "Stopping cargo watch server (PID: $PID)..."
+            kill -TERM $PID 2>/dev/null || true
+            sleep 2
+            # Force kill if still running
+            if kill -0 $PID 2>/dev/null; then
+                kill -9 $PID 2>/dev/null || true
+            fi
+        fi
         rm -f /tmp/hashrand-cargo.pid
-        echo "cargo watch server stopped"
     fi
-    # Cleanup any remaining processes
-    pkill -f "vite.*--port 3000" 2>/dev/null || true
+    
+    # Comprehensive cleanup of any remaining development processes
+    echo "Cleaning up any remaining development processes..."
+    
+    # Kill all npm run dev processes for this project
+    pkill -f "npm.*run.*dev" 2>/dev/null || true
+    
+    # Kill all vite processes (including different ports)
+    pkill -f "node.*vite" 2>/dev/null || true
+    pkill -f "/bin/vite" 2>/dev/null || true
+    pkill -f "vite.*--port" 2>/dev/null || true
+    
+    # Kill all cargo watch processes for hashrand
+    pkill -f "cargo.*watch.*hashrand" 2>/dev/null || true
     pkill -f "cargo.*run.*serve" 2>/dev/null || true
-    echo "All development servers stopped"
+    
+    # Kill processes using development ports
+    if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "Forcefully stopping processes on port 3000..."
+        lsof -ti :3000 | xargs -r kill -9 2>/dev/null || true
+    fi
+    
+    if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "Forcefully stopping processes on port 8080..."
+        lsof -ti :8080 | xargs -r kill -9 2>/dev/null || true
+    fi
+    
+    # Clean up log files
+    rm -f /tmp/hashrand-npm.log /tmp/hashrand-cargo.log
+    
+    sleep 1
+    echo "All development servers and related processes stopped"
+    
+    # Verify ports are free
+    if ! lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 && ! lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "✓ Ports 3000 and 8080 are now free"
+    else
+        echo "⚠ Warning: Some processes might still be using development ports"
+    fi
 
 # Show development server status
 status:
