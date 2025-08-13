@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { Router } from '@vaadin/router';
+import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
 export class HashResult extends LitElement {
@@ -32,6 +34,37 @@ export class HashResult extends LitElement {
         super.connectedCallback();
         // Enable automatic re-rendering when locale changes
         updateWhenLocaleChanges(this);
+        
+        // Load data from sessionStorage
+        this.loadFromSession();
+    }
+    
+    loadFromSession() {
+        // Get stored parameters
+        const storedParams = sessionStorage.getItem('hashrand-last-params');
+        if (storedParams) {
+            const parsed = JSON.parse(storedParams);
+            this.hashType = parsed.type;
+            this.parameters = parsed.parameters;
+        }
+        
+        // Get stored result or error
+        const storedResult = sessionStorage.getItem('hashrand-last-result');
+        const storedError = sessionStorage.getItem('hashrand-last-error');
+        
+        if (storedResult) {
+            this.generatedHash = storedResult;
+            this.isLoading = false;
+            this.error = null;
+            sessionStorage.removeItem('hashrand-last-result');
+        } else if (storedError) {
+            this.error = storedError;
+            this.isLoading = false;
+            sessionStorage.removeItem('hashrand-last-error');
+        } else {
+            this.isLoading = true;
+            this.error = null;
+        }
     }
 
     render() {
@@ -212,11 +245,17 @@ export class HashResult extends LitElement {
             e.currentTarget.blur();
         }
         
-        this.dispatchEvent(new CustomEvent('back-to-config', { 
-            bubbles: true,
-            composed: true,
-            detail: { hashType: this.hashType }
-        }));
+        // Navigate to the appropriate configuration page
+        switch(this.hashType) {
+            case 'password':
+                Router.go('/password');
+                break;
+            case 'api-key':
+                Router.go('/api-key');
+                break;
+            default:
+                Router.go('/generic');
+        }
     }
 
     handleBackToMenu(e) {
@@ -225,22 +264,65 @@ export class HashResult extends LitElement {
             e.currentTarget.blur();
         }
         
-        this.dispatchEvent(new CustomEvent('back-to-menu', { 
-            bubbles: true,
-            composed: true 
-        }));
+        Router.go('/');
     }
 
     async handleRegenerate() {
-        this.dispatchEvent(new CustomEvent('regenerate', { 
-            bubbles: true,
-            composed: true,
-            detail: {
-                hashType: this.hashType,
-                parameters: this.parameters
+        this.isLoading = true;
+        this.error = null;
+        
+        try {
+            let response;
+            let url;
+            
+            // Build the appropriate API call based on hash type
+            if (this.hashType === 'api-key') {
+                const params = new URLSearchParams({ 
+                    length: this.parameters.length || 44,
+                    raw: 'true'
+                });
+                if (this.parameters.alphabet) {
+                    params.append('alphabet', this.parameters.alphabet);
+                }
+                url = buildApiUrl(`/api/api-key?${params}`);
+                response = await fetch(url);
+            } else if (this.hashType === 'password') {
+                const params = new URLSearchParams({ 
+                    length: this.parameters.length || 21 
+                });
+                if (this.parameters.alphabet) {
+                    params.append('alphabet', this.parameters.alphabet);
+                }
+                url = buildApiUrl(`/api/password?${params}`);
+                response = await fetch(url);
+            } else {
+                // Generic hash
+                const params = new URLSearchParams({
+                    length: this.parameters.length || 21,
+                    alphabet: this.parameters.alphabet || 'base58',
+                    raw: 'true'
+                });
+                
+                if (this.parameters.prefix) params.append('prefix', this.parameters.prefix);
+                if (this.parameters.suffix) params.append('suffix', this.parameters.suffix);
+                
+                url = buildApiUrl(`/api/generate?${params}`);
+                response = await fetch(url);
             }
-        }));
+            
+            const result = await response.text();
+            
+            if (response.ok) {
+                this.generatedHash = result;
+                this.isLoading = false;
+            } else {
+                throw new Error(response.statusText);
+            }
+        } catch (error) {
+            this.error = error.message;
+            this.isLoading = false;
+        }
     }
 }
 
-customElements.define('hash-result', HashResult);
+customElements.define('hash-result-page', HashResult);

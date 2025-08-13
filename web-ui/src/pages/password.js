@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { Router } from '@vaadin/router';
+import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
 export class PasswordView extends LitElement {
@@ -73,10 +75,7 @@ export class PasswordView extends LitElement {
     }
 
     handleBackClick() {
-        this.dispatchEvent(new CustomEvent('back-to-menu', { 
-            bubbles: true,
-            composed: true 
-        }));
+        Router.go('/');
     }
 
     handleLengthChange(e) {
@@ -95,7 +94,7 @@ export class PasswordView extends LitElement {
         }
     }
 
-    handleGenerate() {
+    async handleGenerate() {
         const length = this.shadowRoot.querySelector('#password-length').value;
         const alphabet = this.shadowRoot.querySelector('#password-alphabet').value;
         
@@ -104,15 +103,37 @@ export class PasswordView extends LitElement {
             alphabet: alphabet
         };
         
-        // Emit event to parent component
-        this.dispatchEvent(new CustomEvent('generate-hash', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                hashType: 'password',
-                parameters: parameters
-            }
+        // Store parameters in sessionStorage for the result page
+        sessionStorage.setItem('hashrand-last-params', JSON.stringify({
+            type: 'password',
+            parameters: parameters
         }));
+        
+        try {
+            // Make API call
+            const params = new URLSearchParams({ 
+                length: parameters.length || 21 
+            });
+            // Add alphabet parameter if specified
+            if (parameters.alphabet) {
+                params.append('alphabet', parameters.alphabet);
+            }
+            const url = buildApiUrl(`/api/password?${params}`);
+            const response = await fetch(url);
+            const result = await response.text();
+            
+            if (response.ok) {
+                // Store result and navigate to result page
+                sessionStorage.setItem('hashrand-last-result', result);
+                Router.go('/password/result');
+            } else {
+                throw new Error(response.statusText);
+            }
+        } catch (error) {
+            // Store error and navigate to result page
+            sessionStorage.setItem('hashrand-last-error', error.message);
+            Router.go('/password/result');
+        }
     }
 }
 

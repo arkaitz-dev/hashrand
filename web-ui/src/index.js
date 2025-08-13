@@ -1,3 +1,6 @@
+// Import router
+import { Router } from '@vaadin/router';
+
 // Import localization configuration
 import { getLocale, setLocale } from './localization.js';
 import { sourceLocale, targetLocales } from './locales/locale-codes.js';
@@ -53,4 +56,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set document properties
     document.documentElement.lang = getLocale();
     document.documentElement.dir = getLocale() === 'ar' ? 'rtl' : 'ltr';
+
+    // Initialize router
+    const router = new Router(document.getElementById('router-outlet'));
+    router.setRoutes([
+        {
+            path: '/',
+            component: 'menu-page'
+        },
+        {
+            path: '/generic',
+            component: 'generic-hash-page'
+        },
+        {
+            path: '/password',
+            component: 'password-page'
+        },
+        {
+            path: '/api-key',
+            component: 'api-key-page'
+        },
+        {
+            path: '/generic/result',
+            component: 'hash-result-page'
+        },
+        {
+            path: '/password/result',
+            component: 'hash-result-page'
+        },
+        {
+            path: '/api-key/result',
+            component: 'hash-result-page'
+        }
+    ]);
 });

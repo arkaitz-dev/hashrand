@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { Router } from '@vaadin/router';
+import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
 export class ApiKeyView extends LitElement {
@@ -78,10 +80,7 @@ export class ApiKeyView extends LitElement {
     }
 
     handleBackClick() {
-        this.dispatchEvent(new CustomEvent('back-to-menu', { 
-            bubbles: true,
-            composed: true 
-        }));
+        Router.go('/');
     }
 
     handleLengthChange(e) {
@@ -100,7 +99,7 @@ export class ApiKeyView extends LitElement {
         }
     }
     
-    handleGenerate() {
+    async handleGenerate() {
         const length = this.shadowRoot.querySelector('#apikey-length').value;
         const alphabet = this.shadowRoot.querySelector('#apikey-alphabet').value;
         
@@ -109,15 +108,38 @@ export class ApiKeyView extends LitElement {
             alphabet: alphabet
         };
         
-        // Emit event to parent component
-        this.dispatchEvent(new CustomEvent('generate-hash', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                hashType: 'apiKey',
-                parameters: parameters
-            }
+        // Store parameters in sessionStorage for the result page
+        sessionStorage.setItem('hashrand-last-params', JSON.stringify({
+            type: 'api-key',
+            parameters: parameters
         }));
+        
+        try {
+            // Make API call
+            const params = new URLSearchParams({ 
+                length: parameters.length || 44,
+                raw: 'true'
+            });
+            // Add alphabet parameter if specified
+            if (parameters.alphabet) {
+                params.append('alphabet', parameters.alphabet);
+            }
+            const url = buildApiUrl(`/api/api-key?${params}`);
+            const response = await fetch(url);
+            const result = await response.text();
+            
+            if (response.ok) {
+                // Store result and navigate to result page
+                sessionStorage.setItem('hashrand-last-result', result);
+                Router.go('/api-key/result');
+            } else {
+                throw new Error(response.statusText);
+            }
+        } catch (error) {
+            // Store error and navigate to result page
+            sessionStorage.setItem('hashrand-last-error', error.message);
+            Router.go('/api-key/result');
+        }
     }
 }
 

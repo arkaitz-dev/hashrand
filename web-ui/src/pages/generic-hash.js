@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { Router } from '@vaadin/router';
+import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
 export class GenericHashView extends LitElement {
@@ -62,10 +64,7 @@ export class GenericHashView extends LitElement {
     }
 
     handleBackClick() {
-        this.dispatchEvent(new CustomEvent('back-to-menu', { 
-            bubbles: true,
-            composed: true 
-        }));
+        Router.go('/');
     }
 
     handleLengthChange(e) {
@@ -73,7 +72,7 @@ export class GenericHashView extends LitElement {
         this.lengthValue = parseInt(target.value);
     }
 
-    handleGenerate() {
+    async handleGenerate() {
         const length = this.shadowRoot.querySelector('#generate-length').value;
         const alphabet = this.shadowRoot.querySelector('#generate-alphabet').value;
         const prefix = this.shadowRoot.querySelector('#generate-prefix').value;
@@ -86,15 +85,39 @@ export class GenericHashView extends LitElement {
             suffix: suffix
         };
         
-        // Emit event to parent component
-        this.dispatchEvent(new CustomEvent('generate-hash', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                hashType: 'generate',
-                parameters: parameters
-            }
+        // Store parameters in sessionStorage for the result page
+        sessionStorage.setItem('hashrand-last-params', JSON.stringify({
+            type: 'generic',
+            parameters: parameters
         }));
+        
+        try {
+            // Make API call
+            const params = new URLSearchParams({
+                length: parameters.length || 21,
+                alphabet: parameters.alphabet || 'base58',
+                raw: 'true'
+            });
+            
+            if (parameters.prefix) params.append('prefix', parameters.prefix);
+            if (parameters.suffix) params.append('suffix', parameters.suffix);
+            
+            const url = buildApiUrl(`/api/generate?${params}`);
+            const response = await fetch(url);
+            const result = await response.text();
+            
+            if (response.ok) {
+                // Store result and navigate to result page
+                sessionStorage.setItem('hashrand-last-result', result);
+                Router.go('/generic/result');
+            } else {
+                throw new Error(response.statusText);
+            }
+        } catch (error) {
+            // Store error and navigate to result page
+            sessionStorage.setItem('hashrand-last-error', error.message);
+            Router.go('/generic/result');
+        }
     }
 }
 
