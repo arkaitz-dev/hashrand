@@ -92,6 +92,23 @@ The web interface is built with **modern web technologies** prioritizing perform
 - **Vite 7.1.1**: Build tool with Hot Module Replacement (HMR) and Terser optimization
 - **PostCSS**: TailwindCSS integration with automatic purging
 
+**Architecture Organization (Updated):**
+```
+web-ui/src/
+├── components/          # Reusable UI components
+│   ├── header-title.js  # Application header with version
+│   └── language-selector.js  # I18n language picker
+├── pages/              # Main application pages
+│   ├── menu.js         # Main navigation menu
+│   ├── generic-hash.js # Custom hash generation
+│   ├── password.js     # Password generation
+│   ├── api-key.js      # API key generation
+│   └── hash-result.js  # Results display with copy/regenerate
+├── locales/            # I18n translations (12 languages)
+├── utils/              # Shared utilities (API helpers)
+└── shared-styles.js    # Common TailwindCSS imports
+```
+
 **Performance Optimizations:**
 - **Bundle Size**: 48% reduction (86kB → 45kB total)
 - **Smart Chunking**: Separate vendor, locale, and app bundles

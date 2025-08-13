@@ -98,4 +98,4 @@ export class GenericHashView extends LitElement {
     }
 }
 
-customElements.define('generic-hash-view', GenericHashView);
+customElements.define('generic-hash-page', GenericHashView);

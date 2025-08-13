@@ -149,7 +149,100 @@ Resolved persistent button focus issues across the application:
 - Navigation buttons eliminate focus after click events
 - Zero breaking changes maintained throughout
 
-## Completed Session (2025-08-13)
+## Session (2025-08-13) - Frontend Architecture Reorganization
+
+### Session Summary
+**Duration**: ~1 hour | **Branch**: master | **Version**: 0.6.0 (no version change)
+
+**Primary Accomplishment**: Frontend code organization and component structure improvements
+
+### Changes Made
+
+#### 1. Directory Structure Reorganization
+**Created**: `web-ui/src/pages/` directory for main application pages
+**Moved components:**
+- `components/generic-hash-view.js` → `pages/generic-hash.js`
+- `components/password-view.js` → `pages/password.js` 
+- `components/api-key-view.js` → `pages/api-key.js`
+- `components/hash-generator.js` → `pages/menu.js`
+- `components/hash-result.js` → `pages/hash-result.js`
+
+**Components directory cleanup:**
+- Now contains only reusable UI components: `header-title.js`, `language-selector.js`
+
+#### 2. Systematic Renaming (-view → -page)
+**File renames:**
+- `hash-generator.js` → `menu.js`
+
+**ID Updates:**
+- `menu-view` → `menu-page`
+- `generate-view` → `generate-page`
+- `password-view` → `password-page` 
+- `apikey-view` → `apikey-page`
+- `result-view` → `result-page`
+
+**Custom Element Updates:**
+- `hash-generator` → `menu-page`
+- `generic-hash-view` → `generic-hash-page`
+- `password-view` → `password-page`
+- `api-key-view` → `api-key-page`
+- Class name: `HashGenerator` → `MenuPage`
+
+#### 3. Import/Reference Updates
+**Updated files:**
+- `index.js`: All page imports updated to new paths
+- `index.html`: Main component reference updated
+- `menu.js`: All internal references and selectors updated
+- All moved components: Relative imports preserved
+
+### Architecture Impact
+
+**Before:**
+```
+web-ui/src/components/
+├── header-title.js (UI component)
+├── language-selector.js (UI component)
+├── hash-generator.js (main menu - misplaced)
+├── generic-hash-view.js (page - misplaced)
+├── password-view.js (page - misplaced)
+├── api-key-view.js (page - misplaced)
+└── hash-result.js (page - misplaced)
+```
+
+**After:**
+```
+web-ui/src/
+├── components/ (Pure UI components)
+│   ├── header-title.js
+│   └── language-selector.js
+└── pages/ (Application pages)
+    ├── menu.js
+    ├── generic-hash.js
+    ├── password.js
+    ├── api-key.js
+    └── hash-result.js
+```
+
+### Benefits Achieved
+1. **Clear Separation of Concerns**: Pages vs reusable components
+2. **Better Maintainability**: Logical organization for future development
+3. **Consistent Naming**: All pages use `-page` suffix instead of mixed naming
+4. **Improved Navigation**: Clearer mental model for developers
+
+### Technical Validation
+- ✅ All 46 tests passing
+- ✅ Development server starts correctly
+- ✅ No breaking changes in functionality
+- ✅ Zero remaining references to old naming
+
+### Next Session Priorities (Unchanged)
+1. Component testing (@web/test-runner)
+2. Theme switching (dark/light)
+3. TypeScript migration
+4. PWA features
+5. Batch generation
+
+## Previous Session (2025-08-13) - TailwindCSS Integration
 
 ### Session Summary
 **Duration**: ~3 hours | **Branch**: master | **Version**: 0.5.0 → 0.6.0

@@ -116,4 +116,4 @@ export class PasswordView extends LitElement {
     }
 }
 
-customElements.define('password-view', PasswordView);
+customElements.define('password-page', PasswordView);

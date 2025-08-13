@@ -7,12 +7,12 @@ import { apiFetch } from './utils/api.js';
 
 // Import all Lit components
 import './components/header-title.js';
-import './components/hash-generator.js';
-import './components/generic-hash-view.js';
-import './components/password-view.js';
-import './components/api-key-view.js';
-import './components/hash-result.js';
 import './components/language-selector.js';
+import './pages/menu.js';
+import './pages/generic-hash.js';
+import './pages/password.js';
+import './pages/api-key.js';
+import './pages/hash-result.js';
 
 
 // Initialize locale detection and persistence

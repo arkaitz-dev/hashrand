@@ -121,4 +121,4 @@ export class ApiKeyView extends LitElement {
     }
 }
 
-customElements.define('api-key-view', ApiKeyView);
+customElements.define('api-key-page', ApiKeyView);

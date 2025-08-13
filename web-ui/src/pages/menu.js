@@ -4,7 +4,7 @@ import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { buildApiUrl } from '../utils/api.js';
 import sharedStyles from '../shared-styles.js';
 
-export class HashGenerator extends LitElement {
+export class MenuPage extends LitElement {
     @state()
     accessor currentView = 'menu';
     
@@ -64,7 +64,7 @@ export class HashGenerator extends LitElement {
     render() {
         return html`
             <!-- Menu View -->
-            <div id="menu-view" class="${this.currentView === 'menu' ? 'block' : 'hidden'}">
+            <div id="menu-page" class="${this.currentView === 'menu' ? 'block' : 'hidden'}">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-8">
                     <div class="bg-white border-2 border-gray-200 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500 group" 
                          data-mode="generate" 
@@ -102,13 +102,13 @@ export class HashGenerator extends LitElement {
             </div>
             
             <!-- Configuration Views -->
-            <generic-hash-view id="generate-view" class="${this.currentView === 'generate' ? 'block animate-fadeIn' : 'hidden'}"></generic-hash-view>
-            <password-view id="password-view" class="${this.currentView === 'password' ? 'block animate-fadeIn' : 'hidden'}"></password-view>
-            <api-key-view id="apikey-view" class="${this.currentView === 'apiKey' ? 'block animate-fadeIn' : 'hidden'}"></api-key-view>
+            <generic-hash-page id="generate-page" class="${this.currentView === 'generate' ? 'block animate-fadeIn' : 'hidden'}"></generic-hash-page>
+            <password-page id="password-page" class="${this.currentView === 'password' ? 'block animate-fadeIn' : 'hidden'}"></password-page>
+            <api-key-page id="apikey-page" class="${this.currentView === 'apiKey' ? 'block animate-fadeIn' : 'hidden'}"></api-key-page>
             
             <!-- Result View -->
             <hash-result 
-                id="result-view" 
+                id="result-page" 
                 class="${this.currentView === 'result' ? 'block animate-fadeIn' : 'hidden'}"
                 .hashType=${this.lastHashType}
                 .generatedHash=${this.lastResult}
@@ -148,7 +148,7 @@ export class HashGenerator extends LitElement {
         await this.updateComplete;
         
         // Update result component to show loading
-        const resultView = this.shadowRoot.querySelector('#result-view');
+        const resultView = this.shadowRoot.querySelector('#result-page');
         if (resultView) {
             resultView.isLoading = true;
             resultView.error = null;
@@ -215,4 +215,4 @@ export class HashGenerator extends LitElement {
     }
 }
 
-customElements.define('hash-generator', HashGenerator);
+customElements.define('menu-page', MenuPage);
