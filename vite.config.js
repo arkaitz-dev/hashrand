@@ -1,19 +1,12 @@
 import { defineConfig } from 'vite'
 import babel from 'vite-plugin-babel'
-import tailwindcssPostcss from '@tailwindcss/postcss'
+import tailwindcss from '@tailwindcss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
   root: 'web-ui',
   base: '/',
   publicDir: 'public',
-  css: {
-    postcss: {
-      plugins: [
-        tailwindcssPostcss,
-      ],
-    },
-  },
   server: {
     port: 3000,
     host: true,
@@ -43,6 +36,7 @@ export default defineConfig({
     minify: true
   },
   plugins: [
+    tailwindcss(),
     babel({
       babelConfig: {
         babelrc: false,
