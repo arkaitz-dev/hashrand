@@ -3,15 +3,6 @@
  * Utility functions for API calls with base path support
  */
 
-/**
- * @typedef {Object} ImportMetaEnv
- * @property {string} [BASE_URL] - Vite base URL
- */
-
-/**
- * @typedef {Object} ImportMeta
- * @property {ImportMetaEnv} env - Vite environment variables
- */
 
 /**
  * Get the base path from Vite's configuration
@@ -19,9 +10,10 @@
  * @returns {string} The base path for the application
  */
 export function getBasePath() {
-    // In development, Vite provides import.meta.env.BASE_URL
-    // In production, we use the base path from the build
-    return (/** @type {ImportMeta} */ (/** @type {unknown} */ (import.meta))).env.BASE_URL || '/';
+    // Simplified approach: always use root path
+    // Vite proxy handles /api routing in development
+    // Production build serves from root
+    return '/';
 }
 
 /**

@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Erstelle sichere Passwörter mit Symbolen`,
 's5f343a43e7ea9f91': `Fehler`,
+'s60fa0c95a1b53c8c': `Wählen Sie unten Ihre bevorzugte Generierungsmethode, um kryptographisch sichere Zufallszeichenfolgen zu erstellen`,
 's68995eb38bdd5eba': `Hash Generieren`,
 's78052951d5233fd6': `Zu Dunkel wechseln`,
 's7d6ed23f1f594243': `Generiere anpassbare Hashes mit verschiedenen Alphabeten`,

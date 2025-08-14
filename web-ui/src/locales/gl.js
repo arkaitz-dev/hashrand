@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Crea contrasinais robustos con símbolos`,
 's5f343a43e7ea9f91': `Erro`,
+'s60fa0c95a1b53c8c': `Elixe o teu método de xeración preferido a continuación para crear cadeas aleatorias criptograficamente seguras`,
 's68995eb38bdd5eba': `Xerar Hash`,
 's78052951d5233fd6': `Cambiar a Escuro`,
 's7d6ed23f1f594243': `Xera hashes personalizables con varios alfabetos`,

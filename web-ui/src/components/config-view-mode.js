@@ -7,7 +7,8 @@ export class ConfigViewMode extends LitElement {
     static properties = {
         currentLocale: { type: String },
         isOpen: { type: Boolean },
-        isDark: { type: Boolean }
+        isDark: { type: Boolean },
+        version: { type: String }
     };
 
     constructor() {
@@ -15,10 +16,12 @@ export class ConfigViewMode extends LitElement {
         this.currentLocale = 'en';
         this.isOpen = false;
         this.isDark = false;
+        this.version = '';
         this._documentClickHandler = this._handleDocumentClick.bind(this);
         
         // Detectar tema igual que theme-toggle
         this.detectTheme();
+        this.fetchVersion();
     }
     
     detectTheme() {
@@ -27,6 +30,17 @@ export class ConfigViewMode extends LitElement {
             this.isDark = savedTheme === 'dark';
         } else {
             this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+    }
+    
+    async fetchVersion() {
+        try {
+            const response = await fetch('/api/version');
+            const data = await response.json();
+            this.version = data.version;
+        } catch (error) {
+            console.error('Error fetching version:', error);
+            this.version = '';
         }
     }
 
@@ -41,9 +55,8 @@ export class ConfigViewMode extends LitElement {
             align-items: center;
             gap: 6px;
             padding: 8px 10px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            border: 1px solid transparent;
             border-radius: 8px;
             color: white;
             cursor: pointer;
@@ -53,11 +66,8 @@ export class ConfigViewMode extends LitElement {
             justify-content: center;
         }
 
-        .selector-button:not(.open) {
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
         .selector-button.open {
+            background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
         }
@@ -69,7 +79,6 @@ export class ConfigViewMode extends LitElement {
 
         .selector-button:focus {
             outline: none;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
         }
 
         .button-content {
@@ -137,6 +146,18 @@ export class ConfigViewMode extends LitElement {
             font-weight: 500;
         }
 
+        .version-separator {
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            background: transparent;
+            border: none;
+            cursor: default;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            letter-spacing: 0.025em;
+        }
+
         /* Dark mode styles for new elements */
         :host-context(.dark) .dropdown-separator {
             background: #374151;
@@ -144,6 +165,10 @@ export class ConfigViewMode extends LitElement {
 
         :host-context(.dark) .theme-button {
             border-bottom-color: #374151;
+        }
+
+        :host-context(.dark) .version-separator {
+            color: #6b7280;
         }
 
         .dropdown.open {
@@ -266,6 +291,11 @@ export class ConfigViewMode extends LitElement {
     _handleDocumentClick(event) {
         if (!this.contains(event.target)) {
             this.isOpen = false;
+            // Blur the button when clicking outside
+            const button = this.shadowRoot.querySelector('.selector-button');
+            if (button) {
+                /** @type {HTMLElement} */ (button).blur();
+            }
         }
     }
 
@@ -284,6 +314,11 @@ export class ConfigViewMode extends LitElement {
             localStorage.setItem('hashrand-locale', locale);
         }
         this.isOpen = false;
+        // Blur the button after selection
+        const button = this.shadowRoot.querySelector('.selector-button');
+        if (button) {
+            /** @type {HTMLElement} */ (button).blur();
+        }
     }
     
     toggleTheme(event) {
@@ -303,6 +338,11 @@ export class ConfigViewMode extends LitElement {
         
         localStorage.setItem('hashrand-theme', this.isDark ? 'dark' : 'light');
         this.isOpen = false;
+        // Blur the button after theme toggle
+        const button = this.shadowRoot.querySelector('.selector-button');
+        if (button) {
+            /** @type {HTMLElement} */ (button).blur();
+        }
     }
 
     getLanguageFlag(locale) {
@@ -373,6 +413,12 @@ export class ConfigViewMode extends LitElement {
                             <span>${this.isDark ? msg('Switch to Light') : msg('Switch to Dark')}</span>
                         </button>
                     </li>
+                    <!-- Version separator -->
+                    ${this.version ? html`
+                        <li class="dropdown-item">
+                            <div class="version-separator">v${this.version}</div>
+                        </li>
+                    ` : ''}
                     <!-- Separator -->
                     <li class="dropdown-separator"></li>
                     <!-- Language options -->

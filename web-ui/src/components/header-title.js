@@ -60,8 +60,7 @@ export class HeaderTitle extends LitElement {
 
     render() {
         return html`
-            <h1 class="text-4xl md:text-5xl font-bold mb-2">🎲 HashRand ${this.version ? html`<span class="text-sm opacity-70 font-normal">v${this.version}</span>` : ''}</h1>
-            <p class="opacity-90 text-lg">${msg('Secure Random Hash Generator with Multiple Alphabets')}</p>
+            <h1 class="text-3xl md:text-4xl font-bold">🎲 HashRand</h1>
         `;
     }
 }

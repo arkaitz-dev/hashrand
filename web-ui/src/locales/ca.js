@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Crea contrasenyes fortes amb símbols`,
 's5f343a43e7ea9f91': `Error`,
+'s60fa0c95a1b53c8c': `Tria el teu mètode de generació preferit a continuació per crear cadenes aleatòries criptogràficament segures`,
 's68995eb38bdd5eba': `Generar Hash`,
 's78052951d5233fd6': `Canviar a Fosc`,
 's7d6ed23f1f594243': `Genera hashos personalitzables amb diversos alfabets`,

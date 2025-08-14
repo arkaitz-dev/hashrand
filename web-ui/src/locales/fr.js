@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Créer des mots de passe robustes avec des symboles`,
 's5f343a43e7ea9f91': `Erreur`,
+'s60fa0c95a1b53c8c': `Choisissez votre méthode de génération préférée ci-dessous pour créer des chaînes aléatoires cryptographiquement sécurisées`,
 's68995eb38bdd5eba': `Générer le Hash`,
 's78052951d5233fd6': `Passer en Sombre`,
 's7d6ed23f1f594243': `Générer des hashes personnalisables avec divers alphabets`,

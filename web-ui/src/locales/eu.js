@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Sortu pasahitz sendoak simboloekin`,
 's5f343a43e7ea9f91': `Errorea`,
+'s60fa0c95a1b53c8c': `Aukeratu behean zure belaunaldi metodo hobetsia kate ausazko seguru kriptografikoak sortzeko`,
 's68995eb38bdd5eba': `Sortu Hash`,
 's78052951d5233fd6': `Iluna aldatu`,
 's7d6ed23f1f594243': `Sortu hash pertsonalizatuak alfabeto ezberdinekin`,

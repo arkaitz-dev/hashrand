@@ -31,6 +31,7 @@
 's550253c729ec9fc4': `Base58 (Bitcoin)`,
 's555ae2231a4ece23': `Crea contraseñas robustas con símbolos`,
 's5f343a43e7ea9f91': `Error`,
+'s60fa0c95a1b53c8c': `Elige tu método de generación preferido para crear cadenas aleatorias criptográficamente seguras`,
 's68995eb38bdd5eba': `Generar Hash`,
 's78052951d5233fd6': `Cambiar a Oscuro`,
 's7d6ed23f1f594243': `Genera hashes personalizables con varios alfabetos`,
