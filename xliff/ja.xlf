@@ -230,6 +230,10 @@
   <source>Switch to Dark</source>
   <target>ダークに切り替え</target>
 </trans-unit>
+<trans-unit id="s60fa0c95a1b53c8c">
+  <source>Choose your preferred generation method below to create cryptographically secure random strings</source>
+  <target>暗号学的に安全なランダム文字列を作成するために、下記からお好みの生成方法をお選びください</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

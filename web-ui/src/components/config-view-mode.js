@@ -1,7 +1,8 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { getLocale, setLocale } from '../localization.js';
 import { allLocales } from '../locales/locale-codes.js';
+import { sharedStyles } from '../shared-styles.js';
 
 export class ConfigViewMode extends LitElement {
     static properties = {
@@ -44,195 +45,7 @@ export class ConfigViewMode extends LitElement {
         }
     }
 
-    static styles = css`
-        :host {
-            display: block;
-            position: relative;
-        }
-
-        .selector-button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 10px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            width: auto;
-            justify-content: center;
-        }
-
-        .selector-button.open {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
-        }
-
-        .selector-button:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .selector-button:focus {
-            outline: none;
-        }
-
-        .button-content {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .flag {
-            font-size: 18px;
-            line-height: 1;
-        }
-
-        .theme-icon {
-            font-size: 16px;
-            line-height: 1;
-        }
-
-        .arrow {
-            width: 12px;
-            height: 12px;
-            transition: transform 0.2s ease;
-            color: rgba(255, 255, 255, 0.9);
-            fill: currentColor;
-            opacity: 1;
-        }
-
-        .arrow.open {
-            transform: rotate(180deg);
-        }
-
-        .dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            min-width: 180px;
-            max-height: 300px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            border: 1px solid #e5e7eb;
-            overflow-y: auto;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.2s ease;
-        }
-
-        .dropdown.rtl {
-            right: auto;
-            left: 0;
-        }
-
-        .dropdown-separator {
-            height: 1px;
-            background: #e5e7eb;
-            margin: 4px 0;
-            list-style: none;
-        }
-
-        .theme-button {
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 4px;
-            font-weight: 500;
-        }
-
-        .version-separator {
-            padding: 8px 12px;
-            text-align: center;
-            font-size: 11px;
-            color: #9ca3af;
-            background: transparent;
-            border: none;
-            cursor: default;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            letter-spacing: 0.025em;
-        }
-
-        /* Dark mode styles for new elements */
-        :host-context(.dark) .dropdown-separator {
-            background: #374151;
-        }
-
-        :host-context(.dark) .theme-button {
-            border-bottom-color: #374151;
-        }
-
-        :host-context(.dark) .version-separator {
-            color: #6b7280;
-        }
-
-        .dropdown.open {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dropdown-list {
-            list-style: none;
-            padding: 4px;
-            margin: 0;
-        }
-
-        .dropdown-item {
-            margin: 0;
-            padding: 0;
-        }
-
-        .dropdown-button {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 10px 12px;
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            color: #374151;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            transition: background-color 0.15s ease;
-        }
-
-        .dropdown-button:hover {
-            background-color: #f3f4f6;
-        }
-
-        .dropdown-button.active {
-            background-color: #eff6ff;
-            color: #2563eb;
-            font-weight: 600;
-        }
-
-        /* Dark mode styles */
-        :host-context(.dark) .dropdown {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        :host-context(.dark) .dropdown-button {
-            color: #e5e7eb;
-        }
-
-        :host-context(.dark) .dropdown-button:hover {
-            background-color: #374151;
-        }
-
-        :host-context(.dark) .dropdown-button.active {
-            background-color: #1e3a8a;
-            color: #60a5fa;
-        }
-    `;
+    static styles = sharedStyles;
 
     connectedCallback() {
         super.connectedCallback();
@@ -385,27 +198,27 @@ export class ConfigViewMode extends LitElement {
         const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
-                class="selector-button ${this.isOpen ? 'open' : ''}"
+                class="flex items-center gap-2 px-2 py-2 bg-transparent border border-transparent rounded-lg text-white cursor-pointer text-sm transition-all duration-200 w-auto justify-center hover:bg-gray-100 hover:bg-opacity-15 focus:outline-none"
                 @click=${this.toggleDropdown}
                 aria-label="Select language"
                 aria-expanded="${this.isOpen}"
                 aria-haspopup="listbox"
             >
-                <div class="button-content">
-                    <span class="flag">${this.getLanguageFlag(this.currentLocale)}</span>
-                    <span class="theme-icon">${this.isDark ? '🌙' : '☀️'}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-lg leading-none">${this.getLanguageFlag(this.currentLocale)}</span>
+                    <span class="text-base leading-none">${this.isDark ? '🌙' : '☀️'}</span>
                 </div>
-                <svg class="arrow ${this.isOpen ? 'open' : ''}" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-3 h-3 transition-transform duration-200 text-white text-opacity-90 fill-current ${this.isOpen ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
             </button>
             
-            <div class="dropdown ${this.isOpen ? 'open' : ''} ${isRTL ? 'rtl' : ''}" role="listbox">
-                <ul class="dropdown-list">
+            <div class="absolute top-full right-0 mt-2 min-w-45 max-h-96 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto z-1000 transition-all duration-200 ${this.isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'} ${isRTL ? 'left-0 right-auto' : ''}" role="listbox">
+                <ul class="list-none p-1 m-0">
                     <!-- Theme toggle as first item -->
-                    <li class="dropdown-item">
+                    <li class="m-0 p-0">
                         <button
-                            class="dropdown-button theme-button"
+                            class="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none rounded text-gray-700 cursor-pointer text-sm text-left transition-colors duration-200 border-b border-gray-200 mb-1 font-medium hover:bg-gray-100"
                             @click=${this.toggleTheme}
                             role="option"
                         >
@@ -415,17 +228,17 @@ export class ConfigViewMode extends LitElement {
                     </li>
                     <!-- Version separator -->
                     ${this.version ? html`
-                        <li class="dropdown-item">
-                            <div class="version-separator">v${this.version}</div>
+                        <li class="m-0 p-0">
+                            <div class="px-3 py-2 text-center text-xs text-gray-500 bg-transparent border-none cursor-default font-normal">v${this.version}</div>
                         </li>
                     ` : ''}
                     <!-- Separator -->
-                    <li class="dropdown-separator"></li>
+                    <li class="h-px bg-gray-200 my-1 list-none"></li>
                     <!-- Language options -->
                     ${allLocales.map(locale => html`
-                        <li class="dropdown-item">
+                        <li class="m-0 p-0">
                             <button
-                                class="dropdown-button ${locale === this.currentLocale ? 'active' : ''}"
+                                class="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none rounded text-gray-700 cursor-pointer text-sm text-left transition-colors duration-200 ${locale === this.currentLocale ? 'bg-blue-50 text-blue-600 font-semibold' : ''} hover:bg-gray-100"
                                 @click=${(e) => this.selectLanguage(locale, e)}
                                 role="option"
                                 aria-selected="${locale === this.currentLocale}"

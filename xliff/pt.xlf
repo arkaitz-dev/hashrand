@@ -230,6 +230,10 @@
   <source>Switch to Dark</source>
   <target>Mudar para Escuro</target>
 </trans-unit>
+<trans-unit id="s60fa0c95a1b53c8c">
+  <source>Choose your preferred generation method below to create cryptographically secure random strings</source>
+  <target>Escolha seu método de geração preferido abaixo para criar strings aleatórias criptograficamente seguras</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

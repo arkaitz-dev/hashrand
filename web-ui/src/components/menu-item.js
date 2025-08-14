@@ -1,7 +1,8 @@
 // @ts-check
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { Router } from '@vaadin/router';
+import { sharedStyles } from '../shared-styles.js';
 
 /**
  * MenuItem component - Individual card for menu navigation
@@ -19,106 +20,7 @@ export class MenuItem extends LitElement {
         descKey: { type: String }
     };
 
-    static styles = css`
-        :host {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .menu-card {
-            background: white;
-            border: 2px solid #6b7280;
-            border-radius: 0.75rem;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        /* Dark mode styles */
-        :host-context(.dark) .menu-card,
-        :host-context(html.dark) .menu-card {
-            background: #4b5563 !important; /* gray-600 - más claro que header (gray-700) pero más oscuro que contenedor (gray-500) */
-            border: none !important; /* sin bordes */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border-color: #3b82f6;
-        }
-
-        :host-context(.dark) .menu-card:hover {
-            border-color: #93c5fd;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-        }
-
-        .menu-card:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        :host-context(.dark) .menu-card:focus {
-            border-color: #93c5fd;
-        }
-
-        .hover-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom right, #3b82f6, #6366f1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .menu-card:hover .hover-overlay {
-            opacity: 0.1;
-        }
-
-        :host-context(.dark) .menu-card:hover .hover-overlay {
-            opacity: 0.2;
-        }
-
-        .menu-icon {
-            font-size: 3rem;
-            line-height: 1;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        .menu-title {
-            color: #111827;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-            position: relative;
-            z-index: 10;
-        }
-
-        :host-context(.dark) .menu-title,
-        :host-context(html.dark) .menu-title {
-            color: #f9fafb !important; /* gray-50 - texto claro para el fondo gray-600 */
-        }
-
-        .menu-description {
-            color: #374151;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        :host-context(.dark) .menu-description,
-        :host-context(html.dark) .menu-description {
-            color: #e5e7eb !important; /* gray-200 - texto más suave para descripción */
-        }
-    `;
+    static styles = sharedStyles;
 
     constructor() {
         super();
@@ -153,17 +55,24 @@ export class MenuItem extends LitElement {
     render() {
         return html`
             <div 
-                class="menu-card"
+                class="bg-white dark:bg-gray-600 border-2 border-gray-500 dark:border-none rounded-xl p-8 text-center cursor-pointer transition-all duration-300 relative overflow-hidden shadow-xl dark:shadow-black/40 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/25 dark:hover:shadow-black/60 hover:border-blue-600 dark:hover:border-blue-300 focus:outline-none focus:border-blue-600 focus:shadow-blue-100 dark:focus:border-blue-300"
                 @click=${this.handleClick}
                 @blur=${this.handleBlur}
                 tabindex="0"
                 role="button"
-                aria-label="${msg(this.titleKey)}"
+                aria-label="${msg(this.titleKey)} - ${msg(this.descKey)}"
             >
-                <div class="hover-overlay"></div>
-                <div class="menu-icon">${this.icon}</div>
-                <h3 class="menu-title">${msg(this.titleKey)}</h3>
-                <p class="menu-description">${msg(this.descKey)}</p>
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-600 opacity-0 transition-opacity duration-300 hover:opacity-5"></div>
+                
+                <span class="text-5xl mb-4 block">${this.icon}</span>
+                
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2 relative z-10">
+                    ${msg(this.titleKey)}
+                </h3>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-200 leading-snug relative z-10">
+                    ${msg(this.descKey)}
+                </p>
             </div>
         `;
     }

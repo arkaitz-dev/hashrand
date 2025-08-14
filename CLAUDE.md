@@ -426,6 +426,68 @@ Modified:
 - **Build System**: Successfully configured Vite + TailwindCSS + Lit integration
 - **Testing**: Dev server (localhost:3019) and production build both working correctly
 
+## Session (2025-08-14) - TypeScript Error Resolution
+
+### Session Summary
+**Duration**: ~30 minutes | **Branch**: master | **Version**: 0.6.0 (no version change)
+**Commit**: `bf6006f` - Complete resolution of all TypeScript @ts-check errors
+
+**Primary Accomplishment**: Fixed all 8 TypeScript errors in JavaScript files with @ts-check directive
+
+### Issues Resolved
+
+#### 1. Property 'value' Errors (4 files)
+**Files**: `api-key.js`, `custom-hash.js`, `password.js`
+**Problem**: `querySelector()` returns `Element` type, not `HTMLInputElement`
+**Solution**: Added explicit type casts: `/** @type {HTMLInputElement} */ (element)`
+
+#### 2. URLSearchParams Type Errors (3 files)  
+**Files**: `api-key.js`, `custom-hash.js`, `password.js`
+**Problem**: URLSearchParams constructor expects string values, not numbers
+**Solution**: Wrapped numeric values with `String()`: `String(parameters.length || 21)`
+
+#### 3. Property 'blur' Error
+**File**: `menu.js`
+**Problem**: `e.currentTarget` typed as `EventTarget`, not `HTMLElement`
+**Solution**: Added type cast: `/** @type {HTMLElement} */ (e.currentTarget)`
+
+#### 4. Property 'env' Error  
+**File**: `api.js`
+**Problem**: `import.meta.env` not recognized by TypeScript
+**Solution**: Added JSDoc type definitions and double type cast through `unknown`
+
+### Technical Implementation
+```javascript
+// Type definitions added to api.js
+/**
+ * @typedef {Object} ImportMetaEnv
+ * @property {string} [BASE_URL] - Vite base URL
+ */
+
+/**
+ * @typedef {Object} ImportMeta  
+ * @property {ImportMetaEnv} env - Vite environment variables
+ */
+
+// Complex type cast for import.meta
+return (/** @type {ImportMeta} */ (/** @type {unknown} */ (import.meta))).env.BASE_URL || '/';
+```
+
+### Validation Results
+- ✅ **0 TypeScript errors**: All @ts-check files now pass validation
+- ✅ **Functionality preserved**: No breaking changes to application behavior
+- ✅ **Best practices**: Used JSDoc type annotations for maintainability
+
+### Files Modified
+```
+Modified (5 files):
+~ src/pages/api-key.js (type casts for input elements + URLSearchParams)  
+~ src/pages/custom-hash.js (type casts for input elements + URLSearchParams)
+~ src/pages/menu.js (type cast for currentTarget.blur())
+~ src/pages/password.js (type casts for input elements + URLSearchParams)
+~ src/utils/api.js (JSDoc definitions + complex import.meta type cast)
+```
+
 ### Bundle Optimization Results (Completed)
 **BEFORE Optimization:**
 - Main JS: 78.96 kB (17.53 kB gzip)

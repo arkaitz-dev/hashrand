@@ -1,4 +1,5 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
+import { sharedStyles } from '../shared-styles.js';
 
 export class ThemeToggle extends LitElement {
     static properties = {
@@ -19,41 +20,7 @@ export class ThemeToggle extends LitElement {
         this.applyTheme();
     }
 
-    static styles = css`
-        :host {
-            display: block !important;
-            position: relative;
-            background: red; /* Debug color */
-            width: 40px;
-            height: 40px;
-        }
-
-        .toggle-button {
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #fff;
-            border-radius: 8px;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            height: 100%;
-            font-size: 18px;
-        }
-
-        .toggle-button:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: scale(1.05);
-        }
-
-        .icon {
-            width: 20px;
-            height: 20px;
-        }
-    `;
+    static styles = sharedStyles;
 
     applyTheme() {
         if (this.isDark) {
@@ -73,11 +40,13 @@ export class ThemeToggle extends LitElement {
         console.log('ThemeToggle render() called, isDark:', this.isDark);
         return html`
             <button
-                class="toggle-button"
+                class="flex items-center justify-center p-2 bg-white border-2 border-white rounded-lg text-gray-700 cursor-pointer transition-all duration-200 w-full h-full text-lg hover:shadow-md focus:outline-none"
                 @click=${this.toggleTheme}
                 title="${this.isDark ? 'Switch to light mode' : 'Switch to dark mode'}"
             >
-                ${this.isDark ? '☀️' : '🌙'}
+                <span class="w-5 h-5 text-center leading-none">
+                    ${this.isDark ? '☀️' : '🌙'}
+                </span>
             </button>
         `;
     }

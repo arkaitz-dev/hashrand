@@ -15,7 +15,7 @@ console.log('Large data loaded, length:', LARGE_DATA.length);
 // Import all Lit components
 import './components/header-title.js';
 import './components/config-view-mode.js';
-import './components/theme-toggle-final.js';
+// Theme toggle integrated in config-view-mode component
 import './pages/menu.js';
 import './pages/custom-hash.js';
 import './pages/password.js';
