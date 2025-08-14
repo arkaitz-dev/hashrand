@@ -589,12 +589,109 @@ Modified:
 ### Session Impact Summary
 **🎯 Mission Accomplished**: Transformed from MPA-style navigation to modern SPA with complete URL routing, maintaining all existing functionality while improving UX, DX, and code architecture.
 
-## Current Session (2025-01-13)
+## Session (2025-08-14) - TailwindCSS v4 Migration & Button Positioning Fix
 
-### Session Start
-**Time**: Started at current time
-**Branch**: master (clean, up to date)
-**Version**: 0.6.0
+### Session Summary
+**Duration**: ~2 horas | **Branch**: master | **Version**: 0.6.0 (no version change)
+**Commit**: `c8c5690` - TailwindCSS v4 migration and configuration fixes
+
+**Primary Accomplishment**: Complete resolution of config-view-mode button positioning issue through proper TailwindCSS v4 configuration
+
+### Root Cause Analysis
+
+#### Problem Identified
+The config-view-mode button appeared on the left side instead of the right due to **fundamental TailwindCSS v4 configuration issues**:
+
+1. **Wrong Plugin**: Using `@tailwindcss/postcss` instead of official `@tailwindcss/vite`
+2. **Obsolete Config**: `tailwind.config.js` with deprecated `corePlugins` option (removed in v4)  
+3. **Incorrect CSS Syntax**: Using v3 directives instead of v4's `@import "tailwindcss"`
+4. **Class Generation Failure**: Essential utilities (`top-4`, `right-4`, `p-6`) not being generated
+
+### Solution Implemented
+
+#### 1. TailwindCSS v4 Official Configuration
+- **Uninstalled**: `@tailwindcss/postcss` (incompatible with v4)
+- **Installed**: `@tailwindcss/vite@4.1.11` (official v4 plugin)
+- **Updated vite.config.js**: Replaced PostCSS configuration with Vite plugin
+- **Removed**: `tailwind.config.js` with deprecated `corePlugins`
+
+#### 2. CSS Syntax Migration
+- **Before**: `@tailwind base; @tailwind components; @tailwind utilities;`
+- **After**: `@import "tailwindcss";` (v4 standard)
+
+#### 3. HTML Positioning Fix  
+- **Issue**: RTL override classes interfering: `rtl:right-auto rtl:left-4`
+- **Solution**: Simplified to: `class="absolute top-4 right-4"`
+- **Result**: Button correctly positioned in top-right corner regardless of language
+
+### Technical Validation
+
+#### Class Generation Verification
+✅ **All utilities now generate correctly**:
+- Position: `.absolute`, `.relative`, `.static`
+- Spacing: `.top-4`, `.right-4`, `.p-6`, `.mx-auto`
+- Colors: `.bg-blue-600`, `.text-white`, `.border-gray-300`
+- Dark Mode: `.dark\\:bg-gray-800`, `.dark\\:border-gray-700`
+- Responsive: `.md\\:grid-cols-2`, `.lg\\:grid-cols-3`
+
+#### Files Modified
+```
+Modified:
+~ package.json (dependencies: -@tailwindcss/postcss, +@tailwindcss/vite)
+~ package-lock.json (dependency updates)
+~ vite.config.js (PostCSS → Vite plugin configuration)
+~ web-ui/src/css/main.css (v3 → v4 syntax)
+~ web-ui/index.html (RTL positioning fix)
+
+Removed:
+- tailwind.config.js (obsolete corePlugins configuration)
+```
+
+### Key Technical Learnings
+
+1. **TailwindCSS v4 Architecture Changes**:
+   - `corePlugins` option completely removed
+   - JavaScript config files no longer auto-detected
+   - Configuration primarily through CSS, not JS
+   - `@tailwindcss/vite` required for proper Vite integration
+
+2. **Migration Requirements**:
+   - CSS syntax: `@import "tailwindcss"` replaces individual directives
+   - Plugin: Must use `@tailwindcss/vite`, not PostCSS variant
+   - Config: Minimal or no JavaScript configuration needed
+
+3. **Positioning Best Practices**:
+   - Avoid RTL override classes unless specifically needed
+   - Test class generation with server restarts
+   - Verify utilities in compiled CSS for debugging
+
+### Documentation References
+- **TailwindCSS v4 Installation**: Official Vite integration guide
+- **Upgrade Guide**: v3 → v4 breaking changes documentation
+- **Configuration**: CSS-first approach in v4
+
+### Next Session Priorities (Unchanged)
+1. Component testing (@web/test-runner)
+2. TypeScript migration
+3. PWA features
+4. Batch generation
+5. Enhanced UX polish
+
+### Architecture Impact
+- **Zero Breaking Changes**: All existing functionality preserved
+- **Performance**: Same bundle optimization maintained
+- **Maintainability**: Simplified configuration, easier debugging
+- **Standards Compliance**: Following official TailwindCSS v4 practices
+
+### Session Success Metrics
+- ✅ Button positioned correctly (top-right corner)
+- ✅ All TailwindCSS utilities generate properly
+- ✅ Dark mode classes functional
+- ✅ No temporary workarounds or patches
+- ✅ Configuration follows v4 best practices
+- ✅ Zero functionality regressions
+
+## Previous Session (2025-01-13)
 
 ### Session Accomplishments
 

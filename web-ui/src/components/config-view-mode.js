@@ -53,6 +53,15 @@ export class ConfigViewMode extends LitElement {
             justify-content: center;
         }
 
+        .selector-button:not(.open) {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .selector-button.open {
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
         .selector-button:hover {
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.3);
@@ -83,8 +92,9 @@ export class ConfigViewMode extends LitElement {
             width: 12px;
             height: 12px;
             transition: transform 0.2s ease;
-            color: white;
+            color: rgba(255, 255, 255, 0.9);
             fill: currentColor;
+            opacity: 1;
         }
 
         .arrow.open {
@@ -335,7 +345,7 @@ export class ConfigViewMode extends LitElement {
         const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
-                class="selector-button"
+                class="selector-button ${this.isOpen ? 'open' : ''}"
                 @click=${this.toggleDropdown}
                 aria-label="Select language"
                 aria-expanded="${this.isOpen}"
