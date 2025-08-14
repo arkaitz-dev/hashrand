@@ -95,8 +95,8 @@ export class PasswordView extends LitElement {
     }
 
     async handleGenerate() {
-        const length = this.shadowRoot.querySelector('#password-length').value;
-        const alphabet = this.shadowRoot.querySelector('#password-alphabet').value;
+        const length = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#password-length')).value;
+        const alphabet = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#password-alphabet')).value;
         
         const parameters = {
             length: parseInt(length),
@@ -112,7 +112,7 @@ export class PasswordView extends LitElement {
         try {
             // Make API call
             const params = new URLSearchParams({ 
-                length: parameters.length || 21 
+                length: String(parameters.length || 21) 
             });
             // Add alphabet parameter if specified
             if (parameters.alphabet) {

@@ -64,7 +64,7 @@ export class MenuPage extends LitElement {
      */
     handleCardBlur(e) {
         // Ensure the card loses focus
-        e.currentTarget.blur();
+        /** @type {HTMLElement} */ (e.currentTarget).blur();
     }
 }
 

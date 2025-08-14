@@ -4,6 +4,16 @@
  */
 
 /**
+ * @typedef {Object} ImportMetaEnv
+ * @property {string} [BASE_URL] - Vite base URL
+ */
+
+/**
+ * @typedef {Object} ImportMeta
+ * @property {ImportMetaEnv} env - Vite environment variables
+ */
+
+/**
  * Get the base path from Vite's configuration
  * This handles both development and production environments
  * @returns {string} The base path for the application
@@ -11,7 +21,7 @@
 export function getBasePath() {
     // In development, Vite provides import.meta.env.BASE_URL
     // In production, we use the base path from the build
-    return import.meta.env.BASE_URL || '/';
+    return (/** @type {ImportMeta} */ (/** @type {unknown} */ (import.meta))).env.BASE_URL || '/';
 }
 
 /**

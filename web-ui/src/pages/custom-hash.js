@@ -73,10 +73,10 @@ export class CustomHashView extends LitElement {
     }
 
     async handleGenerate() {
-        const length = this.shadowRoot.querySelector('#generate-length').value;
-        const alphabet = this.shadowRoot.querySelector('#generate-alphabet').value;
-        const prefix = this.shadowRoot.querySelector('#generate-prefix').value;
-        const suffix = this.shadowRoot.querySelector('#generate-suffix').value;
+        const length = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#generate-length')).value;
+        const alphabet = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#generate-alphabet')).value;
+        const prefix = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#generate-prefix')).value;
+        const suffix = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#generate-suffix')).value;
         
         const parameters = {
             length: parseInt(length),
@@ -94,7 +94,7 @@ export class CustomHashView extends LitElement {
         try {
             // Make API call
             const params = new URLSearchParams({
-                length: parameters.length || 21,
+                length: String(parameters.length || 21),
                 alphabet: parameters.alphabet || 'base58',
                 raw: 'true'
             });

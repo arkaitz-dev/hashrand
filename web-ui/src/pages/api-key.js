@@ -100,8 +100,8 @@ export class ApiKeyView extends LitElement {
     }
     
     async handleGenerate() {
-        const length = this.shadowRoot.querySelector('#apikey-length').value;
-        const alphabet = this.shadowRoot.querySelector('#apikey-alphabet').value;
+        const length = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#apikey-length')).value;
+        const alphabet = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#apikey-alphabet')).value;
         
         const parameters = {
             length: parseInt(length),
@@ -117,7 +117,7 @@ export class ApiKeyView extends LitElement {
         try {
             // Make API call
             const params = new URLSearchParams({ 
-                length: parameters.length || 44,
+                length: String(parameters.length || 44),
                 raw: 'true'
             });
             // Add alphabet parameter if specified
