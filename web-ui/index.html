@@ -6,7 +6,7 @@
     <title>HashRand - Random Hash Generator</title>
     <link rel="stylesheet" href="/src/css/main.css">
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-5">
+<body class="min-h-screen p-5 transition-colors duration-300">
     <!-- Preloader -->
     <div id="preloader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
@@ -19,13 +19,15 @@
 
     <!-- Main application (hidden initially) -->
     <div id="main-app" style="visibility: hidden;">
-        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
-            <div class="bg-slate-700 text-white p-8 text-center relative">
-                <language-selector class="absolute top-6 right-6 z-50"></language-selector>
+        <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-black/30 overflow-hidden transition-colors duration-300">
+            <div class="bg-blue-600 dark:bg-gray-800 text-white p-6 text-center relative transition-colors duration-300 border-b border-blue-700 dark:border-gray-700">
+                <div class="absolute top-4 right-4 rtl:right-auto rtl:left-4">
+                    <config-view-mode></config-view-mode>
+                </div>
                 <header-title></header-title>
             </div>
             
-            <div class="p-8">
+            <div class="p-8 dark:text-gray-100 transition-colors duration-300">
                 <div id="router-outlet"></div>
             </div>
         </div>
@@ -41,20 +43,30 @@
             const progressContainer = document.getElementById('progress-container');
             
             // Detect system color scheme and apply styles
-            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('hashrand-theme');
+            const isDarkMode = savedTheme ? savedTheme === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            // Apply theme to HTML immediately to prevent flash
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.style.backgroundColor = '#1f2937'; // gray-800 - SAME as preloader
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.style.backgroundColor = '#f9fafb'; // gray-50
+            }
             
             if (isDarkMode) {
-                // Dark mode styles
-                preloader.style.background = '#2d3748'; // Gray-700
-                progressPercent.style.color = '#e2e8f0'; // Gray-300
-                progressContainer.style.border = '1px solid #4a5568'; // Gray-600
-                progressBar.style.backgroundColor = '#63b3ed'; // Blue-400
+                // Dark mode styles - matching main app dark theme
+                preloader.style.background = '#1f2937'; // Gray-800
+                progressPercent.style.color = '#f3f4f6'; // Gray-100
+                progressContainer.style.border = '1px solid #4b5563'; // Gray-600
+                progressBar.style.backgroundColor = '#3b82f6'; // Blue-500
             } else {
-                // Light mode styles (default)
-                preloader.style.background = 'white';
-                progressPercent.style.color = 'black';
-                progressContainer.style.border = '1px solid #ccc';
-                progressBar.style.backgroundColor = '#4285f4';
+                // Light mode styles - matching main app light theme
+                preloader.style.background = '#ffffff';
+                progressPercent.style.color = '#1f2937'; // Gray-800
+                progressContainer.style.border = '1px solid #e5e7eb'; // Gray-200
+                progressBar.style.backgroundColor = '#3b82f6'; // Blue-500
             }
             
             let totalProgress = 0;

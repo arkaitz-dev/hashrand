@@ -222,6 +222,14 @@
   <source>Copied!</source>
   <target>Kopiatuta!</target>
 </trans-unit>
+<trans-unit id="s25c3dc10a1796fee">
+  <source>Switch to Light</source>
+  <target>Argira aldatu</target>
+</trans-unit>
+<trans-unit id="s78052951d5233fd6">
+  <source>Switch to Dark</source>
+  <target>Iluna aldatu</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

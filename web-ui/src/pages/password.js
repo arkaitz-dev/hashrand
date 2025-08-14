@@ -37,14 +37,14 @@ export class PasswordView extends LitElement {
         }
         
         return html`
-            <button class="bg-transparent border-2 border-indigo-500 text-indigo-500 mb-6 w-auto px-5 py-2.5 inline-flex items-center gap-2 font-semibold cursor-pointer rounded-lg text-base transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30 focus:outline-none" @click=${this.handleBackClick}>${msg('← Back to Menu')}</button>
+            <button class="bg-transparent border-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 mb-6 w-auto px-5 py-2.5 inline-flex items-center gap-2 font-semibold cursor-pointer rounded-lg text-base transition-all duration-200 hover:bg-blue-600 dark:hover:bg-blue-500 hover:text-white hover:shadow-md focus:outline-none" @click=${this.handleBackClick}>${msg('← Back to Menu')}</button>
             
             <div class="mb-8">
-                <h2 class="text-slate-700 mb-4 text-xl flex items-center gap-2">${msg('🔐 Generate Password')}</h2>
+                <h2 class="text-gray-800 dark:text-gray-200 mb-4 text-xl flex items-center gap-2">${msg('🔐 Generate Password')}</h2>
                 
                 <div class="mb-6">
-                    <label for="password-alphabet" class="block mb-2 font-semibold text-slate-600">${msg('Alphabet Type')}</label>
-                    <select id="password-alphabet" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base font-inherit transition-all duration-300 bg-white focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]" @change=${this.handleAlphabetChange}>
+                    <label for="password-alphabet" class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">${msg('Alphabet Type')}</label>
+                    <select id="password-alphabet" class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-base font-inherit transition-all duration-200 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20" @change=${this.handleAlphabetChange}>
                         <option value="full-with-symbols" ?selected=${this.alphabetType === 'full-with-symbols'}>
                             ${msg('Full with Symbols (Maximum Security)')}
                         </option>

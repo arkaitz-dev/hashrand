@@ -222,6 +222,14 @@
   <source>Secure Random Hash Generator with Multiple Alphabets</source>
   <target>安全随机哈希生成器，支持多种字母表</target>
 </trans-unit>
+<trans-unit id="s25c3dc10a1796fee">
+  <source>Switch to Light</source>
+  <target>切换到浅色</target>
+</trans-unit>
+<trans-unit id="s78052951d5233fd6">
+  <source>Switch to Dark</source>
+  <target>切换到深色</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

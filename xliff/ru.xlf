@@ -222,6 +222,14 @@
   <source>Secure Random Hash Generator with Multiple Alphabets</source>
   <target>Безопасный Генератор Случайных Хешей с Множественными Алфавитами</target>
 </trans-unit>
+<trans-unit id="s25c3dc10a1796fee">
+  <source>Switch to Light</source>
+  <target>Переключить на Светлый</target>
+</trans-unit>
+<trans-unit id="s78052951d5233fd6">
+  <source>Switch to Dark</source>
+  <target>Переключить на Темный</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

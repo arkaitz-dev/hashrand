@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class', // Enable dark mode via class
   content: [
     './web-ui/index.html',
     './web-ui/src/**/*.js',
@@ -41,7 +42,7 @@ export default {
     invert: false,
     saturate: false,
     sepia: false,
-    backdropBlur: false,
+    backdropBlur: true,
     backdropBrightness: false,
     backdropContrast: false,
     backdropFilter: false,
@@ -55,10 +56,10 @@ export default {
     divideOpacity: false,
     divideStyle: false,
     divideWidth: false,
-    ringColor: false,
-    ringOffsetColor: false,
-    ringOffsetWidth: false,
-    ringOpacity: false,
-    ringWidth: false,
+    ringColor: true,
+    ringOffsetColor: true,
+    ringOffsetWidth: true,
+    ringOpacity: true,
+    ringWidth: true,
   }
 }

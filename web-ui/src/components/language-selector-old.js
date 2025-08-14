@@ -154,24 +154,35 @@ export class LanguageSelector extends LitElement {
         const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
-                class="bg-transparent border border-transparent text-white px-3 py-1.5 rounded-md cursor-pointer text-base flex items-center gap-1.5 transition-all duration-200 hover:bg-white hover:bg-opacity-10 hover:border-white hover:border-opacity-20 focus:outline-none" 
+                class="bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 text-white px-3 py-1.5 rounded-lg cursor-pointer text-base flex items-center gap-2 transition-all duration-200 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30" 
                 @click=${this.toggleDropdown}
+                aria-label="Select language"
+                aria-expanded="${this.showDropdown}"
             >
-                <span>${this.getLanguageFlag(this.currentLocale)}</span>
-                <span>🌐</span>
+                <span class="text-lg">${this.getLanguageFlag(this.currentLocale)}</span>
+                <span class="text-lg">🌐</span>
+                <svg class="w-4 h-4 transition-transform duration-200 ${this.showDropdown ? 'rotate-180' : ''}" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
             </button>
             
-            <div class="absolute top-full z-50 min-w-[180px] mt-1 bg-white rounded-lg shadow-xl transition-all duration-200 ${this.showDropdown ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} ${isRTL ? 'left-0' : 'right-0'}">
-                ${allLocales.map(locale => html`
-                    <button
-                        class="flex items-center gap-2 w-full px-4 py-3 text-slate-700 cursor-pointer border-none bg-none text-left text-base hover:bg-gray-50 transition-colors duration-150 ${locale === this.currentLocale ? 'bg-blue-50 text-blue-600 font-medium' : ''}"
-                        @click=${() => this.selectLanguage(locale)}
-                    >
-                        <span>${this.getLanguageFlag(locale)}</span>
-                        <span>${this.getLocaleDisplayName(locale)}</span>
-                    </button>
-                `)}
-            </div>
+            ${this.showDropdown ? html`
+                <ul class="absolute top-full right-0 z-50 min-w-[180px] mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden list-none p-0 m-0">
+                    ${allLocales.map(locale => html`
+                        <li class="m-0 p-0">
+                            <button
+                                class="flex items-center gap-3 w-full px-4 py-2.5 text-gray-700 dark:text-gray-200 cursor-pointer border-none bg-transparent text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ${locale === this.currentLocale ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-semibold' : ''}"
+                                @click=${() => this.selectLanguage(locale)}
+                                role="option"
+                                aria-selected="${locale === this.currentLocale}"
+                            >
+                                <span class="text-base">${this.getLanguageFlag(locale)}</span>
+                                <span>${this.getLocaleDisplayName(locale)}</span>
+                            </button>
+                        </li>
+                    `)}
+                </ul>
+            ` : ''}
         `;
     }
 }

@@ -222,6 +222,14 @@
   <source>Copied!</source>
   <target>Copiado!</target>
 </trans-unit>
+<trans-unit id="s25c3dc10a1796fee">
+  <source>Switch to Light</source>
+  <target>Cambiar a Claro</target>
+</trans-unit>
+<trans-unit id="s78052951d5233fd6">
+  <source>Switch to Dark</source>
+  <target>Cambiar a Escuro</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -588,3 +588,43 @@ Modified:
 
 ### Session Impact Summary
 **🎯 Mission Accomplished**: Transformed from MPA-style navigation to modern SPA with complete URL routing, maintaining all existing functionality while improving UX, DX, and code architecture.
+
+## Current Session (2025-01-13)
+
+### Session Start
+**Time**: Started at current time
+**Branch**: master (clean, up to date)
+**Version**: 0.6.0
+
+### Session Accomplishments
+
+#### Language Selector Fix
+✅ **Problema resuelto**: El selector mostraba múltiples botones en lugar de un dropdown
+- Creado nuevo componente con CSS nativo (sin Tailwind en el componente)
+- Un solo botón visible con: bandera actual + 🌐 + flecha
+- Dropdown real con transiciones suaves y lista estructurada
+- Posicionamiento correcto en esquina superior derecha
+
+#### Theme Toggle Implementation
+✅ **Switch claro/oscuro funcional**
+- Detecta preferencia del sistema automáticamente
+- Botón con iconos sol/luna
+- Persiste preferencia en localStorage
+- Clase 'dark' aplicada al documento
+
+#### Professional Design Overhaul
+✅ **Diseño austero y profesional**
+- Eliminados gradientes llamativos (púrpura/indigo)
+- Color principal: azul profesional (#3b82f6)
+- Fondo: gris claro sólido (light) / gris oscuro (dark)
+- Header: azul sólido sin gradientes
+- Consistencia con colores del preloader
+- Sombras más sutiles
+- Transiciones más rápidas (200ms)
+
+#### Technical Changes
+- Nuevo `language-selector.js` con CSS interno para control total
+- `theme-toggle.js` componente funcional
+- Soporte dark mode en todos los componentes
+- Tailwind configurado con `darkMode: 'class'`
+- Colores actualizados en todas las páginas

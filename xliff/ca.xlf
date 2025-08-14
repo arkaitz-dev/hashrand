@@ -222,6 +222,14 @@
   <source>Copied!</source>
   <target>Copiat!</target>
 </trans-unit>
+<trans-unit id="s25c3dc10a1796fee">
+  <source>Switch to Light</source>
+  <target>Canviar a Clar</target>
+</trans-unit>
+<trans-unit id="s78052951d5233fd6">
+  <source>Switch to Dark</source>
+  <target>Canviar a Fosc</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

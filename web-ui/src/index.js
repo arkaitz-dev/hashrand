@@ -8,9 +8,14 @@ import { sourceLocale, targetLocales } from './locales/locale-codes.js';
 // Import API utilities
 import { apiFetch } from './utils/api.js';
 
+// Import large data to test bundle size and preloader
+import { LARGE_DATA } from './large-data.js';
+console.log('Large data loaded, length:', LARGE_DATA.length);
+
 // Import all Lit components
 import './components/header-title.js';
-import './components/language-selector.js';
+import './components/config-view-mode.js';
+import './components/theme-toggle-final.js';
 import './pages/menu.js';
 import './pages/custom-hash.js';
 import './pages/password.js';
