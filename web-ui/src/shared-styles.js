@@ -1,8 +1,7 @@
 import { css, unsafeCSS } from 'lit';
 
-// For now, let's define the essential Tailwind utilities manually
-// This will be replaced with generated code from TailwindCSS build
-const tailwindUtilities = unsafeCSS(`
+// TailwindCSS utilities for Shadow DOM - manually defined based on generated styles
+const manualTailwindUtilities = unsafeCSS(`
   /* Reset base */
   *,::before,::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }
 
@@ -123,9 +122,13 @@ const tailwindUtilities = unsafeCSS(`
 
   /* Extended colors */
   .bg-gray-200{background-color:rgb(229 231 235)}
+  .bg-gray-700{background-color:rgb(55 65 81)}
   .bg-blue-50{background-color:rgb(239 246 255)}
   .bg-blue-800{background-color:rgb(30 64 175)}
+  .bg-blue-900{background-color:rgb(30 58 138)}
+  .text-gray-400{color:rgb(156 163 175)}
   .text-gray-500{color:rgb(107 114 128)}
+  .text-blue-400{color:rgb(96 165 250)}
   .text-blue-500{color:rgb(59 130 246)}
 
   /* Font weight */
@@ -178,9 +181,15 @@ const tailwindUtilities = unsafeCSS(`
   
   /* Dark mode variants */
   .dark\\:bg-gray-600{background-color:rgb(75 85 99)}
+  .dark\\:bg-gray-700{background-color:rgb(55 65 81)}
+  .dark\\:bg-blue-900{background-color:rgb(30 58 138)}
   .dark\\:border-none{border-style:none}
+  .dark\\:border-gray-600{border-color:rgb(75 85 99)}
   .dark\\:text-gray-50{color:rgb(249 250 251)}
   .dark\\:text-gray-200{color:rgb(229 231 235)}
+  .dark\\:text-gray-300{color:rgb(209 213 219)}
+  .dark\\:text-gray-400{color:rgb(156 163 175)}
+  .dark\\:text-blue-400{color:rgb(96 165 250)}
   .dark\\:shadow-black\\/40{box-shadow:0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4)}
   
   /* Hover states */
@@ -190,6 +199,7 @@ const tailwindUtilities = unsafeCSS(`
   .hover\\:opacity-5:hover{opacity:0.05}
   
   /* Dark mode hover states */
+  .dark\\:hover\\:bg-gray-600:hover{background-color:rgb(75 85 99)}
   .dark\\:hover\\:shadow-black\\/60:hover{box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.6)}
   .dark\\:hover\\:border-blue-300:hover{border-color:rgb(147 197 253)}
   
@@ -258,16 +268,26 @@ const tailwindUtilities = unsafeCSS(`
   }
 
   /* Class-based dark mode */
+  .dark .dark\\:bg-gray-600{background-color:rgb(75 85 99)}
+  .dark .dark\\:bg-gray-700{background-color:rgb(55 65 81)}
   .dark .dark\\:bg-gray-800{background-color:rgb(31 41 55)}
   .dark .dark\\:bg-gray-900{background-color:rgb(17 24 39)}
+  .dark .dark\\:bg-blue-900{background-color:rgb(30 58 138)}
   .dark .dark\\:text-white{color:rgb(255 255 255)}
   .dark .dark\\:text-gray-300{color:rgb(209 213 219)}
+  .dark .dark\\:text-gray-400{color:rgb(156 163 175)}
+  .dark .dark\\:text-blue-400{color:rgb(96 165 250)}
   .dark .dark\\:border-gray-600{border-color:rgb(75 85 99)}
+  .dark .dark\\:hover\\:bg-gray-600:hover{background-color:rgb(75 85 99)}
+  
+  /* Hover states with dark mode that may be missing */
+  .dark .hover\\:bg-blue-700:hover{background-color:rgb(29 78 216)}
+  .dark .dark\\:hover\\:bg-gray-600:hover{background-color:rgb(75 85 99)}
 `);
 
-// Create shared styles that include Tailwind utilities
+// Create shared styles that include TailwindCSS utilities
 export const sharedStyles = [
-  tailwindUtilities,
+  manualTailwindUtilities, // TailwindCSS utilities for Shadow DOM
   
   // Common component styles
   css`

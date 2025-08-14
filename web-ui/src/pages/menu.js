@@ -12,6 +12,7 @@ export class MenuPage extends LitElement {
                 display: block;
             }
             
+            /* Commented out - using TailwindCSS classes directly in HTML
             .hero-section {
                 text-align: center !important;
                 width: 100%;
@@ -33,6 +34,7 @@ export class MenuPage extends LitElement {
                     gap: 2rem;
                 }
             }
+            */
         `
     ];
     
@@ -45,7 +47,7 @@ export class MenuPage extends LitElement {
     render() {
         return html`
             <!-- Hero Section -->
-            <div class="hero-section mb-12">
+            <div class="text-center w-full flex flex-col items-center mb-12">
                 <h2 class="text-2xl md:text-3xl font-light text-gray-700 dark:text-gray-300 mb-4">
                     ${msg('Secure Random Hash Generator with Multiple Alphabets')}
                 </h2>
@@ -54,7 +56,7 @@ export class MenuPage extends LitElement {
                 </p>
             </div>
             
-            <div class="menu-grid my-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full my-8">
                 <menu-item 
                     route="/custom"
                     icon="🎲"

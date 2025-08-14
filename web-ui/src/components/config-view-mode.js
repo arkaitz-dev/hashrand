@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { getLocale, setLocale } from '../localization.js';
 import { allLocales } from '../locales/locale-codes.js';
@@ -45,7 +45,15 @@ export class ConfigViewMode extends LitElement {
         }
     }
 
-    static styles = sharedStyles;
+    static styles = [
+        sharedStyles,
+        css`
+            :host {
+                position: relative;
+                display: inline-block;
+            }
+        `
+    ];
 
     connectedCallback() {
         super.connectedCallback();
@@ -143,10 +151,10 @@ export class ConfigViewMode extends LitElement {
         
         if (this.isDark) {
             html.classList.add('dark');
-            body.style.backgroundColor = '#1f2937'; // gray-800 - SAME as preloader
+            // body.style.backgroundColor = '#1f2937'; // gray-800 - SAME as preloader
         } else {
             html.classList.remove('dark');
-            body.style.backgroundColor = '#f9fafb'; // gray-50
+            // body.style.backgroundColor = '#f9fafb'; // gray-50
         }
         
         localStorage.setItem('hashrand-theme', this.isDark ? 'dark' : 'light');
@@ -198,7 +206,7 @@ export class ConfigViewMode extends LitElement {
         const isRTL = document.documentElement.dir === 'rtl';
         return html`
             <button 
-                class="flex items-center gap-2 px-2 py-2 bg-transparent border border-transparent rounded-lg text-white cursor-pointer text-sm transition-all duration-200 w-auto justify-center hover:bg-gray-100 hover:bg-opacity-15 focus:outline-none"
+                class="flex items-center gap-2 px-2 py-2 bg-blue-600 dark:bg-gray-700 border border-transparent rounded-lg text-white cursor-pointer text-sm transition-all duration-200 w-auto justify-center hover:bg-blue-700 dark:hover:bg-gray-600 focus:outline-none"
                 @click=${this.toggleDropdown}
                 aria-label="Select language"
                 aria-expanded="${this.isOpen}"
@@ -213,12 +221,12 @@ export class ConfigViewMode extends LitElement {
                 </svg>
             </button>
             
-            <div class="absolute top-full right-0 mt-2 min-w-45 max-h-96 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto z-1000 transition-all duration-200 ${this.isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'} ${isRTL ? 'left-0 right-auto' : ''}" role="listbox">
+            <div class="absolute top-full right-0 mt-2 min-w-45 max-h-96 bg-blue-600 dark:bg-gray-700 rounded-lg shadow-lg border border-blue-700 dark:border-gray-600 overflow-y-auto z-1000 transition-all duration-200 ${this.isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'} ${isRTL ? 'left-0 right-auto' : ''}" role="listbox">
                 <ul class="list-none p-1 m-0">
                     <!-- Theme toggle as first item -->
                     <li class="m-0 p-0">
                         <button
-                            class="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none rounded text-gray-700 cursor-pointer text-sm text-left transition-colors duration-200 border-b border-gray-200 mb-1 font-medium hover:bg-gray-100"
+                            class="flex items-center gap-2 w-full px-3 py-2 bg-blue-600 dark:bg-gray-700 border-none rounded text-white cursor-pointer text-sm text-left transition-colors duration-200 border-b border-blue-700 dark:border-gray-600 mb-1 font-normal hover:bg-blue-700 dark:hover:bg-gray-600"
                             @click=${this.toggleTheme}
                             role="option"
                         >
@@ -229,16 +237,16 @@ export class ConfigViewMode extends LitElement {
                     <!-- Version separator -->
                     ${this.version ? html`
                         <li class="m-0 p-0">
-                            <div class="px-3 py-2 text-center text-xs text-gray-500 bg-transparent border-none cursor-default font-normal">v${this.version}</div>
+                            <div class="px-3 py-2 text-center text-xs text-white bg-blue-600 dark:bg-gray-700 border-none cursor-default font-normal">v${this.version}</div>
                         </li>
                     ` : ''}
                     <!-- Separator -->
-                    <li class="h-px bg-gray-200 my-1 list-none"></li>
+                    <li class="h-px bg-blue-700 dark:bg-gray-600 my-1 list-none"></li>
                     <!-- Language options -->
                     ${allLocales.map(locale => html`
                         <li class="m-0 p-0">
                             <button
-                                class="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none rounded text-gray-700 cursor-pointer text-sm text-left transition-colors duration-200 ${locale === this.currentLocale ? 'bg-blue-50 text-blue-600 font-semibold' : ''} hover:bg-gray-100"
+                                class="flex items-center gap-2 w-full px-3 py-2 bg-blue-600 dark:bg-gray-700 border-none rounded text-white cursor-pointer text-sm text-left transition-colors duration-200 ${locale === this.currentLocale ? 'bg-blue-700 dark:bg-gray-600 font-semibold' : ''} hover:bg-blue-700 dark:hover:bg-gray-600"
                                 @click=${(e) => this.selectLanguage(locale, e)}
                                 role="option"
                                 aria-selected="${locale === this.currentLocale}"
