@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Utility functions for API calls with base path support
  */
@@ -5,6 +6,7 @@
 /**
  * Get the base path from Vite's configuration
  * This handles both development and production environments
+ * @returns {string} The base path for the application
  */
 export function getBasePath() {
     // In development, Vite provides import.meta.env.BASE_URL
@@ -29,7 +31,7 @@ export function buildApiUrl(endpoint) {
 /**
  * Wrapper for fetch that automatically adds the base path
  * @param {string} endpoint - The API endpoint
- * @param {RequestInit} options - Fetch options
+ * @param {RequestInit} [options={}] - Optional fetch options
  * @returns {Promise<Response>} The fetch response
  */
 export async function apiFetch(endpoint, options = {}) {

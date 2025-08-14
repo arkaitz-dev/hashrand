@@ -1,3 +1,27 @@
+//! HashRand - Cryptographically Secure Random String Generator
+//!
+//! A command-line tool and web server for generating secure random hashes,
+//! passwords, and API keys using various character alphabets. Features include:
+//!
+//! - Multiple alphabet types (Base58, Full, No-look-alike, Symbols)
+//! - Collision checking with filesystem operations
+//! - Configurable prefixes and suffixes
+//! - Security audit logging
+//! - HTTP server with rate limiting and CORS support
+//! - Embedded web UI for production deployment
+//!
+//! # Examples
+//!
+//! Generate a random Base58 hash:
+//! ```bash
+//! hashrand 12
+//! ```
+//!
+//! Start web server:
+//! ```bash
+//! hashrand --serve 8080
+//! ```
+
 use clap::Parser;
 use std::fs;
 
@@ -22,6 +46,14 @@ async fn main() {
     }
 }
 
+/// Main application logic with error handling
+///
+/// Parses command-line arguments, validates configuration, and executes
+/// the requested operation (hash generation, server mode, or file operations).
+///
+/// # Returns
+/// * `Ok(())` - Operation completed successfully
+/// * `Err(Box<dyn std::error::Error>)` - Configuration or runtime error
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args::parse();
     

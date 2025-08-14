@@ -1,3 +1,4 @@
+// @ts-check
 import { LitElement, html, css } from 'lit';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { Router } from '@vaadin/router';
@@ -55,6 +56,12 @@ export class MenuPage extends LitElement {
         `;
     }
 
+    /**
+     * Handles card blur to remove focus styling after click
+     * Prevents persistent focus states that degrade UX
+     * @param {Event} e - The blur event
+     * @returns {void}
+     */
     handleCardBlur(e) {
         // Ensure the card loses focus
         e.currentTarget.blur();

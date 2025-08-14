@@ -1,3 +1,11 @@
+//! Character alphabet definitions for random string generation
+//!
+//! This module provides various character sets optimized for different use cases:
+//! - Base58: Bitcoin-style encoding (no confusing characters)
+//! - No Look-Alike: Maximum readability (removes visually similar chars)
+//! - Full: Complete alphanumeric set
+//! - Full with Symbols: Extended set including special characters
+
 // Base58 alphabet (Bitcoin alphabet) - default
 pub const BASE58_ALPHABET: [char; 58] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -37,6 +45,22 @@ pub const FULL_WITH_SYMBOLS_ALPHABET: [char; 73] = [
 
 use crate::cli::AlphabetType;
 
+/// Returns the appropriate character alphabet for the specified type
+///
+/// # Arguments
+/// * `alphabet_type` - The type of alphabet to retrieve
+///
+/// # Returns
+/// A static slice containing the characters for the specified alphabet
+///
+/// # Examples
+/// ```
+/// use hashrand::generators::get_alphabet;
+/// use hashrand::cli::AlphabetType;
+///
+/// let alphabet = get_alphabet(&AlphabetType::Base58);
+/// assert_eq!(alphabet.len(), 58);
+/// ```
 pub fn get_alphabet(alphabet_type: &AlphabetType) -> &'static [char] {
     match alphabet_type {
         AlphabetType::Base58 => &BASE58_ALPHABET,

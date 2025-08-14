@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import babel from 'vite-plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
+import checker from 'vite-plugin-checker'
 
 export default defineConfig({
   root: 'web-ui',
@@ -37,6 +38,13 @@ export default defineConfig({
   },
   plugins: [
     tailwindcss(),
+    // TypeScript checking for @ts-check JS files
+    checker({
+      typescript: {
+        root: 'web-ui',
+        configFile: 'web-ui/tsconfig.json'
+      }
+    }),
     babel({
       babelConfig: {
         babelrc: false,
