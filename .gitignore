@@ -1,0 +1,4 @@
+target/
+.spin/
+.spin-dev.log
+.spin-dev.pid
