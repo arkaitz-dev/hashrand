@@ -22,9 +22,8 @@ export interface ApiKeyParams {
 }
 
 export interface VersionResponse {
-	version: string;
-	name: string;
-	description: string;
+	api_version: string;
+	ui_version: string;
 }
 
 // Navigation types

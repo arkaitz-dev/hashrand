@@ -1,18 +1,24 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import { setResult, setLoading, setError, isLoading } from '$lib/stores/result';
+	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
 
-	// Form state
-	let params: GenerateParams = {
-		length: 21,
-		alphabet: 'base58',
-		prefix: '',
-		suffix: '',
-		raw: true
-	};
+	// Default values
+	function getDefaultParams(): GenerateParams {
+		return {
+			length: 21,
+			alphabet: 'base58',
+			prefix: '',
+			suffix: '',
+			raw: true
+		};
+	}
+
+	// Form state - will be initialized in onMount
+	let params: GenerateParams = getDefaultParams();
 
 	const alphabetOptions: { value: AlphabetType; label: string; description: string }[] = [
 		{ value: 'base58', label: t('alphabets.base58'), description: 'Bitcoin alphabet, excludes confusing characters' },
@@ -51,6 +57,18 @@
 			setLoading(false);
 		}
 	}
+
+	// Initialize params based on navigation source
+	onMount(() => {
+		// Check if we're coming from result page with existing params
+		if ($resultState && ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') && $resultState.params) {
+			// Coming from result page - use existing params
+			params = { ...$resultState.params } as GenerateParams;
+		} else {
+			// Coming from menu or fresh load - use defaults
+			params = getDefaultParams();
+		}
+	});
 </script>
 
 <svelte:head>

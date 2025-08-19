@@ -3,19 +3,23 @@
 	import { onMount } from 'svelte';
 	import { navigationItems } from '$lib/stores/navigation';
 	import { t } from '$lib/stores/i18n';
+	import { clearResult } from '$lib/stores/result';
 	import type { VersionResponse } from '$lib/types';
 
-	let version: VersionResponse | null = null;
+	let versions: VersionResponse | null = null;
 	let loadingVersion = false;
 
 	onMount(async () => {
+		// Clear result state when returning to menu - this resets all form values to defaults
+		clearResult();
+
 		// Load version info from API
 		try {
 			loadingVersion = true;
 			const { api } = await import('$lib/api');
-			version = await api.getVersion();
+			versions = await api.getVersion();
 		} catch (error) {
-			console.error('Failed to load version:', error);
+			console.error('Failed to load versions:', error);
 		} finally {
 			loadingVersion = false;
 		}
@@ -83,18 +87,18 @@
 						<div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
 						<span class="text-gray-600 dark:text-gray-300 text-sm">Loading version...</span>
 					</div>
-				{:else if version}
+				{:else if versions}
 					<div class="text-sm text-gray-600 dark:text-gray-300">
-						<strong class="text-gray-900 dark:text-white">{version.name}</strong>
+						<strong class="text-gray-900 dark:text-white">HashRand Spin</strong>
 						<span class="mx-2">•</span>
-						{t('menu.version')} {version.version}
+						UI v{versions.ui_version} / API v{versions.api_version}
 					</div>
 					<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-						{version.description}
+						Cryptographically secure hash, password, and API key generator
 					</p>
 				{:else}
 					<div class="text-sm text-gray-500 dark:text-gray-400">
-						API connection unavailable
+						Versions unavailable
 					</div>
 				{/if}
 			</div>

@@ -8,6 +8,16 @@
 
 	let copySuccess = false;
 	let copyTimeout: number;
+	let showGenerationDetails = false; // Collapsed by default on mobile
+	let showParametersUsed = false; // Collapsed by default on mobile
+
+	function toggleGenerationDetails() {
+		showGenerationDetails = !showGenerationDetails;
+	}
+
+	function toggleParametersUsed() {
+		showParametersUsed = !showParametersUsed;
+	}
 
 	// Redirect if no result
 	onMount(() => {
@@ -73,8 +83,8 @@
 		switch (endpoint) {
 			case 'custom': return 'blue';
 			case 'generate': return 'blue';
-			case 'password': return 'green';
-			case 'api-key': return 'purple';
+			case 'password': return 'blue';
+			case 'api-key': return 'blue';
 			default: return 'gray';
 		}
 	}
@@ -105,6 +115,8 @@
 	async function regenerateHash() {
 		if (!$resultState || $isLoading) return;
 
+		// Reset copy success state immediately
+		copySuccess = false;
 		setLoading(true);
 		
 		try {
@@ -164,7 +176,11 @@
 						{t('common.result')}
 					</h1>
 					<p class="text-gray-600 dark:text-gray-300">
-						{getEndpointDisplayName($resultState.endpoint)} generated successfully
+						{#if $isLoading}
+							Generating...
+						{:else}
+							{getEndpointDisplayName($resultState.endpoint)} generated successfully
+						{/if}
 					</p>
 				</div>
 			</div>
@@ -181,16 +197,17 @@
 							<textarea
 								id="generated-value"
 								readonly
-								value={$resultState.value}
-								class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-{color}-500 focus:border-{color}-500 min-h-[100px]"
+								value={$isLoading ? 'Generating...' : $resultState.value}
+								class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-{color}-500 focus:border-{color}-500 min-h-[100px] {$isLoading ? 'text-gray-500 dark:text-gray-400' : ''}"
 								onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
 							></textarea>
-							<button
-								onclick={copyToClipboard}
-								class="absolute top-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
-								class:bg-green-600={copySuccess}
-								class:hover:bg-green-700={copySuccess}
-							>
+							{#if !$isLoading}
+								<button
+									onclick={copyToClipboard}
+									class="absolute top-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
+									class:bg-green-600={copySuccess}
+									class:hover:bg-green-700={copySuccess}
+								>
 								{#if copySuccess}
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -203,9 +220,14 @@
 									{t('common.copy')}
 								{/if}
 							</button>
+						{/if}
 						</div>
 						<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-							Click the text area to select all, or use the copy button
+							{#if $isLoading}
+								Please wait while generating new value...
+							{:else}
+								Click the text area to select all, or use the copy button
+							{/if}
 						</p>
 					</div>
 
@@ -213,8 +235,25 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<!-- Generation Details -->
 						<div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Generation Details</h3>
-							<dl class="space-y-2">
+							<!-- Header with toggle for mobile -->
+							<button 
+								onclick={toggleGenerationDetails}
+								class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"
+							>
+								<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Generation Details</h3>
+								<!-- Toggle icon - only visible on mobile -->
+								<svg 
+									class="w-5 h-5 text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showGenerationDetails ? 'rotate-180' : ''}"
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24"
+								>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							
+							<!-- Content - collapsible on mobile, always visible on desktop -->
+							<dl class="space-y-2 {showGenerationDetails ? 'block' : 'hidden'} md:block">
 								<div>
 									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Type</dt>
 									<dd class="text-sm text-gray-900 dark:text-white">{getEndpointDisplayName($resultState.endpoint)}</dd>
@@ -232,8 +271,25 @@
 
 						<!-- Parameters Used -->
 						<div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Parameters Used</h3>
-							<dl class="space-y-2">
+							<!-- Header with toggle for mobile -->
+							<button 
+								onclick={toggleParametersUsed}
+								class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"
+							>
+								<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Parameters Used</h3>
+								<!-- Toggle icon - only visible on mobile -->
+								<svg 
+									class="w-5 h-5 text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showParametersUsed ? 'rotate-180' : ''}"
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24"
+								>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							
+							<!-- Content - collapsible on mobile, always visible on desktop -->
+							<dl class="space-y-2 {showParametersUsed ? 'block' : 'hidden'} md:block">
 								{#each Object.entries($resultState.params) as [key, value]}
 									{#if value !== undefined && value !== null && value !== '' && key !== 'raw'}
 										<div>

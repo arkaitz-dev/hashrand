@@ -1,16 +1,22 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import { setResult, setLoading, setError, isLoading } from '$lib/stores/result';
+	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
 
-	// Form state
-	let params: PasswordParams = {
-		length: 32,
-		alphabet: 'full-with-symbols',
-		raw: true
-	};
+	// Default values
+	function getDefaultParams(): PasswordParams {
+		return {
+			length: 21, // Minimum for full-with-symbols alphabet
+			alphabet: 'full-with-symbols',
+			raw: true
+		};
+	}
+
+	// Form state - will be initialized in onMount
+	let params: PasswordParams = getDefaultParams();
 
 	const alphabetOptions: { value: 'no-look-alike' | 'full-with-symbols'; label: string; description: string }[] = [
 		{ value: 'full-with-symbols', label: t('alphabets.full-with-symbols'), description: 'Maximum security with symbols (73 chars)' },
@@ -49,30 +55,39 @@
 
 	// Update length when alphabet changes with smooth adjustment
 	function handleAlphabetChange() {
-		const newMinLength = params.alphabet === 'full-with-symbols' ? 21 : 24;
-		if (params.length! < newMinLength) {
-			params.length = newMinLength;
-		}
+		// Use setTimeout to avoid reactivity issues
+		setTimeout(() => {
+			const newMinLength = params.alphabet === 'full-with-symbols' ? 21 : 24;
+			if (params.length! < newMinLength) {
+				// Force reactivity by reassigning the entire params object
+				params = { ...params, length: newMinLength };
+			}
+		}, 0);
 	}
 
-	// Reactive statement to adjust length automatically
-	$: {
-		if (params.length! < minLength) {
-			params.length = minLength;
+	// Initialize params based on navigation source
+	onMount(() => {
+		// Check if we're coming from result page with existing params
+		if ($resultState && $resultState.endpoint === 'password' && $resultState.params) {
+			// Coming from result page - use existing params
+			params = { ...$resultState.params } as PasswordParams;
+		} else {
+			// Coming from menu or fresh load - use defaults
+			params = getDefaultParams();
 		}
-	}
+	});
 </script>
 
 <svelte:head>
 	<title>Secure Password Generator</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
 	<div class="container mx-auto px-4 py-8">
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="text-center">
-				<div class="inline-flex items-center justify-center w-12 h-12 bg-green-600 rounded-full mb-4">
+				<div class="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
 					<span class="text-xl text-white">🔐</span>
 				</div>
 				<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -97,7 +112,7 @@
 							id="alphabet"
 							bind:value={params.alphabet}
 							onchange={handleAlphabetChange}
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
 						>
 							{#each alphabetOptions as option}
 								<option value={option.value}>{option.label}</option>
@@ -122,9 +137,9 @@
 								bind:value={params.length}
 								min={minLength}
 								max="44"
-								class="flex-1 h-2 bg-green-600 rounded appearance-none outline-none slider"
+								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
 							/>
-							<span class="bg-green-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
+							<span class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
 						</div>
 						{#if !lengthValid}
 							<p class="text-red-500 text-sm mt-1">
@@ -145,10 +160,10 @@
 
 
 					<!-- Security Notice -->
-					<div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+					<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
 						<div class="flex items-start">
-							<span class="text-green-600 dark:text-green-400 mr-2">🛡️</span>
-							<div class="text-sm text-green-800 dark:text-green-200">
+							<span class="text-blue-600 dark:text-blue-400 mr-2">🛡️</span>
+							<div class="text-sm text-blue-800 dark:text-blue-200">
 								<strong>Security Note:</strong> Passwords are generated using cryptographically secure random generation.
 								They are not stored or logged anywhere.
 							</div>
@@ -160,7 +175,7 @@
 						<button
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 py-4 bg-green-600 hover:bg-green-700 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-200 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center"
+							class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-200 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center"
 						>
 							{#if $isLoading}
 								<LoadingSpinner size="sm" class="mr-2" />
