@@ -1,4 +1,48 @@
+# Spin (Rust) build artifacts
 target/
 .spin/
 .spin-dev.log
 .spin-dev.pid
+*.wasm
+
+# Rust
+*.pdb
+*.exe
+
+# SvelteKit build artifacts
+/.svelte-kit/
+/web/dist/
+/web/build/
+
+# Node.js / npm
+node_modules/
+*.log
+.env
+.env.local
+.env.production
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Output directories
+.output
+.vercel
+.netlify
+.wrangler
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

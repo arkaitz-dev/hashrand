@@ -1,15 +1,25 @@
 # HashRand Spin
 
-A random hash generator API built with Fermyon Spin and WebAssembly. Generate cryptographically secure hashes, passwords, and API keys with customizable parameters.
+A random hash generator built with Fermyon Spin and WebAssembly. Generate cryptographically secure hashes, passwords, and API keys with customizable parameters. Includes both a REST API and a professional web interface.
 
 ## Features
 
+### Core API
 - **🔐 Secure Generation**: Uses `nanoid` for cryptographically secure random generation
 - **🎯 Multiple Endpoints**: Generate hashes, passwords, and API keys
 - **🔤 Multiple Alphabets**: Support for Base58, no-look-alike, full alphanumeric, and symbols
 - **⚡ WebAssembly**: Fast and lightweight serverless architecture
 - **🧪 Comprehensive Testing**: 43 automated test cases covering all scenarios
 - **🏗️ Modular Architecture**: Clean separation of concerns for maintainability
+
+### Web Interface
+- **🎨 Professional UI**: Modern SPA built with SvelteKit + TypeScript + TailwindCSS 4.0
+- **📱 Responsive Design**: Works perfectly on mobile, tablet, and desktop
+- **🌙 Dark/Light Mode**: Automatic theme switching based on system preferences
+- **✅ Real-time Validation**: Client-side parameter validation with clear error messages
+- **📋 Copy to Clipboard**: One-click copying with visual feedback
+- **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
+- **🌍 I18n Ready**: Prepared for multiple language support
 
 ## API Endpoints
 
@@ -85,10 +95,11 @@ GET /api/version
 ## Quick Start
 
 ### Prerequisites
-- [Rust](https://rustup.rs/) (1.89+)
-- [Fermyon Spin](https://developer.fermyon.com/spin/v2/install)
+- [Rust](https://rustup.rs/) (1.89+) - For the API backend
+- [Fermyon Spin](https://developer.fermyon.com/spin/v2/install) - WebAssembly platform
+- [Node.js 18+](https://nodejs.org/) - For the web interface
 
-### Development
+### API Development
 
 ```bash
 # Clone the repository
@@ -105,6 +116,37 @@ just dev
 just watch
 
 # The API will be available at http://localhost:3000
+```
+
+### Web Interface Development
+
+```bash
+# Navigate to web interface
+cd web
+
+# Install dependencies
+npm install
+
+# Start development server (runs on port 5173)
+npm run dev
+
+# The web interface will be available at http://localhost:5173
+# It automatically proxies API calls to the backend on port 3000
+```
+
+### Full Development Setup
+
+For the complete development experience:
+
+```bash
+# Terminal 1: Start the API backend
+just dev
+
+# Terminal 2: Start the web interface
+cd web && npm run dev
+
+# Access the web interface at http://localhost:5173
+# Access the API directly at http://localhost:3000
 ```
 
 ### Background Development
@@ -189,13 +231,15 @@ just clean        # Clean build artifacts
 ```
 hashrand-spin/
 ├── README.md              # This file
-├── CHANGELOG.md            # Version history
-├── final_test.sh          # Comprehensive test suite
+├── CHANGELOG.md           # Version history
+├── CLAUDE.md              # Development guidance
+├── justfile               # Development task automation
+├── final_test.sh          # API comprehensive test suite (43 tests)
 ├── Cargo.toml             # Workspace configuration
 ├── spin.toml              # Spin application configuration
-├── api/                   # API implementation
+├── api/                   # API implementation (Rust + Spin)
 │   ├── Cargo.toml         # API crate configuration
-│   └── src/               # Source code
+│   └── src/               # Modular source code
 │       ├── lib.rs         # Main HTTP handler
 │       ├── types/         # Data types and enums
 │       │   ├── alphabet.rs    # Alphabet type definitions
@@ -207,8 +251,31 @@ hashrand-spin/
 │       │   └── version.rs     # Version information
 │       └── utils/         # Utility functions
 │           ├── query.rs       # Query parameter parsing
-│           └── routing.rs     # Request routing
-└── target/                # Build artifacts
+│           └── routing.rs     # Request routing logic
+├── web/                   # Web interface (SvelteKit + TypeScript)
+│   ├── README.md          # Web interface documentation
+│   ├── package.json       # Node.js dependencies and scripts
+│   ├── vite.config.ts     # Vite configuration with API proxy
+│   ├── svelte.config.js   # SvelteKit SPA configuration
+│   ├── tailwind.config.js # TailwindCSS 4.0 configuration
+│   ├── src/
+│   │   ├── app.html       # HTML template with meta tags
+│   │   ├── app.css        # Global styles with TailwindCSS
+│   │   ├── lib/
+│   │   │   ├── api.ts     # Type-safe API service layer
+│   │   │   ├── components/    # Reusable Svelte components
+│   │   │   ├── stores/        # State management stores
+│   │   │   └── types/         # TypeScript type definitions
+│   │   └── routes/
+│   │       ├── +layout.svelte # Root layout with navigation
+│   │       ├── +layout.ts     # SPA configuration
+│   │       ├── +page.svelte   # Main menu page
+│   │       ├── generate/      # Custom hash generator
+│   │       ├── password/      # Password generator
+│   │       ├── api-key/       # API key generator
+│   │       └── result/        # Shared result display
+│   └── build/             # Production SPA build output
+└── target/                # Rust build artifacts
 ```
 
 ## Configuration
@@ -217,9 +284,24 @@ hashrand-spin/
 No environment variables are required. All configuration is done through query parameters.
 
 ### Deployment
+
+#### API Deployment
 ```bash
 # Deploy to Fermyon Cloud (requires account)
 spin-cli deploy
+```
+
+#### Web Interface Deployment
+```bash
+# Build static SPA
+cd web && npm run build
+
+# Deploy the 'build' directory to any static hosting service:
+# - Vercel, Netlify, GitHub Pages
+# - AWS S3 + CloudFront
+# - Any CDN or static file server
+
+# For production, configure reverse proxy to route /api/* to your Spin API
 ```
 
 ## Error Handling

@@ -1,0 +1,255 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import BackButton from '$lib/components/BackButton.svelte';
+	import { resultState, error } from '$lib/stores/result';
+	import { t } from '$lib/stores/i18n';
+
+	let copySuccess = false;
+	let copyTimeout: number;
+
+	// Redirect if no result
+	onMount(() => {
+		if (!$resultState) {
+			goto('/');
+		}
+	});
+
+	async function copyToClipboard() {
+		if (!$resultState?.value) return;
+
+		try {
+			await navigator.clipboard.writeText($resultState.value);
+			copySuccess = true;
+			
+			// Clear success state after 2 seconds
+			clearTimeout(copyTimeout);
+			copyTimeout = setTimeout(() => {
+				copySuccess = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+			// Fallback for older browsers
+			try {
+				const textArea = document.createElement('textarea');
+				textArea.value = $resultState.value;
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textArea);
+				copySuccess = true;
+				clearTimeout(copyTimeout);
+				copyTimeout = setTimeout(() => {
+					copySuccess = false;
+				}, 2000);
+			} catch (fallbackErr) {
+				console.error('Fallback copy failed:', fallbackErr);
+			}
+		}
+	}
+
+	function getEndpointDisplayName(endpoint: string): string {
+		switch (endpoint) {
+			case 'generate': return 'Custom Hash';
+			case 'password': return 'Secure Password';
+			case 'api-key': return 'API Key';
+			default: return endpoint;
+		}
+	}
+
+	function getEndpointIcon(endpoint: string): string {
+		switch (endpoint) {
+			case 'generate': return '🎲';
+			case 'password': return '🔐';
+			case 'api-key': return '🔑';
+			default: return '📝';
+		}
+	}
+
+	function getEndpointColor(endpoint: string): string {
+		switch (endpoint) {
+			case 'generate': return 'blue';
+			case 'password': return 'green';
+			case 'api-key': return 'purple';
+			default: return 'gray';
+		}
+	}
+
+	function formatTimestamp(date: Date): string {
+		return new Intl.DateTimeFormat('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		}).format(date);
+	}
+
+	function getPreviousPath(): string {
+		return $resultState ? `/${$resultState.endpoint}` : '/';
+	}
+</script>
+
+<svelte:head>
+	<title>Generated Result</title>
+</svelte:head>
+
+{#if $resultState}
+	{@const color = getEndpointColor($resultState.endpoint)}
+	<div class="min-h-screen bg-gradient-to-br from-{color}-50 to-{color}-100 dark:from-gray-900 dark:to-gray-800">
+		<div class="container mx-auto px-4 py-8">
+			<!-- Header -->
+			<div class="mb-8">
+				<div class="flex items-center justify-between mb-6">
+					<BackButton to={getPreviousPath()} />
+					<button
+						onclick={() => goto('/')}
+						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-{color}-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-all duration-200"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
+						</svg>
+						{t('common.backToMenu')}
+					</button>
+				</div>
+
+				<div class="text-center">
+					<div class="inline-flex items-center justify-center w-16 h-16 bg-{color}-600 rounded-full mb-6">
+						<span class="text-2xl text-white">{getEndpointIcon($resultState.endpoint)}</span>
+					</div>
+					<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+						{t('common.result')}
+					</h1>
+					<p class="text-gray-600 dark:text-gray-300">
+						{getEndpointDisplayName($resultState.endpoint)} generated successfully
+					</p>
+				</div>
+			</div>
+
+			<!-- Result Display -->
+			<div class="max-w-4xl mx-auto">
+				<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+					<!-- Result Value -->
+					<div class="mb-6">
+						<label for="generated-value" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+							Generated Value
+						</label>
+						<div class="relative">
+							<textarea
+								id="generated-value"
+								readonly
+								value={$resultState.value}
+								class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-{color}-500 focus:border-{color}-500 min-h-[100px]"
+								onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
+							></textarea>
+							<button
+								onclick={copyToClipboard}
+								class="absolute top-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
+								class:bg-green-600={copySuccess}
+								class:hover:bg-green-700={copySuccess}
+							>
+								{#if copySuccess}
+									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+									</svg>
+									{t('common.copied')}
+								{:else}
+									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+									</svg>
+									{t('common.copy')}
+								{/if}
+							</button>
+						</div>
+						<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+							Click the text area to select all, or use the copy button
+						</p>
+					</div>
+
+					<!-- Metadata -->
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<!-- Generation Details -->
+						<div>
+							<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Generation Details</h3>
+							<dl class="space-y-2">
+								<div>
+									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Type</dt>
+									<dd class="text-sm text-gray-900 dark:text-white">{getEndpointDisplayName($resultState.endpoint)}</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Length</dt>
+									<dd class="text-sm text-gray-900 dark:text-white">{$resultState.value.length} characters</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Generated</dt>
+									<dd class="text-sm text-gray-900 dark:text-white">{formatTimestamp($resultState.timestamp)}</dd>
+								</div>
+							</dl>
+						</div>
+
+						<!-- Parameters Used -->
+						<div>
+							<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Parameters Used</h3>
+							<dl class="space-y-2">
+								{#each Object.entries($resultState.params) as [key, value]}
+									{#if value !== undefined && value !== null && value !== ''}
+										<div>
+											<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
+												{key.replace(/([A-Z])/g, ' $1').trim()}
+											</dt>
+											<dd class="text-sm text-gray-900 dark:text-white">
+												{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+											</dd>
+										</div>
+									{/if}
+								{/each}
+							</dl>
+						</div>
+					</div>
+				</div>
+
+				<!-- Actions -->
+				<div class="flex flex-col sm:flex-row gap-4 justify-center">
+					<button
+						onclick={() => goto(getPreviousPath())}
+						class="px-6 py-3 bg-{color}-600 hover:bg-{color}-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+						</svg>
+						Generate Another
+					</button>
+					<button
+						onclick={() => goto('/')}
+						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
+						</svg>
+						{t('common.backToMenu')}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{:else if $error}
+	<div class="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800">
+		<div class="container mx-auto px-4 py-8">
+			<div class="max-w-2xl mx-auto text-center">
+				<div class="inline-flex items-center justify-center w-16 h-16 bg-red-600 rounded-full mb-6">
+					<span class="text-2xl text-white">❌</span>
+				</div>
+				<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+					{t('common.error')}
+				</h1>
+				<p class="text-gray-600 dark:text-gray-300 mb-8">
+					{$error}
+				</p>
+				<BackButton to="/" />
+			</div>
+		</div>
+	</div>
+{/if}
