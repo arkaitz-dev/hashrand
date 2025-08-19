@@ -194,6 +194,82 @@ web/
 - Enhanced form interaction patterns following modern web standards
 - Improved button state management documentation
 
+## [0.4.0] - 2025-08-19
+
+### Added
+- **🌙 Smart Theme Toggle System**: Complete manual dark/light mode switching implementation
+  - **Intelligent Default Behavior**: Uses system preference (`prefers-color-scheme`) on first visit
+  - **Persistent User Choice**: Saves manual selection to localStorage and respects it on subsequent visits
+  - **Theme Toggle Component**: New `ThemeToggle.svelte` component with professional design
+    - Floating button in upper-right corner that moves with page scroll
+    - Transparent at rest, visible on hover/click/focus
+    - Correct icon representation: 🌙 moon for dark mode, ☀️ sun for light mode
+    - Smooth CSS transitions and visual feedback
+    - Full accessibility support with ARIA labels and keyboard navigation
+  - **Theme Management Store**: New `theme.ts` Svelte store for state management
+    - Automatic system preference detection
+    - Manual toggle functionality with localStorage persistence
+    - Theme application to document root with smooth transitions
+    - Optional reset to system preference function
+- **🎨 TailwindCSS 4.0 Dark Mode Configuration**: Proper setup for latest Tailwind version
+  - `@custom-variant dark (&:where(.dark, .dark *))` configuration in app.css
+  - Class-based dark mode implementation (not media query based)
+  - Seamless integration with existing dark: utility classes
+  - Smooth theme transitions with CSS transition properties
+
+### Enhanced
+- **🎯 User Experience**: Significant improvements to theme switching experience
+  - No visual flicker during theme changes
+  - Immediate visual feedback on toggle interaction
+  - Persistent theme choice across browser sessions
+  - Respects user's manual preference over system changes
+- **♿ Accessibility**: Enhanced accessibility features for theme toggle
+  - Screen reader friendly with descriptive ARIA labels
+  - Keyboard navigation support
+  - High contrast compatibility
+  - Focus management and visual indicators
+- **📱 Cross-Device Compatibility**: Theme system works across all platforms
+  - Mobile browser theme-color meta tag updates
+  - Tablet and desktop consistent behavior
+  - System integration on supported browsers
+
+### Technical Implementation
+- **Component Architecture**: New theme-related components and stores
+  - `/src/lib/components/ThemeToggle.svelte` - Theme toggle button component
+  - `/src/lib/stores/theme.ts` - Theme state management store
+  - Updated `+layout.svelte` with theme integration
+- **CSS Architecture**: Modern TailwindCSS 4.0 implementation
+  - Custom variant configuration for dark mode
+  - Smooth transition utilities
+  - Class-based theme switching (not media query)
+- **State Management**: Sophisticated theme preference handling
+  - System preference detection as default
+  - localStorage persistence for manual choices
+  - Automatic theme application on store subscription
+- **Browser Integration**: Enhanced mobile and desktop experience
+  - Dynamic meta theme-color updates for mobile browsers
+  - Proper CSS transition handling
+  - Cross-browser compatibility
+
+### Changed
+- **Theme System**: Upgraded from simple system preference to intelligent manual control
+  - Previous: Only `prefers-color-scheme` media query support
+  - Current: Manual toggle with system preference fallback
+- **Layout Structure**: Enhanced main layout with theme toggle integration
+  - Added `relative` positioning to main container
+  - Integrated theme toggle component
+  - Improved z-index management
+
+### Technical Dependencies
+- No new external dependencies added
+- Leverages existing SvelteKit, TypeScript, and TailwindCSS 4.0 infrastructure
+- Uses browser APIs: `localStorage`, `matchMedia`, `classList`
+
+### Documentation Updates
+- Updated README.md with Smart Theme System features
+- Enhanced project structure documentation with new components
+- Added technical implementation details
+
 ## [Unreleased]
 
 ### Planned Features
@@ -210,6 +286,7 @@ web/
 
 ## Version History Summary
 
+- **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
 - **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
 - **0.2.0** (2025-08-19) - Web interface release with professional SPA
 - **0.1.0** (2025-08-18) - Initial release with complete API implementation

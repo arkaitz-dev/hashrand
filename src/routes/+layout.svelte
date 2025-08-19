@@ -4,6 +4,9 @@
 	import { onMount } from 'svelte';
 	import { currentRoute } from '$lib/stores/navigation';
 	import { page } from '$app/stores';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	// Import theme store to ensure it's initialized
+	import '$lib/stores/theme';
 	
 	let { children } = $props();
 
@@ -24,6 +27,9 @@
 	<meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
-<main class="min-h-screen">
+<main class="min-h-screen relative">
+	<!-- Theme Toggle moves with scroll -->
+	<ThemeToggle />
+	
 	{@render children?.()}
 </main>

@@ -8,7 +8,7 @@ This is a complete random hash generator solution consisting of:
 1. **API Backend**: Fermyon Spin WebAssembly HTTP component built with Rust
 2. **Web Interface**: Professional SPA built with SvelteKit, TypeScript, and TailwindCSS 4.0
 
-The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, and API keys.
+The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, and API keys. Features a sophisticated theme system with manual dark/light mode toggle and intelligent system preference detection.
 
 ## Development Commands
 
@@ -88,10 +88,11 @@ npm run check     # Run TypeScript and Svelte checks
 
 ### Web Interface Structure
 - **Framework**: SvelteKit 2.x configured as Single Page Application (SPA)
-- **Styling**: TailwindCSS 4.0 with dark/light mode support
+- **Styling**: TailwindCSS 4.0 with smart dark/light mode implementation
+- **Theme System**: Intelligent manual toggle with system preference detection
 - **Build Tool**: Vite 7.x with API proxy configuration
 - **Routing**: File-based routing with menu → forms → result flow
-- **State**: Svelte stores for navigation, results, and internationalization
+- **State**: Svelte stores for navigation, results, internationalization, and theme management
 
 ### Project Structure
 ```
@@ -133,12 +134,14 @@ hashrand-spin/
 │   │   ├── lib/
 │   │   │   ├── api.ts      # Type-safe API service layer
 │   │   │   ├── components/ # Reusable Svelte components
-│   │   │   │   ├── BackButton.svelte
-│   │   │   │   └── LoadingSpinner.svelte
+│   │   │   │   ├── BackButton.svelte      # Navigation component
+│   │   │   │   ├── LoadingSpinner.svelte  # Loading animation
+│   │   │   │   └── ThemeToggle.svelte     # Dark/light mode toggle
 │   │   │   ├── stores/     # State management stores
 │   │   │   │   ├── navigation.ts  # Route and navigation state
 │   │   │   │   ├── result.ts      # Generation results state
-│   │   │   │   └── i18n.ts        # Internationalization
+│   │   │   │   ├── i18n.ts        # Internationalization
+│   │   │   │   └── theme.ts       # Theme management store
 │   │   │   └── types/      # TypeScript type definitions
 │   │   │       └── index.ts       # API types and interfaces
 │   │   └── routes/
@@ -195,6 +198,34 @@ hashrand-spin/
 - `@tailwindcss/vite = "^4.0.0"` - Vite integration
 - `@tailwindcss/typography = "^0.5.16"` - Typography plugin
 - `vite = "^7.0.4"` - Build tool and dev server
+
+### Theme System Architecture
+
+#### TailwindCSS 4.0 Dark Mode Configuration
+- **Configuration Method**: CSS-first approach using `@custom-variant` in `app.css`
+- **Dark Mode Strategy**: Class-based implementation (not media query based)
+- **Configuration**: `@custom-variant dark (&:where(.dark, .dark *));`
+- **Integration**: Seamless with existing `dark:` utility classes throughout the codebase
+
+#### Theme Management Store (`theme.ts`)
+- **Type Definition**: `Theme = 'light' | 'dark'`
+- **Default Behavior**: Uses system preference (`prefers-color-scheme`) on first visit
+- **Persistence**: Manual user choices saved to localStorage and respected on subsequent visits
+- **State Management**: Svelte writable store with subscription-based theme application
+- **Browser Integration**: Automatic `dark` class management on `document.documentElement`
+
+#### Theme Toggle Component (`ThemeToggle.svelte`)
+- **Position**: Fixed in upper-right corner, moves with page scroll (absolute positioning)
+- **Visibility**: Transparent at rest, visible on hover/click/focus with smooth transitions
+- **Icons**: Contextual representation (🌙 moon for dark mode, ☀️ sun for light mode)
+- **Accessibility**: Full ARIA labels, keyboard navigation, screen reader support
+- **Styling**: Professional hover effects with TailwindCSS utilities
+
+#### Implementation Notes
+- **TailwindCSS 4.0 Requirement**: Must use `@custom-variant` instead of `tailwind.config.js` darkMode setting
+- **Store Subscription**: Theme changes automatically apply via store subscription to `applyTheme`
+- **localStorage Key**: Uses `'theme'` key for persistence
+- **Mobile Integration**: Dynamic meta theme-color updates for mobile browser UI
 
 ### Build Configuration
 

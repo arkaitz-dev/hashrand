@@ -1,16 +1,19 @@
+use crate::handlers::{handle_api_key, handle_generate, handle_password, handle_version};
 use spin_sdk::http::Response;
 use std::collections::HashMap;
-use crate::handlers::{handle_generate, handle_password, handle_api_key, handle_version};
 
 /// Routes the request to the corresponding handler based on the path
-/// 
+///
 /// # Arguments
 /// * `path` - The URL path (e.g., "/api/generate")
 /// * `query_params` - Parsed query parameters
-/// 
+///
 /// # Returns
 /// Appropriate response for the endpoint or 404 if not found
-pub fn route_request(path: &str, query_params: HashMap<String, String>) -> anyhow::Result<Response> {
+pub fn route_request(
+    path: &str,
+    query_params: HashMap<String, String>,
+) -> anyhow::Result<Response> {
     match path {
         path if path.ends_with("/api/generate") => handle_generate(query_params),
         path if path.ends_with("/api/password") => handle_password(query_params),

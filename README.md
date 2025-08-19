@@ -15,7 +15,12 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 ### Web Interface
 - **🎨 Professional UI**: Modern SPA built with SvelteKit + TypeScript + TailwindCSS 4.0
 - **📱 Responsive Design**: Works perfectly on mobile, tablet, and desktop
-- **🌙 Dark/Light Mode**: Automatic theme switching based on system preferences
+- **🌙 Smart Theme System**: Manual dark/light mode toggle with system preference detection
+  - Intelligent theme toggle in upper-right corner
+  - Respects system preference on first visit
+  - Persistent user choice saved in localStorage
+  - Smooth transitions and visual feedback
+  - Accessible with proper ARIA labels
 - **🎛️ Interactive Controls**: Beautiful range sliders with gradient styling for parameter selection
 - **🔄 In-Place Regeneration**: Generate new hashes without leaving the result page
 - **✨ Dynamic Feedback**: Context-aware help text and real-time parameter validation
@@ -267,7 +272,14 @@ hashrand-spin/
 │   │   ├── lib/
 │   │   │   ├── api.ts     # Type-safe API service layer
 │   │   │   ├── components/    # Reusable Svelte components
+│   │   │   │   ├── BackButton.svelte    # Navigation component
+│   │   │   │   ├── LoadingSpinner.svelte # Loading animation
+│   │   │   │   └── ThemeToggle.svelte   # Dark/light mode toggle
 │   │   │   ├── stores/        # State management stores
+│   │   │   │   ├── navigation.ts # Route and navigation state
+│   │   │   │   ├── result.ts     # Generation results state
+│   │   │   │   ├── i18n.ts       # Internationalization
+│   │   │   │   └── theme.ts      # Theme management store
 │   │   │   └── types/         # TypeScript type definitions
 │   │   └── routes/
 │   │       ├── +layout.svelte # Root layout with navigation

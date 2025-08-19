@@ -1,9 +1,9 @@
 /// Available alphabet types for hash generation
 #[derive(Debug, Clone, PartialEq)]
 pub enum AlphabetType {
-    Base58,        // 58 characters - Bitcoin alphabet (default)
-    NoLookAlike,   // 49 characters - Maximum readability  
-    Full,          // 62 characters - Full alphanumeric
+    Base58,          // 58 characters - Bitcoin alphabet (default)
+    NoLookAlike,     // 49 characters - Maximum readability
+    Full,            // 62 characters - Full alphanumeric
     FullWithSymbols, // 73 characters - Maximum entropy
 }
 
@@ -14,7 +14,9 @@ impl AlphabetType {
             AlphabetType::Base58 => "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
             AlphabetType::NoLookAlike => "346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz",
             AlphabetType::Full => "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-            AlphabetType::FullWithSymbols => "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_*^@#+!?$%",
+            AlphabetType::FullWithSymbols => {
+                "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_*^@#+!?$%"
+            }
         }
     }
 
