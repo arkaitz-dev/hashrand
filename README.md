@@ -26,6 +26,7 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **✨ Dynamic Feedback**: Context-aware help text and real-time parameter validation
 - **🎬 Loading Animations**: Smooth spinning animations during hash generation
 - **📋 Copy to Clipboard**: One-click copying with visual feedback
+- **🖼️ Optimized Icons**: SVG sprite system for fast loading and consistent UI
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **🌍 I18n Ready**: Prepared for multiple language support
 
@@ -273,6 +274,7 @@ hashrand-spin/
 │   │   │   ├── api.ts     # Type-safe API service layer
 │   │   │   ├── components/    # Reusable Svelte components
 │   │   │   │   ├── BackButton.svelte    # Navigation component
+│   │   │   │   ├── Icon.svelte          # SVG icon sprite component
 │   │   │   │   ├── LoadingSpinner.svelte # Loading animation
 │   │   │   │   └── ThemeToggle.svelte   # Dark/light mode toggle
 │   │   │   ├── stores/        # State management stores
@@ -290,6 +292,10 @@ hashrand-spin/
 │   │       ├── api-key/       # API key generator
 │   │       └── result/        # Shared result display
 │   └── build/             # Production SPA build output
+├── static/                # Static assets
+│   ├── favicon.png        # Browser favicon
+│   ├── icons-sprite.svg   # SVG icon sprite for UI components
+│   └── robots.txt         # Search engine crawler instructions
 └── target/                # Rust build artifacts
 ```
 

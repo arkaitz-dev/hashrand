@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import BackButton from '$lib/components/BackButton.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { resultState, error, setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
 
@@ -209,14 +210,10 @@
 									class:hover:bg-green-700={copySuccess}
 								>
 								{#if copySuccess}
-									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-									</svg>
+									<Icon name="check" size="w-3 h-3" />
 									{t('common.copied')}
 								{:else}
-									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-									</svg>
+									<Icon name="copy" size="w-3 h-3" />
 									{t('common.copy')}
 								{/if}
 							</button>
@@ -242,14 +239,11 @@
 							>
 								<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Generation Details</h3>
 								<!-- Toggle icon - only visible on mobile -->
-								<svg 
-									class="w-5 h-5 text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showGenerationDetails ? 'rotate-180' : ''}"
-									fill="none" 
-									stroke="currentColor" 
-									viewBox="0 0 24 24"
-								>
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-								</svg>
+								<Icon 
+									name="chevron-down" 
+									size="w-5 h-5" 
+									class="text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showGenerationDetails ? 'rotate-180' : ''}" 
+								/>
 							</button>
 							
 							<!-- Content - collapsible on mobile, always visible on desktop -->
@@ -278,14 +272,11 @@
 							>
 								<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Parameters Used</h3>
 								<!-- Toggle icon - only visible on mobile -->
-								<svg 
-									class="w-5 h-5 text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showParametersUsed ? 'rotate-180' : ''}"
-									fill="none" 
-									stroke="currentColor" 
-									viewBox="0 0 24 24"
-								>
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-								</svg>
+								<Icon 
+									name="chevron-down" 
+									size="w-5 h-5" 
+									class="text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showParametersUsed ? 'rotate-180' : ''}" 
+								/>
 							</button>
 							
 							<!-- Content - collapsible on mobile, always visible on desktop -->
@@ -314,29 +305,21 @@
 						disabled={$isLoading}
 						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : `bg-${color}-600 hover:bg-${color}-700 cursor-pointer`}"
 					>
-						<svg class="w-4 h-4 {$isLoading ? 'animate-spin-fast' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-						</svg>
+						<Icon name="refresh" size="w-4 h-4" class={$isLoading ? 'animate-spin-fast' : ''} />
 						Generate Another
 					</button>
 					<button
 						onclick={() => goto(getPreviousPath())}
 						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
 					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-						</svg>
+						<Icon name="settings" size="w-4 h-4" />
 						Adjust Settings
 					</button>
 					<button
 						onclick={() => goto('/')}
 						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
 					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
-						</svg>
+						<Icon name="briefcase" size="w-4 h-4" />
 						{t('common.backToMenu')}
 					</button>
 				</div>

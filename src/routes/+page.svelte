@@ -4,6 +4,7 @@
 	import { navigationItems } from '$lib/stores/navigation';
 	import { t } from '$lib/stores/i18n';
 	import { clearResult } from '$lib/stores/result';
+	import Icon from '$lib/components/Icon.svelte';
 	import type { VersionResponse } from '$lib/types';
 
 	let versions: VersionResponse | null = null;
@@ -70,9 +71,7 @@
 						</p>
 						<div class="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
 							Choose
-							<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-							</svg>
+							<Icon name="arrow-right" size="w-4 h-4 ml-1" />
 						</div>
 					</div>
 				</button>

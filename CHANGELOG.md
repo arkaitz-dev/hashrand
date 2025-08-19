@@ -270,6 +270,64 @@ web/
 - Enhanced project structure documentation with new components
 - Added technical implementation details
 
+## [0.5.0] - 2025-08-19
+
+### Added
+- **🖼️ SVG Icon Sprite System**: Complete implementation of optimized icon management
+  - **Centralized Sprite**: All icons consolidated into `/static/icons-sprite.svg` for efficient caching
+  - **Icon Component**: New reusable `Icon.svelte` component for consistent icon usage
+    - Simple props: `name`, `size`, `class` for flexible styling
+    - Uses external sprite references (`/icons-sprite.svg#icon-{name}`)
+    - No inline SVG bloat in JavaScript bundles
+  - **10 Icons Migrated**: All UI icons converted to sprite system
+    - Theme toggle: sun and moon icons
+    - Navigation: left/right arrows
+    - Actions: copy, check, refresh, settings, briefcase
+    - UI elements: chevron-down, loading spinner
+  - **Lazy Loading**: Sprite downloaded only when first icon is rendered
+  - **Automatic Caching**: Browser handles sprite caching without preload warnings
+
+### Enhanced
+- **⚡ Performance Optimization**: Significant improvements to loading and rendering
+  - **Reduced Bundle Size**: Eliminated inline SVG from JavaScript/CSS bundles
+  - **Single HTTP Request**: All icons downloaded in one cached file
+  - **No Preload Warnings**: Removed problematic link preload, using on-demand loading
+  - **Memory Efficiency**: Shared SVG symbols reduce DOM memory usage
+- **🔧 Developer Experience**: Improved maintainability and consistency
+  - **Centralized Icon Management**: Easy to add, modify, or remove icons
+  - **Component Consistency**: Uniform icon sizing and styling across app
+  - **Type Safety**: TypeScript support for icon names and properties
+
+### Changed
+- **Icon Implementation**: Migrated from inline SVG to sprite-based system
+  - **ThemeToggle.svelte**: Uses `Icon` component for sun/moon icons
+  - **BackButton.svelte**: Uses `Icon` component for left arrow
+  - **LoadingSpinner.svelte**: Uses `Icon` component for spinner
+  - **Main menu**: Uses `Icon` component for right arrow navigation
+  - **Result page**: Uses `Icon` component for all action buttons and UI elements
+- **HTML Structure**: Added sprite reference system to app template
+  - Removed link preload that caused browser warnings
+  - External sprite references for optimal loading
+
+### Technical Implementation
+- **Component Architecture**: New icon management system
+  - `/src/lib/components/Icon.svelte` - Reusable icon component
+  - `/static/icons-sprite.svg` - Centralized sprite file with 10 symbols
+  - Updated all components to use new `Icon` component
+- **Loading Strategy**: Optimized sprite loading approach
+  - External references (`href="/icons-sprite.svg#icon-{name}"`)
+  - Browser-managed caching without manual preload
+  - No console warnings or performance issues
+- **Export System**: Icon component available through `$lib` imports
+  - Added to `/src/lib/index.ts` for convenient importing
+  - Consistent import pattern across codebase
+
+### Performance Benefits
+- **Network**: Single cached request replaces 10+ inline SVG elements
+- **Memory**: Shared SVG symbols reduce DOM node count
+- **Bundle**: JavaScript/CSS sizes reduced by removing inline SVG
+- **Cache**: Long-lived sprite cache improves repeat visit performance
+
 ## [Unreleased]
 
 ### Planned Features
@@ -286,6 +344,7 @@ web/
 
 ## Version History Summary
 
+- **0.5.0** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
 - **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
 - **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
 - **0.2.0** (2025-08-19) - Web interface release with professional SPA
