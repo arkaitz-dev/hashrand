@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import BackButton from '$lib/components/BackButton.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
@@ -10,7 +9,7 @@
 	let params: PasswordParams = {
 		length: 32,
 		alphabet: 'full-with-symbols',
-		raw: false
+		raw: true
 	};
 
 	const alphabetOptions: { value: 'no-look-alike' | 'full-with-symbols'; label: string; description: string }[] = [
@@ -48,8 +47,16 @@
 		}
 	}
 
-	// Update length when alphabet changes
+	// Update length when alphabet changes with smooth adjustment
 	function handleAlphabetChange() {
+		const newMinLength = params.alphabet === 'full-with-symbols' ? 21 : 24;
+		if (params.length! < newMinLength) {
+			params.length = newMinLength;
+		}
+	}
+
+	// Reactive statement to adjust length automatically
+	$: {
 		if (params.length! < minLength) {
 			params.length = minLength;
 		}
@@ -64,7 +71,6 @@
 	<div class="container mx-auto px-4 py-8">
 		<!-- Header -->
 		<div class="mb-8">
-			<BackButton to="/" class="mb-6" />
 			<div class="text-center">
 				<div class="inline-flex items-center justify-center w-12 h-12 bg-green-600 rounded-full mb-4">
 					<span class="text-xl text-white">🔐</span>
@@ -107,39 +113,36 @@
 					<!-- Length -->
 					<div>
 						<label for="length" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							{t('password.length')} ({minLength}-44)
+							{t('password.length')} ({minLength}-44 characters)
 						</label>
-						<input
-							type="number"
-							id="length"
-							bind:value={params.length}
-							min={minLength}
-							max="44"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
-							class:border-red-500={!lengthValid}
-						/>
+						<div class="flex items-center gap-4">
+							<input
+								type="range"
+								id="length"
+								bind:value={params.length}
+								min={minLength}
+								max="44"
+								class="flex-1 h-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded appearance-none outline-none slider"
+							/>
+							<span class="bg-green-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
+						</div>
 						{#if !lengthValid}
 							<p class="text-red-500 text-sm mt-1">
 								Length must be between {minLength} and 44 for selected alphabet
 							</p>
 						{/if}
-						<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-							Minimum length ensures adequate entropy for security
-						</p>
+						<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3">
+							<p class="text-sm text-blue-800 dark:text-blue-200">
+								<strong>Security Note:</strong>
+								{#if params.alphabet === 'no-look-alike'}
+									No Look-alike alphabet excludes confusable characters. Minimum {minLength} characters for equivalent security.
+								{:else}
+									Full alphabet with symbols provides maximum entropy. Minimum {minLength} characters for strong security.
+								{/if}
+							</p>
+						</div>
 					</div>
 
-					<!-- Raw output -->
-					<div class="flex items-center">
-						<input
-							type="checkbox"
-							id="raw"
-							bind:checked={params.raw}
-							class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-						/>
-						<label for="raw" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-							{t('password.raw')} (no trailing newline)
-						</label>
-					</div>
 
 					<!-- Security Notice -->
 					<div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
@@ -152,19 +155,32 @@
 						</div>
 					</div>
 
-					<!-- Generate Button -->
-					<button
-						type="submit"
-						disabled={!formValid || $isLoading}
-						class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
-					>
-						{#if $isLoading}
-							<LoadingSpinner size="sm" class="mr-2" />
-							{t('common.loading')}
-						{:else}
-							{t('common.generate')}
-						{/if}
-					</button>
+					<!-- Action Buttons -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<button
+							type="submit"
+							disabled={!formValid || $isLoading}
+							class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
+						>
+							{#if $isLoading}
+								<LoadingSpinner size="sm" class="mr-2" />
+								{t('common.loading')}
+							{:else}
+								{t('common.generate')}
+							{/if}
+						</button>
+						<button
+							type="button"
+							onclick={() => goto('/')}
+							class="px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
+							</svg>
+							{t('common.backToMenu')}
+						</button>
+					</div>
 				</form>
 			</div>
 		</div>

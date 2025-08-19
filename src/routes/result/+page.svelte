@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import BackButton from '$lib/components/BackButton.svelte';
-	import { resultState, error } from '$lib/stores/result';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import { resultState, error, setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
 
 	let copySuccess = false;
@@ -50,6 +51,7 @@
 
 	function getEndpointDisplayName(endpoint: string): string {
 		switch (endpoint) {
+			case 'custom': return 'Custom Hash';
 			case 'generate': return 'Custom Hash';
 			case 'password': return 'Secure Password';
 			case 'api-key': return 'API Key';
@@ -59,6 +61,7 @@
 
 	function getEndpointIcon(endpoint: string): string {
 		switch (endpoint) {
+			case 'custom': return '🎲';
 			case 'generate': return '🎲';
 			case 'password': return '🔐';
 			case 'api-key': return '🔑';
@@ -68,6 +71,7 @@
 
 	function getEndpointColor(endpoint: string): string {
 		switch (endpoint) {
+			case 'custom': return 'blue';
 			case 'generate': return 'blue';
 			case 'password': return 'green';
 			case 'api-key': return 'purple';
@@ -87,7 +91,57 @@
 	}
 
 	function getPreviousPath(): string {
-		return $resultState ? `/${$resultState.endpoint}` : '/';
+		if (!$resultState) return '/';
+		// Map endpoint names to actual route paths
+		const endpointRoutes: Record<string, string> = {
+			'custom': '/custom',
+			'generate': '/custom', // backward compatibility
+			'password': '/password',
+			'api-key': '/api-key'
+		};
+		return endpointRoutes[$resultState.endpoint] || '/';
+	}
+
+	async function regenerateHash() {
+		if (!$resultState || $isLoading) return;
+
+		setLoading(true);
+		
+		try {
+			const { api } = await import('$lib/api');
+			let result: string;
+
+			// Call the appropriate API method based on endpoint
+			switch ($resultState.endpoint) {
+				case 'custom':
+				case 'generate':
+					result = await api.generate($resultState.params);
+					break;
+				case 'password':
+					result = await api.generatePassword($resultState.params);
+					break;
+				case 'api-key':
+					result = await api.generateApiKey($resultState.params);
+					break;
+				default:
+					throw new Error('Unknown endpoint type');
+			}
+			
+			// Update result with new value but keep same parameters and endpoint
+			setResult({
+				value: result,
+				params: $resultState.params,
+				endpoint: $resultState.endpoint,
+				timestamp: new Date()
+			});
+
+			// Reset copy success state
+			copySuccess = false;
+		} catch (error) {
+			setError(error instanceof Error ? error.message : 'Failed to regenerate');
+		} finally {
+			setLoading(false);
+		}
 	}
 </script>
 
@@ -101,19 +155,6 @@
 		<div class="container mx-auto px-4 py-8">
 			<!-- Header -->
 			<div class="mb-8">
-				<div class="flex items-center justify-between mb-6">
-					<BackButton to={getPreviousPath()} />
-					<button
-						onclick={() => goto('/')}
-						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-{color}-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-all duration-200"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
-						</svg>
-						{t('common.backToMenu')}
-					</button>
-				</div>
 
 				<div class="text-center">
 					<div class="inline-flex items-center justify-center w-16 h-16 bg-{color}-600 rounded-full mb-6">
@@ -194,7 +235,7 @@
 							<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Parameters Used</h3>
 							<dl class="space-y-2">
 								{#each Object.entries($resultState.params) as [key, value]}
-									{#if value !== undefined && value !== null && value !== ''}
+									{#if value !== undefined && value !== null && value !== '' && key !== 'raw'}
 										<div>
 											<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
 												{key.replace(/([A-Z])/g, ' $1').trim()}
@@ -213,13 +254,24 @@
 				<!-- Actions -->
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<button
-						onclick={() => goto(getPreviousPath())}
-						class="px-6 py-3 bg-{color}-600 hover:bg-{color}-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+						onclick={regenerateHash}
+						disabled={$isLoading}
+						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : `bg-${color}-600 hover:bg-${color}-700 cursor-pointer`}"
 					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="w-4 h-4 {$isLoading ? 'animate-spin-fast' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
 						</svg>
 						Generate Another
+					</button>
+					<button
+						onclick={() => goto(getPreviousPath())}
+						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+						</svg>
+						Adjust Settings
 					</button>
 					<button
 						onclick={() => goto('/')}

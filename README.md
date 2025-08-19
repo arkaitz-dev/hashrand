@@ -16,7 +16,10 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **🎨 Professional UI**: Modern SPA built with SvelteKit + TypeScript + TailwindCSS 4.0
 - **📱 Responsive Design**: Works perfectly on mobile, tablet, and desktop
 - **🌙 Dark/Light Mode**: Automatic theme switching based on system preferences
-- **✅ Real-time Validation**: Client-side parameter validation with clear error messages
+- **🎛️ Interactive Controls**: Beautiful range sliders with gradient styling for parameter selection
+- **🔄 In-Place Regeneration**: Generate new hashes without leaving the result page
+- **✨ Dynamic Feedback**: Context-aware help text and real-time parameter validation
+- **🎬 Loading Animations**: Smooth spinning animations during hash generation
 - **📋 Copy to Clipboard**: One-click copying with visual feedback
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **🌍 I18n Ready**: Prepared for multiple language support
@@ -270,7 +273,7 @@ hashrand-spin/
 │   │       ├── +layout.svelte # Root layout with navigation
 │   │       ├── +layout.ts     # SPA configuration
 │   │       ├── +page.svelte   # Main menu page
-│   │       ├── generate/      # Custom hash generator
+│   │       ├── custom/        # Custom hash generator (renamed from generate/)
 │   │       ├── password/      # Password generator
 │   │       ├── api-key/       # API key generator
 │   │       └── result/        # Shared result display

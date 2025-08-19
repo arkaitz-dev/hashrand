@@ -146,6 +146,50 @@ web/
 - **CLAUDE.md**: Updated architecture to include web interface
 - **Web README.md**: Complete documentation for web interface development
 
+## [0.3.0] - 2025-08-19
+
+### Added
+- **🎨 Enhanced Web Interface**: Major UI/UX improvements for professional user experience
+  - **Interactive Range Sliders**: Replaced number inputs with attractive gradient sliders for length parameters
+  - **Dynamic Informational Notes**: Context-aware help text that changes based on alphabet selection
+  - **Automatic Length Adjustment**: Intelligent minimum length calculation when switching alphabets
+  - **Spinning Loading Animation**: Smooth 1.5 rotations/second icon animation during hash regeneration
+  - **In-Place Regeneration**: Generate new hashes without navigating back to configuration
+  - **Visual Loading States**: Button color changes and disabled states during processing
+
+### Changed  
+- **Route Reorganization**: Renamed `/generate` route to `/custom` for better semantic clarity
+- **Simplified Configuration**: All web UI operations now use `raw=true` by default (hidden from user)
+- **Streamlined Navigation**: Removed redundant navigation buttons for cleaner user flow
+  - Removed duplicate Back/Back to Menu buttons from result view
+  - Consolidated navigation with "Back to Menu" button in configuration views
+  - Removed redundant Back buttons from configuration forms
+- **Button State Improvements**: Enhanced visual feedback during loading states
+  - Consistent button sizing with `min-width` to prevent layout shift
+  - Proper color state management during loading/active states
+  - Fixed button visibility issues (borders, contrast)
+
+### Improved
+- **User Experience**: Comprehensive UX enhancements based on reference project patterns
+  - Professional gradient styling on range sliders
+  - Real-time parameter validation with dynamic feedback
+  - Contextual help messages for security and format recommendations
+  - Smooth CSS animations and transitions
+- **Accessibility**: Enhanced loading state communication through visual animations
+- **Performance**: Removed artificial delays used for testing loading states
+
+### Technical Implementation
+- **CSS Animations**: Custom `animate-spin-fast` keyframe animation for button icons
+- **Dynamic Classes**: Improved Tailwind class application for button states
+- **Component Updates**: Enhanced all configuration views (custom, password, api-key)
+- **State Management**: Better loading state handling across components
+- **Route Mapping**: Updated internal routing with backward compatibility
+
+### Documentation
+- Updated route references from `/generate` to `/custom` throughout codebase
+- Enhanced form interaction patterns following modern web standards
+- Improved button state management documentation
+
 ## [Unreleased]
 
 ### Planned Features
@@ -156,11 +200,12 @@ web/
 - Metrics and monitoring
 - Docker containerization
 - Helm charts for Kubernetes deployment
-- Web interface enhancements (themes, more languages)
+- Additional language support for internationalization
 
 ---
 
 ## Version History Summary
 
+- **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
 - **0.2.0** (2025-08-19) - Web interface release with professional SPA
 - **0.1.0** (2025-08-18) - Initial release with complete API implementation

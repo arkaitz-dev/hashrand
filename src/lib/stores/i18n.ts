@@ -22,28 +22,33 @@ export const translations: Record<string, I18nTexts> = {
 			subtitle: 'Choose a generation method',
 			version: 'Version'
 		},
-		generate: {
+		custom: {
 			title: 'Custom Hash Generator',
-			description: 'Generate customizable random hashes',
+			description: 'Generate customized random hashes',
 			length: 'Length',
 			alphabet: 'Alphabet Type',
 			prefix: 'Prefix',
-			suffix: 'Suffix',
-			raw: 'Raw Output'
+			suffix: 'Suffix'
+		},
+		generate: {
+			title: 'Custom Hash Generator',
+			description: 'Generate customized random hashes',
+			length: 'Length',
+			alphabet: 'Alphabet Type',
+			prefix: 'Prefix',
+			suffix: 'Suffix'
 		},
 		password: {
 			title: 'Secure Password Generator',
 			description: 'Generate secure passwords',
 			length: 'Length',
-			alphabet: 'Character Set',
-			raw: 'Raw Output'
+			alphabet: 'Character Set'
 		},
 		apiKey: {
 			title: 'API Key Generator',
 			description: 'Generate API keys with ak_ prefix',
 			length: 'Length',
-			alphabet: 'Character Set',
-			raw: 'Raw Output'
+			alphabet: 'Character Set'
 		},
 		alphabets: {
 			'base58': 'Base58 (58 chars)',

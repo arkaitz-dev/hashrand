@@ -6,10 +6,10 @@ export const previousRoute = writable<string | null>(null);
 
 export const navigationItems: NavItem[] = [
 	{
-		id: 'generate',
+		id: 'custom',
 		title: 'Custom Hash',
-		description: 'Generate customizable random hashes with various parameters',
-		path: '/generate',
+		description: 'Generate customized random hashes with various parameters',
+		path: '/custom',
 		icon: '🎲'
 	},
 	{

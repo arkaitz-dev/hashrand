@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import BackButton from '$lib/components/BackButton.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
@@ -12,7 +11,7 @@
 		alphabet: 'base58',
 		prefix: '',
 		suffix: '',
-		raw: false
+		raw: true
 	};
 
 	const alphabetOptions: { value: AlphabetType; label: string; description: string }[] = [
@@ -41,7 +40,7 @@
 			setResult({
 				value: result,
 				params: { ...params },
-				endpoint: 'generate',
+				endpoint: 'custom',
 				timestamp: new Date()
 			});
 
@@ -62,16 +61,15 @@
 	<div class="container mx-auto px-4 py-8">
 		<!-- Header -->
 		<div class="mb-8">
-			<BackButton to="/" class="mb-6" />
 			<div class="text-center">
 				<div class="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
 					<span class="text-xl text-white">🎲</span>
 				</div>
 				<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-					{t('generate.title')}
+					{t('custom.title')}
 				</h1>
 				<p class="text-gray-600 dark:text-gray-300">
-					{t('generate.description')}
+					{t('custom.description')}
 				</p>
 			</div>
 		</div>
@@ -83,17 +81,19 @@
 					<!-- Length -->
 					<div>
 						<label for="length" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							{t('generate.length')} (2-128)
+							{t('custom.length')} (2-128)
 						</label>
-						<input
-							type="number"
-							id="length"
-							bind:value={params.length}
-							min="2"
-							max="128"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-							class:border-red-500={!lengthValid}
-						/>
+						<div class="flex items-center gap-4">
+							<input
+								type="range"
+								id="length"
+								bind:value={params.length}
+								min="2"
+								max="128"
+								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
+							/>
+							<span class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
+						</div>
 						{#if !lengthValid}
 							<p class="text-red-500 text-sm mt-1">Length must be between 2 and 128</p>
 						{/if}
@@ -102,7 +102,7 @@
 					<!-- Alphabet -->
 					<div>
 						<label for="alphabet" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							{t('generate.alphabet')}
+							{t('custom.alphabet')}
 						</label>
 						<select
 							id="alphabet"
@@ -123,7 +123,7 @@
 					<!-- Prefix -->
 					<div>
 						<label for="prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							{t('generate.prefix')} (max 32 chars)
+							{t('custom.prefix')} (max 32 chars)
 						</label>
 						<input
 							type="text"
@@ -142,7 +142,7 @@
 					<!-- Suffix -->
 					<div>
 						<label for="suffix" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							{t('generate.suffix')} (max 32 chars)
+							{t('custom.suffix')} (max 32 chars)
 						</label>
 						<input
 							type="text"
@@ -158,32 +158,33 @@
 						{/if}
 					</div>
 
-					<!-- Raw output -->
-					<div class="flex items-center">
-						<input
-							type="checkbox"
-							id="raw"
-							bind:checked={params.raw}
-							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-						/>
-						<label for="raw" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-							{t('generate.raw')} (no trailing newline)
-						</label>
-					</div>
 
-					<!-- Generate Button -->
-					<button
-						type="submit"
-						disabled={!formValid || $isLoading}
-						class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
-					>
-						{#if $isLoading}
-							<LoadingSpinner size="sm" class="mr-2" />
-							{t('common.loading')}
-						{:else}
-							{t('common.generate')}
-						{/if}
-					</button>
+					<!-- Action Buttons -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<button
+							type="submit"
+							disabled={!formValid || $isLoading}
+							class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-200 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center"
+						>
+							{#if $isLoading}
+								<LoadingSpinner size="sm" class="mr-2" />
+								{t('common.loading')}
+							{:else}
+								{t('common.generate')}
+							{/if}
+						</button>
+						<button
+							type="button"
+							onclick={() => goto('/')}
+							class="px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
+							</svg>
+							{t('common.backToMenu')}
+						</button>
+					</div>
 				</form>
 			</div>
 		</div>
