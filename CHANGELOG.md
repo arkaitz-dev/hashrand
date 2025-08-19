@@ -328,9 +328,73 @@ web/
 - **Bundle**: JavaScript/CSS sizes reduced by removing inline SVG
 - **Cache**: Long-lived sprite cache improves repeat visit performance
 
+## [0.6.0] - 2025-08-19
+
+### Added
+- **🏴 Flag Icon Collection**: Complete set of country and region flag icons for future internationalization
+  - **11 Flag Icons**: Comprehensive collection of carefully designed SVG flag representations
+    - **National Flags**: Spain, UK, France, Germany, Portugal, Russia, Saudi Arabia, China
+    - **Regional Flags**: Catalonia, Basque Country (Ikurriña), Galicia
+  - **Authentic Colors**: All flags use official color specifications from Wikimedia Commons
+  - **Optimized SVG**: Simplified designs optimized for small icon sizes while maintaining recognizability
+  - **Consistent Integration**: All flags integrated into existing sprite system for optimal performance
+  - **Scalable Design**: Vector graphics ensure crisp rendering at any size
+
+### Enhanced
+- **🎨 Icon Sprite System**: Expanded sprite collection from 10 to 21 total icons
+  - **Performance Maintained**: Single HTTP request for all icons including new flags
+  - **Memory Efficient**: Shared SVG symbols for all flag representations
+  - **Developer Ready**: Easy access via `<Icon name="spain" />`, `<Icon name="uk" />`, etc.
+- **🌍 Internationalization Preparation**: Foundation laid for multi-language support
+  - Flag icons ready for language selection UI
+  - Cultural representation for major markets
+  - Regional support for Spain (Catalonia, Basque, Galicia)
+
+### Technical Implementation
+- **Flag Design Optimization**: Complex flags simplified for icon usage
+  - **UK Flag**: Full Union Jack design with proper cross positioning and clipping
+  - **China Flag**: Large star with simplified dots for small stars
+  - **Catalonia**: Traditional four red stripes on yellow background (La Senyera)
+  - **Basque Country**: Complete Ikurriña with red field, green saltire, and white cross
+  - **Galicia**: Corrected design with white field and blue diagonal stripe
+  - **Simplified Flags**: Saudi Arabia (green field), Portugal (vertical stripes)
+- **SVG Structure**: Proper viewBox ratios maintaining flag proportions
+  - Standard flags: 3:2 ratio (viewBox="0 0 6 4")
+  - Special cases: Custom ratios for accurate representation
+  - Color fidelity: Hex codes from official specifications
+
+### Usage Examples
+```svelte
+<!-- European flags -->
+<Icon name="spain" size="w-6 h-6" />
+<Icon name="france" size="w-6 h-6" />
+<Icon name="germany" size="w-6 h-6" />
+<Icon name="uk" size="w-6 h-6" />
+<Icon name="portugal" size="w-6 h-6" />
+
+<!-- Other regions -->
+<Icon name="china" size="w-6 h-6" />
+<Icon name="russia" size="w-6 h-6" />
+<Icon name="saudi" size="w-6 h-6" />
+
+<!-- Spanish regions -->
+<Icon name="catalonia" size="w-6 h-6" />
+<Icon name="basque" size="w-6 h-6" />
+<Icon name="galicia" size="w-6 h-6" />
+```
+
+### Ready for Future Features
+- **Language Selection**: Flag icons prepared for language picker UI
+- **Regional Localization**: Support for regional variants within countries
+- **Cultural Adaptation**: Visual elements ready for international markets
+- **Accessibility**: All flags include proper naming for screen readers
+
 ## [Unreleased]
 
 ### Planned Features
+- Multi-language internationalization using flag icons
+- Language selection interface with flag representations
+- Regional content adaptation
 - Performance benchmarking
 - Additional alphabet types
 - Batch generation endpoints
@@ -338,12 +402,12 @@ web/
 - Metrics and monitoring
 - Docker containerization
 - Helm charts for Kubernetes deployment
-- Additional language support for internationalization
 
 ---
 
 ## Version History Summary
 
+- **0.6.0** (2025-08-19) - Flag icon collection for internationalization (11 country/region flags)
 - **0.5.0** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
 - **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
 - **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
