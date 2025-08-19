@@ -184,6 +184,10 @@ web/
 - **Component Updates**: Enhanced all configuration views (custom, password, api-key)
 - **State Management**: Better loading state handling across components
 - **Route Mapping**: Updated internal routing with backward compatibility
+- **Unified Styling**: Standardized button and slider styles across all generator views
+  - Consistent color scheme: solid colors instead of complex gradients
+  - Uniform hover states and transitions (duration-200, hover:shadow-lg)
+  - Simplified visual effects while maintaining color identity per endpoint
 
 ### Documentation
 - Updated route references from `/generate` to `/custom` throughout codebase

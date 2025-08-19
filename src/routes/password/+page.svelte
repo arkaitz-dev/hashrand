@@ -122,7 +122,7 @@
 								bind:value={params.length}
 								min={minLength}
 								max="44"
-								class="flex-1 h-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded appearance-none outline-none slider"
+								class="flex-1 h-2 bg-green-600 rounded appearance-none outline-none slider"
 							/>
 							<span class="bg-green-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
 						</div>
@@ -160,7 +160,7 @@
 						<button
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
+							class="flex-1 py-4 bg-green-600 hover:bg-green-700 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-200 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center"
 						>
 							{#if $isLoading}
 								<LoadingSpinner size="sm" class="mr-2" />
