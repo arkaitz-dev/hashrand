@@ -15,60 +15,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Web Interface Changes (v0.8.0)
 #### Added
-- **❤️ Developer Branding**: Personal branding integration across all pages
-  - **"Made with ❤️ by Arkaitz Dev"**: Added to all pages with heart icon and developer link
-  - **Heart Icon**: New heart SVG icon added to sprite system (`icon-heart`)
-  - **Developer Link**: Links to https://arkaitz.dev with hover effects and accessibility
-  - **Consistent Placement**: Appears on main page below version info, on other pages at bottom
-  - **Professional Styling**: Discrete but visible with proper theme integration
-- **🌍 Complete Internationalization (i18n)**: Full 11-language support implementation
-  - **Reactive Language System**: Svelte store-based i18n with real-time translations
-  - **11 Languages Supported**: Spanish, English, French, German, Portuguese, Russian, Arabic, Chinese, Catalan, Basque (Euskera), Galician
-  - **Grammar-Aware Translations**: Proper grammatical structures for each language
-    - **Arabic**: Right-to-left (RTL) text direction support prepared
-    - **Euskera**: SOV word order and proper grammatical cases
-    - **Declension Support**: Language-specific grammatical particularities
-  - **Complete Coverage**: All user-visible text translated across all pages
-    - Main menu with navigation cards
-    - All form pages (/custom, /password, /api-key)
-    - Result page with parameter translation
-    - Loading states, error messages, buttons, labels
-  - **Context-Aware Keys**: Specific translation keys per page type for accuracy
-    - `custom.generateHash`, `password.generatePassword`, `apiKey.generateApiKey`
-    - Page-specific descriptions and help text
-    - Dynamic parameter translation in result view
-- **🏴 Language Selector Enhancement**: Visual-only flag selection (functional i18n prepared)
-  - **Current Behavior**: Flag changes without affecting actual translations
-  - **Future Ready**: Full i18n system implemented for future language switching activation
-  - **All Translations Ready**: Complete translation database for immediate activation
+- **🌍 Complete Translation System**: Full restoration of internationalization with 13 languages
+  - **Modular Translation Architecture**: Separated each language into individual files for better maintainability
+    - `/web/src/lib/stores/translations/en.ts`, `es.ts`, `pt.ts`, `fr.ts`, `de.ts`, `ru.ts`, `zh.ts`, `ar.ts`, `eu.ts`, `ca.ts`, `gl.ts`, `hi.ts`, `ja.ts`
+    - Clean import system in main `i18n.ts` for all language modules
+    - No more syntax errors from large monolithic translation file
+  - **13 Complete Languages Operational**: All translations now display correctly instead of translation keys
+    - **Western Europe**: English, Spanish, Portuguese, French, German  
+    - **Eastern Europe**: Russian
+    - **Asia**: Chinese, Hindi, Japanese
+    - **Middle East**: Arabic (with RTL text direction prepared)
+    - **Regional Languages**: Euskera (Basque), Català (Catalan), Galego (Galician)
+  - **Grammar-Accurate Translations**: Proper linguistic structures for each language
+    - **Hindi**: Devanagari script with proper grammar (LTR direction)
+    - **Japanese**: Natural mixing of hiragana, katakana, and kanji
+    - **Arabic**: RTL-ready Arabic script
+    - **Regional Specificity**: Proper Euskera SOV order, Catalan contractions, Galician unique vocabulary
+  - **Complete UI Coverage**: All user interface elements translated across entire application
+    - Main menu navigation and descriptions
+    - All form pages with contextual help text
+    - Result page with parameter descriptions
+    - Error messages, loading states, buttons, tooltips
+    - Dynamic content based on user actions
 
 #### Enhanced
-- **🎨 User Experience**: Improved user interface consistency
-  - **Footer Positioning**: Initially implemented as fixed footer, then reverted to integrated content
-  - **Version Display**: Clean integration of version information with branding
-  - **Discrete Branding**: Professional developer attribution without overwhelming the UI
-- **🌐 Internationalization Infrastructure**: Comprehensive i18n architecture
-  - **Svelte Store System**: Centralized translation management with `i18n.ts` store
-  - **Translation Functions**: `$_()` reactive translation function throughout app
-  - **Language-Specific Features**: Ready for RTL support and complex grammar
-  - **Scalable Architecture**: Easy addition of new languages or translation keys
+- **🏴 Language Selector UI**: Improved visual consistency and user feedback
+  - **Larger Flag Icons**: Main selector button upgraded to `w-6 h-6` (was `w-5 h-5`) for better visibility
+  - **Active State Indication**: Button shows pressed/highlighted appearance while dropdown is open
+    - Applies background color, shadow, border, and scale effects when active
+    - Clear visual feedback that selector is currently engaged
+    - Consistent with modern UI patterns for dropdown controls
+  - **Size Consistency**: Dropdown flag icons standardized to `w-5 h-5` matching theme toggle
 
 #### Fixed
-- **🔧 Translation Accuracy**: Multiple translation corrections and improvements
-  - **Euskera Corrections**: Grammar and vocabulary improvements
-    - "luzera" → "luzeera" (proper term for length)
-    - "Ezarpenak doitu" → "Ezarpenak aldatu" (better connotation for "adjust settings")
-    - Word order fixes: "32 hizki ezin du gainditu" (proper SOV structure)
-  - **Missing Key Fixes**: Added missing translation keys for all pages
-  - **Generate Button Context**: Fixed context-specific button text per page type
-  - **Parameter Translation**: Proper translation of "Length" and "Alphabet" in result view
+- **🐛 Translation System Restoration**: Complete fix of broken internationalization
+  - **Problem**: Only 3 out of 13 languages were working (English, Hindi, Japanese)
+  - **Root Cause**: Missing translation files for 10 languages caused display of translation keys instead of actual text
+  - **Solution**: Created individual translation files for all missing languages
+  - **Result**: All 13 languages now display proper translations instead of keys like `menu.title`
+- **🔧 Syntax Error Resolution**: Fixed all TypeScript compilation issues
+  - Corrected malformed translation files with proper syntax
+  - Fixed indentation and structure issues across language files
+  - Eliminated ESBuild errors that prevented successful builds
 
 #### Technical Implementation
-- **Translation Database**: Comprehensive translation system with 11 complete language sets
-- **Icon System Extension**: Added heart icon to existing sprite system
-- **Component Architecture**: Maintained consistent component-based approach
-- **Theme Integration**: All new elements properly support light/dark modes
-- **Accessibility**: All new elements include proper ARIA labels and accessibility features
+- **Modular Architecture**: Clean separation of translation concerns
+  - Each language in its own TypeScript file with proper type definitions
+  - Centralized import system maintaining performance
+  - Easier maintenance and future language additions
+- **Build System Compatibility**: Ensured flawless compilation
+  - All translation files pass TypeScript validation
+  - No ESBuild syntax errors during production builds
+  - Clean development server startup without translation warnings
+- **Version Management**: Updated to reflect significant improvements
+  - Web UI version bumped to 0.8.0 (significant feature restoration)
+  - API version maintained at stable 1.0.0 (no backend changes)
+  - Version endpoint correctly reports new UI version
 
 ---
 
@@ -477,7 +479,7 @@ web/
 
 ## Version History Summary
 
-- **[API v1.0.0 / Web v0.8.0]** (2025-08-20) - Complete internationalization system with 11 languages and developer branding
+- **[API v1.0.0 / Web v0.8.0]** (2025-08-20) - Complete translation system restoration with 13 languages and language selector UI improvements
 - **[API v1.0.0 / Web v0.7.0]** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
 - **[API v1.0.0 / Web v0.6.0]** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
 - **[API v1.0.0 / Web v0.5.0]** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
@@ -512,6 +514,6 @@ web/
   ```json
   {
     "api_version": "1.0.0",
-    "ui_version": "0.7.0"
+    "ui_version": "0.8.0"
   }
   ```
