@@ -11,6 +11,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.8.0] - 2025-08-20
+
+### Web Interface Changes (v0.8.0)
+#### Added
+- **❤️ Developer Branding**: Personal branding integration across all pages
+  - **"Made with ❤️ by Arkaitz Dev"**: Added to all pages with heart icon and developer link
+  - **Heart Icon**: New heart SVG icon added to sprite system (`icon-heart`)
+  - **Developer Link**: Links to https://arkaitz.dev with hover effects and accessibility
+  - **Consistent Placement**: Appears on main page below version info, on other pages at bottom
+  - **Professional Styling**: Discrete but visible with proper theme integration
+- **🌍 Complete Internationalization (i18n)**: Full 11-language support implementation
+  - **Reactive Language System**: Svelte store-based i18n with real-time translations
+  - **11 Languages Supported**: Spanish, English, French, German, Portuguese, Russian, Arabic, Chinese, Catalan, Basque (Euskera), Galician
+  - **Grammar-Aware Translations**: Proper grammatical structures for each language
+    - **Arabic**: Right-to-left (RTL) text direction support prepared
+    - **Euskera**: SOV word order and proper grammatical cases
+    - **Declension Support**: Language-specific grammatical particularities
+  - **Complete Coverage**: All user-visible text translated across all pages
+    - Main menu with navigation cards
+    - All form pages (/custom, /password, /api-key)
+    - Result page with parameter translation
+    - Loading states, error messages, buttons, labels
+  - **Context-Aware Keys**: Specific translation keys per page type for accuracy
+    - `custom.generateHash`, `password.generatePassword`, `apiKey.generateApiKey`
+    - Page-specific descriptions and help text
+    - Dynamic parameter translation in result view
+- **🏴 Language Selector Enhancement**: Visual-only flag selection (functional i18n prepared)
+  - **Current Behavior**: Flag changes without affecting actual translations
+  - **Future Ready**: Full i18n system implemented for future language switching activation
+  - **All Translations Ready**: Complete translation database for immediate activation
+
+#### Enhanced
+- **🎨 User Experience**: Improved user interface consistency
+  - **Footer Positioning**: Initially implemented as fixed footer, then reverted to integrated content
+  - **Version Display**: Clean integration of version information with branding
+  - **Discrete Branding**: Professional developer attribution without overwhelming the UI
+- **🌐 Internationalization Infrastructure**: Comprehensive i18n architecture
+  - **Svelte Store System**: Centralized translation management with `i18n.ts` store
+  - **Translation Functions**: `$_()` reactive translation function throughout app
+  - **Language-Specific Features**: Ready for RTL support and complex grammar
+  - **Scalable Architecture**: Easy addition of new languages or translation keys
+
+#### Fixed
+- **🔧 Translation Accuracy**: Multiple translation corrections and improvements
+  - **Euskera Corrections**: Grammar and vocabulary improvements
+    - "luzera" → "luzeera" (proper term for length)
+    - "Ezarpenak doitu" → "Ezarpenak aldatu" (better connotation for "adjust settings")
+    - Word order fixes: "32 hizki ezin du gainditu" (proper SOV structure)
+  - **Missing Key Fixes**: Added missing translation keys for all pages
+  - **Generate Button Context**: Fixed context-specific button text per page type
+  - **Parameter Translation**: Proper translation of "Length" and "Alphabet" in result view
+
+#### Technical Implementation
+- **Translation Database**: Comprehensive translation system with 11 complete language sets
+- **Icon System Extension**: Added heart icon to existing sprite system
+- **Component Architecture**: Maintained consistent component-based approach
+- **Theme Integration**: All new elements properly support light/dark modes
+- **Accessibility**: All new elements include proper ARIA labels and accessibility features
+
+---
+
 ## [API v1.0.0 / Web v0.7.0] - 2025-08-20
 
 ### Cross-Component Changes
@@ -416,6 +477,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.8.0]** (2025-08-20) - Complete internationalization system with 11 languages and developer branding
 - **[API v1.0.0 / Web v0.7.0]** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
 - **[API v1.0.0 / Web v0.6.0]** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
 - **[API v1.0.0 / Web v0.5.0]** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
