@@ -426,6 +426,93 @@ web/
 - **Cultural Adaptation**: Visual elements ready for international markets
 - **Accessibility**: All flags include proper naming for screen readers
 
+## [0.7.0] - 2025-08-20
+
+### Added
+- **🚀 Enhanced Development Workflow**: Complete justfile integration for unified development experience
+  - **Unified Development Commands**: `just dev` now launches complete environment
+    - Automatically starts Spin API backend in background (port 3000)
+    - Automatically starts npm web interface in background (port 5173)
+    - Automatically exposes frontend via Tailscale serve for remote access
+    - Single command for complete development setup
+  - **Intelligent Server Management**: Enhanced stop/start process management
+    - `just stop` now stops all services including Tailscale serve
+    - Proper service dependency order (API first, then web interface)
+    - Complete cleanup of background processes and PID files
+    - Status reporting for all running services
+- **🌐 Tailscale Integration**: Built-in remote access support for development
+  - **Frontend Exposure Commands**: 
+    - `just tailscale-front-start` - Expose web interface (port 5173) via Tailscale
+    - `just tailscale-front-stop` - Stop Tailscale serve for frontend
+  - **Backend Exposure Commands**:
+    - `just tailscale-back-start` - Expose API backend (port 3000) via Tailscale  
+    - `just tailscale-back-stop` - Stop Tailscale serve for backend
+  - **Automatic Installation Check**: Verifies Tailscale CLI availability before execution
+  - **Status Integration**: `just status` now shows Tailscale serve status and active URLs
+- **🏗️ Enhanced Build System**: Unified build commands for complete project
+  - **Dual Build Process**: `just build` now builds both WebAssembly component and web interface
+    - Executes `spin-cli build` for WASM compilation
+    - Executes `npm run build` in web/ directory for production SPA
+  - **Complete Clean Commands**: Enhanced cleanup for all project artifacts
+    - `just clean` removes Rust build artifacts and npm cache/build directories
+    - Cleans: `target/`, `node_modules/.cache`, `dist`, `build`, `.svelte-kit`
+  - **Fresh Build Commands**: New rebuild workflows
+    - `just clean-build` - Clean and rebuild everything
+    - `just rebuild` - Alias for clean and rebuild workflow
+
+### Enhanced
+- **⚡ Developer Experience**: Significant improvements to development workflow efficiency
+  - **One-Command Setup**: `just dev` provides complete development environment
+  - **Automatic Remote Access**: Frontend automatically available via Tailscale network
+  - **Integrated Status Monitoring**: Single command shows all service states
+  - **Intelligent Cleanup**: Stop command handles all services comprehensively
+- **📊 Status Reporting**: Enhanced development server monitoring
+  - **Comprehensive Status Check**: Shows Spin, npm, and Tailscale service states
+  - **Port Usage Monitoring**: Reports on ports 3000, 5173, and service PIDs
+  - **Tailscale URL Display**: Shows active Tailscale URLs for remote access
+  - **Service Health Indicators**: Clear visual indicators for running/stopped services
+- **🔧 Build Process**: Streamlined build and cleanup workflows
+  - **Parallel Build Execution**: Efficient building of both backend and frontend
+  - **Complete Artifact Cleanup**: Thorough cleaning of all generated files
+  - **Developer-Friendly Commands**: Intuitive command names for common operations
+
+### Changed
+- **Development Workflow**: Updated primary development commands
+  - **`just dev`**: Now launches complete environment (was Spin-only)
+    - Previous: Started only `spin-cli watch` in foreground
+    - Current: Starts Spin (bg) → npm (bg) → Tailscale serve → complete environment ready
+  - **`just dev-fg`**: New foreground mode (previous `just dev` behavior)
+    - Starts npm in background, Spin in foreground for direct log viewing
+    - Use when you need to monitor Spin logs directly
+  - **`just stop`**: Enhanced to stop all services including Tailscale
+  - **`just build`**: Enhanced to build both backend and frontend components
+- **Service Management**: Improved background process handling
+  - **Startup Order**: API backend starts first, then web interface
+  - **PID Management**: Separate PID files for Spin and npm processes
+  - **Log Management**: Separate log files (`.spin-dev.log`, `.npm-dev.log`)
+  - **Cleanup Process**: Comprehensive cleanup of all background services
+
+### Technical Implementation
+- **Justfile Architecture**: Advanced shell scripting for service orchestration
+  - **Service Dependencies**: Proper dependency management between commands
+  - **Error Handling**: Robust error checking and service validation
+  - **Background Process Management**: Professional PID and log file handling
+  - **Status Verification**: Comprehensive service health checking
+- **Tailscale Integration**: Professional remote access implementation
+  - **Service Discovery**: Automatic Tailscale serve status detection
+  - **URL Management**: Dynamic URL reporting for active services
+  - **Dependency Checking**: CLI availability verification before execution
+- **Build System**: Enhanced compilation and cleanup processes
+  - **Multi-Target Building**: Coordinated WASM and SPA build processes
+  - **Comprehensive Cleaning**: Complete artifact removal across all components
+
+### Developer Benefits
+- **Reduced Complexity**: One command (`just dev`) for complete setup
+- **Remote Development**: Automatic Tailscale exposure for tablet/mobile testing
+- **Better Debugging**: Enhanced status reporting and log management
+- **Faster Cleanup**: Complete environment cleanup with `just stop`
+- **Simplified Building**: Unified build process for deployment preparation
+
 ## [Unreleased]
 
 ### Planned Features
@@ -442,6 +529,7 @@ web/
 
 ## Version History Summary
 
+- **0.7.0** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
 - **0.6.0** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
 - **0.5.0** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
 - **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation

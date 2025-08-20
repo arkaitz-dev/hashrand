@@ -5,16 +5,20 @@
 default:
     @just --list
 
-# Build the WebAssembly component
+# Build both WebAssembly component and web interface
 build:
+    #!/usr/bin/env bash
+    echo "Building WebAssembly component..."
     spin-cli build
+    echo "Building web interface..."
+    cd web && npm run build
 
 # Start the application locally
 up:
     spin-cli up
 
 # Stop any running development servers (foreground and background)
-stop:
+stop: tailscale-front-stop
     #!/usr/bin/env bash
     echo "Stopping development servers..."
     
@@ -27,6 +31,15 @@ stop:
         rm -f .spin-dev.pid
     fi
     
+    # Kill background npm server if PID file exists
+    if [ -f .npm-dev.pid ]; then
+        PID=$(cat .npm-dev.pid)
+        if kill -0 $PID 2>/dev/null; then
+            kill $PID 2>/dev/null && echo "✓ Stopped npm background server (PID: $PID)" || echo "• Failed to stop npm background server"
+        fi
+        rm -f .npm-dev.pid
+    fi
+    
     # Kill any running spin-cli watch processes
     pkill -f "spin-cli watch" 2>/dev/null && echo "✓ Stopped spin-cli watch" || echo "• No spin-cli watch process found"
     # Kill any processes using port 3000
@@ -34,8 +47,13 @@ stop:
     # Kill any spin-cli processes
     pkill -f "spin-cli" 2>/dev/null && echo "✓ Stopped other spin-cli processes" || echo "• No other spin-cli processes found"
     
-    # Clean up log file
-    [ -f .spin-dev.log ] && rm -f .spin-dev.log && echo "✓ Cleaned up log file"
+    # Kill any npm dev processes and free port 5173
+    pkill -f "npm run dev" 2>/dev/null && echo "✓ Stopped npm run dev" || echo "• No npm run dev process found"
+    lsof -ti:5173 | xargs kill -9 2>/dev/null && echo "✓ Freed port 5173" || echo "• Port 5173 was free"
+    
+    # Clean up log files
+    [ -f .spin-dev.log ] && rm -f .spin-dev.log && echo "✓ Cleaned up spin log file"
+    [ -f .npm-dev.log ] && rm -f .npm-dev.log && echo "✓ Cleaned up npm log file"
     
     echo "Development servers stopped."
 
@@ -61,11 +79,34 @@ status:
         echo "• No background server PID file"
     fi
     
+    # Check npm background server status
+    if [ -f .npm-dev.pid ]; then
+        PID=$(cat .npm-dev.pid)
+        if kill -0 $PID 2>/dev/null; then
+            echo "✓ NPM background server running (PID: $PID)"
+            if [ -f .npm-dev.log ]; then
+                echo "  Log file: .npm-dev.log ($(wc -l < .npm-dev.log) lines)"
+            fi
+        else
+            echo "✗ NPM PID file exists but process is dead (cleaning up...)"
+            rm -f .npm-dev.pid
+        fi
+    else
+        echo "• No npm background server PID file"
+    fi
+    
     # Check if spin-cli watch is running
     if pgrep -f "spin-cli watch" > /dev/null; then
         echo "✓ spin-cli watch process(es) running (PID(s): $(pgrep -f 'spin-cli watch' | tr '\n' ' '))"
     else
         echo "✗ No spin-cli watch processes running"
+    fi
+    
+    # Check if npm run dev is running
+    if pgrep -f "npm run dev" > /dev/null; then
+        echo "✓ npm run dev process(es) running (PID(s): $(pgrep -f 'npm run dev' | tr '\n' ' '))"
+    else
+        echo "✗ No npm run dev processes running"
     fi
     
     # Check if port 3000 is in use
@@ -76,6 +117,14 @@ status:
         echo "✗ Port 3000 is free"
     fi
     
+    # Check if port 5173 is in use
+    if lsof -ti:5173 > /dev/null 2>&1; then
+        echo "✓ Port 5173 is in use (PID: $(lsof -ti:5173))"
+        echo "  Web interface should be available at: http://localhost:5173"
+    else
+        echo "✗ Port 5173 is free"
+    fi
+    
     # Check if any spin-cli processes are running
     SPIN_PROCESSES=$(pgrep -f "spin-cli" | wc -l)
     if [ $SPIN_PROCESSES -gt 0 ]; then
@@ -83,34 +132,125 @@ status:
     else
         echo "✗ No spin-cli processes running"
     fi
+    
+    echo ""
+    echo "Tailscale Status:"
+    echo "================"
+    # Check if tailscale is available
+    if ! command -v tailscale &> /dev/null; then
+        echo "✗ Tailscale CLI not installed"
+    else
+        # Check tailscale serve status
+        TAILSCALE_STATUS=$(tailscale serve status 2>/dev/null)
+        if [ -n "$TAILSCALE_STATUS" ]; then
+            echo "✓ Tailscale serve is active:"
+            echo "$TAILSCALE_STATUS" | sed 's/^/  /'
+        else
+            echo "• Tailscale serve is not active"
+            echo "  Start frontend: just tailscale-front-start"
+            echo "  Start backend: just tailscale-back-start"
+        fi
+    fi
 
-# Start development server with auto-reload (stops existing servers first)
-dev: stop
-    echo "Starting development server..."
+# Start development servers in foreground mode (npm in bg, spin in fg)
+dev-fg: stop
+    #!/usr/bin/env bash
+    echo "Starting development servers..."
+    
+    # Start npm dev server in background
+    echo "Starting npm run dev in background..."
+    cd web
+    nohup npm run dev > ../.npm-dev.log 2>&1 &
+    NPM_PID=$!
+    echo $NPM_PID > ../.npm-dev.pid
+    cd ..
+    
+    # Wait a moment and check if npm dev started successfully
+    sleep 2
+    if kill -0 $NPM_PID 2>/dev/null; then
+        echo "✓ NPM dev server started (PID: $NPM_PID, Port: 5173)"
+    else
+        echo "✗ Failed to start npm dev server"
+        rm -f .npm-dev.pid
+    fi
+    
+    # Start spin-cli watch (foreground)
+    echo "Starting spin-cli watch (foreground)..."
+    echo "  API: http://localhost:3000"
+    echo "  Web: http://localhost:5173"
+    echo "  Press Ctrl+C to stop"
     spin-cli watch
 
-# Start development server in background (persistent after terminal close)
-dev-bg: stop
+# Start complete development environment (both servers in background)
+dev: stop
     #!/usr/bin/env bash
-    echo "Starting development server in background..."
+    echo "Starting complete development environment..."
+    
+    # Start spin-cli watch in background (first - API backend)
+    echo "Starting spin-cli watch in background..."
     nohup spin-cli watch > .spin-dev.log 2>&1 &
-    echo $! > .spin-dev.pid
-    sleep 2
-    if kill -0 $(cat .spin-dev.pid) 2>/dev/null; then
-        echo "✓ Development server started in background (PID: $(cat .spin-dev.pid))"
-        echo "  Logs: tail -f .spin-dev.log"
+    SPIN_PID=$!
+    echo $SPIN_PID > .spin-dev.pid
+    
+    # Start npm dev server in background (second - web interface)
+    echo "Starting npm run dev in background..."
+    cd web
+    nohup npm run dev > ../.npm-dev.log 2>&1 &
+    NPM_PID=$!
+    echo $NPM_PID > ../.npm-dev.pid
+    cd ..
+    
+    # Wait and verify both services started
+    sleep 3
+    
+    SPIN_SUCCESS=false
+    NPM_SUCCESS=false
+    
+    if kill -0 $SPIN_PID 2>/dev/null; then
+        echo "✓ Spin dev server started in background (PID: $SPIN_PID)"
+        SPIN_SUCCESS=true
+    else
+        echo "✗ Failed to start spin dev server"
+        rm -f .spin-dev.pid
+    fi
+    
+    if kill -0 $NPM_PID 2>/dev/null; then
+        echo "✓ NPM dev server started in background (PID: $NPM_PID)"
+        NPM_SUCCESS=true
+    else
+        echo "✗ Failed to start npm dev server"
+        rm -f .npm-dev.pid
+    fi
+    
+    if [ "$NPM_SUCCESS" = true ] || [ "$SPIN_SUCCESS" = true ]; then
+        echo ""
+        echo "🚀 Development environment ready!"
+        echo "================================="
+        [ "$SPIN_SUCCESS" = true ] && echo "  API: http://localhost:3000"
+        [ "$NPM_SUCCESS" = true ] && echo "  Web: http://localhost:5173"
+        echo ""
+        echo "Management commands:"
+        echo "  Logs: tail -f .spin-dev.log .npm-dev.log"
         echo "  Stop: just stop"
         echo "  Status: just status"
+        
+        # Start Tailscale serve for frontend if npm is running
+        if [ "$NPM_SUCCESS" = true ]; then
+            echo ""
+            echo "Starting Tailscale serve for remote access..."
+            just tailscale-front-start
+        fi
     else
-        echo "✗ Failed to start development server"
-        rm -f .spin-dev.pid
+        echo "✗ Failed to start development servers"
         exit 1
     fi
 
 # Watch mode: start dev server in background and follow logs (Ctrl+C stops watching only)
-watch: dev-bg
+watch: dev
     echo "Following development server logs (Ctrl+C to stop watching)..."
-    tail -f .spin-dev.log
+    echo "Logs from both Spin (.spin-dev.log) and NPM (.npm-dev.log):"
+    echo "============================================================="
+    tail -f .spin-dev.log .npm-dev.log
 
 # Run comprehensive test suite
 test:
@@ -139,7 +279,19 @@ add crate:
 
 # Clean build artifacts
 clean:
+    #!/usr/bin/env bash
+    echo "Cleaning Rust build artifacts..."
     cargo clean
+    echo "Cleaning npm artifacts and dist directory..."
+    cd web
+    rm -rf node_modules/.cache dist build .svelte-kit
+    echo "✓ All build artifacts cleaned"
+
+# Clean and rebuild everything
+clean-build: clean build
+
+# Rebuild everything from scratch
+rebuild: clean build
 
 # Deploy to Fermyon Cloud
 deploy:
@@ -235,6 +387,39 @@ examples:
     @echo ""
     @echo "# Get version"
     @echo "curl http://localhost:3000/api/version"
+
+# Check if tailscale is available
+check-tailscale:
+    @which tailscale > /dev/null || (echo "Error: tailscale not found. Please install Tailscale CLI." && exit 1)
+    @echo "✓ tailscale is available"
+
+# Start Tailscale serve for frontend (port 5173)
+tailscale-front-start: check-tailscale
+    #!/usr/bin/env bash
+    echo "Starting Tailscale serve for frontend (port 5173)..."
+    tailscale serve --bg 5173
+    echo "✓ Tailscale serve started for frontend"
+    echo "  Frontend now accessible via Tailscale network"
+    echo "  Check status: just status"
+
+# Stop Tailscale serve for frontend
+tailscale-front-stop:
+    #!/usr/bin/env bash
+    echo "Stopping Tailscale serve..."
+    tailscale serve --https=443 off
+    echo "✓ Tailscale serve stopped"
+
+# Start Tailscale serve for backend API (port 3000)
+tailscale-back-start: check-tailscale
+    #!/usr/bin/env bash
+    echo "Starting Tailscale serve for backend API (port 3000)..."
+    tailscale serve --bg 3000
+    echo "✓ Tailscale serve started for backend API"
+    echo "  API now accessible via Tailscale network"
+    echo "  Check status: just status"
+
+# Stop Tailscale serve for backend (same as frontend stop)
+tailscale-back-stop: tailscale-front-stop
 
 # Development workflow shortcuts
 alias d := dev

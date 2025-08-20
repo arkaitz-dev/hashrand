@@ -108,7 +108,9 @@ GET /api/version
 - [Fermyon Spin](https://developer.fermyon.com/spin/v2/install) - WebAssembly platform
 - [Node.js 18+](https://nodejs.org/) - For the web interface
 
-### API Development
+### Complete Development Setup
+
+The easiest way to start development is with a single command:
 
 ```bash
 # Clone the repository
@@ -118,44 +120,50 @@ cd hashrand-spin
 # See all available development tasks
 just
 
-# Start development server with auto-reload
+# Start complete development environment (recommended)
 just dev
+```
 
-# Or start in background and watch logs (Ctrl+C to stop watching only)
+This single command will:
+- 🚀 Start Spin API backend in background (port 3000)
+- 🌐 Start npm web interface in background (port 5173) 
+- 🔗 Expose frontend via Tailscale for remote access
+- ✅ Verify all services started successfully
+
+**Available URLs:**
+- **Local Web Interface**: http://localhost:5173
+- **Local API**: http://localhost:3000
+- **Remote Access**: https://your-tailscale-name.ts.net (automatically configured)
+
+### Alternative Development Modes
+
+```bash
+# Start in foreground mode (for direct log monitoring)
+just dev-fg
+
+# Start in background and watch logs (Ctrl+C to stop watching only)
 just watch
 
-# The API will be available at http://localhost:3000
+# Check status of all services
+just status
+
+# Stop all development services
+just stop
 ```
 
-### Web Interface Development
+### Manual Setup (if needed)
+
+If you prefer manual control over individual services:
 
 ```bash
-# Navigate to web interface
-cd web
+# Terminal 1: Start the API backend only
+spin-cli watch
 
-# Install dependencies
-npm install
-
-# Start development server (runs on port 5173)
-npm run dev
-
-# The web interface will be available at http://localhost:5173
-# It automatically proxies API calls to the backend on port 3000
-```
-
-### Full Development Setup
-
-For the complete development experience:
-
-```bash
-# Terminal 1: Start the API backend
-just dev
-
-# Terminal 2: Start the web interface
+# Terminal 2: Start the web interface only
 cd web && npm run dev
 
-# Access the web interface at http://localhost:5173
-# Access the API directly at http://localhost:3000
+# Terminal 3: Expose via Tailscale (optional)
+just tailscale-front-start
 ```
 
 ### Background Development
@@ -185,10 +193,17 @@ The background server:
 ### Building
 
 ```bash
-# Build the WebAssembly component
+# Build both WebAssembly component and web interface
 just build
 
-# Start the application
+# Clean and rebuild everything
+just rebuild
+just clean-build  # Same as rebuild
+
+# Clean all build artifacts
+just clean
+
+# Start the application (production mode)
 just up
 ```
 
@@ -208,31 +223,40 @@ just test-dev
 # Show all available commands
 just
 
-# Development
-just dev          # Start development server (stops existing first)
-just dev-bg       # Start development server in background
-just watch        # Start background server and follow logs (Ctrl+C to stop watching)
-just stop         # Stop development servers (foreground and background)
-just status       # Check server status (shows background processes)
-just build        # Build WebAssembly component
-just test         # Run test suite
-just test-dev     # Run tests with auto-managed server
+# Development Environment
+just dev          # Start complete development environment (recommended)
+just dev-fg       # Start with foreground Spin logs for debugging
+just watch        # Start in background and follow all logs
+just stop         # Stop all services (dev servers + Tailscale)
+just status       # Check status of all services (local + remote)
 
-# Code Quality
+# Remote Access (Tailscale)
+just tailscale-front-start  # Expose web interface via Tailscale
+just tailscale-back-start   # Expose API backend via Tailscale  
+just tailscale-front-stop   # Stop Tailscale serve (frontend)
+just tailscale-back-stop    # Stop Tailscale serve (backend)
+just check-tailscale        # Verify Tailscale CLI availability
+
+# Building & Cleaning
+just build        # Build both WASM component and web interface
+just rebuild      # Clean and rebuild everything
+just clean-build  # Same as rebuild
+just clean        # Clean all build artifacts (Rust + npm)
+
+# Testing & Quality
+just test         # Run comprehensive test suite (43 tests)
+just test-dev     # Run tests with auto-managed server
 just check        # Run quality checks (lint + format)
 just fmt          # Format code
 just lint         # Run linter
 just pre-commit   # Run all checks before commit
 
-# Information
+# Information & Utilities
 just info         # Show project information
 just examples     # Show API usage examples
 just deps         # Show dependencies
-just logs         # Show recent logs
-
-# Performance & Utilities
+just logs         # Show recent server logs
 just perf-test    # Performance testing
-just clean        # Clean build artifacts
 ```
 
 ## Project Structure
