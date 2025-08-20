@@ -328,63 +328,100 @@ web/
 - **Bundle**: JavaScript/CSS sizes reduced by removing inline SVG
 - **Cache**: Long-lived sprite cache improves repeat visit performance
 
-## [0.6.0] - 2025-08-19
+## [0.6.0] - 2025-08-20
 
 ### Added
-- **🏴 Flag Icon Collection**: Complete set of country and region flag icons for future internationalization
-  - **11 Flag Icons**: Comprehensive collection of carefully designed SVG flag representations
+- **🌍 Language Selector Component**: Complete visual language selection interface
+  - **Interactive Dropdown**: Shows 11 languages with authentic flag representations
+  - **Flag Icon Integration**: Complete flag sprite collection with national and regional flags
     - **National Flags**: Spain, UK, France, Germany, Portugal, Russia, Saudi Arabia, China
     - **Regional Flags**: Catalonia, Basque Country (Ikurriña), Galicia
+  - **Visual Demo Mode**: Changes displayed flag without affecting application language
+  - **Professional Design**: Matches theme toggle styling with consistent hover effects
+  - **Smart Positioning**: Positioned alongside theme toggle in upper-right corner
+  - **Accessibility Support**: Full ARIA labels and keyboard navigation
+  - **Click Outside Handling**: Dropdown closes when clicking elsewhere
+- **🏴 Flag Icon Collection**: Complete set of country and region flag icons
+  - **11 Flag Icons**: Comprehensive collection of carefully designed SVG flag representations
   - **Authentic Colors**: All flags use official color specifications from Wikimedia Commons
   - **Optimized SVG**: Simplified designs optimized for small icon sizes while maintaining recognizability
   - **Consistent Integration**: All flags integrated into existing sprite system for optimal performance
   - **Scalable Design**: Vector graphics ensure crisp rendering at any size
 
 ### Enhanced
-- **🎨 Icon Sprite System**: Expanded sprite collection from 10 to 21 total icons
+- **🎨 UI Component Consistency**: Improved visual cohesion across interface controls
+  - **Uniform Button Sizing**: Both language selector and theme toggle use identical dimensions (36x36px)
+  - **Consistent Padding**: Standardized internal spacing (8px padding) for better visual balance
+  - **Optimized Spacing**: Reduced gap between control buttons for cohesive grouping
+  - **Centered Icons**: Perfect alignment of all icons within their containers
+- **🖼️ Icon System Improvements**: Enhanced SVG sprite system with flag support
+  - **Complete Flag Collection**: 11 authentic flag designs added to sprite
+  - **Expanded Sprite System**: Collection from 10 to 21 total icons
   - **Performance Maintained**: Single HTTP request for all icons including new flags
   - **Memory Efficient**: Shared SVG symbols for all flag representations
   - **Developer Ready**: Easy access via `<Icon name="spain" />`, `<Icon name="uk" />`, etc.
-- **🌍 Internationalization Preparation**: Foundation laid for multi-language support
-  - Flag icons ready for language selection UI
-  - Cultural representation for major markets
-  - Regional support for Spain (Catalonia, Basque, Galicia)
+  - **Reactivity Fix**: Resolved Svelte 5 runes mode compatibility issues
+
+### Fixed
+- **⚡ Svelte 5 Runes Compatibility**: Updated components for modern Svelte syntax
+  - **State Management**: Migrated from `let` to `$state()` for reactive variables
+  - **Derived Values**: Changed `$:` reactive statements to `$derived()` syntax
+  - **Icon Component**: Fixed reactivity issues with dynamic icon name changes
+  - **Proper Reactivity**: Ensured UI updates correctly when language selection changes
 
 ### Technical Implementation
-- **Flag Design Optimization**: Complex flags simplified for icon usage
+- **Component Architecture**: New language selection system
+  - `/src/lib/components/LanguageSelector.svelte` - Main language selector component
+  - Extended `/static/icons-sprite.svg` - Added 11 flag icons to existing sprite
+  - Updated layout integration in `+layout.svelte`
+- **Flag Icon Design**: Authentic flag representations
   - **UK Flag**: Full Union Jack design with proper cross positioning and clipping
   - **China Flag**: Large star with simplified dots for small stars
   - **Catalonia**: Traditional four red stripes on yellow background (La Senyera)
   - **Basque Country**: Complete Ikurriña with red field, green saltire, and white cross
   - **Galicia**: Corrected design with white field and blue diagonal stripe
   - **Simplified Flags**: Saudi Arabia (green field), Portugal (vertical stripes)
-- **SVG Structure**: Proper viewBox ratios maintaining flag proportions
-  - Standard flags: 3:2 ratio (viewBox="0 0 6 4")
-  - Special cases: Custom ratios for accurate representation
-  - Color fidelity: Hex codes from official specifications
+  - Proper color specifications from official sources
+  - Optimized viewBox ratios for consistent icon sizing
+  - Complex designs simplified for small icon usage
+- **State Management**: Local component state for demo functionality
+  - Simple language code tracking (`'uk'`, `'spain'`, etc.)
+  - Dropdown visibility management with outside click detection
+  - Visual-only language switching (preparation for full i18n)
+- **Svelte 5 Migration**: Updated syntax throughout affected components
+  - Replaced legacy reactive statements with modern runes
+  - Fixed state management for proper component updates
+  - Ensured component reactivity works with prop changes
+
+### Changed
+- **Icon System**: Improved sprite-based icon handling
+  - Enhanced `Icon.svelte` component with proper reactive icon ID generation
+  - Fixed issues with dynamic icon name changes not updating display
+- **Control Layout**: Refined positioning of interface controls
+  - Adjusted spacing between language selector and theme toggle
+  - Optimized button sizing for better visual hierarchy
+- **Development Experience**: Better debugging and error handling
+  - Clearer error messages for Svelte 5 compatibility issues
+  - Improved component state management
 
 ### Usage Examples
 ```svelte
-<!-- European flags -->
+<!-- Language selector component -->
+<LanguageSelector />
+
+<!-- Individual flag icons -->
 <Icon name="spain" size="w-6 h-6" />
-<Icon name="france" size="w-6 h-6" />
-<Icon name="germany" size="w-6 h-6" />
 <Icon name="uk" size="w-6 h-6" />
-<Icon name="portugal" size="w-6 h-6" />
-
-<!-- Other regions -->
-<Icon name="china" size="w-6 h-6" />
-<Icon name="russia" size="w-6 h-6" />
-<Icon name="saudi" size="w-6 h-6" />
-
-<!-- Spanish regions -->
 <Icon name="catalonia" size="w-6 h-6" />
 <Icon name="basque" size="w-6 h-6" />
-<Icon name="galicia" size="w-6 h-6" />
 ```
 
-### Ready for Future Features
-- **Language Selection**: Flag icons prepared for language picker UI
+### Preparation
+- **Internationalization Foundation**: Infrastructure ready for full i18n implementation
+  - Language selection UI component complete
+  - Flag icon system integrated
+  - Component state management proven
+  - Ready for translation system integration in future sessions
 - **Regional Localization**: Support for regional variants within countries
 - **Cultural Adaptation**: Visual elements ready for international markets
 - **Accessibility**: All flags include proper naming for screen readers
@@ -392,9 +429,7 @@ web/
 ## [Unreleased]
 
 ### Planned Features
-- Multi-language internationalization using flag icons
-- Language selection interface with flag representations
-- Regional content adaptation
+- **Complete Internationalization System**: Full i18n implementation with 11 languages
 - Performance benchmarking
 - Additional alphabet types
 - Batch generation endpoints
@@ -407,7 +442,7 @@ web/
 
 ## Version History Summary
 
-- **0.6.0** (2025-08-19) - Flag icon collection for internationalization (11 country/region flags)
+- **0.6.0** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
 - **0.5.0** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
 - **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
 - **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience

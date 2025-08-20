@@ -5,6 +5,7 @@
 	import { currentRoute } from '$lib/stores/navigation';
 	import { page } from '$app/stores';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import LanguageSelector from '$lib/components/LanguageSelector.svelte';
 	// Import theme store to ensure it's initialized
 	import '$lib/stores/theme';
 	
@@ -28,7 +29,8 @@
 </svelte:head>
 
 <main class="min-h-screen relative">
-	<!-- Theme Toggle moves with scroll -->
+	<!-- Language Selector and Theme Toggle move with scroll -->
+	<LanguageSelector />
 	<ThemeToggle />
 	
 	{@render children?.()}

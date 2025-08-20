@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
 	import { t } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
@@ -189,10 +190,7 @@
 							onclick={() => goto('/')}
 							class="px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
 						>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z" />
-							</svg>
+							<Icon name="briefcase" size="w-4 h-4" />
 							{t('common.backToMenu')}
 						</button>
 					</div>

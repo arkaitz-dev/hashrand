@@ -15,8 +15,8 @@
 
 	let { name, size = 'w-5 h-5', class: className = '' }: Props = $props();
 
-	// Build the full icon ID for the sprite
-	const iconId = `/icons-sprite.svg#icon-${name}`;
+	// Build the full icon ID for the sprite - reactive to name changes
+	const iconId = $derived(`/icons-sprite.svg#icon-${name}`);
 
 	// Ensure sprite is loaded - this will be cached after first load
 	onMount(() => {
