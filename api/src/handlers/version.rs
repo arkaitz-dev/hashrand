@@ -23,7 +23,7 @@ pub fn handle_version() -> anyhow::Result<Response> {
 /// Gets the UI version from package.json at compile time
 fn get_ui_version() -> String {
     // Include package.json content at compile time
-    let package_json_content = include_str!("../../../package.json");
+    let package_json_content = include_str!("../../../web/package.json");
 
     // Parse and extract version
     if let Ok(package_json) = serde_json::from_str::<serde_json::Value>(package_json_content)

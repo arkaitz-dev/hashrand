@@ -89,7 +89,10 @@ GET /api/version
 
 **Response:**
 ```json
-{"version":"0.1.0"}
+{
+  "api_version": "1.0.0",
+  "ui_version": "0.7.0"
+}
 ```
 
 ## Alphabet Types
@@ -291,6 +294,7 @@ hashrand-spin/
 │   ├── vite.config.ts     # Vite configuration with API proxy
 │   ├── svelte.config.js   # SvelteKit SPA configuration
 │   ├── tailwind.config.js # TailwindCSS 4.0 configuration
+│   ├── tsconfig.json      # TypeScript configuration
 │   ├── src/
 │   │   ├── app.html       # HTML template with meta tags
 │   │   ├── app.css        # Global styles with TailwindCSS
@@ -315,11 +319,11 @@ hashrand-spin/
 │   │       ├── password/      # Password generator
 │   │       ├── api-key/       # API key generator
 │   │       └── result/        # Shared result display
-│   └── build/             # Production SPA build output
-├── static/                # Static assets
-│   ├── favicon.png        # Browser favicon
-│   ├── icons-sprite.svg   # SVG icon sprite for UI components
-│   └── robots.txt         # Search engine crawler instructions
+│   ├── static/            # Static assets
+│   │   ├── favicon.png    # Browser favicon
+│   │   ├── icons-sprite.svg # SVG icon sprite for UI components
+│   │   └── robots.txt     # Search engine crawler instructions
+│   └── dist/              # Production SPA build output
 └── target/                # Rust build artifacts
 ```
 

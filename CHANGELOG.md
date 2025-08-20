@@ -5,81 +5,263 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2025-08-18
+**Component Versions:**
+- **API**: Stable backend (starts from 1.0.0)  
+- **Web**: User interface (evolving, 0.x.x series)
 
-### Added
-- Initial implementation of HashRand Spin API
-- **GET /api/generate** endpoint for customizable hash generation
-  - Support for length parameter (2-128 characters)
-  - Multiple alphabet types: base58, no-look-alike, full, full-with-symbols
-  - Prefix and suffix support (max 32 characters each)
-  - Raw output formatting option
-- **GET /api/password** endpoint for secure password generation
-  - Dynamic minimum length based on alphabet type
-  - Length range validation (21-44 characters)
-  - Symbol and no-look-alike alphabet support
-- **GET /api/api-key** endpoint for API key generation
-  - Automatic ak_ prefix for all generated keys
-  - Length validation (44-64 characters)
-  - Support for full and no-look-alike alphabets
-- **GET /api/version** endpoint returning JSON version information
-- Comprehensive alphabet system with 4 character sets:
-  - Base58: 58 characters (Bitcoin standard, excludes confusing characters)
-  - No-look-alike: 49 characters (maximum readability)
-  - Full: 62 characters (complete alphanumeric)
-  - Full-with-symbols: 73 characters (maximum entropy)
-- Cryptographically secure random generation using nanoid
-- Complete parameter validation and error handling
-- Modular architecture with clean separation of concerns
-- Comprehensive test suite with 43 automated test cases
-- Project restructured into workspace with api/ directory
-- Support for Rust 2024 edition
-- **justfile** for streamlined development workflow with 20+ commands
-  - Development tasks: `just dev`, `just build`, `just test`
-  - Background server support: `just dev-bg`, `just watch`, `just stop`, `just status`
-  - Code quality: `just check`, `just lint`, `just fmt`
-  - Information: `just info`, `just examples`, `just deps`
-  - CI/CD: `just pre-commit`, `just perf-test`
-- **Background development server functionality**
-  - `just dev-bg` - Start server in background with PID tracking
-  - `just watch` - Start background server and follow logs
-  - `just status` - Check background server status
-  - PID file management in `.spin-dev.pid`
-  - Log file management in `.spin-dev.log`
-  - Automatic cleanup on server stop
+---
 
-### Technical Details
-- Built with Fermyon Spin WebAssembly framework
-- Uses spin-sdk 3.1.0 for HTTP component functionality
-- Implements cdylib crate type for WASM compatibility
-- Targets wasm32-wasip1 WebAssembly platform
-- Workspace structure for better code organization
+## [API v1.0.0 / Web v0.7.0] - 2025-08-20
 
-### Dependencies
-- `spin-sdk = "3.1.0"` - Core Spin framework
-- `nanoid = "0.4.0"` - Secure random ID generation
-- `serde = "1.0.219"` - Serialization framework
-- `serde_json = "1.0.142"` - JSON serialization
-- `anyhow = "1"` - Error handling
+### Cross-Component Changes
+#### Enhanced
+- **🚀 Enhanced Development Workflow**: Complete justfile integration for unified development experience
+  - **Unified Development Commands**: `just dev` now launches complete environment
+    - Automatically starts Spin API backend in background (port 3000)
+    - Automatically starts npm web interface in background (port 5173)
+    - Automatically exposes frontend via Tailscale serve for remote access
+    - Single command for complete development setup
+  - **Intelligent Server Management**: Enhanced stop/start process management
+    - `just stop` now stops all services including Tailscale serve
+    - Proper service dependency order (API first, then web interface)
+    - Complete cleanup of background processes and PID files
+    - Status reporting for all running services
 
-### Testing
-- 43 comprehensive test cases covering all endpoints
-- Parameter validation testing
-- Edge case and error condition testing
-- Alphabet-specific character validation
-- Performance and consistency testing
-- 100% test success rate achieved
+#### Added
+- **🌐 Tailscale Integration**: Built-in remote access support for development
+  - **Frontend Exposure Commands**: 
+    - `just tailscale-front-start` - Expose web interface (port 5173) via Tailscale
+    - `just tailscale-front-stop` - Stop Tailscale serve for frontend
+  - **Backend Exposure Commands**:
+    - `just tailscale-back-start` - Expose API backend (port 3000) via Tailscale  
+    - `just tailscale-back-stop` - Stop Tailscale serve for backend
+  - **Automatic Installation Check**: Verifies Tailscale CLI availability before execution
+  - **Status Integration**: `just status` now shows Tailscale serve status and active URLs
+- **🏗️ Enhanced Build System**: Unified build commands for complete project
+  - **Dual Build Process**: `just build` now builds both WebAssembly component and web interface
+    - Executes `spin-cli build` for WASM compilation
+    - Executes `npm run build` in web/ directory for production SPA
+  - **Complete Clean Commands**: Enhanced cleanup for all project artifacts
+    - `just clean` removes Rust build artifacts and npm cache/build directories
+    - Cleans: `target/`, `node_modules/.cache`, `dist`, `build`, `.svelte-kit`
+  - **Fresh Build Commands**: New rebuild workflows
+    - `just clean-build` - Clean and rebuild everything
+    - `just rebuild` - Alias for clean and rebuild workflow
 
-### Documentation
-- Complete README.md with API documentation
-- Detailed endpoint descriptions and examples
-- Project structure documentation
-- Setup and deployment instructions
-- CLAUDE.md for development guidance
+### Web Interface Changes (v0.7.0)
+#### Enhanced
+- **⚡ Developer Experience**: Significant improvements to development workflow efficiency
+  - **One-Command Setup**: `just dev` provides complete development environment
+  - **Automatic Remote Access**: Frontend automatically available via Tailscale network
+  - **Integrated Status Monitoring**: Single command shows all service states
+  - **Intelligent Cleanup**: Stop command handles all services comprehensively
+- **📊 Status Reporting**: Enhanced development server monitoring
+  - **Comprehensive Status Check**: Shows Spin, npm, and Tailscale service states
+  - **Port Usage Monitoring**: Reports on ports 3000, 5173, and service PIDs
+  - **Tailscale URL Display**: Shows active Tailscale URLs for remote access
+  - **Service Health Indicators**: Clear visual indicators for running/stopped services
+- **🔧 Build Process**: Streamlined build and cleanup workflows
+  - **Parallel Build Execution**: Efficient building of both backend and frontend
+  - **Complete Artifact Cleanup**: Thorough cleaning of all generated files
+  - **Developer-Friendly Commands**: Intuitive command names for common operations
 
-## [0.2.0] - 2025-08-19
+#### Changed
+- **Development Workflow**: Updated primary development commands
+  - **`just dev`**: Now launches complete environment (was Spin-only)
+    - Previous: Started only `spin-cli watch` in foreground
+    - Current: Starts Spin (bg) → npm (bg) → Tailscale serve → complete environment ready
+  - **`just dev-fg`**: New foreground mode (previous `just dev` behavior)
+    - Starts npm in background, Spin in foreground for direct log viewing
+    - Use when you need to monitor Spin logs directly
+  - **`just stop`**: Enhanced to stop all services including Tailscale
+  - **`just build`**: Enhanced to build both backend and frontend components
+- **Service Management**: Improved background process handling
+  - **Startup Order**: API backend starts first, then web interface
+  - **PID Management**: Separate PID files for Spin and npm processes
+  - **Log Management**: Separate log files (`.spin-dev.log`, `.npm-dev.log`)
+  - **Cleanup Process**: Comprehensive cleanup of all background services
 
-### Added
+### API Changes (v1.0.0)
+*No breaking changes - API reached stability at 1.0.0*
+
+#### Technical Implementation
+- **Component Versioning**: Independent versioning system implemented
+  - API follows stable 1.x.x versioning (backward compatible)
+  - Web interface follows 0.x.x development versioning
+  - `/api/version` endpoint returns separate version numbers
+
+---
+
+## [API v1.0.0 / Web v0.6.0] - 2025-08-20
+
+### Web Interface Changes (v0.6.0)
+#### Added
+- **🌍 Language Selector Component**: Complete visual language selection interface
+  - **Interactive Dropdown**: Shows 11 languages with authentic flag representations
+  - **Flag Icon Integration**: Complete flag sprite collection with national and regional flags
+    - **National Flags**: Spain, UK, France, Germany, Portugal, Russia, Saudi Arabia, China
+    - **Regional Flags**: Catalonia, Basque Country (Ikurriña), Galicia
+  - **Visual Demo Mode**: Changes displayed flag without affecting application language
+  - **Professional Design**: Matches theme toggle styling with consistent hover effects
+  - **Smart Positioning**: Positioned alongside theme toggle in upper-right corner
+  - **Accessibility Support**: Full ARIA labels and keyboard navigation
+  - **Click Outside Handling**: Dropdown closes when clicking elsewhere
+- **🏴 Flag Icon Collection**: Complete set of country and region flag icons
+  - **11 Flag Icons**: Comprehensive collection of carefully designed SVG flag representations
+  - **Authentic Colors**: All flags use official color specifications from Wikimedia Commons
+  - **Optimized SVG**: Simplified designs optimized for small icon sizes while maintaining recognizability
+  - **Consistent Integration**: All flags integrated into existing sprite system for optimal performance
+  - **Scalable Design**: Vector graphics ensure crisp rendering at any size
+
+#### Enhanced
+- **🎨 UI Component Consistency**: Improved visual cohesion across interface controls
+  - **Uniform Button Sizing**: Both language selector and theme toggle use identical dimensions (36x36px)
+  - **Consistent Padding**: Standardized internal spacing (8px padding) for better visual balance
+  - **Optimized Spacing**: Reduced gap between control buttons for cohesive grouping
+  - **Centered Icons**: Perfect alignment of all icons within their containers
+- **🖼️ Icon System Improvements**: Enhanced SVG sprite system with flag support
+  - **Complete Flag Collection**: 11 authentic flag designs added to sprite
+  - **Expanded Sprite System**: Collection from 10 to 21 total icons
+  - **Performance Maintained**: Single HTTP request for all icons including new flags
+  - **Memory Efficient**: Shared SVG symbols for all flag representations
+  - **Developer Ready**: Easy access via `<Icon name="spain" />`, `<Icon name="uk" />`, etc.
+  - **Reactivity Fix**: Resolved Svelte 5 runes mode compatibility issues
+
+#### Fixed
+- **⚡ Svelte 5 Runes Compatibility**: Updated components for modern Svelte syntax
+  - **State Management**: Migrated from `let` to `$state()` for reactive variables
+  - **Derived Values**: Changed `$:` reactive statements to `$derived()` syntax
+  - **Icon Component**: Fixed reactivity issues with dynamic icon name changes
+  - **Proper Reactivity**: Ensured UI updates correctly when language selection changes
+
+---
+
+## [API v1.0.0 / Web v0.5.0] - 2025-08-19
+
+### Web Interface Changes (v0.5.0)
+#### Added
+- **🖼️ SVG Icon Sprite System**: Complete implementation of optimized icon management
+  - **Centralized Sprite**: All icons consolidated into `/static/icons-sprite.svg` for efficient caching
+  - **Icon Component**: New reusable `Icon.svelte` component for consistent icon usage
+    - Simple props: `name`, `size`, `class` for flexible styling
+    - Uses external sprite references (`/icons-sprite.svg#icon-{name}`)
+    - No inline SVG bloat in JavaScript bundles
+  - **10 Icons Migrated**: All UI icons converted to sprite system
+    - Theme toggle: sun and moon icons
+    - Navigation: left/right arrows
+    - Actions: copy, check, refresh, settings, briefcase
+    - UI elements: chevron-down, loading spinner
+  - **Lazy Loading**: Sprite downloaded only when first icon is rendered
+  - **Automatic Caching**: Browser handles sprite caching without preload warnings
+
+#### Enhanced
+- **⚡ Performance Optimization**: Significant improvements to loading and rendering
+  - **Reduced Bundle Size**: Eliminated inline SVG from JavaScript/CSS bundles
+  - **Single HTTP Request**: All icons downloaded in one cached file
+  - **No Preload Warnings**: Removed problematic link preload, using on-demand loading
+  - **Memory Efficiency**: Shared SVG symbols reduce DOM memory usage
+- **🔧 Developer Experience**: Improved maintainability and consistency
+  - **Centralized Icon Management**: Easy to add, modify, or remove icons
+  - **Component Consistency**: Uniform icon sizing and styling across app
+  - **Type Safety**: TypeScript support for icon names and properties
+
+#### Changed
+- **Icon Implementation**: Migrated from inline SVG to sprite-based system
+  - **ThemeToggle.svelte**: Uses `Icon` component for sun/moon icons
+  - **BackButton.svelte**: Uses `Icon` component for left arrow
+  - **LoadingSpinner.svelte**: Uses `Icon` component for spinner
+  - **Main menu**: Uses `Icon` component for right arrow navigation
+  - **Result page**: Uses `Icon` component for all action buttons and UI elements
+- **HTML Structure**: Added sprite reference system to app template
+  - Removed link preload that caused browser warnings
+  - External sprite references for optimal loading
+
+---
+
+## [API v1.0.0 / Web v0.4.0] - 2025-08-19
+
+### Web Interface Changes (v0.4.0)
+#### Added
+- **🌙 Smart Theme Toggle System**: Complete manual dark/light mode switching implementation
+  - **Intelligent Default Behavior**: Uses system preference (`prefers-color-scheme`) on first visit
+  - **Persistent User Choice**: Saves manual selection to localStorage and respects it on subsequent visits
+  - **Theme Toggle Component**: New `ThemeToggle.svelte` component with professional design
+    - Floating button in upper-right corner that moves with page scroll
+    - Transparent at rest, visible on hover/click/focus
+    - Correct icon representation: 🌙 moon for dark mode, ☀️ sun for light mode
+    - Smooth CSS transitions and visual feedback
+    - Full accessibility support with ARIA labels and keyboard navigation
+  - **Theme Management Store**: New `theme.ts` Svelte store for state management
+    - Automatic system preference detection
+    - Manual toggle functionality with localStorage persistence
+    - Theme application to document root with smooth transitions
+    - Optional reset to system preference function
+- **🎨 TailwindCSS 4.0 Dark Mode Configuration**: Proper setup for latest Tailwind version
+  - `@custom-variant dark (&:where(.dark, .dark *))` configuration in app.css
+  - Class-based dark mode implementation (not media query based)
+  - Seamless integration with existing dark: utility classes
+  - Smooth theme transitions with CSS transition properties
+
+#### Enhanced
+- **🎯 User Experience**: Significant improvements to theme switching experience
+  - No visual flicker during theme changes
+  - Immediate visual feedback on toggle interaction
+  - Persistent theme choice across browser sessions
+  - Respects user's manual preference over system changes
+- **♿ Accessibility**: Enhanced accessibility features for theme toggle
+  - Screen reader friendly with descriptive ARIA labels
+  - Keyboard navigation support
+  - High contrast compatibility
+  - Focus management and visual indicators
+- **📱 Cross-Device Compatibility**: Theme system works across all platforms
+  - Mobile browser theme-color meta tag updates
+  - Tablet and desktop consistent behavior
+  - System integration on supported browsers
+
+---
+
+## [API v1.0.0 / Web v0.3.0] - 2025-08-19
+
+### Web Interface Changes (v0.3.0)
+#### Added
+- **🎨 Enhanced Web Interface**: Major UI/UX improvements for professional user experience
+  - **Interactive Range Sliders**: Replaced number inputs with attractive gradient sliders for length parameters
+  - **Dynamic Informational Notes**: Context-aware help text that changes based on alphabet selection
+  - **Automatic Length Adjustment**: Intelligent minimum length calculation when switching alphabets
+  - **Spinning Loading Animation**: Smooth 1.5 rotations/second icon animation during hash regeneration
+  - **In-Place Regeneration**: Generate new hashes without navigating back to configuration
+  - **Visual Loading States**: Button color changes and disabled states during processing
+
+#### Changed  
+- **Route Reorganization**: Renamed `/generate` route to `/custom` for better semantic clarity
+- **Simplified Configuration**: All web UI operations now use `raw=true` by default (hidden from user)
+- **Streamlined Navigation**: Removed redundant navigation buttons for cleaner user flow
+  - Removed duplicate Back/Back to Menu buttons from result view
+  - Consolidated navigation with "Back to Menu" button in configuration views
+  - Removed redundant Back buttons from configuration forms
+- **Button State Improvements**: Enhanced visual feedback during loading states
+  - Consistent button sizing with `min-width` to prevent layout shift
+  - Proper color state management during loading/active states
+  - Fixed button visibility issues (borders, contrast)
+
+#### Improved
+- **User Experience**: Comprehensive UX enhancements based on reference project patterns
+  - Professional gradient styling on range sliders
+  - Real-time parameter validation with dynamic feedback
+  - Contextual help messages for security and format recommendations
+  - Smooth CSS animations and transitions
+- **Accessibility**: Enhanced loading state communication through visual animations
+- **Performance**: Removed artificial delays used for testing loading states
+
+---
+
+## [API v1.0.0 / Web v0.2.0] - 2025-08-19
+
+### API Changes (v1.0.0)
+*API reached stable 1.0.0 - No breaking changes since initial implementation*
+
+### Web Interface Changes (v0.2.0)
+#### Added
 - **🎨 Professional Web Interface**: Complete SPA built with modern web technologies
   - **SvelteKit 2.x** - Modern web framework with SPA configuration
   - **TypeScript** - Full type safety throughout the application
@@ -116,7 +298,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Production build pipeline for static deployment
   - TypeScript and Svelte code validation
 
-### Technical Implementation
+#### Technical Implementation
 - **Single Page Application (SPA)**: Built with `@sveltejs/adapter-static`
 - **API Service Layer**: Type-safe API integration with error handling
 - **State Management**: Svelte stores for navigation, results, and i18n
@@ -124,7 +306,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Routing System**: File-based routing with menu → forms → result flow
 - **Build System**: Optimized production builds with code splitting
 
-### Web Interface Structure
+#### Web Interface Structure
 ```
 web/
 ├── src/
@@ -135,383 +317,88 @@ web/
 │   │   └── types/             # TypeScript definitions
 │   └── routes/
 │       ├── +page.svelte       # Main menu
-│       ├── generate/          # Hash generator
+│       ├── custom/            # Hash generator (renamed from generate)
 │       ├── password/          # Password generator
 │       ├── api-key/           # API key generator
 │       └── result/            # Shared result display
 ```
 
-### Updated Documentation
-- **README.md**: Added web interface sections and full development setup
-- **CLAUDE.md**: Updated architecture to include web interface
-- **Web README.md**: Complete documentation for web interface development
+---
 
-## [0.3.0] - 2025-08-19
+## [API v1.0.0] - 2025-08-18
 
-### Added
-- **🎨 Enhanced Web Interface**: Major UI/UX improvements for professional user experience
-  - **Interactive Range Sliders**: Replaced number inputs with attractive gradient sliders for length parameters
-  - **Dynamic Informational Notes**: Context-aware help text that changes based on alphabet selection
-  - **Automatic Length Adjustment**: Intelligent minimum length calculation when switching alphabets
-  - **Spinning Loading Animation**: Smooth 1.5 rotations/second icon animation during hash regeneration
-  - **In-Place Regeneration**: Generate new hashes without navigating back to configuration
-  - **Visual Loading States**: Button color changes and disabled states during processing
+### API Changes (v1.0.0)
+#### Added
+- **Initial implementation of HashRand Spin API** - Complete random hash generator solution
+- **GET /api/generate** endpoint for customizable hash generation
+  - Support for length parameter (2-128 characters)
+  - Multiple alphabet types: base58, no-look-alike, full, full-with-symbols
+  - Prefix and suffix support (max 32 characters each)
+  - Raw output formatting option
+- **GET /api/password** endpoint for secure password generation
+  - Dynamic minimum length based on alphabet type
+  - Length range validation (21-44 characters)
+  - Symbol and no-look-alike alphabet support
+- **GET /api/api-key** endpoint for API key generation
+  - Automatic ak_ prefix for all generated keys
+  - Length validation (44-64 characters)
+  - Support for full and no-look-alike alphabets
+- **GET /api/version** endpoint returning JSON version information
+- **Comprehensive alphabet system** with 4 character sets:
+  - Base58: 58 characters (Bitcoin standard, excludes confusing characters)
+  - No-look-alike: 49 characters (maximum readability)
+  - Full: 62 characters (complete alphanumeric)
+  - Full-with-symbols: 73 characters (maximum entropy)
+- **Cryptographically secure random generation** using nanoid
+- **Complete parameter validation and error handling**
+- **Modular architecture** with clean separation of concerns
+- **Comprehensive test suite** with 43 automated test cases
+- **Project restructured into workspace** with api/ directory
+- **Support for Rust 2024 edition**
+- **justfile** for streamlined development workflow with 20+ commands
+  - Development tasks: `just dev`, `just build`, `just test`
+  - Background server support: `just dev-bg`, `just watch`, `just stop`, `just status`
+  - Code quality: `just check`, `just lint`, `just fmt`
+  - Information: `just info`, `just examples`, `just deps`
+  - CI/CD: `just pre-commit`, `just perf-test`
+- **Background development server functionality**
+  - `just dev-bg` - Start server in background with PID tracking
+  - `just watch` - Start background server and follow logs
+  - `just status` - Check background server status
+  - PID file management in `.spin-dev.pid`
+  - Log file management in `.spin-dev.log`
+  - Automatic cleanup on server stop
 
-### Changed  
-- **Route Reorganization**: Renamed `/generate` route to `/custom` for better semantic clarity
-- **Simplified Configuration**: All web UI operations now use `raw=true` by default (hidden from user)
-- **Streamlined Navigation**: Removed redundant navigation buttons for cleaner user flow
-  - Removed duplicate Back/Back to Menu buttons from result view
-  - Consolidated navigation with "Back to Menu" button in configuration views
-  - Removed redundant Back buttons from configuration forms
-- **Button State Improvements**: Enhanced visual feedback during loading states
-  - Consistent button sizing with `min-width` to prevent layout shift
-  - Proper color state management during loading/active states
-  - Fixed button visibility issues (borders, contrast)
+#### Technical Details
+- Built with Fermyon Spin WebAssembly framework
+- Uses spin-sdk 3.1.0 for HTTP component functionality
+- Implements cdylib crate type for WASM compatibility
+- Targets wasm32-wasip1 WebAssembly platform
+- Workspace structure for better code organization
 
-### Improved
-- **User Experience**: Comprehensive UX enhancements based on reference project patterns
-  - Professional gradient styling on range sliders
-  - Real-time parameter validation with dynamic feedback
-  - Contextual help messages for security and format recommendations
-  - Smooth CSS animations and transitions
-- **Accessibility**: Enhanced loading state communication through visual animations
-- **Performance**: Removed artificial delays used for testing loading states
+#### Dependencies
+- `spin-sdk = "3.1.0"` - Core Spin framework
+- `nanoid = "0.4.0"` - Secure random ID generation
+- `serde = "1.0.219"` - Serialization framework
+- `serde_json = "1.0.142"` - JSON serialization
+- `anyhow = "1"` - Error handling
 
-### Technical Implementation
-- **CSS Animations**: Custom `animate-spin-fast` keyframe animation for button icons
-- **Dynamic Classes**: Improved Tailwind class application for button states
-- **Component Updates**: Enhanced all configuration views (custom, password, api-key)
-- **State Management**: Better loading state handling across components
-- **Route Mapping**: Updated internal routing with backward compatibility
-- **Unified Styling**: Standardized button and slider styles across all generator views
-  - Consistent color scheme: solid colors instead of complex gradients
-  - Uniform hover states and transitions (duration-200, hover:shadow-lg)
-  - Simplified visual effects while maintaining color identity per endpoint
+#### Testing
+- 43 comprehensive test cases covering all endpoints
+- Parameter validation testing
+- Edge case and error condition testing
+- Alphabet-specific character validation
+- Performance and consistency testing
+- 100% test success rate achieved
 
-### Documentation
-- Updated route references from `/generate` to `/custom` throughout codebase
-- Enhanced form interaction patterns following modern web standards
-- Improved button state management documentation
+#### Documentation
+- Complete README.md with API documentation
+- Detailed endpoint descriptions and examples
+- Project structure documentation
+- Setup and deployment instructions
+- CLAUDE.md for development guidance
 
-## [0.4.0] - 2025-08-19
-
-### Added
-- **🌙 Smart Theme Toggle System**: Complete manual dark/light mode switching implementation
-  - **Intelligent Default Behavior**: Uses system preference (`prefers-color-scheme`) on first visit
-  - **Persistent User Choice**: Saves manual selection to localStorage and respects it on subsequent visits
-  - **Theme Toggle Component**: New `ThemeToggle.svelte` component with professional design
-    - Floating button in upper-right corner that moves with page scroll
-    - Transparent at rest, visible on hover/click/focus
-    - Correct icon representation: 🌙 moon for dark mode, ☀️ sun for light mode
-    - Smooth CSS transitions and visual feedback
-    - Full accessibility support with ARIA labels and keyboard navigation
-  - **Theme Management Store**: New `theme.ts` Svelte store for state management
-    - Automatic system preference detection
-    - Manual toggle functionality with localStorage persistence
-    - Theme application to document root with smooth transitions
-    - Optional reset to system preference function
-- **🎨 TailwindCSS 4.0 Dark Mode Configuration**: Proper setup for latest Tailwind version
-  - `@custom-variant dark (&:where(.dark, .dark *))` configuration in app.css
-  - Class-based dark mode implementation (not media query based)
-  - Seamless integration with existing dark: utility classes
-  - Smooth theme transitions with CSS transition properties
-
-### Enhanced
-- **🎯 User Experience**: Significant improvements to theme switching experience
-  - No visual flicker during theme changes
-  - Immediate visual feedback on toggle interaction
-  - Persistent theme choice across browser sessions
-  - Respects user's manual preference over system changes
-- **♿ Accessibility**: Enhanced accessibility features for theme toggle
-  - Screen reader friendly with descriptive ARIA labels
-  - Keyboard navigation support
-  - High contrast compatibility
-  - Focus management and visual indicators
-- **📱 Cross-Device Compatibility**: Theme system works across all platforms
-  - Mobile browser theme-color meta tag updates
-  - Tablet and desktop consistent behavior
-  - System integration on supported browsers
-
-### Technical Implementation
-- **Component Architecture**: New theme-related components and stores
-  - `/src/lib/components/ThemeToggle.svelte` - Theme toggle button component
-  - `/src/lib/stores/theme.ts` - Theme state management store
-  - Updated `+layout.svelte` with theme integration
-- **CSS Architecture**: Modern TailwindCSS 4.0 implementation
-  - Custom variant configuration for dark mode
-  - Smooth transition utilities
-  - Class-based theme switching (not media query)
-- **State Management**: Sophisticated theme preference handling
-  - System preference detection as default
-  - localStorage persistence for manual choices
-  - Automatic theme application on store subscription
-- **Browser Integration**: Enhanced mobile and desktop experience
-  - Dynamic meta theme-color updates for mobile browsers
-  - Proper CSS transition handling
-  - Cross-browser compatibility
-
-### Changed
-- **Theme System**: Upgraded from simple system preference to intelligent manual control
-  - Previous: Only `prefers-color-scheme` media query support
-  - Current: Manual toggle with system preference fallback
-- **Layout Structure**: Enhanced main layout with theme toggle integration
-  - Added `relative` positioning to main container
-  - Integrated theme toggle component
-  - Improved z-index management
-
-### Technical Dependencies
-- No new external dependencies added
-- Leverages existing SvelteKit, TypeScript, and TailwindCSS 4.0 infrastructure
-- Uses browser APIs: `localStorage`, `matchMedia`, `classList`
-
-### Documentation Updates
-- Updated README.md with Smart Theme System features
-- Enhanced project structure documentation with new components
-- Added technical implementation details
-
-## [0.5.0] - 2025-08-19
-
-### Added
-- **🖼️ SVG Icon Sprite System**: Complete implementation of optimized icon management
-  - **Centralized Sprite**: All icons consolidated into `/static/icons-sprite.svg` for efficient caching
-  - **Icon Component**: New reusable `Icon.svelte` component for consistent icon usage
-    - Simple props: `name`, `size`, `class` for flexible styling
-    - Uses external sprite references (`/icons-sprite.svg#icon-{name}`)
-    - No inline SVG bloat in JavaScript bundles
-  - **10 Icons Migrated**: All UI icons converted to sprite system
-    - Theme toggle: sun and moon icons
-    - Navigation: left/right arrows
-    - Actions: copy, check, refresh, settings, briefcase
-    - UI elements: chevron-down, loading spinner
-  - **Lazy Loading**: Sprite downloaded only when first icon is rendered
-  - **Automatic Caching**: Browser handles sprite caching without preload warnings
-
-### Enhanced
-- **⚡ Performance Optimization**: Significant improvements to loading and rendering
-  - **Reduced Bundle Size**: Eliminated inline SVG from JavaScript/CSS bundles
-  - **Single HTTP Request**: All icons downloaded in one cached file
-  - **No Preload Warnings**: Removed problematic link preload, using on-demand loading
-  - **Memory Efficiency**: Shared SVG symbols reduce DOM memory usage
-- **🔧 Developer Experience**: Improved maintainability and consistency
-  - **Centralized Icon Management**: Easy to add, modify, or remove icons
-  - **Component Consistency**: Uniform icon sizing and styling across app
-  - **Type Safety**: TypeScript support for icon names and properties
-
-### Changed
-- **Icon Implementation**: Migrated from inline SVG to sprite-based system
-  - **ThemeToggle.svelte**: Uses `Icon` component for sun/moon icons
-  - **BackButton.svelte**: Uses `Icon` component for left arrow
-  - **LoadingSpinner.svelte**: Uses `Icon` component for spinner
-  - **Main menu**: Uses `Icon` component for right arrow navigation
-  - **Result page**: Uses `Icon` component for all action buttons and UI elements
-- **HTML Structure**: Added sprite reference system to app template
-  - Removed link preload that caused browser warnings
-  - External sprite references for optimal loading
-
-### Technical Implementation
-- **Component Architecture**: New icon management system
-  - `/src/lib/components/Icon.svelte` - Reusable icon component
-  - `/static/icons-sprite.svg` - Centralized sprite file with 10 symbols
-  - Updated all components to use new `Icon` component
-- **Loading Strategy**: Optimized sprite loading approach
-  - External references (`href="/icons-sprite.svg#icon-{name}"`)
-  - Browser-managed caching without manual preload
-  - No console warnings or performance issues
-- **Export System**: Icon component available through `$lib` imports
-  - Added to `/src/lib/index.ts` for convenient importing
-  - Consistent import pattern across codebase
-
-### Performance Benefits
-- **Network**: Single cached request replaces 10+ inline SVG elements
-- **Memory**: Shared SVG symbols reduce DOM node count
-- **Bundle**: JavaScript/CSS sizes reduced by removing inline SVG
-- **Cache**: Long-lived sprite cache improves repeat visit performance
-
-## [0.6.0] - 2025-08-20
-
-### Added
-- **🌍 Language Selector Component**: Complete visual language selection interface
-  - **Interactive Dropdown**: Shows 11 languages with authentic flag representations
-  - **Flag Icon Integration**: Complete flag sprite collection with national and regional flags
-    - **National Flags**: Spain, UK, France, Germany, Portugal, Russia, Saudi Arabia, China
-    - **Regional Flags**: Catalonia, Basque Country (Ikurriña), Galicia
-  - **Visual Demo Mode**: Changes displayed flag without affecting application language
-  - **Professional Design**: Matches theme toggle styling with consistent hover effects
-  - **Smart Positioning**: Positioned alongside theme toggle in upper-right corner
-  - **Accessibility Support**: Full ARIA labels and keyboard navigation
-  - **Click Outside Handling**: Dropdown closes when clicking elsewhere
-- **🏴 Flag Icon Collection**: Complete set of country and region flag icons
-  - **11 Flag Icons**: Comprehensive collection of carefully designed SVG flag representations
-  - **Authentic Colors**: All flags use official color specifications from Wikimedia Commons
-  - **Optimized SVG**: Simplified designs optimized for small icon sizes while maintaining recognizability
-  - **Consistent Integration**: All flags integrated into existing sprite system for optimal performance
-  - **Scalable Design**: Vector graphics ensure crisp rendering at any size
-
-### Enhanced
-- **🎨 UI Component Consistency**: Improved visual cohesion across interface controls
-  - **Uniform Button Sizing**: Both language selector and theme toggle use identical dimensions (36x36px)
-  - **Consistent Padding**: Standardized internal spacing (8px padding) for better visual balance
-  - **Optimized Spacing**: Reduced gap between control buttons for cohesive grouping
-  - **Centered Icons**: Perfect alignment of all icons within their containers
-- **🖼️ Icon System Improvements**: Enhanced SVG sprite system with flag support
-  - **Complete Flag Collection**: 11 authentic flag designs added to sprite
-  - **Expanded Sprite System**: Collection from 10 to 21 total icons
-  - **Performance Maintained**: Single HTTP request for all icons including new flags
-  - **Memory Efficient**: Shared SVG symbols for all flag representations
-  - **Developer Ready**: Easy access via `<Icon name="spain" />`, `<Icon name="uk" />`, etc.
-  - **Reactivity Fix**: Resolved Svelte 5 runes mode compatibility issues
-
-### Fixed
-- **⚡ Svelte 5 Runes Compatibility**: Updated components for modern Svelte syntax
-  - **State Management**: Migrated from `let` to `$state()` for reactive variables
-  - **Derived Values**: Changed `$:` reactive statements to `$derived()` syntax
-  - **Icon Component**: Fixed reactivity issues with dynamic icon name changes
-  - **Proper Reactivity**: Ensured UI updates correctly when language selection changes
-
-### Technical Implementation
-- **Component Architecture**: New language selection system
-  - `/src/lib/components/LanguageSelector.svelte` - Main language selector component
-  - Extended `/static/icons-sprite.svg` - Added 11 flag icons to existing sprite
-  - Updated layout integration in `+layout.svelte`
-- **Flag Icon Design**: Authentic flag representations
-  - **UK Flag**: Full Union Jack design with proper cross positioning and clipping
-  - **China Flag**: Large star with simplified dots for small stars
-  - **Catalonia**: Traditional four red stripes on yellow background (La Senyera)
-  - **Basque Country**: Complete Ikurriña with red field, green saltire, and white cross
-  - **Galicia**: Corrected design with white field and blue diagonal stripe
-  - **Simplified Flags**: Saudi Arabia (green field), Portugal (vertical stripes)
-  - Proper color specifications from official sources
-  - Optimized viewBox ratios for consistent icon sizing
-  - Complex designs simplified for small icon usage
-- **State Management**: Local component state for demo functionality
-  - Simple language code tracking (`'uk'`, `'spain'`, etc.)
-  - Dropdown visibility management with outside click detection
-  - Visual-only language switching (preparation for full i18n)
-- **Svelte 5 Migration**: Updated syntax throughout affected components
-  - Replaced legacy reactive statements with modern runes
-  - Fixed state management for proper component updates
-  - Ensured component reactivity works with prop changes
-
-### Changed
-- **Icon System**: Improved sprite-based icon handling
-  - Enhanced `Icon.svelte` component with proper reactive icon ID generation
-  - Fixed issues with dynamic icon name changes not updating display
-- **Control Layout**: Refined positioning of interface controls
-  - Adjusted spacing between language selector and theme toggle
-  - Optimized button sizing for better visual hierarchy
-- **Development Experience**: Better debugging and error handling
-  - Clearer error messages for Svelte 5 compatibility issues
-  - Improved component state management
-
-### Usage Examples
-```svelte
-<!-- Language selector component -->
-<LanguageSelector />
-
-<!-- Individual flag icons -->
-<Icon name="spain" size="w-6 h-6" />
-<Icon name="uk" size="w-6 h-6" />
-<Icon name="catalonia" size="w-6 h-6" />
-<Icon name="basque" size="w-6 h-6" />
-```
-
-### Preparation
-- **Internationalization Foundation**: Infrastructure ready for full i18n implementation
-  - Language selection UI component complete
-  - Flag icon system integrated
-  - Component state management proven
-  - Ready for translation system integration in future sessions
-- **Regional Localization**: Support for regional variants within countries
-- **Cultural Adaptation**: Visual elements ready for international markets
-- **Accessibility**: All flags include proper naming for screen readers
-
-## [0.7.0] - 2025-08-20
-
-### Added
-- **🚀 Enhanced Development Workflow**: Complete justfile integration for unified development experience
-  - **Unified Development Commands**: `just dev` now launches complete environment
-    - Automatically starts Spin API backend in background (port 3000)
-    - Automatically starts npm web interface in background (port 5173)
-    - Automatically exposes frontend via Tailscale serve for remote access
-    - Single command for complete development setup
-  - **Intelligent Server Management**: Enhanced stop/start process management
-    - `just stop` now stops all services including Tailscale serve
-    - Proper service dependency order (API first, then web interface)
-    - Complete cleanup of background processes and PID files
-    - Status reporting for all running services
-- **🌐 Tailscale Integration**: Built-in remote access support for development
-  - **Frontend Exposure Commands**: 
-    - `just tailscale-front-start` - Expose web interface (port 5173) via Tailscale
-    - `just tailscale-front-stop` - Stop Tailscale serve for frontend
-  - **Backend Exposure Commands**:
-    - `just tailscale-back-start` - Expose API backend (port 3000) via Tailscale  
-    - `just tailscale-back-stop` - Stop Tailscale serve for backend
-  - **Automatic Installation Check**: Verifies Tailscale CLI availability before execution
-  - **Status Integration**: `just status` now shows Tailscale serve status and active URLs
-- **🏗️ Enhanced Build System**: Unified build commands for complete project
-  - **Dual Build Process**: `just build` now builds both WebAssembly component and web interface
-    - Executes `spin-cli build` for WASM compilation
-    - Executes `npm run build` in web/ directory for production SPA
-  - **Complete Clean Commands**: Enhanced cleanup for all project artifacts
-    - `just clean` removes Rust build artifacts and npm cache/build directories
-    - Cleans: `target/`, `node_modules/.cache`, `dist`, `build`, `.svelte-kit`
-  - **Fresh Build Commands**: New rebuild workflows
-    - `just clean-build` - Clean and rebuild everything
-    - `just rebuild` - Alias for clean and rebuild workflow
-
-### Enhanced
-- **⚡ Developer Experience**: Significant improvements to development workflow efficiency
-  - **One-Command Setup**: `just dev` provides complete development environment
-  - **Automatic Remote Access**: Frontend automatically available via Tailscale network
-  - **Integrated Status Monitoring**: Single command shows all service states
-  - **Intelligent Cleanup**: Stop command handles all services comprehensively
-- **📊 Status Reporting**: Enhanced development server monitoring
-  - **Comprehensive Status Check**: Shows Spin, npm, and Tailscale service states
-  - **Port Usage Monitoring**: Reports on ports 3000, 5173, and service PIDs
-  - **Tailscale URL Display**: Shows active Tailscale URLs for remote access
-  - **Service Health Indicators**: Clear visual indicators for running/stopped services
-- **🔧 Build Process**: Streamlined build and cleanup workflows
-  - **Parallel Build Execution**: Efficient building of both backend and frontend
-  - **Complete Artifact Cleanup**: Thorough cleaning of all generated files
-  - **Developer-Friendly Commands**: Intuitive command names for common operations
-
-### Changed
-- **Development Workflow**: Updated primary development commands
-  - **`just dev`**: Now launches complete environment (was Spin-only)
-    - Previous: Started only `spin-cli watch` in foreground
-    - Current: Starts Spin (bg) → npm (bg) → Tailscale serve → complete environment ready
-  - **`just dev-fg`**: New foreground mode (previous `just dev` behavior)
-    - Starts npm in background, Spin in foreground for direct log viewing
-    - Use when you need to monitor Spin logs directly
-  - **`just stop`**: Enhanced to stop all services including Tailscale
-  - **`just build`**: Enhanced to build both backend and frontend components
-- **Service Management**: Improved background process handling
-  - **Startup Order**: API backend starts first, then web interface
-  - **PID Management**: Separate PID files for Spin and npm processes
-  - **Log Management**: Separate log files (`.spin-dev.log`, `.npm-dev.log`)
-  - **Cleanup Process**: Comprehensive cleanup of all background services
-
-### Technical Implementation
-- **Justfile Architecture**: Advanced shell scripting for service orchestration
-  - **Service Dependencies**: Proper dependency management between commands
-  - **Error Handling**: Robust error checking and service validation
-  - **Background Process Management**: Professional PID and log file handling
-  - **Status Verification**: Comprehensive service health checking
-- **Tailscale Integration**: Professional remote access implementation
-  - **Service Discovery**: Automatic Tailscale serve status detection
-  - **URL Management**: Dynamic URL reporting for active services
-  - **Dependency Checking**: CLI availability verification before execution
-- **Build System**: Enhanced compilation and cleanup processes
-  - **Multi-Target Building**: Coordinated WASM and SPA build processes
-  - **Comprehensive Cleaning**: Complete artifact removal across all components
-
-### Developer Benefits
-- **Reduced Complexity**: One command (`just dev`) for complete setup
-- **Remote Development**: Automatic Tailscale exposure for tablet/mobile testing
-- **Better Debugging**: Enhanced status reporting and log management
-- **Faster Cleanup**: Complete environment cleanup with `just stop`
-- **Simplified Building**: Unified build process for deployment preparation
+---
 
 ## [Unreleased]
 
@@ -529,10 +416,40 @@ web/
 
 ## Version History Summary
 
-- **0.7.0** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
-- **0.6.0** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
-- **0.5.0** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
-- **0.4.0** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
-- **0.3.0** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
-- **0.2.0** (2025-08-19) - Web interface release with professional SPA
-- **0.1.0** (2025-08-18) - Initial release with complete API implementation
+- **[API v1.0.0 / Web v0.7.0]** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
+- **[API v1.0.0 / Web v0.6.0]** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility
+- **[API v1.0.0 / Web v0.5.0]** (2025-08-19) - SVG icon sprite system for optimized performance and maintainability
+- **[API v1.0.0 / Web v0.4.0]** (2025-08-19) - Smart theme toggle system with TailwindCSS 4.0 dark mode implementation
+- **[API v1.0.0 / Web v0.3.0]** (2025-08-19) - Enhanced UI/UX with interactive components and improved user experience
+- **[API v1.0.0 / Web v0.2.0]** (2025-08-19) - Web interface release with professional SPA
+- **[API v1.0.0]** (2025-08-18) - Initial stable API release with complete implementation
+
+---
+
+## Versioning Strategy
+
+### API (Backend) Versioning
+- **Stable Versioning**: API follows strict semver starting from 1.0.0
+- **Backward Compatibility**: Minor versions (1.1.0, 1.2.0) add features without breaking changes
+- **Major Versions**: Only for breaking API changes (2.0.0, 3.0.0)
+- **Production Ready**: API is stable and production-ready at 1.0.0
+
+### Web Interface Versioning  
+- **Development Versioning**: Web interface follows 0.x.x series during active development
+- **Rapid Iteration**: Minor versions (0.1.0, 0.2.0) for UI/UX improvements and new features
+- **Breaking UI Changes**: Major versions in 0.x.x series (0.1.0 → 0.2.0) for significant UI restructures
+- **Stability Target**: Will reach 1.0.0 when feature-complete and UI/UX is finalized
+
+### Release Tags
+- **API releases**: `api-v1.0.0`, `api-v1.1.0`, etc.
+- **Web releases**: `web-v0.7.0`, `web-v0.8.0`, etc.
+- **Combined releases**: When both components are updated simultaneously
+
+### Version Endpoint
+- **GET /api/version**: Returns both component versions
+  ```json
+  {
+    "api_version": "1.0.0",
+    "ui_version": "0.7.0"
+  }
+  ```

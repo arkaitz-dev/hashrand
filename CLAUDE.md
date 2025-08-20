@@ -51,6 +51,8 @@ npm run check     # Run TypeScript and Svelte checks
 # The web interface automatically proxies /api/* to the backend on port 3000
 ```
 
+**Important**: All web interface configuration files (package.json, vite.config.ts, svelte.config.js, tailwind.config.js, tsconfig.json) are now located within the `web/` directory following SvelteKit 2.x best practices.
+
 ### Direct Commands
 - `spin-cli build` - Build the WebAssembly component (targets `wasm32-wasip1`)
 - `spin-cli up` - Start the application locally
@@ -102,7 +104,7 @@ hashrand-spin/
 ├── final_test.sh           # Comprehensive test suite (43 tests)
 ├── justfile                # Development task automation
 ├── README.md               # Project documentation
-├── CHANGELOG.md            # Version history
+├── CHANGELOG.md            # Version history (now with independent API/Web versioning)
 ├── CLAUDE.md               # This file - development guidance
 ├── api/                    # API implementation crate
 │   ├── Cargo.toml          # API crate configuration
@@ -126,8 +128,9 @@ hashrand-spin/
 │   ├── README.md           # Web interface documentation
 │   ├── package.json        # Node.js dependencies and scripts
 │   ├── vite.config.ts      # Vite configuration with API proxy
-│   ├── svelte.config.js    # SvelteKit SPA configuration
+│   ├── svelte.config.js    # SvelteKit SPA configuration (now without deprecated options)
 │   ├── tailwind.config.js  # TailwindCSS 4.0 configuration
+│   ├── tsconfig.json       # TypeScript configuration
 │   ├── src/
 │   │   ├── app.html        # HTML template with meta tags
 │   │   ├── app.css         # Global styles with TailwindCSS
@@ -148,7 +151,7 @@ hashrand-spin/
 │   │       ├── +layout.svelte     # Root layout with navigation
 │   │       ├── +layout.ts         # SPA configuration
 │   │       ├── +page.svelte       # Main menu page
-│   │       ├── generate/          # Custom hash generator
+│   │       ├── custom/            # Custom hash generator (renamed from generate/)
 │   │       │   └── +page.svelte
 │   │       ├── password/          # Password generator
 │   │       │   └── +page.svelte
@@ -156,7 +159,11 @@ hashrand-spin/
 │   │       │   └── +page.svelte
 │   │       └── result/            # Shared result display
 │   │           └── +page.svelte
-│   └── build/              # Production SPA build output
+│   ├── static/             # Static assets
+│   │   ├── favicon.png     # Browser favicon
+│   │   ├── icons-sprite.svg # SVG icon sprite for UI components
+│   │   └── robots.txt      # Search engine crawler instructions
+│   └── dist/               # Production SPA build output
 └── target/                 # Rust build artifacts
 ```
 
@@ -343,3 +350,39 @@ spin-cli watch &
 - ✅ Error handling appropriate
 - ✅ Response formats correct
 - ✅ Performance consistent
+
+## Version Management
+
+The project now uses **independent versioning** for API and Web components:
+
+### API Backend (v1.0.0)
+- **Stable Version**: API has reached 1.0.0 stability
+- **Semantic Versioning**: Follows strict semver for backward compatibility
+- **Production Ready**: Can be used in production environments
+
+### Web Interface (v0.7.0)
+- **Development Version**: Currently in 0.x.x series during active development
+- **Rapid Iteration**: Frequent updates for UI/UX improvements
+- **Modern Architecture**: Built with latest SvelteKit 2.x without deprecated warnings
+
+### Version Endpoint
+The `/api/version` endpoint returns both component versions:
+```json
+{
+  "api_version": "1.0.0",
+  "ui_version": "0.7.0"
+}
+```
+
+### SvelteKit Configuration
+The web interface has been **fully reorganized** to eliminate deprecated warnings:
+- ✅ All configuration files moved inside `web/` directory
+- ✅ Removed deprecated `config.kit.files` options
+- ✅ Using standard SvelteKit 2.x project structure
+- ✅ No more deprecation warnings in development or build
+
+### Development Benefits
+- **Clean Logs**: No more SvelteKit deprecation warnings
+- **Future-Proof**: Ready for SvelteKit v3 migration
+- **Standards Compliant**: Follows official SvelteKit best practices
+- **Independent Evolution**: API and Web can evolve at different speeds
