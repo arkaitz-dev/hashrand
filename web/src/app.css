@@ -95,3 +95,23 @@
 	direction: ltr !important;
 	text-align: left !important;
 }
+
+/* RTL support for select elements */
+[data-rtl="true"] select:not(.force-ltr):not(.force-ltr *) {
+	text-align: right !important;
+	direction: rtl !important;
+	text-align-last: right !important;
+}
+
+[data-rtl="true"] select:not(.force-ltr):not(.force-ltr *) option {
+	text-align: right !important;
+	direction: rtl !important;
+}
+
+/* Force stronger RTL for form selects specifically */
+[data-rtl="true"] form select,
+[data-rtl="true"] .form-control select {
+	text-align: right !important;
+	direction: rtl !important;
+	text-align-last: right !important;
+}

@@ -97,9 +97,9 @@ export const hi: I18nTexts = {
 		failedToGenerateApiKey: 'API की जनरेट नहीं हुई'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 अक्षर)',
-		'no-look-alike': 'नो लुक-अलाइक (49 अक्षर)',
-		'full': 'पूर्ण अल्फान्यूमेरिक (62 अक्षर)',
-		'full-with-symbols': 'प्रतीकों के साथ पूर्ण (73 अक्षर)'
+		'base58': 'Base58 (बिटकॉइन अल्फाबेट)',
+		'no-look-alike': 'नो लुक-अलाइक',
+		'full': 'पूर्ण अल्फान्यूमेरिक',
+		'full-with-symbols': 'प्रतीकों के साथ पूर्ण'
 	}
 };

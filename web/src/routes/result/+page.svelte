@@ -4,6 +4,8 @@
 	import BackButton from '$lib/components/BackButton.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import Footer from '$lib/components/Footer.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import { resultState, error, setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { _, currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
@@ -61,7 +63,8 @@
 		}
 	}
 
-	function getEndpointDisplayName(endpoint: string): string {
+	// Reactive endpoint display name that updates when language changes
+	$: getEndpointDisplayName = (endpoint: string): string => {
 		switch (endpoint) {
 			case 'custom': return $_('custom.title');
 			case 'generate': return $_('custom.title');
@@ -69,7 +72,7 @@
 			case 'api-key': return $_('apiKey.title');
 			default: return endpoint;
 		}
-	}
+	};
 
 	function getEndpointIcon(endpoint: string): string {
 		switch (endpoint) {
@@ -91,12 +94,8 @@
 		}
 	}
 
-	function formatTimestamp(date: Date): string {
-		// Use the current language for date formatting
-		let currentLang = 'en';
-		const unsubscribe = currentLanguage.subscribe(lang => currentLang = lang);
-		unsubscribe();
-		
+	// Reactive formatted timestamp that updates when language changes
+	$: formattedTimestamp = $resultState?.timestamp ? (() => {
 		// Map language codes to locale identifiers for date formatting
 		const localeMap: Record<string, string> = {
 			'en': 'en-US',
@@ -107,12 +106,14 @@
 			'ru': 'ru-RU',
 			'zh': 'zh-CN',
 			'ar': 'ar-SA',
+			'hi': 'hi-IN',
+			'ja': 'ja-JP',
 			'eu': 'eu-ES',
 			'ca': 'ca-ES',
 			'gl': 'gl-ES'
 		};
 		
-		const locale = localeMap[currentLang] || 'en-US';
+		const locale = localeMap[$currentLanguage] || 'en-US';
 		
 		return new Intl.DateTimeFormat(locale, {
 			year: 'numeric',
@@ -121,10 +122,11 @@
 			hour: '2-digit',
 			minute: '2-digit',
 			second: '2-digit'
-		}).format(date);
-	}
+		}).format($resultState.timestamp);
+	})() : '';
 
-	function translateParameterKey(key: string): string {
+	// Reactive parameter key translation that updates when language changes
+	$: translateParameterKey = (key: string): string => {
 		const translations: Record<string, string> = {
 			length: $_('common.length'),
 			alphabet: $_('common.alphabet'),
@@ -133,7 +135,21 @@
 		};
 		
 		return translations[key] || key.replace(/([A-Z])/g, ' $1').trim();
-	}
+	};
+
+	// Reactive parameter value translation that updates when language changes
+	$: translateParameterValue = (key: string, value: any): string => {
+		if (typeof value === 'boolean') {
+			return value ? $_('common.yes') || 'Yes' : $_('common.no') || 'No';
+		}
+		
+		// Translate alphabet types
+		if (key === 'alphabet' && typeof value === 'string') {
+			return $_(`alphabets.${value}`) || value;
+		}
+		
+		return String(value);
+	};
 
 	function getPreviousPath(): string {
 		if (!$resultState) return '/';
@@ -230,21 +246,16 @@
 								onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
 							></textarea>
 							{#if !$isLoading}
-								<button
+								<!-- RTL-aware copy button -->
+								<Button
 									onclick={copyToClipboard}
-									class="absolute bottom-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
-									class:bg-green-600={copySuccess}
-									class:hover:bg-green-700={copySuccess}
+									class="absolute bottom-3 {$isRTL ? 'left-3' : 'right-3'} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySuccess ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}"
+									icon={copySuccess ? "check" : "copy"}
+									iconSize="w-3 h-3"
 								>
-								{#if copySuccess}
-									<Icon name="check" size="w-3 h-3" />
-									{$_('common.copied')}
-								{:else}
-									<Icon name="copy" size="w-3 h-3" />
-									{$_('common.copy')}
-								{/if}
-							</button>
-						{/if}
+									{copySuccess ? $_('common.copied') : $_('common.copy')}
+								</Button>
+							{/if}
 						</div>
 					</div>
 
@@ -278,7 +289,7 @@
 								</div>
 								<div>
 									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{$_('common.generated')}</dt>
-									<dd class="text-sm text-gray-900 dark:text-white">{formatTimestamp($resultState.timestamp)}</dd>
+									<dd class="text-sm text-gray-900 dark:text-white">{formattedTimestamp}</dd>
 								</div>
 							</dl>
 						</div>
@@ -308,7 +319,7 @@
 												{translateParameterKey(key)}
 											</dt>
 											<dd class="text-sm text-gray-900 dark:text-white">
-												{typeof value === 'boolean' ? (value ? $_('common.yes') || 'Yes' : $_('common.no') || 'No') : value}
+												{translateParameterValue(key, value)}
 											</dd>
 										</div>
 									{/if}
@@ -320,40 +331,39 @@
 
 				<!-- Actions -->
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
-					<button
+					<!-- RTL-aware regenerate button -->
+					<Button
 						onclick={regenerateHash}
 						disabled={$isLoading}
-						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : `bg-${color}-600 hover:bg-${color}-700 cursor-pointer`} {$isRTL ? 'rtl-reverse' : ''}"
+						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'}"
+						icon="refresh"
+						iconClass={$isLoading ? 'animate-spin-fast' : ''}
 					>
-						<Icon name="refresh" size="w-4 h-4" class={$isLoading ? 'animate-spin-fast' : ''} />
 						{$_('common.generateAnother')}
-					</button>
-					<button
+					</Button>
+					
+					<!-- RTL-aware adjust settings button -->
+					<Button
 						onclick={() => goto(getPreviousPath())}
-						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 {$isRTL ? 'rtl-reverse' : ''}"
+						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
+						icon="settings"
 					>
-						<Icon name="settings" size="w-4 h-4" />
 						{$_('common.adjustSettings')}
-					</button>
-					<button
+					</Button>
+					
+					<!-- RTL-aware back to menu button -->
+					<Button
 						onclick={() => goto('/')}
-						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 {$isRTL ? 'rtl-reverse' : ''}"
+						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
+						icon="briefcase"
 					>
-						<Icon name="briefcase" size="w-4 h-4" />
 						{$_('common.backToMenu')}
-					</button>
+					</Button>
 				</div>
 			</div>
 			
-			<!-- Made with love -->
-			<div class="text-center mt-8">
-				<div class="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center">
-					<span>Made with</span>
-					<Icon name="heart" size="w-3 h-3 mx-1 text-red-500" />
-					<span>by</span>
-					<a href="https://arkaitz.dev" target="_blank" rel="noopener noreferrer" class="ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">Arkaitz Dev</a>
-				</div>
-			</div>
+			<!-- Footer with Version Information -->
+			<Footer />
 		</div>
 		
 	</div>
@@ -373,15 +383,8 @@
 				<BackButton to="/" />
 			</div>
 			
-			<!-- Made with love -->
-			<div class="text-center mt-8">
-				<div class="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center">
-					<span>Made with</span>
-					<Icon name="heart" size="w-3 h-3 mx-1 text-red-500" />
-					<span>by</span>
-					<a href="https://arkaitz.dev" target="_blank" rel="noopener noreferrer" class="ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">Arkaitz Dev</a>
-				</div>
-			</div>
+			<!-- Footer with Version Information -->
+			<Footer />
 		</div>
 		
 	</div>

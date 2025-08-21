@@ -42,7 +42,9 @@ export const ar: I18nTexts = {
 		optionalPrefix: 'البادئة اختيارية',
 		optionalSuffix: 'اللاحقة اختيارية',
 		prefixCannotExceed: 'البادئة لا يمكن أن تتجاوز 32 حرفاً',
-		suffixCannotExceed: 'اللاحقة لا يمكن أن تتجاوز 32 حرفاً'
+		suffixCannotExceed: 'اللاحقة لا يمكن أن تتجاوز 32 حرفاً',
+		yes: 'نعم',
+		no: 'لا'
 	},
 	menu: {
 		title: 'مولد الهاش',
@@ -97,9 +99,9 @@ export const ar: I18nTexts = {
 		failedToGenerateApiKey: 'فشل في توليد مفتاح API'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 حرف)',
-		'no-look-alike': 'عدم التشابه (49 حرف)',
-		'full': 'أبجدية رقمية كاملة (62 حرف)',
-		'full-with-symbols': 'كاملة مع الرموز (73 حرف)'
+		'base58': 'أبجدية البيتكوين (Base58)',
+		'no-look-alike': 'عدم التشابه',
+		'full': 'أبجدية رقمية كاملة',
+		'full-with-symbols': 'كاملة مع الرموز'
 	}
 };

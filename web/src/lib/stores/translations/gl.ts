@@ -97,9 +97,9 @@ export const gl: I18nTexts = {
 		failedToGenerateApiKey: 'Fallou xerar a chave API'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 caracteres)',
-		'no-look-alike': 'Sen confusión (49 caracteres)',
-		'full': 'Alfanumérico completo (62 caracteres)',
-		'full-with-symbols': 'Completo con símbolos (73 caracteres)'
+		'base58': 'Base58 (alfabeto Bitcoin)',
+		'no-look-alike': 'Sen confusión',
+		'full': 'Alfanumérico completo',
+		'full-with-symbols': 'Completo con símbolos'
 	}
 };

@@ -42,7 +42,9 @@ export const fr: I18nTexts = {
 		optionalPrefix: 'Préfixe optionnel',
 		optionalSuffix: 'Suffixe optionnel',
 		prefixCannotExceed: 'Le préfixe ne peut pas dépasser 32 lettres',
-		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 lettres'
+		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 lettres',
+		yes: 'Oui',
+		no: 'Non'
 	},
 	menu: {
 		title: 'Générateur de Hash',
@@ -97,9 +99,9 @@ export const fr: I18nTexts = {
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 chars)',
-		'no-look-alike': 'Sans Ambiguïté (49 chars)',
-		'full': 'Alphanumérique Complet (62 chars)',
-		'full-with-symbols': 'Complet avec Symboles (73 chars)'
+		'base58': 'Base58 (alphabet Bitcoin)',
+		'no-look-alike': 'Sans Ambiguïté',
+		'full': 'Alphanumérique Complet',
+		'full-with-symbols': 'Complet avec Symboles'
 	}
 };

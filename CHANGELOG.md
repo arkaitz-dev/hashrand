@@ -11,6 +11,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.10.0] - 2025-08-21
+
+### Web Interface Changes (v0.10.0)
+#### Added
+- **🔄 RTL-Aware Button Component**: Universal button wrapper with automatic RTL support
+  - **Smart Icon Positioning**: Icons automatically position left (LTR) or right (RTL) based on language direction
+  - **CSS Direction-Based**: Uses `direction: rtl/ltr` for seamless visual order changes
+  - **Wrapper Architecture**: Simple pass-through wrapper preserving all native button attributes
+  - **Built-in RTL**: Never forget to apply RTL - it's automatic for all buttons with icons
+- **🌐 Improved Language Ordering**: Alphabetical organization by native language names
+  - **Latin Transcription Ordering**: Languages sorted by transcribed native names (Arabiya, Catala, Deutsch, English...)
+  - **Professional Organization**: Easier language discovery with logical alphabetical arrangement
+  - **Consistent Across Components**: Applied to both TopControls and LanguageSelector components
+- **📏 Enhanced Code Quality Standards**: Enforced DRY and KISS principles
+  - **Architecture Guidelines**: Added mandatory DRY/KISS principles to project documentation
+  - **Code Duplication Identification**: Flagged duplicate language selector logic for future refactoring
+  - **Quality Assurance**: Self-replicating code quality rules across all project documentation
+
+#### Enhanced
+- **🔘 Universal Button RTL Support**: All buttons now support RTL automatically
+  - **Result Page Buttons**: Regenerate, settings, and menu buttons with proper RTL icon positioning
+  - **Form Buttons**: Generate and navigation buttons across custom, password, and API key forms
+  - **Copy Button**: Enhanced copy functionality with RTL-aware positioning
+  - **Consistent Experience**: Arabic users see icons on the right, other languages on the left
+
+#### Technical
+- **🏗️ Component Architecture**: Simplified Button component implementation
+  - **Removed Complex Logic**: Eliminated confusing variant/size props and conditional logic
+  - **Pure Wrapper**: Button component now purely wraps native button with RTL enhancement
+  - **Automatic RTL**: No manual RTL handling required - works out of the box
+  - **Clean Implementation**: Single responsibility principle - just handle icon positioning
+
+#### Fixed
+- **🔧 RTL Icon Positioning**: Resolved incorrect icon placement in Arabic language mode
+  - **Visual Order**: Icons now appear on correct side in RTL languages (text first, icon second)
+  - **CSS Direction**: Proper use of CSS direction property for automatic visual reordering
+  - **Component Logic**: Fixed Button component logic to handle RTL states correctly
+
+---
+
 ## [API v1.0.0 / Web v0.9.0] - 2025-08-21
 
 ### Web Interface Changes (v0.9.0)

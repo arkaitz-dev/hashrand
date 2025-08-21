@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { _ } from '$lib/stores/i18n';
+	import Icon from './Icon.svelte';
 	import type { VersionResponse } from '$lib/types';
 
 	let versions: VersionResponse | null = null;
@@ -20,19 +21,28 @@
 	});
 </script>
 
-<footer class="mt-8 text-center py-4 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-700/50">
-	<div class="text-xs text-gray-400 dark:text-gray-500">
+<!-- Version Information and Footer -->
+<div class="text-center mt-8">
+	<div class="text-sm text-gray-500 dark:text-gray-400">
 		{#if loadingVersion}
 			<div class="flex items-center justify-center">
-				<div class="animate-spin w-3 h-3 border border-gray-400 border-t-transparent rounded-full mr-1"></div>
+				<div class="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full mr-2"></div>
 				<span>{$_('common.loadingVersion')}...</span>
 			</div>
 		{:else if versions}
-			<span class="text-gray-500 dark:text-gray-400">{$_('menu.brandName')}</span>
-			<span class="mx-1">•</span>
+			<span class="text-gray-600 dark:text-gray-300">{$_('menu.brandName')}</span>
+			<span class="mx-2 text-gray-400">•</span>
 			<span>UI v{versions.ui_version} / API v{versions.api_version}</span>
 		{:else}
 			<span>{$_('common.versionsUnavailable')}</span>
 		{/if}
 	</div>
-</footer>
+	
+	<!-- Made with love -->
+	<div class="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center justify-center force-ltr">
+		<span>Made with</span>
+		<Icon name="heart" size="w-3 h-3 mx-1 text-red-500" />
+		<span>by</span>
+		<a href="https://arkaitz.dev" target="_blank" rel="noopener noreferrer" class="ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">Arkaitz Dev</a>
+	</div>
+</div>

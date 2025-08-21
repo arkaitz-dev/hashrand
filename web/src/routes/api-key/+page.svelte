@@ -3,6 +3,8 @@
 	import { onMount } from 'svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import Footer from '$lib/components/Footer.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { ApiKeyParams } from '$lib/types';
@@ -19,9 +21,10 @@
 	// Form state - will be initialized in onMount
 	let params: ApiKeyParams = getDefaultParams();
 
-	const alphabetOptions: { value: 'no-look-alike' | 'full'; label: string; description: string }[] = [
-		{ value: 'full', label: $_('alphabets.full'), description: $_('apiKey.standardAlphanumericDescription') },
-		{ value: 'no-look-alike', label: $_('alphabets.no-look-alike'), description: $_('apiKey.noConfusingDescription') }
+	// Reactive alphabet options that update when language changes
+	$: alphabetOptions = [
+		{ value: 'full' as const, label: $_('alphabets.full'), description: $_('apiKey.standardAlphanumericDescription') },
+		{ value: 'no-look-alike' as const, label: $_('alphabets.no-look-alike'), description: $_('apiKey.noConfusingDescription') }
 	];
 
 	// Dynamic minimum length based on alphabet
@@ -188,10 +191,11 @@
 
 					<!-- Action Buttons -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<!-- Static generate API key button -->
 						<button
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg text-lg font-semibold cursor-pointer transition-all duration-200 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center"
+							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center {(!formValid || $isLoading) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer'}"
 						>
 							{#if $isLoading}
 								<LoadingSpinner size="sm" class="mr-2" />
@@ -200,27 +204,22 @@
 								{$_('apiKey.generateApiKey')}
 							{/if}
 						</button>
-						<button
-							type="button"
+						
+						<!-- RTL-aware back to menu button -->
+						<Button
 							onclick={() => goto('/')}
-							class="px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+							icon="briefcase"
+							iconSize="w-5 h-5"
 						>
-							<Icon name="briefcase" size="w-4 h-4" />
 							{$_('common.backToMenu')}
-						</button>
+						</Button>
 					</div>
 				</form>
 			</div>
 		</div>
 		
-		<!-- Made with love -->
-		<div class="text-center mt-8">
-			<div class="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center">
-				<span>Made with</span>
-				<Icon name="heart" size="w-3 h-3 mx-1 text-red-500" />
-				<span>by</span>
-				<a href="https://arkaitz.dev" target="_blank" rel="noopener noreferrer" class="ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">Arkaitz Dev</a>
-			</div>
-		</div>
+		<!-- Footer with Version Information -->
+		<Footer />
 	</div>
 </div>

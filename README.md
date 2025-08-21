@@ -28,7 +28,11 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **📋 Copy to Clipboard**: One-click copying with visual feedback
 - **🖼️ Optimized Icons**: SVG sprite system for fast loading and consistent UI
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
-- **🌍 I18n Ready**: Prepared for multiple language support
+- **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages
+  - **Smart RTL Buttons**: Automatic icon positioning for right-to-left languages
+  - **Language Ordering**: Alphabetically organized by native language names
+  - **Seamless Direction Changes**: Smooth transitions between text directions
+  - **Universal RTL**: Built-in RTL support - never manually handle text direction
 
 ## API Endpoints
 

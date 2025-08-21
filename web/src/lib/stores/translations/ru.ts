@@ -97,9 +97,9 @@ export const ru: I18nTexts = {
 		failedToGenerateApiKey: 'Не удалось сгенерировать API-ключ'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 символов)',
-		'no-look-alike': 'Без путаницы (49 символов)',
-		'full': 'Полный алфавитно-цифровой (62 символа)',
-		'full-with-symbols': 'Полный с символами (73 символа)'
+		'base58': 'Base58 (алфавит Bitcoin)',
+		'no-look-alike': 'Без путаницы',
+		'full': 'Полный алфавитно-цифровой',
+		'full-with-symbols': 'Полный с символами'
 	}
 };

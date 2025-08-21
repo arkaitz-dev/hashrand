@@ -6,25 +6,12 @@
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import Icon from '$lib/components/Icon.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 	import type { VersionResponse } from '$lib/types';
-
-	let versions: VersionResponse | null = null;
-	let loadingVersion = false;
 
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
-		
-		// Load version info from API
-		try {
-			loadingVersion = true;
-			const { api } = await import('$lib/api');
-			versions = await api.getVersion();
-		} catch (error) {
-			console.error('Failed to load versions:', error);
-		} finally {
-			loadingVersion = false;
-		}
 	});
 
 	function navigateToItem(path: string) {
@@ -81,10 +68,10 @@
 					<div class="p-6">
 						<div class="flex items-center mb-4">
 							{#if $isRTL}
-								<h2 class="text-xl font-semibold text-gray-900 dark:text-white ml-3">
+								<span class="text-3xl ml-3">{item.icon}</span>
+								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 									{getTranslatedTitle(item.id)}
 								</h2>
-								<span class="text-3xl">{item.icon}</span>
 							{:else}
 								<span class="text-3xl mr-3">{item.icon}</span>
 								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
@@ -98,7 +85,7 @@
 						<div class="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium {$isRTL ? 'rtl-float-right' : 'rtl-float-left'}">
 							{#if $isRTL}
 								{$_('common.choose')}
-								<Icon name="arrow-left" size="w-4 h-4 mr-1" />
+								<Icon name="arrow-left" size="w-4 h-4 ml-1" />
 							{:else}
 								{$_('common.choose')}
 								<Icon name="arrow-right" size="w-4 h-4 ml-1" />
@@ -110,28 +97,7 @@
 			{/each}
 		</div>
 
-		<!-- Version Information -->
-		<div class="text-center mt-8">
-			<div class="text-sm text-gray-500 dark:text-gray-400">
-				{#if loadingVersion}
-					<div class="flex items-center justify-center">
-						<div class="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full mr-2"></div>
-						<span>{$_('common.loadingVersion')}...</span>
-					</div>
-				{:else if versions}
-					<span class="text-gray-600 dark:text-gray-300">{$_('menu.brandName')}</span>
-					<span class="mx-2 text-gray-400">•</span>
-					<span>UI v{versions.ui_version} / API v{versions.api_version}</span>
-				{:else}
-					<span>{$_('common.versionsUnavailable')}</span>
-				{/if}
-			</div>
-			<div class="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center justify-center">
-				<span>Made with</span>
-				<Icon name="heart" size="w-3 h-3 mx-1 text-red-500" />
-				<span>by</span>
-				<a href="https://arkaitz.dev" target="_blank" rel="noopener noreferrer" class="ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">Arkaitz Dev</a>
-			</div>
-		</div>
+		<!-- Footer with Version Information -->
+		<Footer />
 	</div>
 </div>

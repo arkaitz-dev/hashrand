@@ -97,9 +97,9 @@ export const ca: I18nTexts = {
 		failedToGenerateApiKey: 'Ha fallat generar la clau API'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 caràcters)',
-		'no-look-alike': 'Sense confusió (49 caràcters)',
-		'full': 'Alfanumèric complet (62 caràcters)',
-		'full-with-symbols': 'Complet amb símbols (73 caràcters)'
+		'base58': 'Base58 (alfabet Bitcoin)',
+		'no-look-alike': 'Sense confusió',
+		'full': 'Alfanumèric complet',
+		'full-with-symbols': 'Complet amb símbols'
 	}
 };

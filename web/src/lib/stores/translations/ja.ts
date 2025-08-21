@@ -97,9 +97,9 @@ export const ja: I18nTexts = {
 		failedToGenerateApiKey: 'APIキーの生成に失敗しました'
 	},
 	alphabets: {
-		'base58': 'Base58（58文字）',
-		'no-look-alike': '紛らわしくない（49文字）',
-		'full': '完全英数字（62文字）',
-		'full-with-symbols': '記号を含む完全（73文字）'
+		'base58': 'Base58（ビットコインアルファベット）',
+		'no-look-alike': '紛らわしくない',
+		'full': '完全英数字',
+		'full-with-symbols': '記号を含む完全'
 	}
 };

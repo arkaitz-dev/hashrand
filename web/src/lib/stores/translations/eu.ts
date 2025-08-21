@@ -97,9 +97,9 @@ export const eu: I18nTexts = {
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 hizki)',
-		'no-look-alike': 'Nahasgarririk gabe (49 hizki)',
-		'full': 'Alfabeto Alfanumeriko Osoa (62 hizki)',
-		'full-with-symbols': 'Osoa Sinboloekin (73 hizki)'
+		'base58': 'Base58 (Bitcoin alfabetoa)',
+		'no-look-alike': 'Nahasgarririk gabe',
+		'full': 'Alfabeto Alfanumeriko Osoa',
+		'full-with-symbols': 'Osoa Sinboloekin'
 	}
 };

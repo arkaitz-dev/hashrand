@@ -97,9 +97,9 @@ export const zh: I18nTexts = {
 		failedToGenerateApiKey: '生成API密钥失败'
 	},
 	alphabets: {
-		'base58': 'Base58（58个字符）',
-		'no-look-alike': '无相似（49个字符）',
-		'full': '完整字母数字（62个字符）',
-		'full-with-symbols': '带符号完整（73个字符）'
+		'base58': 'Base58（比特币字母表）',
+		'no-look-alike': '无相似',
+		'full': '完整字母数字',
+		'full-with-symbols': '带符号完整'
 	}
 };

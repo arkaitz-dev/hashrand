@@ -97,9 +97,9 @@ export const de: I18nTexts = {
 		failedToGenerateApiKey: 'API-Schlüssel-Generierung fehlgeschlagen'
 	},
 	alphabets: {
-		'base58': 'Base58 (58 Zeichen)',
-		'no-look-alike': 'Ohne Verwechslung (49 Zeichen)',
-		'full': 'Vollständig Alphanumerisch (62 Zeichen)',
-		'full-with-symbols': 'Vollständig mit Symbolen (73 Zeichen)'
+		'base58': 'Base58 (Bitcoin-Alphabet)',
+		'no-look-alike': 'Ohne Verwechslung',
+		'full': 'Vollständig Alphanumerisch',
+		'full-with-symbols': 'Vollständig mit Symbolen'
 	}
 };

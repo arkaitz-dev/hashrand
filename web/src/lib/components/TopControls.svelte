@@ -8,20 +8,21 @@
 	let isTransitioning = $state(false);
 	
 	// Language options with their flag icons
+	// Ordered alphabetically by native name transcribed to Latin alphabet
 	const languages = [
-		{ code: 'en', name: 'English', flag: 'uk' },
-		{ code: 'hi', name: 'हिंदी', flag: 'india' },
-		{ code: 'ja', name: '日本語', flag: 'japan' },
-		{ code: 'es', name: 'Español', flag: 'spain' },
-		{ code: 'pt', name: 'Português', flag: 'portugal' },
-		{ code: 'fr', name: 'Français', flag: 'france' },
-		{ code: 'de', name: 'Deutsch', flag: 'germany' },
-		{ code: 'ru', name: 'Русский', flag: 'russia' },
-		{ code: 'zh', name: '中文', flag: 'china' },
-		{ code: 'ar', name: 'العربية', flag: 'saudi' },
-		{ code: 'eu', name: 'Euskera', flag: 'basque' },
-		{ code: 'ca', name: 'Català', flag: 'catalonia' },
-		{ code: 'gl', name: 'Galego', flag: 'galicia' }
+		{ code: 'ar', name: 'العربية', flag: 'saudi' },      // Arabiya
+		{ code: 'ca', name: 'Català', flag: 'catalonia' },   // Catala  
+		{ code: 'de', name: 'Deutsch', flag: 'germany' },    // Deutsch
+		{ code: 'en', name: 'English', flag: 'uk' },         // English
+		{ code: 'es', name: 'Español', flag: 'spain' },      // Espanol
+		{ code: 'eu', name: 'Euskera', flag: 'basque' },     // Euskera
+		{ code: 'fr', name: 'Français', flag: 'france' },    // Francais
+		{ code: 'gl', name: 'Galego', flag: 'galicia' },     // Galego
+		{ code: 'hi', name: 'हिंदी', flag: 'india' },         // Hindi
+		{ code: 'ja', name: '日本語', flag: 'japan' },         // Nihongo
+		{ code: 'pt', name: 'Português', flag: 'portugal' }, // Portugues
+		{ code: 'ru', name: 'Русский', flag: 'russia' },     // Russkiy
+		{ code: 'zh', name: '中文', flag: 'china' }           // Zhongwen
 	];
 
 	// Find language object by code
