@@ -226,13 +226,13 @@
 								id="generated-value"
 								readonly
 								value={$isLoading ? $_('common.loading') + '...' : $resultState.value}
-								class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-{color}-500 focus:border-{color}-500 min-h-[100px] {$isLoading ? 'text-gray-500 dark:text-gray-400' : ''}"
+								class="w-full p-4 pb-12 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-{color}-500 focus:border-{color}-500 min-h-[100px] {$isLoading ? 'text-gray-500 dark:text-gray-400' : ''}"
 								onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
 							></textarea>
 							{#if !$isLoading}
 								<button
 									onclick={copyToClipboard}
-									class="absolute top-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
+									class="absolute bottom-3 right-3 px-3 py-1.5 bg-{color}-600 hover:bg-{color}-700 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center gap-1"
 									class:bg-green-600={copySuccess}
 									class:hover:bg-green-700={copySuccess}
 								>
@@ -246,13 +246,6 @@
 							</button>
 						{/if}
 						</div>
-						<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-							{#if $isLoading}
-								{$_('common.waitGenerating')}
-							{:else}
-								{$_('common.clickToSelect')}
-							{/if}
-						</p>
 					</div>
 
 					<!-- Metadata -->

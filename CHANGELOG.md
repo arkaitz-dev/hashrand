@@ -11,6 +11,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.9.0] - 2025-08-21
+
+### Web Interface Changes (v0.9.0)
+#### Added
+- **🎭 Advanced RTL Transition System**: Smooth fade effects for language direction changes
+  - **Visual Fade Transitions**: Top controls container fades out/in (1.5s duration) when switching between LTR/RTL languages
+  - **Seamless Direction Changes**: Controls smoothly transition from right corner (LTR) to left corner (RTL)
+  - **No Layout Jumps**: Prevents jarring visual changes during language/direction switches
+- **🎨 Unified Top Controls Container**: Complete consolidation of theme and language controls
+  - **Single Container Component**: New `TopControls.svelte` combines both theme toggle and language selector
+  - **Cohesive Visual Design**: Gray semi-transparent background (`bg-gray-200/90`) with backdrop blur effect
+  - **Responsive Positioning**: Compact margins for mobile (2px from edges), standard for desktop (16px)
+  - **Professional Box Design**: Rounded corners, subtle shadow, discrete border for elegant appearance
+- **⚡ Differentiated Transition Speeds**: Advanced animation system for optimal user experience
+  - **Background Transitions**: Slow 0.75s transitions for button background colors, shadows, and borders
+  - **Icon Transitions**: Fast 0.15s transitions for icon changes (theme: sun/moon, language: flag changes)
+  - **Perfect Balance**: Immediate feedback for content changes, elegant transitions for visual states
+
+#### Enhanced
+- **📱 Mobile-First Design**: Optimized spacing and positioning for all screen sizes
+  - **Compact Mobile Layout**: 2px margins from screen edges on mobile devices
+  - **Enlarged Icons**: Language flag icons increased to `w-12 h-12` (48px) for better visibility and touch interaction
+  - **Optimized Container Size**: 4px internal padding for perfect icon-to-container ratio
+  - **Consistent Cross-Platform**: Maintains professional appearance across all device types
+- **🌐 RTL/LTR Language Support**: Enhanced internationalization with visual consistency
+  - **Smart Positioning**: Container automatically moves between corners based on text direction
+  - **Proper Dropdown Alignment**: Language dropdown correctly positioned for both RTL and LTR modes
+  - **Seamless Integration**: All 13 languages maintain consistent visual experience
+- **🎯 Result Page UX Improvements**: Enhanced user interaction patterns
+  - **Optimized Copy Button**: Moved to bottom-right corner of result textarea for better ergonomics
+  - **Reduced UI Movement**: Eliminated instructional text that caused layout shifts during loading states
+  - **Consistent Visual Height**: Result area maintains stable dimensions during all state changes
+  - **Improved Accessibility**: Copy functionality only visible when results are available
+
+#### Fixed
+- **🔧 TypeScript Build Warnings**: Resolved SvelteKit configuration issues
+  - **Missing Base Config**: Fixed `Cannot find base config file "./.svelte-kit/tsconfig.json"` warning
+  - **Automatic Sync**: Build process now includes `npx svelte-kit sync` to generate required config files
+  - **Clean Builds**: Development workflow now produces zero warnings during compilation
+- **🐛 Component Integration Issues**: Resolved conflicts between individual positioning systems
+  - **Eliminated Positioning Conflicts**: Removed individual absolute positioning from theme/language components
+  - **Centralized Control**: Single container manages all positioning logic for consistency
+  - **RTL Button Visibility**: Fixed issue where theme toggle disappeared in RTL mode due to flex ordering
+
+#### Technical Implementation
+- **Component Architecture**: Revolutionary approach to control grouping
+  - **Self-Contained Logic**: All theme and language functionality consolidated in single component
+  - **No External Dependencies**: Eliminated complex interactions between separate positioned components
+  - **State Management**: Integrated state handling for both theme switching and language selection
+  - **Event Coordination**: Unified click-outside handling and dropdown management
+- **Advanced CSS Transitions**: Sophisticated animation system
+  - **Selective Property Transitions**: Independent control over colors, shadows, borders, and transforms
+  - **Optimal Duration Mapping**: Different durations for different types of visual changes
+  - **Smooth Performance**: Hardware-accelerated transforms and optimized transition properties
+- **Responsive Design System**: Mobile-first approach with breakpoint optimization
+  - **Fluid Spacing**: Seamless scaling from mobile (2px) to desktop (16px) margins
+  - **Touch Optimization**: Larger touch targets and improved spacing for mobile interaction
+  - **Progressive Enhancement**: Enhanced features for larger screens while maintaining mobile functionality
+
+---
+
 ## [API v1.0.0 / Web v0.8.0] - 2025-08-20
 
 ### Web Interface Changes (v0.8.0)
@@ -479,6 +540,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.9.0]** (2025-08-21) - Advanced RTL transition system, unified top controls container, and enhanced mobile UX
 - **[API v1.0.0 / Web v0.8.0]** (2025-08-20) - Complete translation system restoration with 13 languages and language selector UI improvements
 - **[API v1.0.0 / Web v0.7.0]** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration
 - **[API v1.0.0 / Web v0.6.0]** (2025-08-20) - Language selector component with flag icons and Svelte 5 runes compatibility

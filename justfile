@@ -11,7 +11,7 @@ build:
     echo "Building WebAssembly component..."
     spin-cli build
     echo "Building web interface..."
-    cd web && npm run build
+    cd web && npx svelte-kit sync && npm run build
 
 # Start the application locally
 up:

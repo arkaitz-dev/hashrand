@@ -251,7 +251,7 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.8.0)
+## Current State (v0.9.0)
 
 The application now includes:
 - **Complete Internationalization**: Full i18n system with 11 languages ready

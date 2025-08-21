@@ -4,7 +4,7 @@
 </script>
 
 <button
-	class="theme-toggle absolute top-4 right-4 z-50 p-2 rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-all duration-200 transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9"
+	class="p-2 rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-all duration-200 transform hover:scale-105 focus:outline-none flex items-center justify-center w-12 h-12"
 	onclick={toggleTheme}
 	aria-label={$theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
 	title={$theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
