@@ -4,8 +4,9 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import Button from '$lib/components/Button.svelte';
-	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
+	// import Button from '$lib/components/Button.svelte';
+	import Iconize from '$lib/components/Iconize.svelte';
+	import { setResult, setLoading, setError, isLoading, resultState, clearResult } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
 
@@ -61,6 +62,7 @@
 			setLoading(false);
 		}
 	}
+
 
 	// Initialize params based on navigation source
 	onMount(() => {
@@ -197,15 +199,21 @@
 							{/if}
 						</button>
 						
-						<!-- RTL-aware back to menu button -->
-						<Button
+						<!-- RTL-aware back to menu button with Iconize -->
+						<button
+							type="button"
 							onclick={() => goto('/')}
 							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-							icon="briefcase"
-							iconSize="w-5 h-5"
 						>
-							{$_('common.backToMenu')}
-						</Button>
+							<Iconize 
+								conf={{
+									icon: "briefcase",
+									iconSize: "w-5 h-5"
+								}}
+							>
+								{$_('common.backToMenu')}
+							</Iconize>
+						</button>
 					</div>
 				</form>
 			</div>

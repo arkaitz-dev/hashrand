@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { navigationItems } from '$lib/stores/navigation';
-	import { clearResult } from '$lib/stores/result';
+	import { clearResult, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import Icon from '$lib/components/Icon.svelte';

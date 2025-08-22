@@ -70,9 +70,9 @@
 	Future enhancement could detect single HTML elements and inject icons directly.
 	This covers both cases: text content and HTML elements.
 -->
-<!-- Container with debug info outside -->
-<span class="inline-block">
-	<span class={wrapperClasses}>
+<!-- Container - use div to avoid span issues with button events -->
+<div class="inline-block">
+	<div class={wrapperClasses}>
 		<!-- Icon or Emoji - let flexbox handle RTL automatically -->
 		{#if useEmoji}
 			<span 
@@ -89,10 +89,7 @@
 			/>
 		{/if}
 		
-		<!-- Slot content -->
-		<span>
-			<slot />
-		</span>
-	</span>
-	
-</span>
+		<!-- Slot content - remove wrapper span that might interfere with events -->
+		<slot />
+	</div>
+</div>

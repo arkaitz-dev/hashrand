@@ -90,15 +90,13 @@ export const en: I18nTexts = {
 		alphabet: 'Character Set',
 		standardAlphanumericDescription: 'Standard alphanumeric (62 chars)',
 		noConfusingDescription: 'No confusing letters (49 chars)',
-		formatNote: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random letters generated (prefix not counted).',
-		securityWarning: 'Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.',
+		formatNotice: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random letters generated (prefix not counted).',
+		securityNotice: 'Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.',
 		randomCharacters: 'random characters using',
 		noLookAlikeAlphabet: '(easy to type)',
 		fullAlphanumericAlphabet: '(maximum compatibility)',
 		noLookAlikeNote: 'No Look-alike excludes confusing characters. Minimum {0} characters for equivalent security.',
 		fullAlphanumericNote: 'Full alphanumeric provides maximum compatibility. Minimum {0} characters for strong security.',
-		formatNotice: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random characters generated (prefix not counted).',
-		securityNotice: 'Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.',
 		failedToGenerateApiKey: 'Failed to generate API key'
 	},
 	alphabets: {

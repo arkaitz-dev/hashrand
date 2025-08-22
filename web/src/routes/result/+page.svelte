@@ -5,7 +5,8 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import Button from '$lib/components/Button.svelte';
+	// import Button from '$lib/components/Button.svelte';
+	import Iconize from '$lib/components/Iconize.svelte';
 	import { resultState, error, setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { _, currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
@@ -247,14 +248,19 @@
 							></textarea>
 							{#if !$isLoading}
 								<!-- RTL-aware copy button -->
-								<Button
+								<button
 									onclick={copyToClipboard}
 									class="absolute bottom-3 {$isRTL ? 'left-3' : 'right-3'} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySuccess ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}"
-									icon={copySuccess ? "check" : "copy"}
-									iconSize="w-3 h-3"
 								>
-									{copySuccess ? $_('common.copied') : $_('common.copy')}
-								</Button>
+									<Iconize 
+										conf={{
+											icon: copySuccess ? "check" : "copy",
+											iconSize: "w-3 h-3"
+										}}
+									>
+										{copySuccess ? $_('common.copied') : $_('common.copy')}
+									</Iconize>
+								</button>
 							{/if}
 						</div>
 					</div>
@@ -332,33 +338,51 @@
 				<!-- Actions -->
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<!-- RTL-aware regenerate button -->
-					<Button
+					<button
 						onclick={regenerateHash}
 						disabled={$isLoading}
 						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'}"
-						icon="refresh"
-						iconClass={$isLoading ? 'animate-spin-fast' : ''}
 					>
-						{$_('common.generateAnother')}
-					</Button>
+						<Iconize 
+							conf={{
+								icon: "refresh",
+								iconClass: $isLoading ? 'animate-spin-fast' : '',
+								iconSize: "w-4 h-4"
+							}}
+						>
+							{$_('common.generateAnother')}
+						</Iconize>
+					</button>
 					
 					<!-- RTL-aware adjust settings button -->
-					<Button
+					<button
 						onclick={() => goto(getPreviousPath())}
 						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
-						icon="settings"
 					>
-						{$_('common.adjustSettings')}
-					</Button>
+						<Iconize 
+							conf={{
+								icon: "settings",
+								iconSize: "w-4 h-4"
+							}}
+						>
+							{$_('common.adjustSettings')}
+						</Iconize>
+					</button>
 					
 					<!-- RTL-aware back to menu button -->
-					<Button
+					<button
 						onclick={() => goto('/')}
 						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
-						icon="briefcase"
 					>
-						{$_('common.backToMenu')}
-					</Button>
+						<Iconize 
+							conf={{
+								icon: "briefcase",
+								iconSize: "w-4 h-4"
+							}}
+						>
+							{$_('common.backToMenu')}
+						</Iconize>
+					</button>
 				</div>
 			</div>
 			
