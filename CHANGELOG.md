@@ -11,6 +11,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.11.0] - 2025-08-22
+
+### Web Interface Changes (v0.11.0)
+#### Added
+- **🔧 Universal Iconize Component**: Revolutionary RTL-aware wrapper for any content with automatic icon positioning
+  - **Universal Wrapper**: Works with any content - plain text, HTML elements, or complex components
+  - **Smart RTL Behavior**: Automatically positions icons correctly for LTR and RTL languages
+    - **LTR**: `[icon][text]` - Icon appears on the left (start position)
+    - **RTL**: `[text][icon]` - Icon appears on the right (end position) 
+  - **Dual Icon Support**: Supports both SVG sprite icons and Unicode emojis
+    - **Sprite Icons**: `<Iconize conf={{icon: "arrow-right"}}>Choose</Iconize>`
+    - **Emoji Support**: `<Iconize conf={{emoji: "🎲"}}>Custom Hash Generator</Iconize>`
+  - **RTL-Specific Icons**: Different icons for RTL mode with `rtlIcon` property
+    - Example: `arrow-right` in LTR becomes `arrow-left` in RTL for proper visual flow
+  - **Zero Configuration RTL**: Uses HTML `dir="rtl"` and Tailwind's automatic flexbox behavior
+  - **KISS Principle**: Simple implementation using native browser RTL behavior instead of complex CSS order logic
+
+#### Enhanced
+- **🎯 Menu Interface**: Complete migration to Iconize component
+  - **All Card Titles**: Custom, Password, and API Key cards now use Iconize with their respective emojis
+    - 🎲 Custom Hash Generator with automatic RTL positioning
+    - 🔐 Secure Password with proper icon placement
+    - 🔑 API Key with consistent RTL behavior
+  - **Unified Experience**: All menu cards now have consistent RTL-aware icon behavior
+  - **Simplified Code**: Eliminated complex conditional RTL logic in favor of automatic behavior
+
+#### Technical Implementation
+- **Flexbox RTL Integration**: Leverages Tailwind CSS and HTML `dir` attribute for automatic RTL behavior
+  - **No Manual Order**: Eliminates need for CSS `order-1`/`order-2` classes
+  - **Native Browser Support**: Uses browser's built-in RTL handling capabilities
+  - **Tailwind 4.0 Compatible**: Works seamlessly with modern Tailwind RTL features
+- **Component Architecture**: Clean, composable design following single responsibility principle
+  - **Flexible Configuration**: Supports icon size, spacing, classes, and RTL-specific options
+  - **Type-Safe**: Full TypeScript support with proper interface definitions
+  - **Reusable**: Can wrap any content while maintaining semantic HTML structure
+- **Performance Optimized**: Minimal overhead with automatic browser-native RTL handling
+
+#### Fixed
+- **🔧 RTL Icon Positioning**: Resolved complex CSS order issues with browser-native solution
+  - **Problem**: Previous attempts using `order-1`/`order-2` classes had compilation issues
+  - **Root Cause**: Tailwind wasn't compiling dynamically generated order classes
+  - **Solution**: Switched to HTML `dir="rtl"` approach for automatic flexbox behavior
+  - **Result**: Perfect RTL behavior with zero configuration and no CSS complexity
+
+---
+
 ## [API v1.0.0 / Web v0.10.0] - 2025-08-21
 
 ### Web Interface Changes (v0.10.0)

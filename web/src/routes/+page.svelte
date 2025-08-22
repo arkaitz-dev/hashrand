@@ -6,6 +6,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import Icon from '$lib/components/Icon.svelte';
+	import Iconize from '$lib/components/Iconize.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import type { VersionResponse } from '$lib/types';
 
@@ -66,18 +67,12 @@
 					aria-label="{$_('common.navigateTo')} {getTranslatedTitle(item.id)}"
 				>
 					<div class="p-6">
-						<div class="flex items-center mb-4">
-							{#if $isRTL}
-								<span class="text-3xl ml-3">{item.icon}</span>
+						<div class="mb-4">
+							<Iconize conf={{emoji: item.icon, iconSize: "text-3xl", spacing: "gap-3"}}>
 								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 									{getTranslatedTitle(item.id)}
 								</h2>
-							{:else}
-								<span class="text-3xl mr-3">{item.icon}</span>
-								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-									{getTranslatedTitle(item.id)}
-								</h2>
-							{/if}
+							</Iconize>
 						</div>
 						<p class="text-gray-600 dark:text-gray-300 leading-relaxed">
 							{getTranslatedDescription(item.id)}

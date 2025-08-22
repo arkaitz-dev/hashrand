@@ -29,10 +29,11 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **🖼️ Optimized Icons**: SVG sprite system for fast loading and consistent UI
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages
+  - **Universal Iconize Component**: Revolutionary RTL-aware wrapper for any content
   - **Smart RTL Buttons**: Automatic icon positioning for right-to-left languages
   - **Language Ordering**: Alphabetically organized by native language names
   - **Seamless Direction Changes**: Smooth transitions between text directions
-  - **Universal RTL**: Built-in RTL support - never manually handle text direction
+  - **Zero-Config RTL**: Built-in RTL support using browser-native behavior - never manually handle text direction
 
 ## API Endpoints
 
@@ -95,7 +96,7 @@ GET /api/version
 ```json
 {
   "api_version": "1.0.0",
-  "ui_version": "0.9.0"
+  "ui_version": "0.11.0"
 }
 ```
 
@@ -307,6 +308,7 @@ hashrand-spin/
 │   │   │   ├── components/    # Reusable Svelte components
 │   │   │   │   ├── BackButton.svelte    # Navigation component
 │   │   │   │   ├── Icon.svelte          # SVG icon sprite component
+│   │   │   │   ├── Iconize.svelte       # Universal RTL-aware icon wrapper
 │   │   │   │   ├── LoadingSpinner.svelte # Loading animation
 │   │   │   │   └── ThemeToggle.svelte   # Dark/light mode toggle
 │   │   │   ├── stores/        # State management stores
