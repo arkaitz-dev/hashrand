@@ -34,6 +34,12 @@ function DateTimeLocalized($$payload, $$props) {
     second: "2-digit"
   };
   const formattedTimestamp = (() => {
+    const getTimeString = (date) => {
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    };
     if (store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage) === "eu") {
       const euskeraMonths = [
         "urtarril",
@@ -52,10 +58,37 @@ function DateTimeLocalized($$payload, $$props) {
       const year = timestamp.getFullYear();
       const monthName = euskeraMonths[timestamp.getMonth()];
       const day = timestamp.getDate();
-      const hours = String(timestamp.getHours()).padStart(2, "0");
-      const minutes = String(timestamp.getMinutes()).padStart(2, "0");
-      const seconds = String(timestamp.getSeconds()).padStart(2, "0");
-      return `${year}ko ${monthName}ak ${day}, ${hours}:${minutes}:${seconds}`;
+      const timeString = getTimeString(timestamp);
+      return `${year}ko ${monthName}ak ${day}, ${timeString}`;
+    }
+    if (store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage) === "gl") {
+      const galegoMonths = [
+        "xan.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "mai.",
+        "xuñ.",
+        "xul.",
+        "ago.",
+        "set.",
+        "out.",
+        "nov.",
+        "dec."
+      ];
+      try {
+        const result = new Intl.DateTimeFormat("gl-ES", options || defaultOptions).format(timestamp);
+        if (result.includes("Jan") || result.includes("Feb") || result.includes("Mar")) {
+          throw new Error("Intl fallback needed");
+        }
+        return result;
+      } catch {
+        const year = timestamp.getFullYear();
+        const monthName = galegoMonths[timestamp.getMonth()];
+        const day = timestamp.getDate();
+        const timeString = getTimeString(timestamp);
+        return `${day} ${monthName} ${year}, ${timeString}`;
+      }
     }
     const localeMap = {
       en: "en-US",
@@ -74,9 +107,50 @@ function DateTimeLocalized($$payload, $$props) {
     const locale = localeMap[store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage)] || "en-US";
     const formatOptions = options || defaultOptions;
     try {
-      return new Intl.DateTimeFormat(locale, formatOptions).format(timestamp);
+      const formatter = new Intl.DateTimeFormat(locale, formatOptions);
+      const result = formatter.format(timestamp);
+      if (locale !== "en-US" && locale !== "en-GB") {
+        const englishMonths = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+          "January",
+          "February",
+          "March",
+          "April",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December"
+        ];
+        const hasEnglishMonth = englishMonths.some((month) => result.includes(month));
+        if (hasEnglishMonth) {
+          throw new Error("Locale not properly supported, falling back");
+        }
+      }
+      return result;
     } catch {
-      return new Intl.DateTimeFormat("en-US", formatOptions).format(timestamp);
+      try {
+        return new Intl.DateTimeFormat("en-US", formatOptions).format(timestamp);
+      } catch {
+        const year = timestamp.getFullYear();
+        const month = String(timestamp.getMonth() + 1).padStart(2, "0");
+        const day = String(timestamp.getDate()).padStart(2, "0");
+        const timeString = getTimeString(timestamp);
+        return `${year}-${month}-${day}, ${timeString}`;
+      }
     }
   })();
   $$payload.out.push(`<span${attr_class(clsx(wrapperClass))}>${escape_html(formattedTimestamp)}</span>`);
@@ -86,7 +160,7 @@ function DateTimeLocalized($$payload, $$props) {
 function _page($$payload, $$props) {
   push();
   var $$store_subs;
-  let getEndpointDisplayName, translateParameterKey, translateParameterValue;
+  let searchParams, usedProvidedSeed, getEndpointDisplayName, translateParameterKey, translateParameterValue;
   function getEndpointIcon(endpoint) {
     switch (endpoint) {
       case "custom":
@@ -115,7 +189,8 @@ function _page($$payload, $$props) {
         return "gray";
     }
   }
-  store_get($$store_subs ??= {}, "$page", page).url.searchParams;
+  searchParams = store_get($$store_subs ??= {}, "$page", page).url.searchParams;
+  usedProvidedSeed = searchParams.get("seed") !== null;
   getEndpointDisplayName = (endpoint) => {
     switch (endpoint) {
       case "custom":
@@ -174,7 +249,44 @@ function _page($$payload, $$props) {
     } else {
       $$payload.out.push("<!--[!-->");
     }
-    $$payload.out.push(`<!--]--></div></div> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generationDetails"))}</h3> `);
+    $$payload.out.push(`<!--]--></div></div> `);
+    if (store_get($$store_subs ??= {}, "$resultState", resultState).seed) {
+      $$payload.out.push("<!--[-->");
+      $$payload.out.push(`<div class="mb-6">`);
+      if (usedProvidedSeed) {
+        $$payload.out.push("<!--[-->");
+        $$payload.out.push(`<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"><h4 class="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedUsed") || "Seed Used")}</h4> <p class="text-xs font-mono text-blue-700 dark:text-blue-300 break-all">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).seed)}</p></div>`);
+      } else {
+        $$payload.out.push("<!--[!-->");
+        $$payload.out.push(`<label for="seed-value" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedUsed") || "Seed Used")}</label> <div class="relative"><textarea id="seed-value" readonly class="w-full p-3 pb-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-xs resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px] text-gray-600 dark:text-gray-400">`);
+        const $$body_1 = escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).seed);
+        if ($$body_1) {
+          $$payload.out.push(`${$$body_1}`);
+        }
+        $$payload.out.push(`</textarea> `);
+        if (!store_get($$store_subs ??= {}, "$isLoading", isLoading)) {
+          $$payload.out.push("<!--[-->");
+          $$payload.out.push(`<button${attr_class(`absolute bottom-2 ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "left-2" : "right-2")} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 ${stringify("bg-blue-600 hover:bg-blue-700 text-white")}`)}>`);
+          Iconize($$payload, {
+            conf: {
+              icon: "copy",
+              iconSize: "w-3 h-3"
+            },
+            children: ($$payload2) => {
+              $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.copySeed"))}`);
+            }
+          });
+          $$payload.out.push(`<!----></button>`);
+        } else {
+          $$payload.out.push("<!--[!-->");
+        }
+        $$payload.out.push(`<!--]--></div>`);
+      }
+      $$payload.out.push(`<!--]--></div>`);
+    } else {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]--> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generationDetails"))}</h3> `);
     Icon($$payload, {
       name: "chevron-down",
       size: "w-5 h-5",
@@ -209,14 +321,21 @@ function _page($$payload, $$props) {
       }
       $$payload.out.push(`<!--]-->`);
     }
-    $$payload.out.push(`<!--]--></dl></div></div> <div class="flex flex-col sm:flex-row gap-4 mt-6"><button${attr("disabled", store_get($$store_subs ??= {}, "$isLoading", isLoading), true)}${attr_class(`flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 ${stringify(store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg")}`)}>`);
-    Iconize($$payload, {
-      conf: { icon: "refresh", iconSize: "w-5 h-5" },
-      children: ($$payload2) => {
-        $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generateAnother"))}`);
-      }
-    });
-    $$payload.out.push(`<!----></button> <button class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
+    $$payload.out.push(`<!--]--></dl></div></div> <div class="flex flex-col sm:flex-row gap-4 mt-6">`);
+    if (!usedProvidedSeed) {
+      $$payload.out.push("<!--[-->");
+      $$payload.out.push(`<button${attr("disabled", store_get($$store_subs ??= {}, "$isLoading", isLoading), true)}${attr_class(`flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 ${stringify(store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg")}`)}>`);
+      Iconize($$payload, {
+        conf: { icon: "refresh", iconSize: "w-5 h-5" },
+        children: ($$payload2) => {
+          $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generateAnother"))}`);
+        }
+      });
+      $$payload.out.push(`<!----></button>`);
+    } else {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]--> <button${attr_class(`flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${stringify(usedProvidedSeed ? "w-full" : "")}`)}>`);
     Iconize($$payload, {
       conf: { icon: "settings", iconSize: "w-5 h-5" },
       children: ($$payload2) => {
@@ -232,7 +351,11 @@ function _page($$payload, $$props) {
     });
     $$payload.out.push(`<!----></button></div></div></div> `);
     Footer($$payload);
-    $$payload.out.push(`<!----></div></div>`);
+    $$payload.out.push(`<!----></div></div> `);
+    {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]-->`);
   } else {
     $$payload.out.push("<!--[!-->");
     if (store_get($$store_subs ??= {}, "$error", error)) {

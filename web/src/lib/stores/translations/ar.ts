@@ -44,7 +44,15 @@ export const ar: I18nTexts = {
 		prefixCannotExceed: 'البادئة لا يمكن أن تتجاوز 32 حرفاً',
 		suffixCannotExceed: 'اللاحقة لا يمكن أن تتجاوز 32 حرفاً',
 		yes: 'نعم',
-		no: 'لا'
+		no: 'لا',
+		seedUsed: 'البذرة المستخدمة',
+		copySeed: 'نسخ البذرة',
+		optionalSeed: 'بذرة اختيارية (64 حرف سادس عشري)',
+		seedInvalid: 'يجب أن تكون البذرة 64 حرفاً سادس عشرياً بالضبط',
+		reuseSeedTitle: 'إعادة استخدام نفس البذرة؟',
+		reuseSeedMessage: 'هل تريد إعادة استخدام نفس البذرة لتوليد نفس النتيجة، أم تفضل توليد بذرة عشوائية جديدة؟',
+		keepSameSeed: 'الاحتفاظ بنفس البذرة',
+		generateNewSeed: 'توليد بذرة جديدة'
 	},
 	menu: {
 		title: 'مولد الهاش',

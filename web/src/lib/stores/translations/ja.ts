@@ -44,7 +44,15 @@ export const ja: I18nTexts = {
 		prefixCannotExceed: 'プレフィックスは32文字を超えることはできません',
 		suffixCannotExceed: 'サフィックスは32文字を超えることはできません',
 		yes: 'はい',
-		no: 'いいえ'
+		no: 'いいえ',
+		seedUsed: '使用されたシード',
+		copySeed: 'シードをコピー',
+		optionalSeed: 'オプションのシード（64文字の16進数）',
+		seedInvalid: 'シードは正確に64文字の16進数である必要があります',
+		reuseSeedTitle: '同じシードを再利用しますか？',
+		reuseSeedMessage: '同じ結果を得るために同じシードを再利用しますか、それとも新しいランダムシードを生成することを好みますか？',
+		keepSameSeed: '同じシードを保持',
+		generateNewSeed: '新しいシードを生成'
 	},
 	menu: {
 		title: 'ハッシュ生成器',

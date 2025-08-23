@@ -21,6 +21,13 @@
 
 	// Form state - will be initialized in onMount
 	let params: ApiKeyParams = getDefaultParams();
+	let seedInput: string = ''; // Optional seed input
+
+	// Validate hex seed
+	function isValidHexSeed(seed: string): boolean {
+		if (!seed) return true; // Empty seed is valid (optional)
+		return /^[0-9a-fA-F]{64}$/.test(seed);
+	}
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
@@ -47,7 +54,8 @@
 	// Dynamic minimum length based on alphabet
 	$: minLength = params.alphabet === 'full' ? 44 : 47;
 	$: lengthValid = params.length && params.length >= minLength && params.length <= 64;
-	$: formValid = lengthValid;
+	$: seedValid = isValidHexSeed(seedInput);
+	$: formValid = lengthValid && seedValid;
 
 	function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -60,6 +68,11 @@
 		// Add generation parameters
 		urlParams.set('length', (params.length ?? 44).toString());
 		urlParams.set('alphabet', params.alphabet ?? 'full');
+
+		// Add seed if provided
+		if (seedInput && seedValid) {
+			urlParams.set('seed', seedInput);
+		}
 
 		goto(`/result?${urlParams.toString()}`);
 	}
@@ -90,6 +103,7 @@
 		// Override with URL parameters if present
 		const urlLength = searchParams.get('length');
 		const urlAlphabet = searchParams.get('alphabet');
+		const urlSeed = searchParams.get('seed');
 
 		if (urlLength) {
 			const lengthNum = parseInt(urlLength);
@@ -100,6 +114,10 @@
 
 		if (urlAlphabet && isValidApiKeyAlphabet(urlAlphabet)) {
 			params.alphabet = urlAlphabet;
+		}
+
+		if (urlSeed && isValidHexSeed(urlSeed)) {
+			seedInput = urlSeed;
 		}
 	});
 </script>
@@ -222,6 +240,31 @@
 								{$_('apiKey.formatNotice')}
 							</div>
 						</div>
+					</div>
+
+					<!-- Seed -->
+					<div>
+						<label
+							for="seed"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('common.optionalSeed')}
+						</label>
+						<textarea
+							id="seed"
+							bind:value={seedInput}
+							maxlength="64"
+							rows="2"
+							placeholder={$_('common.optionalSeed')}
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white font-mono text-xs resize-none {!seedValid
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: ''}"
+						/>
+						{#if !seedValid}
+							<p class="text-red-500 text-sm mt-1">
+								{$_('common.seedInvalid')}
+							</p>
+						{/if}
 					</div>
 
 					<!-- Security Notice -->

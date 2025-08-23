@@ -43,7 +43,15 @@ export const de: I18nTexts = {
 		optionalPrefix: 'Optionales Präfix',
 		optionalSuffix: 'Optionales Suffix',
 		prefixCannotExceed: 'Das Präfix darf 32 Zeichen nicht überschreiten',
-		suffixCannotExceed: 'Das Suffix darf 32 Zeichen nicht überschreiten'
+		suffixCannotExceed: 'Das Suffix darf 32 Zeichen nicht überschreiten',
+		seedUsed: 'Verwendeter Seed',
+		copySeed: 'Seed Kopieren',
+		optionalSeed: 'Optionaler Seed (64 Hex-Zeichen)',
+		seedInvalid: 'Seed muss genau 64 hexadezimale Zeichen haben',
+		reuseSeedTitle: 'Denselben Seed wiederverwenden?',
+		reuseSeedMessage: 'Möchten Sie denselben Seed wiederverwenden, um das gleiche Ergebnis zu erhalten, oder bevorzugen Sie es, einen neuen zufälligen Seed zu generieren?',
+		keepSameSeed: 'Denselben Seed behalten',
+		generateNewSeed: 'Neuen Seed generieren'
 	},
 	menu: {
 		title: 'Hash-Generator',

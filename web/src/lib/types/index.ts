@@ -21,6 +21,34 @@ export interface ApiKeyParams {
 	raw?: boolean;
 }
 
+// POST request body for seeded generation
+export interface SeedGenerateRequest {
+	length?: number;
+	alphabet?: AlphabetType;
+	prefix?: string;
+	suffix?: string;
+	seed: string; // 64-character hexadecimal string
+	endpoint: string; // original endpoint that was requested
+}
+
+export interface SeedPasswordRequest {
+	length?: number;
+	alphabet?: 'no-look-alike' | 'full-with-symbols';
+	seed: string; // 64-character hexadecimal string
+}
+
+export interface SeedApiKeyRequest {
+	length?: number;
+	alphabet?: 'no-look-alike' | 'full';
+	seed: string; // 64-character hexadecimal string
+}
+
+// API Response types
+export interface HashResponse {
+	hash: string;
+	seed: string;
+}
+
 export interface VersionResponse {
 	api_version: string;
 	ui_version: string;
@@ -35,9 +63,10 @@ export interface NavItem {
 	icon: string;
 }
 
-// Result state
+// Result state - updated to support both string and JSON responses
 export interface ResultState {
 	value: string;
+	seed?: string; // Hexadecimal seed when available
 	params: Record<string, string | number | boolean>;
 	endpoint: string;
 	timestamp: Date;

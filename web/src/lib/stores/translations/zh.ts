@@ -42,7 +42,15 @@ export const zh: I18nTexts = {
 		optionalPrefix: '可选前缀',
 		optionalSuffix: '可选后缀',
 		prefixCannotExceed: '前缀不能超过32个字符',
-		suffixCannotExceed: '后缀不能超过32个字符'
+		suffixCannotExceed: '后缀不能超过32个字符',
+		seedUsed: '使用的种子',
+		copySeed: '复制种子',
+		optionalSeed: '可选种子（64个十六进制字符）',
+		seedInvalid: '种子必须是64个十六进制字符',
+		reuseSeedTitle: '重用相同的种子？',
+		reuseSeedMessage: '您想重用相同的种子来生成相同的结果，还是更愿意生成新的随机种子？',
+		keepSameSeed: '保持相同的种子',
+		generateNewSeed: '生成新种子'
 	},
 	menu: {
 		title: '哈希生成器',

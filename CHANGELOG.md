@@ -11,6 +11,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.16.0] - 2025-08-23
+
+### Major New Feature: Seed-Based Deterministic Generation
+#### Added
+- **🌱 Comprehensive Seed Support**: Complete deterministic generation system for all three generators
+  - **Universal Seed Fields**: Optional 64-character hexadecimal seed input in custom, password, and api-key pages
+  - **Dual API Modes**: 
+    - **GET Requests**: Traditional random generation with auto-generated seed (existing behavior)
+    - **POST Requests**: NEW deterministic generation using provided seed
+  - **API Endpoint Enhancement**: All three endpoints now support both GET and POST methods
+    - `POST /api/custom` - Deterministic hash generation with seed
+    - `POST /api/password` - Deterministic password generation with seed  
+    - `POST /api/api-key` - Deterministic API key generation with seed
+  - **Consistent Response Format**: Both random and seeded generation return same JSON structure with hash and seed
+  - **Perfect Reproducibility**: Same seed + same parameters = exactly same result every time
+
+#### Enhanced
+- **🎯 Intelligent UI Behavior**: Smart interface adaptations for deterministic generation
+  - **Conditional UI Elements**: "Generate Another" button automatically hidden when using deterministic seeds
+  - **Smart Result Display**: 
+    - User-provided seeds displayed as informational text (non-editable)
+    - Auto-generated seeds displayed as copyable textarea for reuse
+  - **Seed Reuse Dialog**: Interactive modal when returning to settings with existing seed
+    - **User Choice**: "Keep Same Seed" vs "Generate New Seed" options
+    - **Styled Dialog**: Professional modal with transparent background and centered buttons
+    - **Keyboard Support**: Escape key closes dialog, full accessibility
+    - **13-Language Support**: Complete translations for dialog and buttons
+- **🔧 API Architecture Improvements**: Enhanced backend to support dual-mode generation
+  - **Method-Based Routing**: GET for random, POST for deterministic generation
+  - **Seed Validation**: Server-side validation of 64-character hexadecimal seeds
+  - **Parameter Integration**: JSON body parameters seamlessly integrated with existing validation
+  - **Error Handling**: Comprehensive error responses for invalid seeds or parameters
+
+#### Technical Implementation
+- **Frontend Integration**: Complete TypeScript integration with new API methods
+  - **New API Services**: `generatePasswordWithSeed()`, `generateApiKeyWithSeed()` methods
+  - **Type Safety**: New interfaces `SeedPasswordRequest`, `SeedApiKeyRequest`
+  - **Form Enhancement**: Seed validation with real-time feedback (red borders, error messages)
+  - **URL Parameter Support**: Seeds passed as URL parameters maintain full functionality
+- **Backend Architecture**: Elegant dual-mode handler system
+  - **Request Routing**: Single handlers manage both GET and POST for each endpoint
+  - **Code Reuse**: Shared generation logic between random and seeded modes  
+  - **Hex Seed Parsing**: Robust conversion from hex string to 32-byte seed array
+  - **Unified Response**: Both modes return consistent JSON with hash and seed fields
+
+#### User Experience Benefits
+- **🎯 Reproducible Testing**: Perfect for demonstrations, testing, and development workflows
+- **📋 Audit Trails**: Complete traceability with seed included in every response
+- **🔄 Consistent Results**: Eliminate randomness when needed for specific use cases
+- **💾 State Persistence**: Seed reuse functionality enables workflow continuity
+- **🎨 Professional UI**: Seamless integration that doesn't complicate the existing interface
+
+---
+
 ## [API v1.0.0 / Web v0.15.0] - 2025-08-23
 
 ### Web Interface Changes (v0.15.0)
@@ -942,6 +996,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.16.0]** (2025-08-23) - **MAJOR**: Comprehensive seed-based deterministic generation system for all endpoints with complete UI integration
 - **[API v1.0.0 / Web v0.15.0]** (2025-08-23) - Translation naturalness improvements across all 13 languages and enhanced DateTimeLocalized component robustness
 - **[API v1.0.0 / Web v0.14.0]** (2025-08-23) - Progressive sprite loading system with UTF placeholders, universal URL parameter support, and centralized API architecture
 - **[API v1.0.0 / Web v0.13.0]** (2025-08-23) - Comprehensive linting system (ESLint + Prettier via Vite), code quality cleanup, and unified development workflow

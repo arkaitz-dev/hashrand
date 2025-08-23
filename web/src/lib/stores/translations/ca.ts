@@ -43,7 +43,15 @@ export const ca: I18nTexts = {
 		optionalPrefix: 'Prefix opcional',
 		optionalSuffix: 'Sufix opcional',
 		prefixCannotExceed: 'El prefix no pot superar 32 caràcters',
-		suffixCannotExceed: 'El sufix no pot superar 32 caràcters'
+		suffixCannotExceed: 'El sufix no pot superar 32 caràcters',
+		seedUsed: 'Llavor Utilitzada',
+		copySeed: 'Copiar Llavor',
+		optionalSeed: 'Llavor opcional (64 caràcters hex)',
+		seedInvalid: 'La llavor ha de tenir exactament 64 caràcters hexadecimals',
+		reuseSeedTitle: 'Reutilitzar la mateixa llavor?',
+		reuseSeedMessage: 'Voleu reutilitzar la mateixa llavor per generar el mateix resultat, o preferiu generar una nova llavor aleatòria?',
+		keepSameSeed: 'Mantenir la mateixa llavor',
+		generateNewSeed: 'Generar nova llavor'
 	},
 	menu: {
 		title: 'Generador de Hash',

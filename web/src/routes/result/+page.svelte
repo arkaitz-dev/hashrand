@@ -20,9 +20,12 @@
 	import { isRTL } from '$lib/stores/rtl';
 
 	let copySuccess = false;
+	let copySeedSuccess = false;
 	let copyTimeout: ReturnType<typeof setTimeout>;
+	let copySeedTimeout: ReturnType<typeof setTimeout>;
 	let showGenerationDetails = false; // Collapsed by default on mobile
 	let showParametersUsed = false; // Collapsed by default on mobile
+	let showSeedDialog = false; // Custom dialog for seed reuse
 
 	function toggleGenerationDetails() {
 		showGenerationDetails = !showGenerationDetails;
@@ -34,6 +37,9 @@
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
+	
+	// Detect if we arrived with a provided seed (deterministic generation)
+	$: usedProvidedSeed = searchParams.get('seed') !== null;
 
 	// Handle result state and API calls
 	onMount(async () => {
@@ -71,33 +77,85 @@
 			const alphabet = searchParams.get('alphabet');
 			const prefix = searchParams.get('prefix');
 			const suffix = searchParams.get('suffix');
+			const inputSeed = searchParams.get('seed');
 
 			if (length) params.length = parseInt(length);
 			if (alphabet) params.alphabet = alphabet;
 			if (prefix) params.prefix = prefix;
 			if (suffix) params.suffix = suffix;
 
-			let result: string;
+			let response: string | import('$lib/types').HashResponse;
 
-			// Call the appropriate API method based on endpoint
-			switch (endpoint) {
-				case 'custom':
-				case 'generate':
-					result = await api.generate(params);
-					break;
-				case 'password':
-					result = await api.generatePassword(params);
-					break;
-				case 'api-key':
-					result = await api.generateApiKey(params);
-					break;
-				default:
+			// If we have a seed, use POST to the appropriate endpoint
+			if (inputSeed) {
+				if (endpoint === 'custom' || endpoint === 'generate') {
+					// Build seed request with only relevant params
+					const customSeedRequest = {
+						seed: inputSeed,
+						endpoint
+					} as import('$lib/types').SeedGenerateRequest;
+					
+					if (params.length) customSeedRequest.length = params.length as number;
+					if (params.alphabet) customSeedRequest.alphabet = params.alphabet as import('$lib/types').AlphabetType;
+					if (params.prefix) customSeedRequest.prefix = params.prefix as string;
+					if (params.suffix) customSeedRequest.suffix = params.suffix as string;
+					
+					response = await api.generateWithSeed(customSeedRequest);
+				} else if (endpoint === 'password') {
+					const passwordSeedRequest = {
+						seed: inputSeed
+					} as import('$lib/types').SeedPasswordRequest;
+					
+					if (params.length) passwordSeedRequest.length = params.length as number;
+					if (params.alphabet) passwordSeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full-with-symbols';
+					
+					response = await api.generatePasswordWithSeed(passwordSeedRequest);
+				} else if (endpoint === 'api-key') {
+					const apiKeySeedRequest = {
+						seed: inputSeed
+					} as import('$lib/types').SeedApiKeyRequest;
+					
+					if (params.length) apiKeySeedRequest.length = params.length as number;
+					if (params.alphabet) apiKeySeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full';
+					
+					response = await api.generateApiKeyWithSeed(apiKeySeedRequest);
+				} else {
 					throw new Error($_('common.unknownEndpoint'));
+				}
+			} else {
+				// Call the appropriate API method based on endpoint
+				switch (endpoint) {
+					case 'custom':
+					case 'generate':
+						response = await api.generate(params);
+						break;
+					case 'password':
+						response = await api.generatePassword(params);
+						break;
+					case 'api-key':
+						response = await api.generateApiKey(params);
+						break;
+					default:
+						throw new Error($_('common.unknownEndpoint'));
+				}
+			}
+
+			// Handle both string and JSON responses
+			let value: string;
+			let seed: string | undefined;
+
+			if (typeof response === 'string') {
+				value = response;
+				seed = undefined;
+			} else {
+				value = response.hash;
+				seed = response.seed;
 			}
 
 			// Set the result state
 			setResult({
-				value: result,
+				value,
+				seed,
 				params,
 				endpoint,
 				timestamp: new Date()
@@ -138,6 +196,39 @@
 				}, 2000);
 			} catch (fallbackErr) {
 				console.error('Fallback copy failed:', fallbackErr);
+			}
+		}
+	}
+
+	async function copySeedToClipboard() {
+		if (!$resultState?.seed) return;
+
+		try {
+			await navigator.clipboard.writeText($resultState.seed);
+			copySeedSuccess = true;
+
+			// Clear success state after 2 seconds
+			clearTimeout(copySeedTimeout);
+			copySeedTimeout = setTimeout(() => {
+				copySeedSuccess = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy seed:', err);
+			// Fallback for older browsers
+			try {
+				const textArea = document.createElement('textarea');
+				textArea.value = $resultState.seed;
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textArea);
+				copySeedSuccess = true;
+				clearTimeout(copySeedTimeout);
+				copySeedTimeout = setTimeout(() => {
+					copySeedSuccess = false;
+				}, 2000);
+			} catch (fallbackErr) {
+				console.error('Fallback seed copy failed:', fallbackErr);
 			}
 		}
 	}
@@ -214,6 +305,92 @@
 		return String(value);
 	};
 
+	async function handleAdjustSettings() {
+		if (!$resultState) {
+			goto('/');
+			return;
+		}
+
+		// If there's no seed, go directly without dialog
+		if (!$resultState.seed) {
+			goto(getPreviousPath());
+			return;
+		}
+
+		// Show custom dialog asking about seed reuse
+		showSeedDialog = true;
+	}
+
+	function handleSeedDialogYes() {
+		showSeedDialog = false;
+		// Include seed in the URL parameters
+		goto(getPreviousPathWithSeed());
+	}
+
+	function handleSeedDialogNo() {
+		showSeedDialog = false;
+		// Don't include seed in URL parameters
+		goto(getPreviousPath());
+	}
+
+	function closeSeedDialog() {
+		showSeedDialog = false;
+	}
+
+	// Handle keyboard events for dialog
+	function handleKeydown(event: globalThis.KeyboardEvent) {
+		if (showSeedDialog && event.key === 'Escape') {
+			closeSeedDialog();
+		}
+	}
+
+	function getPreviousPathWithSeed(): string {
+		if (!$resultState) return '/';
+
+		// Map endpoint names to actual route paths
+		const endpointRoutes: Record<string, string> = {
+			custom: '/custom',
+			generate: '/custom', // backward compatibility
+			password: '/password',
+			'api-key': '/api-key'
+		};
+
+		const basePath = endpointRoutes[$resultState.endpoint] || '/';
+
+		// Add parameters to URL including seed
+		if ($resultState.params && Object.keys($resultState.params).length > 0) {
+			const urlParams = new URLSearchParams();
+
+			// Add common parameters
+			if ($resultState.params.length) {
+				urlParams.set('length', $resultState.params.length.toString());
+			}
+			if ($resultState.params.alphabet) {
+				urlParams.set('alphabet', String($resultState.params.alphabet));
+			}
+
+			// Add endpoint-specific parameters
+			if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
+				if ($resultState.params.prefix) {
+					urlParams.set('prefix', String($resultState.params.prefix));
+				}
+				if ($resultState.params.suffix) {
+					urlParams.set('suffix', String($resultState.params.suffix));
+				}
+			}
+
+			// Add seed if available
+			if ($resultState.seed) {
+				urlParams.set('seed', $resultState.seed);
+			}
+
+			const queryString = urlParams.toString();
+			return queryString ? `${basePath}?${queryString}` : basePath;
+		}
+
+		return basePath;
+	}
+
 	function getPreviousPath(): string {
 		if (!$resultState) return '/';
 
@@ -261,31 +438,45 @@
 
 		// Reset copy success state immediately
 		copySuccess = false;
+		copySeedSuccess = false;
 		setLoading(true);
 
 		try {
 			const { api } = await import('$lib/api');
-			let result: string;
+			let response: string | import('$lib/types').HashResponse;
 
 			// Call the appropriate API method based on endpoint
 			switch ($resultState.endpoint) {
 				case 'custom':
 				case 'generate':
-					result = await api.generate($resultState.params);
+					response = await api.generate($resultState.params);
 					break;
 				case 'password':
-					result = await api.generatePassword($resultState.params);
+					response = await api.generatePassword($resultState.params);
 					break;
 				case 'api-key':
-					result = await api.generateApiKey($resultState.params);
+					response = await api.generateApiKey($resultState.params);
 					break;
 				default:
 					throw new Error($_('common.unknownEndpoint'));
 			}
 
+			// Handle both string and JSON responses
+			let value: string;
+			let seed: string | undefined;
+
+			if (typeof response === 'string') {
+				value = response;
+				seed = undefined;
+			} else {
+				value = response.hash;
+				seed = response.seed;
+			}
+
 			// Update result with new value but keep same parameters and endpoint
 			setResult({
-				value: result,
+				value,
+				seed,
 				params: $resultState.params,
 				endpoint: $resultState.endpoint,
 				timestamp: new Date()
@@ -293,6 +484,7 @@
 
 			// Reset copy success state
 			copySuccess = false;
+			copySeedSuccess = false;
 		} catch (error) {
 			setError(error instanceof Error ? error.message : $_('common.failedToRegenerate'));
 		} finally {
@@ -304,6 +496,8 @@
 <svelte:head>
 	<title>{$_('common.result')}</title>
 </svelte:head>
+
+<svelte:window on:keydown={handleKeydown} />
 
 {#if $resultState}
 	{@const color = getEndpointColor($resultState.endpoint)}
@@ -370,6 +564,60 @@
 							{/if}
 						</div>
 					</div>
+
+					<!-- Seed Display (when available) -->
+					{#if $resultState.seed}
+						<div class="mb-6">
+							{#if usedProvidedSeed}
+								<!-- Seed as informational text when provided by user -->
+								<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+									<h4 class="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+										{$_('common.seedUsed') || 'Seed Used'}
+									</h4>
+									<p class="text-xs font-mono text-blue-700 dark:text-blue-300 break-all">
+										{$resultState.seed}
+									</p>
+								</div>
+							{:else}
+								<!-- Seed with copy functionality when auto-generated -->
+								<label
+									for="seed-value"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+								>
+									{$_('common.seedUsed') || 'Seed Used'}
+								</label>
+								<div class="relative">
+									<textarea
+										id="seed-value"
+										readonly
+										value={$resultState.seed}
+										class="w-full p-3 pb-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-xs resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px] text-gray-600 dark:text-gray-400"
+										onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
+									></textarea>
+									{#if !$isLoading}
+										<!-- RTL-aware copy seed button -->
+										<button
+											onclick={copySeedToClipboard}
+											class="absolute bottom-2 {$isRTL
+												? 'left-2'
+												: 'right-2'} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySeedSuccess
+												? 'bg-green-600 hover:bg-green-700 text-white'
+												: 'bg-blue-600 hover:bg-blue-700 text-white'}"
+										>
+											<Iconize
+												conf={{
+													icon: copySeedSuccess ? 'check' : 'copy',
+													iconSize: 'w-3 h-3'
+												}}
+											>
+												{copySeedSuccess ? $_('common.copied') : $_('common.copySeed')}
+											</Iconize>
+										</button>
+									{/if}
+								</div>
+							{/if}
+						</div>
+					{/if}
 
 					<!-- Metadata -->
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -467,28 +715,30 @@
 
 					<!-- Actions -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-6">
-						<!-- RTL-aware regenerate button -->
-						<button
-							onclick={regenerateHash}
-							disabled={$isLoading}
-							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 {$isLoading
-								? 'bg-gray-400 cursor-not-allowed'
-								: 'bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg'}"
-						>
-							<Iconize
-								conf={{
-									icon: 'refresh',
-									iconSize: 'w-5 h-5'
-								}}
+						<!-- RTL-aware regenerate button - only show if not using a provided seed -->
+						{#if !usedProvidedSeed}
+							<button
+								onclick={regenerateHash}
+								disabled={$isLoading}
+								class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 {$isLoading
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg'}"
 							>
-								{$_('common.generateAnother')}
-							</Iconize>
-						</button>
+								<Iconize
+									conf={{
+										icon: 'refresh',
+										iconSize: 'w-5 h-5'
+									}}
+								>
+									{$_('common.generateAnother')}
+								</Iconize>
+							</button>
+						{/if}
 
 						<!-- RTL-aware adjust settings button -->
 						<button
-							onclick={() => goto(getPreviousPath())}
-							class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+							onclick={handleAdjustSettings}
+							class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 {usedProvidedSeed ? 'w-full' : ''}"
 						>
 							<Iconize
 								conf={{
@@ -522,6 +772,34 @@
 			<Footer />
 		</div>
 	</div>
+
+	<!-- Seed Reuse Dialog -->
+	{#if showSeedDialog}
+		<div class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm" style="background-color: rgba(0, 0, 0, 0.15);" onclick={closeSeedDialog}>
+			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 m-4 max-w-md w-full" onclick={(e) => e.stopPropagation()}>
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+					{$_('common.reuseSeedTitle')}
+				</h3>
+				<p class="text-gray-600 dark:text-gray-300 mb-6">
+					{$_('common.reuseSeedMessage')}
+				</p>
+				<div class="flex justify-between gap-3">
+					<button
+						onclick={handleSeedDialogNo}
+						class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
+					>
+						{$_('common.generateNewSeed')}
+					</button>
+					<button
+						onclick={handleSeedDialogYes}
+						class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+					>
+						{$_('common.keepSameSeed')}
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 {:else if $error}
 	<div
 		class="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800"

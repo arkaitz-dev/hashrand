@@ -23,6 +23,7 @@
 
 	// Form state - will be initialized in onMount
 	let params: GenerateParams = getDefaultParams();
+	let seedInput: string = ''; // Optional seed input
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
@@ -56,11 +57,19 @@
 		}
 	];
 
+	// Seed validation functions
+	function isValidHexSeed(seed: string): boolean {
+		if (!seed) return true; // Empty seed is valid (optional)
+		// Must be exactly 64 characters (32 bytes in hex) and only hex characters
+		return /^[0-9a-fA-F]{64}$/.test(seed);
+	}
+
 	// Validation
 	$: lengthValid = params.length && params.length >= 2 && params.length <= 128;
 	$: prefixValid = !params.prefix || params.prefix.length <= 32;
 	$: suffixValid = !params.suffix || params.suffix.length <= 32;
-	$: formValid = lengthValid && prefixValid && suffixValid;
+	$: seedValid = isValidHexSeed(seedInput);
+	$: formValid = lengthValid && prefixValid && suffixValid && seedValid;
 
 	function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -75,6 +84,11 @@
 		urlParams.set('alphabet', params.alphabet ?? 'base58');
 		if (params.prefix) urlParams.set('prefix', params.prefix);
 		if (params.suffix) urlParams.set('suffix', params.suffix);
+		
+		// Add seed if provided
+		if (seedInput && isValidHexSeed(seedInput)) {
+			urlParams.set('seed', seedInput);
+		}
 
 		goto(`/result?${urlParams.toString()}`);
 	}
@@ -99,6 +113,7 @@
 		const urlAlphabet = searchParams.get('alphabet');
 		const urlPrefix = searchParams.get('prefix');
 		const urlSuffix = searchParams.get('suffix');
+		const urlSeed = searchParams.get('seed');
 
 		if (urlLength) {
 			const lengthNum = parseInt(urlLength);
@@ -117,6 +132,10 @@
 
 		if (urlSuffix !== null && urlSuffix.length <= 32) {
 			params.suffix = urlSuffix;
+		}
+
+		if (urlSeed && isValidHexSeed(urlSeed)) {
+			seedInput = urlSeed;
 		}
 	});
 </script>
@@ -244,6 +263,28 @@
 						/>
 						{#if !suffixValid}
 							<p class="text-red-500 text-sm mt-1">{$_('common.suffixCannotExceed')}</p>
+						{/if}
+					</div>
+
+					<!-- Seed -->
+					<div>
+						<label
+							for="seed"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('common.optionalSeed')}
+						</label>
+						<textarea
+							id="seed"
+							bind:value={seedInput}
+							maxlength="64"
+							rows="2"
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+							class:border-red-500={!seedValid}
+							placeholder={$_('common.optionalSeed')}
+						/>
+						{#if !seedValid}
+							<p class="text-red-500 text-sm mt-1">{$_('common.seedInvalid')}</p>
 						{/if}
 					</div>
 

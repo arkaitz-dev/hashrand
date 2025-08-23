@@ -44,7 +44,15 @@ export const en: I18nTexts = {
 		prefixCannotExceed: 'Prefix cannot exceed 32 letters',
 		suffixCannotExceed: 'Suffix cannot exceed 32 letters',
 		yes: 'Yes',
-		no: 'No'
+		no: 'No',
+		seedUsed: 'Seed Used',
+		copySeed: 'Copy Seed',
+		optionalSeed: 'Optional seed (64 hex characters)',
+		seedInvalid: 'Seed must be exactly 64 hexadecimal characters',
+		reuseSeedTitle: 'Reuse the same seed?',
+		reuseSeedMessage: 'Do you want to reuse the same seed to generate the same result, or do you prefer to generate a new random seed?',
+		keepSameSeed: 'Keep the same seed',
+		generateNewSeed: 'Generate new seed'
 	},
 	menu: {
 		title: 'Hash Generator',

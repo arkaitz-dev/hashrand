@@ -10,7 +10,7 @@ import { _ } from "../../../chunks/rtl.js";
 function _page($$payload, $$props) {
   push();
   var $$store_subs;
-  let alphabetOptions, minLength, lengthValid, formValid;
+  let alphabetOptions, minLength, lengthValid, seedValid, formValid;
   function getDefaultParams() {
     return {
       length: 44,
@@ -20,6 +20,10 @@ function _page($$payload, $$props) {
     };
   }
   let params = getDefaultParams();
+  let seedInput = "";
+  function isValidHexSeed(seed) {
+    return true;
+  }
   store_get($$store_subs ??= {}, "$page", page).url.searchParams;
   alphabetOptions = [
     {
@@ -35,7 +39,8 @@ function _page($$payload, $$props) {
   ];
   minLength = 44;
   lengthValid = params.length >= minLength && params.length <= 64;
-  formValid = lengthValid;
+  seedValid = isValidHexSeed();
+  formValid = lengthValid && seedValid;
   const each_array = ensure_array_like(alphabetOptions);
   head($$payload, ($$payload2) => {
     $$payload2.title = `<title>${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.title"))}</title>`;
@@ -75,7 +80,19 @@ function _page($$payload, $$props) {
     $$payload.out.push("<!--[!-->");
     $$payload.out.push(`${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.fullAlphanumericNote").replace("{0}", minLength.toString()))}`);
   }
-  $$payload.out.push(`<!--]--></p></div></div> <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"><div class="flex items-start"><span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span> <div class="text-sm text-blue-800 dark:text-blue-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.format"))}:</strong> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.formatNotice"))}</div></div></div> <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"><div class="flex items-start"><span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span> <div class="text-sm text-amber-800 dark:text-amber-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.security"))}:</strong> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.securityNotice"))}</div></div></div> <div class="flex flex-col sm:flex-row gap-4 mt-4"><button type="submit"${attr("disabled", !formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading), true)}${attr_class(`flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center ${stringify(!formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer")}`)}>`);
+  $$payload.out.push(`<!--]--></p></div></div> <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"><div class="flex items-start"><span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span> <div class="text-sm text-blue-800 dark:text-blue-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.format"))}:</strong> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.formatNotice"))}</div></div></div> <div><label for="seed" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.optionalSeed"))}</label> <textarea id="seed" maxlength="64" rows="2"${attr("placeholder", store_get($$store_subs ??= {}, "$_", _)("common.optionalSeed"))}${attr_class(`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white font-mono text-xs resize-none ${stringify(!seedValid ? "border-red-500 focus:ring-red-500 focus:border-red-500" : "")}`)}>`);
+  const $$body = escape_html(seedInput);
+  if ($$body) {
+    $$payload.out.push(`${$$body}`);
+  }
+  $$payload.out.push(`</textarea> `);
+  if (!seedValid) {
+    $$payload.out.push("<!--[-->");
+    $$payload.out.push(`<p class="text-red-500 text-sm mt-1">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedInvalid"))}</p>`);
+  } else {
+    $$payload.out.push("<!--[!-->");
+  }
+  $$payload.out.push(`<!--]--></div> <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"><div class="flex items-start"><span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span> <div class="text-sm text-amber-800 dark:text-amber-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.security"))}:</strong> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.securityNotice"))}</div></div></div> <div class="flex flex-col sm:flex-row gap-4 mt-4"><button type="submit"${attr("disabled", !formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading), true)}${attr_class(`flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center ${stringify(!formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer")}`)}>`);
   if (store_get($$store_subs ??= {}, "$isLoading", isLoading)) {
     $$payload.out.push("<!--[-->");
     LoadingSpinner($$payload, { size: "sm", class: "mr-2" });

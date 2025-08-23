@@ -1,4 +1,4 @@
-import type { GenerateParams, PasswordParams, ApiKeyParams, VersionResponse } from './types';
+import type { GenerateParams, PasswordParams, ApiKeyParams, VersionResponse, HashResponse, SeedGenerateRequest, SeedPasswordRequest, SeedApiKeyRequest } from './types';
 
 const API_BASE = '/api';
 
@@ -16,12 +16,20 @@ class ApiError extends Error {
 	}
 }
 
-async function handleResponse(response: Response): Promise<string> {
+// Handle both JSON and text responses automatically
+async function handleResponse(response: Response): Promise<string | HashResponse> {
 	if (!response.ok) {
 		const errorText = await response.text();
 		throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 	}
-	return response.text();
+
+	// Check content type to determine response format
+	const contentType = response.headers.get('content-type');
+	if (contentType?.includes('application/json')) {
+		return response.json() as Promise<HashResponse>;
+	} else {
+		return response.text();
+	}
 }
 
 async function handleJsonResponse<T>(response: Response): Promise<T> {
@@ -33,7 +41,7 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
-	async generate(params: GenerateParams): Promise<string> {
+	async generate(params: GenerateParams): Promise<string | HashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -46,7 +54,7 @@ export const api = {
 		return handleResponse(response);
 	},
 
-	async generatePassword(params: PasswordParams): Promise<string> {
+	async generatePassword(params: PasswordParams): Promise<string | HashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -57,7 +65,7 @@ export const api = {
 		return handleResponse(response);
 	},
 
-	async generateApiKey(params: ApiKeyParams): Promise<string> {
+	async generateApiKey(params: ApiKeyParams): Promise<string | HashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -71,6 +79,57 @@ export const api = {
 	async getVersion(): Promise<VersionResponse> {
 		const response = await fetch(`${API_BASE}/version`);
 		return handleJsonResponse<VersionResponse>(response);
+	},
+
+	async generateWithSeed(seedRequest: SeedGenerateRequest): Promise<HashResponse> {
+		const response = await fetch(`${API_BASE}/custom`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(seedRequest)
+		});
+		
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+		
+		return response.json() as Promise<HashResponse>;
+	},
+
+	async generatePasswordWithSeed(seedRequest: SeedPasswordRequest): Promise<HashResponse> {
+		const response = await fetch(`${API_BASE}/password`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(seedRequest)
+		});
+		
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+		
+		return response.json() as Promise<HashResponse>;
+	},
+
+	async generateApiKeyWithSeed(seedRequest: SeedApiKeyRequest): Promise<HashResponse> {
+		const response = await fetch(`${API_BASE}/api-key`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(seedRequest)
+		});
+		
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+		
+		return response.json() as Promise<HashResponse>;
 	}
 };
 

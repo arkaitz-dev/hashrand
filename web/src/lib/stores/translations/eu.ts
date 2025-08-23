@@ -42,7 +42,15 @@ export const eu: I18nTexts = {
 		optionalPrefix: 'Aukerako aurrizkia',
 		optionalSuffix: 'Aukerako atzizkia',
 		prefixCannotExceed: 'Aurrizkiak 32 hizki ezin ditu gainditu',
-		suffixCannotExceed: 'Atzizkiak 32 hizki ezin ditu gainditu'
+		suffixCannotExceed: 'Atzizkiak 32 hizki ezin ditu gainditu',
+		seedUsed: 'Erabilitako Hazia',
+		copySeed: 'Hazia Kopiatu',
+		optionalSeed: 'Aukerako hazia (64 hex karaktere)',
+		seedInvalid: 'Haziak 64 karaktere hexadezimal izan behar ditu',
+		reuseSeedTitle: 'Hazia berrerabili?',
+		reuseSeedMessage: 'Emaitza bera sortzeko hazi bera berrerabili nahi duzu, ala ausazko hazi berria sortu nahi duzu?',
+		keepSameSeed: 'Hazi bera mantendu',
+		generateNewSeed: 'Hazi berria sortu'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',

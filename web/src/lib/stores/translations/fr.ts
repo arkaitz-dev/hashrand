@@ -45,7 +45,15 @@ export const fr: I18nTexts = {
 		prefixCannotExceed: 'Le préfixe ne peut pas dépasser 32 caractères',
 		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 caractères',
 		yes: 'Oui',
-		no: 'Non'
+		no: 'Non',
+		seedUsed: 'Graine Utilisée',
+		copySeed: 'Copier Graine',
+		optionalSeed: 'Graine optionnelle (64 caractères hex)',
+		seedInvalid: 'La graine doit avoir exactement 64 caractères hexadécimaux',
+		reuseSeedTitle: 'Réutiliser la même graine?',
+		reuseSeedMessage: 'Voulez-vous réutiliser la même graine pour générer le même résultat, ou préférez-vous générer une nouvelle graine aléatoire?',
+		keepSameSeed: 'Garder la même graine',
+		generateNewSeed: 'Générer une nouvelle graine'
 	},
 	menu: {
 		title: 'Générateur de Hash',

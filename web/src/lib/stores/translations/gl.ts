@@ -42,7 +42,15 @@ export const gl: I18nTexts = {
 		optionalPrefix: 'Prefixo opcional',
 		optionalSuffix: 'Sufixo opcional',
 		prefixCannotExceed: 'O prefixo non pode superar 32 caracteres',
-		suffixCannotExceed: 'O sufixo non pode superar 32 caracteres'
+		suffixCannotExceed: 'O sufixo non pode superar 32 caracteres',
+		seedUsed: 'Semente Utilizada',
+		copySeed: 'Copiar Semente',
+		optionalSeed: 'Semente opcional (64 caracteres hex)',
+		seedInvalid: 'A semente debe ter exactamente 64 caracteres hexadecimais',
+		reuseSeedTitle: 'Reutilizar a mesma semente?',
+		reuseSeedMessage: 'Queres reutilizar a mesma semente para xerar o mesmo resultado, ou prefires xerar unha nova semente aleatoria?',
+		keepSameSeed: 'Manter a mesma semente',
+		generateNewSeed: 'Xerar nova semente'
 	},
 	menu: {
 		title: 'Xerador de Hash',

@@ -42,7 +42,15 @@ export const hi: I18nTexts = {
 		optionalPrefix: 'वैकल्पिक प्रीफिक्स',
 		optionalSuffix: 'वैकल्पिक सफिक्स',
 		prefixCannotExceed: 'प्रीफिक्स 32 अक्षरों से अधिक नहीं हो सकता',
-		suffixCannotExceed: 'सफिक्स 32 अक्षरों से अधिक नहीं हो सकता'
+		suffixCannotExceed: 'सफिक्स 32 अक्षरों से अधिक नहीं हो सकता',
+		seedUsed: 'इस्तेमाल किया गया सीड',
+		copySeed: 'सीड कॉपी करें',
+		optionalSeed: 'वैकल्पिक सीड (64 हेक्स अक्षर)',
+		seedInvalid: 'सीड में ठीक 64 हेक्साडेसिमल अक्षर होने चाहिए',
+		reuseSeedTitle: 'वही सीड दोबारा इस्तेमाल करें?',
+		reuseSeedMessage: 'क्या आप वही परिणाम पाने के लिए वही सीड दोबारा इस्तेमाल करना चाहते हैं, या आप नया रैंडम सीड जनरेट करना पसंद करेंगे?',
+		keepSameSeed: 'वही सीड रखें',
+		generateNewSeed: 'नया सीड जनरेट करें'
 	},
 	menu: {
 		title: 'हैश जनरेटर',

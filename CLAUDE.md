@@ -280,9 +280,17 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.14.0)
+## Current State (v0.16.0)
 
-The application now includes:
+The application now includes comprehensive **seed-based deterministic generation** functionality:
+- **🌱 Complete Seed-Based Generation System**: Universal deterministic generation across all three endpoints
+  - **Dual API Modes**: Both GET (random) and POST (deterministic with seed) support for `/api/custom`, `/api/password`, and `/api/api-key`
+  - **64-Character Hex Seeds**: Cryptographically secure seed format for perfect reproducibility
+  - **UI Integration**: Optional seed fields in all generator forms with real-time validation
+  - **Smart Behavior**: Regenerate button hidden for deterministic seeds, seed reuse dialog when returning to settings
+  - **Intelligent Display**: User-provided seeds as informational text, auto-generated seeds as copyable textarea
+  - **Complete Flow**: Seamless integration from form input → API call → result display with seed persistence
+  - **13-Language Support**: Fully translated interface including seed dialog and validation messages
 - **Progressive Sprite Loading System**: Advanced icon system with UTF placeholders and deferred loading
   - **189KB Professional Sprite**: Full-resolution flag SVGs with zero compromise on quality
   - **Instant Placeholders**: UTF emoji fallbacks for immediate visual feedback
@@ -465,8 +473,9 @@ The project now uses **independent versioning** for API and Web components:
 - **Semantic Versioning**: Follows strict semver for backward compatibility
 - **Production Ready**: Can be used in production environments
 
-### Web Interface (v0.7.0)
+### Web Interface (v0.16.0)
 - **Development Version**: Currently in 0.x.x series during active development
+- **Major Features**: Recently added comprehensive seed-based deterministic generation
 - **Rapid Iteration**: Frequent updates for UI/UX improvements
 - **Modern Architecture**: Built with latest SvelteKit 2.x without deprecated warnings
 
@@ -475,7 +484,7 @@ The `/api/version` endpoint returns both component versions:
 ```json
 {
   "api_version": "1.0.0",
-  "ui_version": "0.7.0"
+  "ui_version": "0.16.0"
 }
 ```
 

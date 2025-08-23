@@ -44,7 +44,15 @@ export const es: I18nTexts = {
 		prefixCannotExceed: 'El prefijo no puede exceder 32 letras',
 		suffixCannotExceed: 'El sufijo no puede exceder 32 letras',
 		yes: 'Sí',
-		no: 'No'
+		no: 'No',
+		seedUsed: 'Semilla Utilizada',
+		copySeed: 'Copiar Semilla',
+		optionalSeed: 'Semilla opcional (64 caracteres hex)',
+		seedInvalid: 'La semilla debe tener exactamente 64 caracteres hexadecimales',
+		reuseSeedTitle: '¿Reutilizar la misma semilla?',
+		reuseSeedMessage: '¿Deseas reutilizar la misma semilla para generar el mismo resultado, o prefieres generar una nueva semilla aleatoria?',
+		keepSameSeed: 'Mantener la misma semilla',
+		generateNewSeed: 'Generar nueva semilla'
 	},
 	menu: {
 		title: 'Generador de Hash',
