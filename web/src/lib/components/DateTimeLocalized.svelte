@@ -24,42 +24,52 @@
 		// Custom format for Basque (euskera): [yyyy]ko [mes en euskera]k [d], hh:mm:ss
 		if ($currentLanguage === 'eu') {
 			const euskeraMonths = [
-				'urtarril', 'otsail', 'martxo', 'apiril', 'maiatz', 'ekain',
-				'uztail', 'abuztu', 'irail', 'urri', 'azaro', 'abendu'
+				'urtarril',
+				'otsail',
+				'martxo',
+				'apiril',
+				'maiatz',
+				'ekain',
+				'uztail',
+				'abuztu',
+				'irail',
+				'urri',
+				'azaro',
+				'abendu'
 			];
-			
+
 			const year = timestamp.getFullYear();
 			const monthName = euskeraMonths[timestamp.getMonth()];
 			const day = timestamp.getDate();
 			const hours = String(timestamp.getHours()).padStart(2, '0');
 			const minutes = String(timestamp.getMinutes()).padStart(2, '0');
 			const seconds = String(timestamp.getSeconds()).padStart(2, '0');
-			
+
 			return `${year}ko ${monthName}ak ${day}, ${hours}:${minutes}:${seconds}`;
 		}
-		
+
 		// Map language codes to locale identifiers for date formatting
 		const localeMap: Record<string, string> = {
-			'en': 'en-US',
-			'es': 'es-ES', 
-			'pt': 'pt-PT',
-			'fr': 'fr-FR',
-			'de': 'de-DE',
-			'ru': 'ru-RU',
-			'zh': 'zh-CN',
-			'ar': 'ar-SA',
-			'hi': 'hi-IN',
-			'ja': 'ja-JP',
-			'ca': 'ca-ES',
-			'gl': 'gl-ES'
+			en: 'en-US',
+			es: 'es-ES',
+			pt: 'pt-PT',
+			fr: 'fr-FR',
+			de: 'de-DE',
+			ru: 'ru-RU',
+			zh: 'zh-CN',
+			ar: 'ar-SA',
+			hi: 'hi-IN',
+			ja: 'ja-JP',
+			ca: 'ca-ES',
+			gl: 'gl-ES'
 		};
-		
+
 		const locale = localeMap[$currentLanguage] || 'en-US';
 		const formatOptions = options || defaultOptions;
-		
+
 		try {
 			return new Intl.DateTimeFormat(locale, formatOptions).format(timestamp);
-		} catch (error) {
+		} catch {
 			// Fallback to English if locale is not supported
 			return new Intl.DateTimeFormat('en-US', formatOptions).format(timestamp);
 		}

@@ -66,10 +66,25 @@ npm run check     # Run TypeScript and Svelte checks
 - `cargo add LIBRARY_NAME` - Add new Rust dependencies (direct)
 - `just update` - Update all dependencies (recommended)
 - `cargo update` - Update all dependencies to latest compatible versions (direct)
-- `just lint` - Run linter for code quality checks (recommended)
-- `cargo clippy` - Run linter for code quality checks (direct)
-- `just fmt` - Format code according to Rust standards (recommended)
-- `cargo fmt` - Format code according to Rust standards (direct)
+- `just lint` - Run linter for code quality checks (**Rust + TypeScript/Svelte**)
+- `just fmt` - Format code according to standards (**Rust + Prettier**)
+- `just check` - Complete quality check (**clippy + fmt + ESLint + svelte-check**)
+
+#### Integrated Linting & Formatting
+The project now includes **comprehensive linting and formatting** unified through Vite:
+
+**Rust (API Backend):**
+- `cargo clippy` - Rust linter with strict warnings
+- `cargo fmt` - Code formatting
+
+**TypeScript/JavaScript/Svelte (Web Interface):**
+- **ESLint via Vite** - All linting executed through Vite build system
+- **Prettier Integration** - Code formatting with Svelte plugin
+- **Unified Pipeline** - `just lint` uses Vite for both development and CI/CD
+- **Smart Behavior**:
+  - Development: Real-time linting with warnings visible
+  - Lint-only mode: `VITE_LINT_ONLY=true` for CI/CD
+  - Production builds: ESLint errors fail builds (warnings pass)
 
 **IMPORTANT**: Spin handles compilation to WASM, execution, and development. Only use `cargo add` for dependencies, `cargo clippy` for linting, and `cargo fmt` for formatting - avoid other cargo commands as Spin manages the build process. Note: `spin-cli add` has different functionality (adds new components).
 
@@ -185,9 +200,15 @@ hashrand-spin/
 - `web/src/lib/api.ts` - Type-safe API service layer with error handling
 - `web/src/lib/stores/` - Svelte stores for state management
 - `web/src/lib/types/index.ts` - TypeScript type definitions matching API
-- `web/vite.config.ts` - Vite configuration with API proxy and Tailscale support
+- `web/vite.config.ts` - Vite configuration with API proxy, Tailscale support, and **ESLint integration**
 - `web/svelte.config.js` - SvelteKit SPA configuration
 - `web/package.json` - Dependencies and build scripts
+
+**Linting & Formatting Configuration:**
+- `web/eslint.config.js` - Modern ESLint v9 flat config for TS/JS/Svelte with browser globals
+- `web/.prettierrc` - Prettier configuration with Svelte plugin and project-specific rules
+- `web/.prettierignore` - Files excluded from formatting (build outputs, caches)
+- `web/src/vite-env.d.ts` - Custom TypeScript declarations for vite-plugin-eslint integration
 
 ### Dependencies
 
@@ -207,6 +228,12 @@ hashrand-spin/
 - `@tailwindcss/vite = "^4.0.0"` - Vite integration
 - `@tailwindcss/typography = "^0.5.16"` - Typography plugin
 - `vite = "^7.0.4"` - Build tool and dev server
+
+**Linting & Formatting Dependencies:**
+- `eslint = "^9.34.0"` + `@typescript-eslint/*` - TypeScript/JavaScript linting
+- `eslint-plugin-svelte = "^3.11.0"` - Svelte-specific linting rules
+- `prettier = "^3.6.2"` + `prettier-plugin-svelte` - Code formatting
+- `vite-plugin-eslint = "^1.8.1"` - Real-time ESLint integration in Vite
 
 ### Theme System Architecture
 
@@ -253,9 +280,14 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.12.0)
+## Current State (v0.13.0)
 
 The application now includes:
+- **Enterprise-Grade Linting System**: Comprehensive code quality tools unified through Vite
+  - **Modern ESLint v9**: Latest flat config with TypeScript and Svelte 5 support
+  - **Vite Integration**: Real-time linting during development with instant feedback
+  - **Unified Pipeline**: Single `just check` command for complete quality verification
+  - **Zero Warnings**: All 15+ code quality issues resolved across the codebase
 - **Complete Internationalization**: Full i18n system with 13 languages operational
 - **DateTimeLocalized Component**: Portable internationalized date/time formatting with custom Euskera support
 - **Enhanced Iconize Component**: Advanced RTL-aware wrapper with `invertposition` parameter for flexible icon positioning
@@ -264,6 +296,7 @@ The application now includes:
 - **Consistent UI Design**: Unified button styling and spacing across all pages
 - **Advanced RTL System**: Uses HTML `dir` attribute and browser-native flexbox behavior for perfect RTL support
 - **Translation Infrastructure**: Svelte store-based i18n system fully operational
+- **Type Safety**: Comprehensive TypeScript checking with proper error handling and type definitions
 
 ## Current Functionality
 

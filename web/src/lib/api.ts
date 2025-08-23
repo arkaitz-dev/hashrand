@@ -3,7 +3,10 @@ import type { GenerateParams, PasswordParams, ApiKeyParams, VersionResponse } fr
 const API_BASE = '/api';
 
 class ApiError extends Error {
-	constructor(message: string, public status: number) {
+	constructor(
+		message: string,
+		public readonly status: number
+	) {
 		super(message);
 		this.name = 'ApiError';
 	}
@@ -28,7 +31,7 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
 export const api = {
 	async generate(params: GenerateParams): Promise<string> {
 		const searchParams = new URLSearchParams();
-		
+
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
 		if (params.alphabet) searchParams.set('alphabet', params.alphabet);
 		if (params.prefix) searchParams.set('prefix', params.prefix);
@@ -41,7 +44,7 @@ export const api = {
 
 	async generatePassword(params: PasswordParams): Promise<string> {
 		const searchParams = new URLSearchParams();
-		
+
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
 		if (params.alphabet) searchParams.set('alphabet', params.alphabet);
 		if (params.raw) searchParams.set('raw', 'true');
@@ -52,7 +55,7 @@ export const api = {
 
 	async generateApiKey(params: ApiKeyParams): Promise<string> {
 		const searchParams = new URLSearchParams();
-		
+
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
 		if (params.alphabet) searchParams.set('alphabet', params.alphabet);
 		if (params.raw) searchParams.set('raw', 'true');

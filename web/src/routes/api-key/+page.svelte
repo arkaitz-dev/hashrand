@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
@@ -24,8 +23,16 @@
 
 	// Reactive alphabet options that update when language changes
 	$: alphabetOptions = [
-		{ value: 'full' as const, label: $_('alphabets.full'), description: $_('apiKey.standardAlphanumericDescription') },
-		{ value: 'no-look-alike' as const, label: $_('alphabets.no-look-alike'), description: $_('apiKey.noConfusingDescription') }
+		{
+			value: 'full' as const,
+			label: $_('alphabets.full'),
+			description: $_('apiKey.standardAlphanumericDescription')
+		},
+		{
+			value: 'no-look-alike' as const,
+			label: $_('alphabets.no-look-alike'),
+			description: $_('apiKey.noConfusingDescription')
+		}
 	];
 
 	// Dynamic minimum length based on alphabet
@@ -38,11 +45,11 @@
 		if (!formValid || $isLoading) return;
 
 		setLoading(true);
-		
+
 		try {
 			const { api } = await import('$lib/api');
 			const result = await api.generateApiKey(params);
-			
+
 			setResult({
 				value: result,
 				params: { ...params },
@@ -87,12 +94,16 @@
 	<title>{$_('apiKey.title')}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+<div
+	class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
+>
 	<div class="container mx-auto px-4 py-8">
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="text-center">
-				<div class="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
+				<div
+					class="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4"
+				>
 					<span class="text-xl text-white">🔑</span>
 				</div>
 				<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -106,11 +117,16 @@
 
 		<!-- Form -->
 		<div class="max-w-2xl mx-auto">
-			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+			<div
+				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
+			>
 				<form onsubmit={handleGenerate} class="space-y-6">
 					<!-- Alphabet -->
 					<div>
-						<label for="alphabet" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							for="alphabet"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							{$_('apiKey.alphabet')}
 						</label>
 						<select
@@ -125,14 +141,17 @@
 						</select>
 						{#if params.alphabet}
 							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-								{alphabetOptions.find(o => o.value === params.alphabet)?.description}
+								{alphabetOptions.find((o) => o.value === params.alphabet)?.description}
 							</p>
 						{/if}
 					</div>
 
 					<!-- Length -->
 					<div>
-						<label for="length" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							for="length"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							{$_('apiKey.length')} ({minLength}-64 {$_('common.characters')})
 						</label>
 						<div class="flex items-center gap-4">
@@ -144,22 +163,31 @@
 								max="64"
 								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
 							/>
-							<span class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">{params.length}</span>
+							<span
+								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
+								>{params.length}</span
+							>
 						</div>
 						{#if !lengthValid}
 							<p class="text-red-500 text-sm mt-1">
-								{$_('common.length')} {$_('common.mustBeBetween')} {minLength} {$_('common.and')} 64
+								{$_('common.length')}
+								{$_('common.mustBeBetween')}
+								{minLength}
+								{$_('common.and')} 64
 							</p>
 						{/if}
-						<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3">
+						<div
+							class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"
+						>
 							<p class="text-sm text-blue-800 dark:text-blue-200">
-								<strong>{$_('common.format')}:</strong> ak_ prefix + {params.length || 44} {$_('apiKey.randomCharacters')} 
+								<strong>{$_('common.format')}:</strong> ak_ prefix + {params.length || 44}
+								{$_('apiKey.randomCharacters')}
 								{#if params.alphabet === 'no-look-alike'}
 									{$_('apiKey.noLookAlikeAlphabet')}
 								{:else}
 									{$_('apiKey.fullAlphanumericAlphabet')}
 								{/if}
-								<br><strong>{$_('common.security')}:</strong> 
+								<br /><strong>{$_('common.security')}:</strong>
 								{#if params.alphabet === 'no-look-alike'}
 									{$_('apiKey.noLookAlikeNote').replace('{0}', minLength.toString())}
 								{:else}
@@ -169,23 +197,28 @@
 						</div>
 					</div>
 
-
 					<!-- Format Notice -->
-					<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+					<div
+						class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+					>
 						<div class="flex items-start">
 							<span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
 							<div class="text-sm text-blue-800 dark:text-blue-200">
-								<strong>{$_('common.format')}:</strong> {$_('apiKey.formatNotice')}
+								<strong>{$_('common.format')}:</strong>
+								{$_('apiKey.formatNotice')}
 							</div>
 						</div>
 					</div>
 
 					<!-- Security Notice -->
-					<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+					<div
+						class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
+					>
 						<div class="flex items-start">
 							<span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span>
 							<div class="text-sm text-amber-800 dark:text-amber-200">
-								<strong>{$_('common.security')}:</strong> {$_('apiKey.securityNotice')}
+								<strong>{$_('common.security')}:</strong>
+								{$_('apiKey.securityNotice')}
 							</div>
 						</div>
 					</div>
@@ -196,28 +229,31 @@
 						<button
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center {(!formValid || $isLoading) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer'}"
+							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center {!formValid ||
+							$isLoading
+								? 'bg-gray-400 cursor-not-allowed'
+								: 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer'}"
 						>
 							{#if $isLoading}
 								<LoadingSpinner size="sm" class="mr-2" />
 								{$_('common.loading')}...
 							{:else}
-								<Iconize conf={{emoji: "▶", iconSize: "text-lg", spacing: "gap-2"}}>
+								<Iconize conf={{ emoji: '▶', iconSize: 'text-lg', spacing: 'gap-2' }}>
 									{$_('apiKey.generateApiKey')}
 								</Iconize>
 							{/if}
 						</button>
-						
+
 						<!-- RTL-aware back to menu button -->
 						<button
 							type="button"
 							onclick={() => goto('/')}
 							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
 						>
-							<Iconize 
+							<Iconize
 								conf={{
-									icon: "home",
-									iconSize: "w-5 h-5"
+									icon: 'home',
+									iconSize: 'w-5 h-5'
 								}}
 							>
 								{$_('common.backToMenu')}
@@ -227,7 +263,7 @@
 				</form>
 			</div>
 		</div>
-		
+
 		<!-- Footer with Version Information -->
 		<Footer />
 	</div>

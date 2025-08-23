@@ -38,7 +38,7 @@ export interface NavItem {
 // Result state
 export interface ResultState {
 	value: string;
-	params: Record<string, any>;
+	params: Record<string, string | number | boolean>;
 	endpoint: string;
 	timestamp: Date;
 }

@@ -11,6 +11,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.13.0] - 2025-08-23
+
+### Web Interface Changes (v0.13.0)
+#### Added
+- **🔍 Comprehensive Linting System**: Enterprise-grade code quality tools unified through Vite
+  - **Modern ESLint v9**: Latest flat config with TypeScript and Svelte support
+  - **Prettier Integration**: Automatic code formatting with Svelte plugin support
+  - **Vite Plugin Integration**: Real-time linting during development with `vite-plugin-eslint`
+  - **TypeScript Declarations**: Custom type definitions for `vite-plugin-eslint` in `vite-env.d.ts`
+  - **Browser Globals**: Pre-configured ESLint environment for fetch, localStorage, DOM APIs
+- **⚡ Unified Quality Pipeline**: Single command for complete code verification
+  - **`just check`**: Complete quality verification (clippy + fmt + ESLint + svelte-check)
+  - **`just lint`**: Dual-language linting (Rust clippy + ESLint via Vite)  
+  - **`just fmt`**: Unified formatting (cargo fmt + Prettier)
+  - **Smart Build Integration**: Production builds fail only on errors, warnings allowed
+- **🛠️ Developer Experience**: Enhanced development workflow integration
+  - **Live Linting**: ESLint runs automatically during development
+  - **Instant Feedback**: Warnings and errors show in terminal and browser console
+  - **Hot Reload**: Linting updates without manual rebuilds
+  - **Editor Integration**: Compatible with VSCode, vim, emacs ESLint plugins
+
+#### Enhanced
+- **🎯 Code Quality Standards**: Comprehensive cleanup and standardization
+  - **Zero Warnings**: Eliminated all 15+ ESLint warnings across the codebase
+  - **Import Cleanup**: Removed unused imports from route components (Icon, resultState, etc.)
+  - **Type Safety**: Fixed all TypeScript errors with proper type annotations
+  - **Variable Usage**: Cleaned unused variables while preserving functionality
+  - **Modern Syntax**: Updated `@ts-ignore` to `@ts-expect-error` for better type checking
+- **🔧 Technical Improvements**: Enhanced type definitions and error handling
+  - **Timeout Types**: Cross-platform `ReturnType<typeof setTimeout>` for proper typing
+  - **Unknown Types**: Replaced `any` types with specific `unknown` and type assertions
+  - **API Types**: Improved `ResultState` interface with proper parameter types
+  - **Error Handling**: Enhanced catch blocks without unused error variables
+
+#### Fixed
+- **🚨 TypeScript Compilation Errors**: Resolved all build-blocking TypeScript issues
+  - **Missing Type Definitions**: Added `@types/node` for process.env access
+  - **Custom Declarations**: Created type definitions for vite-plugin-eslint
+  - **Translation Function**: Fixed type casting in i18n system for proper type safety
+  - **Cross-Platform Compatibility**: Fixed setTimeout typing for browser and Node.js
+- **🧹 Code Cleanup**: Systematic elimination of unused code and imports
+  - **Route Components**: Removed unused `Icon` imports from pages using only `Iconize`
+  - **Store Imports**: Cleaned unused store subscriptions (resultState, clearResult, etc.)
+  - **Component Imports**: Removed unused `LoadingSpinner` and other component imports
+  - **Type Imports**: Cleaned unused type definitions like `VersionResponse`
+
+#### Technical Implementation
+- **ESLint Configuration**: Modern flat config architecture for maximum compatibility
+  - **Dual Language Support**: Separate configs for TypeScript and Svelte files
+  - **Plugin Integration**: Comprehensive plugin ecosystem (TypeScript, Svelte, Prettier)
+  - **Environment Configuration**: Browser globals and Node.js types properly configured
+  - **Rule Optimization**: Balanced rule set for code quality without developer friction
+- **Vite Integration**: Advanced build system integration for seamless development
+  - **Plugin Configuration**: Smart linting behavior based on environment variables
+  - **Development Mode**: Non-blocking linting with visible warnings
+  - **Production Mode**: Strict linting that fails builds on errors
+  - **CI/CD Mode**: `VITE_LINT_ONLY=true` for pipeline integration
+- **Development Workflow**: Enhanced justfile commands for unified experience
+  - **Parallel Execution**: Multiple linting tools run efficiently
+  - **Exit Code Handling**: Proper error reporting for CI/CD pipelines
+  - **Format Integration**: Prettier runs before ESLint for consistent workflow
+
+---
+
 ## [API v1.0.0 / Web v0.12.0] - 2025-08-23
 
 ### Web Interface Changes (v0.12.0)
@@ -696,6 +760,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.13.0]** (2025-08-23) - Comprehensive linting system (ESLint + Prettier via Vite), code quality cleanup, and unified development workflow
 - **[API v1.0.0 / Web v0.12.0]** (2025-08-23) - DateTimeLocalized component, enhanced Iconize with invertposition, play/home icons, and result page improvements
 - **[API v1.0.0 / Web v0.11.0]** (2025-08-22) - Universal Iconize Component with RTL-aware automatic positioning and simplified implementation
 - **[API v1.0.0 / Web v0.10.0]** (2025-08-21) - RTL-aware Button component and improved language ordering

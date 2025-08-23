@@ -251,12 +251,12 @@ just rebuild      # Clean and rebuild everything
 just clean-build  # Same as rebuild
 just clean        # Clean all build artifacts (Rust + npm)
 
-# Testing & Quality
+# Code Quality & Testing  
 just test         # Run comprehensive test suite (43 tests)
 just test-dev     # Run tests with auto-managed server
-just check        # Run quality checks (lint + format)
-just fmt          # Format code
-just lint         # Run linter
+just check        # Run complete quality checks (clippy + fmt + ESLint + svelte-check)
+just fmt          # Format code (Rust + Prettier)
+just lint         # Run linting (Rust clippy + ESLint via Vite)
 just pre-commit   # Run all checks before commit
 
 # Information & Utilities
@@ -331,6 +331,78 @@ hashrand-spin/
 │   │   └── robots.txt     # Search engine crawler instructions
 │   └── dist/              # Production SPA build output
 └── target/                # Rust build artifacts
+```
+
+## Code Quality & Development Tools
+
+### Comprehensive Linting System
+
+The project includes **enterprise-grade code quality tools** unified through Vite for seamless development experience:
+
+#### Integrated Quality Pipeline
+```bash
+just check    # Complete quality verification
+├── Rust (API Backend)
+│   ├── cargo clippy --deny warnings  # Strict linting
+│   └── cargo fmt --check            # Format verification
+└── TypeScript/Svelte/JavaScript (Web Interface)  
+    ├── prettier --check .            # Format verification
+    ├── ESLint via Vite integration    # Code quality + consistency
+    └── svelte-check                  # TypeScript validation
+```
+
+#### Real-Time Development Integration
+- **Live Linting**: ESLint runs automatically during development via Vite plugin
+- **Instant Feedback**: Warnings and errors show in terminal and browser console
+- **Smart Builds**: Production builds fail only on errors, warnings allowed
+- **Hot Reload**: Linting updates without manual rebuilds
+
+#### ESLint + Prettier Configuration
+- **Modern ESLint v9**: Uses flat config with TypeScript and Svelte support
+- **Svelte 5 Compatible**: Full support for latest Svelte runes and syntax
+- **Prettier Integration**: Automatic code formatting with Svelte plugin
+- **Type Safety**: Comprehensive TypeScript checking across all files
+- **Browser Globals**: Pre-configured for fetch, localStorage, DOM APIs
+
+#### Quality Assurance Features
+```bash
+# Development workflow
+just lint     # Run all linters (shows warnings, continues)
+just fmt      # Auto-format all code (Rust + Prettier)
+just check    # Pre-commit verification (strict, must pass)
+
+# What gets checked:
+✓ Rust code quality (clippy with deny warnings)
+✓ Code formatting (cargo fmt + prettier)  
+✓ TypeScript type safety (svelte-check)
+✓ JavaScript/Svelte best practices (ESLint)
+✓ Import organization and unused variables
+✓ Consistent code style across languages
+```
+
+#### Developer Benefits
+- **Zero Configuration**: Works out of the box, no setup needed
+- **Editor Integration**: Compatible with VSCode, vim, emacs ESLint plugins  
+- **CI/CD Ready**: `just check` perfect for automated pipelines
+- **Performance Optimized**: Vite integration minimizes linting overhead
+- **Educational**: Clear error messages help improve code quality
+
+### Dependencies
+
+#### Linting & Formatting Tools
+```json
+{
+  "devDependencies": {
+    "eslint": "^9.34.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0", 
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint-plugin-svelte": "^3.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "prettier-plugin-svelte": "^3.4.0",
+    "vite-plugin-eslint": "^1.8.1"
+  }
+}
 ```
 
 ## Configuration

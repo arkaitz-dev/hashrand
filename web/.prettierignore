@@ -1,0 +1,11 @@
+# Build outputs
+.svelte-kit/
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Generated files
+package-lock.json
+.vite/

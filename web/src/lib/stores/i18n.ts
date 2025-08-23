@@ -21,28 +21,37 @@ function detectBrowserLanguage(): string {
 	if (typeof window === 'undefined') {
 		return 'en'; // SSR fallback
 	}
-	
+
 	// Get browser language preferences
-	const browserLanguages = [
-		navigator.language,
-		...(navigator.languages || [])
-	];
-	
+	const browserLanguages = [navigator.language, ...(navigator.languages || [])];
+
 	// Map of supported languages
 	const supportedLanguages = new Set([
-		'en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'
+		'en',
+		'es',
+		'pt',
+		'fr',
+		'de',
+		'ru',
+		'zh',
+		'ar',
+		'eu',
+		'ca',
+		'gl',
+		'hi',
+		'ja'
 	]);
-	
+
 	// Check each browser language preference
 	for (const browserLang of browserLanguages) {
 		// Extract language code (e.g., 'es-ES' -> 'es')
 		const langCode = browserLang.split('-')[0].toLowerCase();
-		
+
 		if (supportedLanguages.has(langCode)) {
 			return langCode;
 		}
 	}
-	
+
 	// Default fallback to English
 	return 'en';
 }
@@ -52,19 +61,24 @@ function initializeLanguage(): string {
 	if (typeof window === 'undefined') {
 		return 'en'; // SSR fallback
 	}
-	
+
 	// First check localStorage for user preference
 	const storedLang = localStorage.getItem('preferred-language');
-	if (storedLang && ['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(storedLang)) {
+	if (
+		storedLang &&
+		['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(
+			storedLang
+		)
+	) {
 		return storedLang;
 	}
-	
+
 	// If no stored preference, detect browser language
 	const detectedLang = detectBrowserLanguage();
-	
+
 	// Store the detected language as user preference
 	localStorage.setItem('preferred-language', detectedLang);
-	
+
 	return detectedLang;
 }
 
@@ -75,7 +89,7 @@ export const currentLanguage = writable<string>(initializeLanguage());
 currentLanguage.subscribe((language) => {
 	if (typeof window !== 'undefined') {
 		localStorage.setItem('preferred-language', language);
-		
+
 		// Debug information in development
 		if (import.meta.env.DEV) {
 			console.log(`[i18n] Language changed to: ${language}`);
@@ -85,11 +99,11 @@ currentLanguage.subscribe((language) => {
 
 // Debug functions for browser console (development only)
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
-	// @ts-ignore - Adding to window for debugging
+	// @ts-expect-error - Adding to window for debugging
 	window.debugI18n = {
 		getCurrentLanguage: () => {
 			let current;
-			const unsubscribe = currentLanguage.subscribe(lang => current = lang);
+			const unsubscribe = currentLanguage.subscribe((lang) => (current = lang));
 			unsubscribe();
 			return current;
 		},
@@ -104,7 +118,21 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 		},
 		getStoredLanguage: () => localStorage.getItem('preferred-language'),
 		detectLanguage: () => detectBrowserLanguage(),
-		getSupportedLanguages: () => ['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'],
+		getSupportedLanguages: () => [
+			'en',
+			'es',
+			'pt',
+			'fr',
+			'de',
+			'ru',
+			'zh',
+			'ar',
+			'eu',
+			'ca',
+			'gl',
+			'hi',
+			'ja'
+		],
 		resetLanguage: () => {
 			localStorage.removeItem('preferred-language');
 			const detected = detectBrowserLanguage();
@@ -112,7 +140,11 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 			return detected;
 		},
 		setLanguage: (lang: string) => {
-			if (['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(lang)) {
+			if (
+				['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(
+					lang
+				)
+			) {
 				currentLanguage.set(lang);
 				return lang;
 			}
@@ -128,7 +160,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 			currentLanguage.set('en');
 		}
 	};
-	
+
 	console.log('[i18n] Debug functions available at window.debugI18n');
 	console.log('[i18n] Try: debugI18n.getBrowserLanguages(), debugI18n.getCurrentLanguage(), etc.');
 }
@@ -154,16 +186,16 @@ export const translations: Record<string, I18nTexts> = {
 // Translation function
 export function t(key: string, lang: string = 'en'): string {
 	const keys = key.split('.');
-	let value: any = translations[lang];
-	
+	let value: unknown = translations[lang];
+
 	for (const k of keys) {
 		if (value && typeof value === 'object' && k in value) {
-			value = value[k];
+			value = (value as Record<string, unknown>)[k];
 		} else {
 			return key; // Return key if translation not found
 		}
 	}
-	
+
 	return typeof value === 'string' ? value : key;
 }
 

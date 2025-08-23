@@ -259,15 +259,19 @@ test:
 # Run linting checks
 lint:
     cd api && cargo clippy -- -D warnings
+    cd web && npm run lint
 
 # Format code
 fmt:
     cd api && cargo fmt
+    cd web && npm run format
 
 # Check code quality (lint + format check)
 check:
     cd api && cargo clippy -- -D warnings
     cd api && cargo fmt --check
+    cd web && npm run lint
+    cd web && npm run check
 
 # Update all dependencies
 update:
