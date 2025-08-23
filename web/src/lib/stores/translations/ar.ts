@@ -62,7 +62,7 @@ export const ar: I18nTexts = {
 		prefix: 'البادئة',
 		suffix: 'اللاحقة',
 		lengthMustBeBetween: 'الطول يجب أن يكون بين 2 و 128',
-		bitcoinDescription: 'أبجدية البيتكوين، تستبعد الأحرف المربكة',
+		bitcoinDescription: 'أبجدية Bitcoin، تستبعد الأحرف المربكة',
 		maxReadabilityDescription: 'أقصى قابلية قراءة، 49 حرف',
 		completeAlphanumericDescription: 'مجموعة أبجدية رقمية كاملة',
 		maxEntropyDescription: 'أقصى عشوائية مع الرموز',
@@ -80,9 +80,9 @@ export const ar: I18nTexts = {
 		securityDescription:
 			'يتم توليد كلمات المرور باستخدام توليد عشوائي آمن تشفيرياً. لا يتم تخزينها أو تسجيلها في أي مكان.',
 		noLookAlikeNote:
-			'أبجدية عدم التشابه تستبعد الأحرف المربكة. الحد الأدنى {0} حرف للأمان المكافئ.',
+			'الأبجدية الواضحة تستبعد الأحرف المربكة. الحد الأدنى {0} حرفاً للأمان المكافئ.',
 		fullAlphabetNote:
-			'الأبجدية الكاملة مع الرموز توفر أقصى عشوائية. الحد الأدنى {0} حرف للأمان القوي.',
+			'الأبجدية الكاملة مع الرموز توفر أقصى عشوائية. الحد الأدنى {0} حرفاً للأمان القوي.',
 		failedToGeneratePassword: 'فشل في توليد كلمة المرور'
 	},
 	apiKey: {
@@ -99,13 +99,14 @@ export const ar: I18nTexts = {
 			'احفظ مفاتيح API بأمان ولا تعرضها أبداً في كود العميل أو التحكم في الإصدارات. عاملها بنفس عناية كلمات المرور.',
 		formatPrefix: 'بادئة ak_ +',
 		randomCharacters: 'حرف عشوائي مع',
-		noLookAlikeAlphabet: 'أبجدية عدم التشابه (سهل الكتابة)',
-		fullAlphanumericAlphabet: 'أبجدية أبجدية رقمية كاملة',
+		noLookAlikeAlphabet: 'أبجدية واضحة (سهلة الكتابة)',
+		fullAlphanumericAlphabet: 'أبجدية رقمية كاملة',
+		fullAlphanumericNote: 'توفر الأبجدية الرقمية الكاملة أقصى توافق. الحد الأدنى {0} حرفاً للأمان القوي.',
 		failedToGenerateApiKey: 'فشل في توليد مفتاح API'
 	},
 	alphabets: {
-		base58: 'أبجدية البيتكوين (Base58)',
-		'no-look-alike': 'عدم التشابه',
+		base58: 'Base58 (أبجدية Bitcoin)',
+		'no-look-alike': 'واضحة',
 		full: 'أبجدية رقمية كاملة',
 		'full-with-symbols': 'كاملة مع الرموز'
 	}

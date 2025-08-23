@@ -37,15 +37,16 @@
 
 	// Handle result state and API calls
 	onMount(async () => {
-		// If there's no result state and no URL parameters, redirect to home
-		if (!$resultState && searchParams.size === 0) {
-			goto('/');
+		// If there are URL parameters, ALWAYS generate from them (override any existing state)
+		if (searchParams.size > 0) {
+			await generateFromParams();
 			return;
 		}
 
-		// If there are URL parameters but no result state, generate from parameters
-		if (!$resultState && searchParams.size > 0) {
-			await generateFromParams();
+		// If no URL parameters and no result state, redirect to home
+		if (!$resultState) {
+			goto('/');
+			return;
 		}
 	});
 
@@ -63,7 +64,7 @@
 			const { api } = await import('$lib/api');
 
 			// Build parameters object
-			const params: any = { raw: true };
+			const params: Record<string, string | number | boolean> = { raw: true };
 
 			// Get common parameters
 			const length = searchParams.get('length');
@@ -235,16 +236,16 @@
 				urlParams.set('length', $resultState.params.length.toString());
 			}
 			if ($resultState.params.alphabet) {
-				urlParams.set('alphabet', $resultState.params.alphabet);
+				urlParams.set('alphabet', String($resultState.params.alphabet));
 			}
 
 			// Add endpoint-specific parameters
 			if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
 				if ($resultState.params.prefix) {
-					urlParams.set('prefix', $resultState.params.prefix);
+					urlParams.set('prefix', String($resultState.params.prefix));
 				}
 				if ($resultState.params.suffix) {
-					urlParams.set('suffix', $resultState.params.suffix);
+					urlParams.set('suffix', String($resultState.params.suffix));
 				}
 			}
 

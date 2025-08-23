@@ -12,7 +12,8 @@ use utils::{parse_query_params, route_request};
 ///
 /// Handles all HTTP requests and routes them to the corresponding handlers.
 /// Supports the following endpoints:
-/// - GET /api/generate - Customizable hash generation
+/// - GET /api/custom - Customizable hash generation
+/// - GET /api/generate - Alias for /api/custom (backward compatibility)
 /// - GET /api/password - Secure password generation  
 /// - GET /api/api-key - API key generation with ak_ prefix
 /// - GET /api/version - Version information

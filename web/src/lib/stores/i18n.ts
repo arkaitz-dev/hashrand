@@ -147,20 +147,37 @@ export const translations: Record<string, I18nTexts> = {
 	ja
 };
 
-// Translation function
+// Translation function with intelligent fallback system
 export function t(key: string, lang: string = 'en'): string {
 	const keys = key.split('.');
-	let value: unknown = translations[lang];
-
-	for (const k of keys) {
-		if (value && typeof value === 'object' && k in value) {
-			value = (value as Record<string, unknown>)[k];
-		} else {
-			return key; // Return key if translation not found
+	
+	// Helper function to get translation from a specific language
+	function getTranslationFromLang(targetLang: string): string | null {
+		let value: unknown = translations[targetLang];
+		
+		for (const k of keys) {
+			if (value && typeof value === 'object' && k in value) {
+				value = (value as Record<string, unknown>)[k];
+			} else {
+				return null; // Translation not found in this language
+			}
 		}
+		
+		return typeof value === 'string' ? value : null;
 	}
-
-	return typeof value === 'string' ? value : key;
+	
+	// Try the requested language first
+	let result = getTranslationFromLang(lang);
+	if (result) return result;
+	
+	// If not found and requested language is not English, try English as fallback
+	if (lang !== 'en') {
+		result = getTranslationFromLang('en');
+		if (result) return result;
+	}
+	
+	// If still not found, return the key itself
+	return key;
 }
 
 // Reactive translation function that works with the store

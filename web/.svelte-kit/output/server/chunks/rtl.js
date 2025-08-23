@@ -13,9 +13,9 @@ function getInitialState() {
 const spriteState = writable(getInitialState());
 const iconEmojis = {
   // Theme icons
-  "sun": "☀️",
+  sun: "☀️",
   // Light mode icon
-  "moon": "🌙",
+  moon: "🌙",
   // Dark mode icon
   // Navigation icons
   "arrow-left": ">",
@@ -24,50 +24,50 @@ const iconEmojis = {
   // Simple arrow for choose buttons (RTL) - flips to < in RTL
   "chevron-down": "🔽",
   // Chevron down for expandable sections
-  "home": "🏠",
+  home: "🏠",
   // Home/house icon for back to menu buttons
   // UI icons
-  "heart": "❤️",
+  heart: "❤️",
   // Heart for "made with love"
-  "check": "✅",
+  check: "✅",
   // Checkmark for success states
-  "copy": "📋",
+  copy: "📋",
   // Copy to clipboard
-  "refresh": "🔄",
+  refresh: "🔄",
   // Refresh/regenerate icon
-  "settings": "⚙️",
+  settings: "⚙️",
   // Settings/gear icon
   // Flag emojis
   // Countries with standard UTF flag emojis
-  "saudi": "🇸🇦",
+  saudi: "🇸🇦",
   // Saudi Arabia (Arabic)
-  "germany": "🇩🇪",
+  germany: "🇩🇪",
   // Germany (Deutsch)
-  "uk": "🇬🇧",
+  uk: "🇬🇧",
   // United Kingdom (English)
-  "spain": "🇪🇸",
+  spain: "🇪🇸",
   // Spain (Español)
-  "france": "🇫🇷",
+  france: "🇫🇷",
   // France (Français)
-  "india": "🇮🇳",
+  india: "🇮🇳",
   // India (Hindi)
-  "japan": "🇯🇵",
+  japan: "🇯🇵",
   // Japan (日本語)
-  "portugal": "🇵🇹",
+  portugal: "🇵🇹",
   // Portugal (Português)
-  "russia": "🇷🇺",
+  russia: "🇷🇺",
   // Russia (Русский)
-  "china": "🇨🇳",
+  china: "🇨🇳",
   // China (中文)
   // Regional flags without standard UTF emojis - use white flag
-  "catalonia": "🏳️",
+  catalonia: "🏳️",
   // Catalonia (no UTF emoji) - use white flag
-  "basque": "🏳️",
-  // Basque Country (no UTF emoji) - use white flag  
-  "galicia": "🏳️",
+  basque: "🏳️",
+  // Basque Country (no UTF emoji) - use white flag
+  galicia: "🏳️",
   // Galicia (no UTF emoji) - use white flag
   // Generic fallback for any unknown icon
-  "unknown": "❓"
+  unknown: "❓"
 };
 function getIconEmoji(iconName) {
   return iconEmojis[iconName] || iconEmojis.unknown;
@@ -347,6 +347,7 @@ const hi = {
     randomCharacters: "रैंडम अक्षर के साथ",
     noLookAlikeAlphabet: "नो लुक-अलाइक अल्फाबेट (टाइप करने में आसान)",
     fullAlphanumericAlphabet: "पूर्ण अल्फान्यूमेरिक अल्फाबेट",
+    fullAlphanumericNote: "पूर्ण अल्फान्यूमेरिक अल्फाबेट अधिकतम संगतता प्रदान करता है। मजबूत सुरक्षा के लिए न्यूनतम {0} वर्ण आवश्यक।",
     failedToGenerateApiKey: "API की जनरेट नहीं हुई"
   },
   alphabets: {
@@ -450,6 +451,7 @@ const ja = {
     randomCharacters: "ランダム文字を使用：",
     noLookAlikeAlphabet: "紛らわしくないアルファベット（入力しやすい）",
     fullAlphanumericAlphabet: "完全英数字アルファベット",
+    fullAlphanumericNote: "完全英数字アルファベットは最大の互換性を提供します。強力なセキュリティには最低{0}文字が必要です。",
     failedToGenerateApiKey: "APIキーの生成に失敗しました"
   },
   alphabets: {
@@ -555,6 +557,8 @@ const es = {
     randomCharacters: "letras aleatorias con",
     noLookAlikeAlphabet: "alfabeto sin confusión (fácil de escribir)",
     fullAlphanumericAlphabet: "alfabeto alfanumérico completo",
+    noLookAlikeNote: "El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} caracteres para seguridad equivalente.",
+    fullAlphanumericNote: "El alfabeto completo alfanumérico proporciona buena entropía. Mínimo {0} caracteres para seguridad fuerte.",
     failedToGenerateApiKey: "Error al generar clave API"
   },
   alphabets: {
@@ -658,6 +662,7 @@ const pt = {
     randomCharacters: "caracteres aleatórios com",
     noLookAlikeAlphabet: "alfabeto sem confusão (fácil de digitar)",
     fullAlphanumericAlphabet: "alfabeto alfanumérico completo",
+    fullAlphanumericNote: "O alfabeto alfanumérico completo oferece máxima compatibilidade. Mínimo de {0} caracteres para segurança forte.",
     failedToGenerateApiKey: "Falha ao gerar chave API"
   },
   alphabets: {
@@ -763,6 +768,7 @@ const fr = {
     randomCharacters: "lettres aléatoires avec",
     noLookAlikeAlphabet: "alphabet sans ambiguïté (facile à taper)",
     fullAlphanumericAlphabet: "alphabet alphanumérique complet",
+    fullAlphanumericNote: "L'alphabet alphanumérique complet offre une compatibilité maximale. Minimum {0} caractères pour une sécurité forte.",
     failedToGenerateApiKey: "Échec de la génération de la clé API"
   },
   alphabets: {
@@ -866,6 +872,7 @@ const de = {
     randomCharacters: "Zufallszeichen mit",
     noLookAlikeAlphabet: "Alphabet ohne Verwechslung (leicht zu tippen)",
     fullAlphanumericAlphabet: "vollständiges alphanumerisches Alphabet",
+    fullAlphanumericNote: "Das vollständige alphanumerische Alphabet bietet maximale Kompatibilität. Mindestens {0} Zeichen für starke Sicherheit.",
     failedToGenerateApiKey: "API-Schlüssel-Generierung fehlgeschlagen"
   },
   alphabets: {
@@ -969,6 +976,7 @@ const ru = {
     randomCharacters: "случайных символов с",
     noLookAlikeAlphabet: "алфавит без путаницы (легко набирать)",
     fullAlphanumericAlphabet: "полный алфавитно-цифровой алфавит",
+    fullAlphanumericNote: "Полный алфавитно-цифровой алфавит обеспечивает максимальную совместимость. Минимум {0} символов для надёжной безопасности.",
     failedToGenerateApiKey: "Не удалось сгенерировать API-ключ"
   },
   alphabets: {
@@ -1072,6 +1080,7 @@ const zh = {
     randomCharacters: "个随机字符，采用",
     noLookAlikeAlphabet: "无相似字母表（易输入）",
     fullAlphanumericAlphabet: "完整字母数字字母表",
+    fullAlphanumericNote: "完整字母数字字母表提供最大兼容性。强安全性需要最少{0}个字符。",
     failedToGenerateApiKey: "生成API密钥失败"
   },
   alphabets: {
@@ -1177,6 +1186,7 @@ const ar = {
     randomCharacters: "حرف عشوائي مع",
     noLookAlikeAlphabet: "أبجدية عدم التشابه (سهل الكتابة)",
     fullAlphanumericAlphabet: "أبجدية أبجدية رقمية كاملة",
+    fullAlphanumericNote: "توفر الأبجدية الرقمية الكاملة أقصى توافق. الحد الأدنى {0} حرفاً للأمان القوي.",
     failedToGenerateApiKey: "فشل في توليد مفتاح API"
   },
   alphabets: {
@@ -1280,6 +1290,7 @@ const eu = {
     randomCharacters: "ausazko hizki hauek erabiliz",
     noLookAlikeAlphabet: "hizki nahasgarririk gabeko alfabetoa (erraz idazteko)",
     fullAlphanumericAlphabet: "alfabeto alfanumeriko osoa",
+    fullAlphanumericNote: "Alfabeto alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Segurtasun sendorako gutxienez {0} hizki behar.",
     failedToGenerateApiKey: "API gakoa sortzeak huts egin du"
   },
   alphabets: {
@@ -1383,6 +1394,7 @@ const ca = {
     randomCharacters: "lletres aleatòries amb",
     noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
     fullAlphanumericAlphabet: "alfabet alfanumèric complet",
+    fullAlphanumericNote: "L'alfabet alfanumèric complet proporciona màxima compatibilitat. Mínim {0} caràcters per a seguretat forta.",
     failedToGenerateApiKey: "Ha fallat generar la clau API"
   },
   alphabets: {
@@ -1486,6 +1498,7 @@ const gl = {
     randomCharacters: "letras aleatorias con",
     noLookAlikeAlphabet: "alfabeto sen confusión (fácil de escribir)",
     fullAlphanumericAlphabet: "alfabeto alfanumérico completo",
+    fullAlphanumericNote: "O alfabeto alfanumérico completo proporciona máxima compatibilidade. Mínimo {0} caracteres para seguridade forte.",
     failedToGenerateApiKey: "Fallou xerar a chave API"
   },
   alphabets: {
@@ -1545,15 +1558,24 @@ const translations = {
 };
 function t(key, lang = "en") {
   const keys = key.split(".");
-  let value = translations[lang];
-  for (const k of keys) {
-    if (value && typeof value === "object" && k in value) {
-      value = value[k];
-    } else {
-      return key;
+  function getTranslationFromLang(targetLang) {
+    let value = translations[targetLang];
+    for (const k of keys) {
+      if (value && typeof value === "object" && k in value) {
+        value = value[k];
+      } else {
+        return null;
+      }
     }
+    return typeof value === "string" ? value : null;
   }
-  return typeof value === "string" ? value : key;
+  let result = getTranslationFromLang(lang);
+  if (result) return result;
+  if (lang !== "en") {
+    result = getTranslationFromLang("en");
+    if (result) return result;
+  }
+  return key;
 }
 const _ = derived(currentLanguage, (lang) => {
   return (key) => t(key, lang);

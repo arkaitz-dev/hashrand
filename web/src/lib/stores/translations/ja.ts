@@ -42,7 +42,9 @@ export const ja: I18nTexts = {
 		optionalPrefix: 'プレフィックス（オプション）',
 		optionalSuffix: 'サフィックス（オプション）',
 		prefixCannotExceed: 'プレフィックスは32文字を超えることはできません',
-		suffixCannotExceed: 'サフィックスは32文字を超えることはできません'
+		suffixCannotExceed: 'サフィックスは32文字を超えることはできません',
+		yes: 'はい',
+		no: 'いいえ'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -99,6 +101,7 @@ export const ja: I18nTexts = {
 		randomCharacters: 'ランダム文字を使用：',
 		noLookAlikeAlphabet: '紛らわしくないアルファベット（入力しやすい）',
 		fullAlphanumericAlphabet: '完全英数字アルファベット',
+		fullAlphanumericNote: '完全英数字アルファベットは最大の互換性を提供します。強力なセキュリティには最低{0}文字が必要です。',
 		failedToGenerateApiKey: 'APIキーの生成に失敗しました'
 	},
 	alphabets: {

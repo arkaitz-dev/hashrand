@@ -41,8 +41,10 @@ export const pt: I18nTexts = {
 		cannotExceed: 'não pode exceder',
 		optionalPrefix: 'Prefixo opcional',
 		optionalSuffix: 'Sufixo opcional',
-		prefixCannotExceed: 'O prefixo não pode exceder 32 letras',
-		suffixCannotExceed: 'O sufixo não pode exceder 32 letras'
+		prefixCannotExceed: 'O prefixo não pode exceder 32 caracteres',
+		suffixCannotExceed: 'O sufixo não pode exceder 32 caracteres',
+		yes: 'Sim',
+		no: 'Não'
 	},
 	menu: {
 		title: 'Gerador de Hash',
@@ -76,7 +78,7 @@ export const pt: I18nTexts = {
 		easyReadDescription: 'Fácil de ler e digitar (49 chars)',
 		securityNote: 'Nota de Segurança:',
 		securityDescription:
-			'As senhas são geradas usando geração aleatória criptograficamente segura. Não são armazenadas nem registadas em qualquer lugar.',
+			'As palavras-passe são geradas utilizando geração aleatória criptograficamente segura. Não são armazenadas nem registadas em lugar algum.',
 		noLookAlikeNote:
 			'O alfabeto Sem Confusão exclui letras confundíveis. Mínimo {0} letras para segurança equivalente.',
 		fullAlphabetNote:
@@ -94,11 +96,12 @@ export const pt: I18nTexts = {
 		formatNotice:
 			'Todas as chaves API são geradas com o prefixo "ak_" para fácil identificação. O comprimento especificado refere-se apenas às letras aleatórias geradas (prefixo não contado).',
 		securityNotice:
-			'Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as senhas.',
+			'Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as palavras-passe.',
 		formatPrefix: 'prefixo ak_ +',
 		randomCharacters: 'caracteres aleatórios com',
 		noLookAlikeAlphabet: 'alfabeto sem confusão (fácil de digitar)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
+		fullAlphanumericNote: 'O alfabeto alfanumérico completo oferece máxima compatibilidade. Mínimo de {0} caracteres para segurança forte.',
 		failedToGenerateApiKey: 'Falha ao gerar chave API'
 	},
 	alphabets: {

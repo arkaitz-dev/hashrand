@@ -36,7 +36,7 @@ export const eu: I18nTexts = {
 		fallbackCopyFailed: 'Ordezko kopiaketa-sistemak huts egin du',
 		failedToRegenerate: 'Berriz sortzeak huts egin du',
 		failedToLoadVersions: 'Bertsioak kargatzeak huts egin du',
-		mustBeBetween: 'tartean egon behar du',
+		mustBeBetween: 'artean egon behar du',
 		and: 'eta',
 		cannotExceed: 'ezin du gainditu',
 		optionalPrefix: 'Aukerako aurrizkia',
@@ -78,9 +78,9 @@ export const eu: I18nTexts = {
 		securityDescription:
 			'Pasahitzak kriptografikoki segurua den ausazko sorkuntzaren bidez sortzen dira. Ez dira inon gordetzen edo erregistratzen.',
 		noLookAlikeNote:
-			'Hizki nahasgarririk gabeko alfabetoak hizki antzekoak kanpoan uzten ditu. Gutxieneko {0} hizki behar dira segurtasun baliokidea lortzeko.',
+			'Hizki nahasgarririk gabeko alfabetoak hizki antzekoak kanpoan uzten ditu. Segurtasun baliokiderako gutxienez {0} hizki behar dira.',
 		fullAlphabetNote:
-			'Sinboloak dituen alfabeto osoak entropia handiena ematen du. Gutxieneko {0} hizki behar dira segurtasun sendoa lortzeko.',
+			'Sinboloak dituen alfabeto osoak entropia handiena ematen du. Segurtasun sendorako gutxienez {0} hizki behar dira.',
 		failedToGeneratePassword: 'Pasahitza sortzeak huts egin du'
 	},
 	apiKey: {
@@ -99,6 +99,7 @@ export const eu: I18nTexts = {
 		randomCharacters: 'ausazko hizki hauek erabiliz',
 		noLookAlikeAlphabet: 'hizki nahasgarririk gabeko alfabetoa (erraz idazteko)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumeriko osoa',
+		fullAlphanumericNote: 'Alfabeto alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Segurtasun sendorako gutxienez {0} hizki behar.',
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
 	alphabets: {

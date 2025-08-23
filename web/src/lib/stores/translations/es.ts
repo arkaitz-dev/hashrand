@@ -101,6 +101,8 @@ export const es: I18nTexts = {
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sin confusión (fácil de escribir)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
+		noLookAlikeNote: 'El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} caracteres para seguridad equivalente.',
+		fullAlphanumericNote: 'El alfabeto completo alfanumérico proporciona buena entropía. Mínimo {0} caracteres para seguridad fuerte.',
 		failedToGenerateApiKey: 'Error al generar clave API'
 	},
 	alphabets: {

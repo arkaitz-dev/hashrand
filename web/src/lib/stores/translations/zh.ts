@@ -37,7 +37,7 @@ export const zh: I18nTexts = {
 		failedToRegenerate: '重新生成失败',
 		failedToLoadVersions: '加载版本失败',
 		mustBeBetween: '必须在',
-		and: '和',
+		and: '到',
 		cannotExceed: '不能超过',
 		optionalPrefix: '可选前缀',
 		optionalSuffix: '可选后缀',
@@ -60,10 +60,10 @@ export const zh: I18nTexts = {
 		prefix: '前缀',
 		suffix: '后缀',
 		lengthMustBeBetween: '长度必须在2到128之间',
-		bitcoinDescription: '比特币字母表，排除混淆字符',
+		bitcoinDescription: 'Bitcoin字母表，排除混淆字符',
 		maxReadabilityDescription: '最大可读性，49个字符',
 		completeAlphanumericDescription: '完整字母数字集合',
-		maxEntropyDescription: '带符号的最大熵',
+		maxEntropyDescription: '包含符号的最大熵',
 		failedToGenerateHash: '生成哈希失败'
 	},
 	password: {
@@ -72,12 +72,12 @@ export const zh: I18nTexts = {
 		generatePassword: '生成密码',
 		length: '长度',
 		alphabet: '字符集',
-		maxSecurityDescription: '带符号的最大安全性（73个字符）',
+		maxSecurityDescription: '包含符号的最高安全性（73个字符）',
 		easyReadDescription: '易读易输入（49个字符）',
 		securityNote: '安全提示：',
-		securityDescription: '密码使用密码学安全的随机生成。不会在任何地方存储或记录。',
-		noLookAlikeNote: '无相似字母表排除易混淆字符。等效安全性需要最少{0}个字符。',
-		fullAlphabetNote: '带符号的完整字母表提供最大熵。强安全性需要最少{0}个字符。',
+		securityDescription: '密码使用密码学安全的随机生成技术。不会在任何地方存储或记录。',
+		noLookAlikeNote: '无混淆字母表排除易混淆字符。等效安全性至少需要{0}个字符。',
+		fullAlphabetNote: '包含符号的完整字母表提供最大熵值。强安全性至少需要{0}个字符。',
 		failedToGeneratePassword: '生成密码失败'
 	},
 	apiKey: {
@@ -89,19 +89,20 @@ export const zh: I18nTexts = {
 		standardAlphanumericDescription: '标准字母数字（62个字符）',
 		noConfusingDescription: '无混淆字符（49个字符）',
 		formatNotice:
-			'所有API密钥都生成带"ak_"前缀以便识别。指定长度仅指生成的随机字符（不计算前缀）。',
+			'所有API密钥都带有"ak_"前缀以便于识别。指定长度仅指生成的随机字符（不包括前缀）。',
 		securityNotice:
-			'安全存储API密钥，永远不要在客户端代码或版本控制中暴露它们。像对待密码一样谨慎对待它们。',
+			'请安全存储API密钥，切勿在客户端代码或版本控制中暴露它们。请像对待密码一样谨慎处理。',
 		formatPrefix: 'ak_前缀 +',
 		randomCharacters: '个随机字符，采用',
-		noLookAlikeAlphabet: '无相似字母表（易输入）',
+		noLookAlikeAlphabet: '无混淆字母表（易输入）',
 		fullAlphanumericAlphabet: '完整字母数字字母表',
+		fullAlphanumericNote: '完整字母数字字母表提供最大兼容性。强安全性至少需要{0}个字符。',
 		failedToGenerateApiKey: '生成API密钥失败'
 	},
 	alphabets: {
-		base58: 'Base58（比特币字母表）',
-		'no-look-alike': '无相似',
+		base58: 'Base58（Bitcoin字母表）',
+		'no-look-alike': '无混淆',
 		full: '完整字母数字',
-		'full-with-symbols': '带符号完整'
+		'full-with-symbols': '包含符号'
 	}
 };

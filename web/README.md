@@ -25,11 +25,17 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
   - Centralized sprite at `/static/icons-sprite.svg` for efficient caching
   - Universal `Icon.svelte` component for consistent usage
   - Theme icons (sun/moon), navigation arrows, action buttons, UI elements
-- **🌍 Complete Internationalization**: Full i18n system with 13 languages
+- **🌍 Complete Internationalization**: Full i18n system with 13 languages featuring professional translation quality
   - **Languages**: English, Spanish, Portuguese, French, German, Russian, Chinese, Arabic, Hindi, Japanese, Euskera, Català, Galego
+  - **Enhanced Naturalness**: Comprehensive linguistic review ensuring authentic, natural-sounding translations
+    - **Native Terminology**: Preferred pure language terms over anglicisms (Hindi, Russian, German)
+    - **Regional Accuracy**: European Portuguese vs Brazilian distinctions, authentic Basque cases
+    - **Technical Consistency**: Unified "characters" terminology across Romance languages
+    - **Cultural Adaptation**: Proper Arabic RTL terminology and Chinese natural expressions
   - **RTL Support**: Right-to-left text direction for Arabic with automatic behavior
   - **Language Selector**: Interactive dropdown with authentic flag representations
   - **Regional Flags**: Includes Catalonia, Basque Country (Ikurriña), Galicia flags
+  - **Robust Date Localization**: Advanced fallback system for cross-browser compatibility
 
 ### 🔧 Advanced UI Components
 

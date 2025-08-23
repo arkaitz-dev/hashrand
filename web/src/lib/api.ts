@@ -5,10 +5,14 @@ const API_BASE = '/api';
 class ApiError extends Error {
 	constructor(
 		message: string,
-		public readonly status: number
+		public readonly status: number // eslint-disable-line no-unused-vars
 	) {
 		super(message);
 		this.name = 'ApiError';
+	}
+
+	get statusCode(): number {
+		return this.status;
 	}
 }
 
@@ -38,7 +42,7 @@ export const api = {
 		if (params.suffix) searchParams.set('suffix', params.suffix);
 		if (params.raw) searchParams.set('raw', 'true');
 
-		const response = await fetch(`${API_BASE}/generate?${searchParams}`);
+		const response = await fetch(`${API_BASE}/custom?${searchParams}`);
 		return handleResponse(response);
 	},
 

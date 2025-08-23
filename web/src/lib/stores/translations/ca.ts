@@ -26,7 +26,7 @@ export const ca: I18nTexts = {
 		selectLanguage: 'Seleccionar idioma',
 		switchToLightMode: 'Canviar al mode clar',
 		switchToDarkMode: 'Canviar al mode fosc',
-		characters: 'lletres',
+		characters: 'caràcters',
 		alphabet: 'Alfabet',
 		generatedValue: 'Valor generat',
 		clickToSelect:
@@ -42,8 +42,8 @@ export const ca: I18nTexts = {
 		cannotExceed: 'no pot superar',
 		optionalPrefix: 'Prefix opcional',
 		optionalSuffix: 'Sufix opcional',
-		prefixCannotExceed: 'El prefix no pot superar 32 lletres',
-		suffixCannotExceed: 'El sufix no pot superar 32 lletres'
+		prefixCannotExceed: 'El prefix no pot superar 32 caràcters',
+		suffixCannotExceed: 'El sufix no pot superar 32 caràcters'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -61,8 +61,8 @@ export const ca: I18nTexts = {
 		prefix: 'Prefix',
 		suffix: 'Sufix',
 		lengthMustBeBetween: "La longitud ha d'estar entre 2 i 128",
-		bitcoinDescription: 'Alfabet Bitcoin, exclou lletres confuses',
-		maxReadabilityDescription: 'Màxima llegibilitat, 49 lletres',
+		bitcoinDescription: 'Alfabet Bitcoin, exclou caràcters confusos',
+		maxReadabilityDescription: 'Màxima llegibilitat, 49 caràcters',
 		completeAlphanumericDescription: 'Conjunt alfanumèric complet',
 		maxEntropyDescription: 'Màxima entropia amb símbols',
 		failedToGenerateHash: 'Ha fallat generar el hash'
@@ -72,7 +72,7 @@ export const ca: I18nTexts = {
 		description: 'Genereu contrasenyes segures',
 		generatePassword: 'Generar Contrasenya',
 		length: 'Longitud',
-		alphabet: 'Conjunt de lletres',
+		alphabet: 'Conjunt de caràcters',
 		maxSecurityDescription: 'Màxima seguretat amb símbols (73 caràcters)',
 		easyReadDescription: 'Fàcil de llegir i escriure (49 caràcters)',
 		securityNote: 'Nota de seguretat:',
@@ -89,7 +89,7 @@ export const ca: I18nTexts = {
 		description: 'Genereu claus API amb prefix ak_',
 		generateApiKey: 'Generar Clau API',
 		length: 'Longitud',
-		alphabet: 'Conjunt de lletres',
+		alphabet: 'Conjunt de caràcters',
 		standardAlphanumericDescription: 'Alfanumèric estàndard (62 caràcters)',
 		noConfusingDescription: 'Sense caràcters confusos (49 caràcters)',
 		formatNotice:
@@ -97,9 +97,10 @@ export const ca: I18nTexts = {
 		securityNotice:
 			'Emmagatzemeu les claus API de forma segura i mai les exposeu en codi del costat del client o control de versions. Tracteu-les amb la mateixa cura que les contrasenyes.',
 		formatPrefix: 'prefix ak_ +',
-		randomCharacters: 'lletres aleatòries amb',
+		randomCharacters: 'caràcters aleatoris amb',
 		noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
 		fullAlphanumericAlphabet: 'alfabet alfanumèric complet',
+		fullAlphanumericNote: "L'alfabet alfanumèric complet proporciona màxima compatibilitat. Mínim {0} caràcters per a seguretat forta.",
 		failedToGenerateApiKey: 'Ha fallat generar la clau API'
 	},
 	alphabets: {

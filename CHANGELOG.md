@@ -11,6 +11,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.15.0] - 2025-08-23
+
+### Web Interface Changes (v0.15.0)
+#### Enhanced
+- **🌍 Translation Naturalness Improvements**: Comprehensive review and enhancement of all 13 language translations
+  - **Portuguese Improvements**: Enhanced terminology for technical precision
+    - Changed "letras" to "caracteres" for consistency across technical contexts
+    - Updated "senhas" to "palavras-passe" (European Portuguese standard)
+    - Improved overall fluency and professional terminology usage
+  - **French Refinements**: Technical terminology standardization
+    - Updated "lettres" to "caractères" for better technical accuracy
+    - Enhanced sentence structures for improved natural flow
+    - Maintained French linguistic elegance while ensuring technical precision
+  - **German Language Polish**: Enhanced word order and terminology choices
+    - Improved passive voice constructions: "Wird generiert..." (more natural)
+    - Better modal verb usage: "darf nicht" instead of "kann nicht" (more appropriate)
+    - Enhanced navigation terminology: "Gehe zu" (more conversational)
+    - Improved compound terms for better German linguistic patterns
+  - **Russian Localization**: Enhanced naturalness with proper linguistic structures
+    - Changed "алфавитно-цифровой" to "буквенно-цифровой" (more natural Russian)
+    - Improved "Алфавит без путаницы" to "Однозначный алфавит" (clearer meaning)
+    - Enhanced sentence flow and case usage for better readability
+    - Updated error messages for more natural Russian expressions
+  - **Chinese Language Refinement**: Improved word choice and sentence structure
+    - Changed "和" to "到" in range expressions (more natural for ranges)
+    - Enhanced "带符号的" to "包含符号的" (more precise terminology)
+    - Improved overall sentence flow and terminology consistency
+    - Better adaptation to Chinese grammar patterns
+  - **Arabic Enhancement**: Improved clarity and RTL considerations
+    - Changed "عدم التشابه" to "واضحة" (clearer and more direct)
+    - Enhanced sentence structures for better Arabic flow
+    - Improved technical terminology while maintaining linguistic authenticity
+  - **Euskera (Basque) Corrections**: Proper ergative/absolutive case usage
+    - Corrected "tartean" to "artean" (more grammatically correct)
+    - Enhanced ergative constructions for natural Basque syntax
+    - Improved word order to match authentic Basque linguistic patterns
+  - **Catalan Consistency**: Standardized technical terminology
+    - Changed "lletres" to "caràcters" for technical consistency
+    - Updated all character-related terminology for uniformity
+    - Enhanced professional terminology across the interface
+  - **Hindi Linguistic Improvements**: More authentic Hindi terminology
+    - Changed "लेंथ" to "लंबाई" (pure Hindi instead of anglicism)
+    - Updated "सिक्यूरिटी" to "सुरक्षा" (native Hindi term)
+    - Improved overall linguistic authenticity and naturalness
+  - **Japanese Completeness**: Added missing translation elements
+    - Added missing "yes" (はい) and "no" (いいえ) translations
+    - Enhanced existing translations for better Japanese linguistic flow
+    - Maintained proper SOV structure throughout the interface
+
+#### Enhanced
+- **📅 DateTimeLocalized Component Robustness**: Advanced fallback system for broader browser compatibility
+  - **Multi-Level Fallback Architecture**: Sophisticated fallback system for unsupported locales
+    - **Primary**: Attempts native `Intl.DateTimeFormat` with target locale
+    - **Detection**: Intelligent detection of failed localization (when browsers return English names for other languages)
+    - **Secondary**: Automatic fallback to English formatting if locale isn't truly supported
+    - **Ultimate**: Manual ISO date formatting as final fallback for maximum compatibility
+  - **Enhanced Galician Support**: Custom fallback implementation for improved compatibility
+    - **Authentic Abbreviations**: Custom Galician month abbreviations (`xan.`, `feb.`, `mar.`, etc.)
+    - **Smart Detection**: Attempts native Intl first, falls back to custom if needed
+    - **Consistent Formatting**: Maintains visual consistency with other languages
+  - **Intelligent Locale Validation**: Advanced detection of browser locale support limitations
+    - **English Month Detection**: Identifies when browsers incorrectly return English month names
+    - **Comprehensive Validation**: Checks multiple English month name variants (short and long forms)
+    - **Graceful Degradation**: Seamless fallback without user-visible errors
+    - **Cross-Platform Compatibility**: Works reliably across different browser engines and versions
+  - **Improved Architecture**: Enhanced code organization and maintainability
+    - **Helper Functions**: Extracted common time formatting logic for code reuse
+    - **Consistent Error Handling**: Unified approach to locale failures across all languages
+    - **Performance Optimization**: Efficient validation without impacting rendering speed
+
+#### Fixed
+- **🔤 Translation Consistency**: Resolved terminology inconsistencies across languages
+  - **Technical Terms**: Standardized character/letter terminology in Portuguese, French, and Catalan
+  - **Regional Variations**: Enhanced European Portuguese vs Brazilian Portuguese distinctions
+  - **Linguistic Authenticity**: Improved native term usage in Hindi and other languages
+- **🌐 Cross-Browser Locale Support**: Enhanced compatibility for date/time formatting
+  - **Browser Variations**: Improved handling of different browser Intl.DateTimeFormat implementations
+  - **Locale Fallbacks**: Robust fallback chain for unsupported or partially supported locales
+  - **Edge Case Handling**: Better handling of mixed locale support scenarios
+
+#### Technical Implementation
+- **Translation Quality Assurance**: Systematic approach to linguistic improvements
+  - **Native Speaker Review**: Used English as reference with Spanish linguistic guidance
+  - **Grammatical Considerations**: Applied language-specific grammatical rules
+    - **German**: Case system and compound word formation
+    - **Russian**: Proper case usage and aspectual verb forms
+    - **Arabic**: RTL considerations and authentic terminology
+    - **Basque**: Ergative-absolutive alignment and word order
+    - **Chinese**: Proper particle usage and sentence structure
+    - **Japanese**: SOV word order and appropriate formality levels
+    - **Hindi**: Pure Hindi vs English loanword preferences
+  - **Consistency Enforcement**: Unified terminology across all interface elements
+  - **Cultural Adaptation**: Respectful adaptation to regional linguistic preferences
+
+---
+
 ## [API v1.0.0 / Web v0.14.0] - 2025-08-23
 
 ### Web Interface Changes (v0.14.0)
@@ -846,6 +942,8 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.15.0]** (2025-08-23) - Translation naturalness improvements across all 13 languages and enhanced DateTimeLocalized component robustness
+- **[API v1.0.0 / Web v0.14.0]** (2025-08-23) - Progressive sprite loading system with UTF placeholders, universal URL parameter support, and centralized API architecture
 - **[API v1.0.0 / Web v0.13.0]** (2025-08-23) - Comprehensive linting system (ESLint + Prettier via Vite), code quality cleanup, and unified development workflow
 - **[API v1.0.0 / Web v0.12.0]** (2025-08-23) - DateTimeLocalized component, enhanced Iconize with invertposition, play/home icons, and result page improvements
 - **[API v1.0.0 / Web v0.11.0]** (2025-08-22) - Universal Iconize Component with RTL-aware automatic positioning and simplified implementation

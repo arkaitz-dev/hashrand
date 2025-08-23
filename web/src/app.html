@@ -39,48 +39,45 @@
 				error: false
 			};
 
-			// Load sprite after DOM is ready
+			// Load sprite immediately
 			function loadSprite() {
-				// Add 10 second delay for testing placeholder functionality
-				setTimeout(() => {
-					fetch('%sveltekit.assets%/icons-sprite.svg')
-						.then((response) => {
-							if (!response.ok) {
-								throw new Error(`HTTP ${response.status}`);
-							}
-							return response.text();
-						})
-						.then((svgContent) => {
-							// Inject sprite SVG directly at end of body
-							const parser = new DOMParser();
-							const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-							const svgElement = svgDoc.documentElement;
-							svgElement.style.display = 'none';
-							svgElement.id = 'icons-sprite-cache';
-							document.body.appendChild(svgElement);
+				fetch('%sveltekit.assets%/icons-sprite.svg')
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error(`HTTP ${response.status}`);
+						}
+						return response.text();
+					})
+					.then((svgContent) => {
+						// Inject sprite SVG directly at end of body
+						const parser = new DOMParser();
+						const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+						const svgElement = svgDoc.documentElement;
+						svgElement.style.display = 'none';
+						svgElement.id = 'icons-sprite-cache';
+						document.body.appendChild(svgElement);
 
-							// Update global state
-							window.__SPRITE_STATE__ = {
-								loaded: true,
-								loading: false,
-								error: false
-							};
+						// Update global state
+						window.__SPRITE_STATE__ = {
+							loaded: true,
+							loading: false,
+							error: false
+						};
 
-							// Dispatch custom event for Svelte reactivity
-							window.dispatchEvent(new CustomEvent('sprite-loaded'));
-						})
-						.catch((error) => {
-							console.error('[SpriteLoader] Failed to load sprite:', error);
-							window.__SPRITE_STATE__ = {
-								loaded: false,
-								loading: false,
-								error: true
-							};
+						// Dispatch custom event for Svelte reactivity
+						window.dispatchEvent(new CustomEvent('sprite-loaded'));
+					})
+					.catch((error) => {
+						console.error('[SpriteLoader] Failed to load sprite:', error);
+						window.__SPRITE_STATE__ = {
+							loaded: false,
+							loading: false,
+							error: true
+						};
 
-							// Dispatch error event
-							window.dispatchEvent(new CustomEvent('sprite-error', { detail: error }));
-						});
-				}, 10000); // 10 second delay for testing
+						// Dispatch error event
+						window.dispatchEvent(new CustomEvent('sprite-error', { detail: error }));
+					});
 			}
 
 			// Start loading

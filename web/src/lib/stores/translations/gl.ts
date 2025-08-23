@@ -99,6 +99,7 @@ export const gl: I18nTexts = {
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sen confusión (fácil de escribir)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
+		fullAlphanumericNote: 'O alfabeto alfanumérico completo proporciona máxima compatibilidade. Mínimo {0} caracteres para seguridade forte.',
 		failedToGenerateApiKey: 'Fallou xerar a chave API'
 	},
 	alphabets: {

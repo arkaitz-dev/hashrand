@@ -3,9 +3,9 @@ import "@sveltejs/kit/internal";
 import "../../../chunks/exports.js";
 import "../../../chunks/utils.js";
 import "../../../chunks/state.svelte.js";
+import { p as page, i as isLoading } from "../../../chunks/result.js";
 import { L as LoadingSpinner } from "../../../chunks/LoadingSpinner.js";
 import { I as Iconize, F as Footer } from "../../../chunks/Footer.js";
-import { i as isLoading } from "../../../chunks/result.js";
 import { _ } from "../../../chunks/rtl.js";
 function _page($$payload, $$props) {
   push();
@@ -20,6 +20,7 @@ function _page($$payload, $$props) {
     };
   }
   let params = getDefaultParams();
+  store_get($$store_subs ??= {}, "$page", page).url.searchParams;
   alphabetOptions = [
     {
       value: "full-with-symbols",

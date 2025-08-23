@@ -42,8 +42,8 @@ export const fr: I18nTexts = {
 		cannotExceed: 'ne peut pas dépasser',
 		optionalPrefix: 'Préfixe optionnel',
 		optionalSuffix: 'Suffixe optionnel',
-		prefixCannotExceed: 'Le préfixe ne peut pas dépasser 32 lettres',
-		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 lettres',
+		prefixCannotExceed: 'Le préfixe ne peut pas dépasser 32 caractères',
+		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 caractères',
 		yes: 'Oui',
 		no: 'Non'
 	},
@@ -81,9 +81,9 @@ export const fr: I18nTexts = {
 		securityDescription:
 			'Les mots de passe sont générés en utilisant une génération aléatoire cryptographiquement sécurisée. Ils ne sont stockés ni journalisés nulle part.',
 		noLookAlikeNote:
-			"L'alphabet Sans Ambiguïté exclut les lettres confuses. Minimum {0} lettres pour une sécurité équivalente.",
+			"L'alphabet sans ambiguïté exclut les caractères confus. Minimum {0} caractères pour une sécurité équivalente.",
 		fullAlphabetNote:
-			"L'alphabet complet avec symboles fournit une entropie maximale. Minimum {0} lettres pour une sécurité forte.",
+			"L'alphabet complet avec symboles fournit une entropie maximale. Minimum {0} caractères pour une sécurité forte.",
 		failedToGeneratePassword: 'Échec de la génération du mot de passe'
 	},
 	apiKey: {
@@ -99,9 +99,10 @@ export const fr: I18nTexts = {
 		securityNotice:
 			'Stockez les clés API en sécurité et ne les exposez jamais dans le code côté client ou le contrôle de version. Traitez-les avec le même soin que les mots de passe.',
 		formatPrefix: 'préfixe ak_ +',
-		randomCharacters: 'lettres aléatoires avec',
+		randomCharacters: 'caractères aléatoires avec',
 		noLookAlikeAlphabet: 'alphabet sans ambiguïté (facile à taper)',
 		fullAlphanumericAlphabet: 'alphabet alphanumérique complet',
+		fullAlphanumericNote: 'L\'alphabet alphanumérique complet offre une compatibilité maximale. Minimum {0} caractères pour une sécurité forte.',
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
 	alphabets: {

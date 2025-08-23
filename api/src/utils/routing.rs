@@ -1,4 +1,4 @@
-use crate::handlers::{handle_api_key, handle_generate, handle_password, handle_version};
+use crate::handlers::{handle_api_key, handle_custom, handle_password, handle_version};
 use spin_sdk::http::Response;
 use std::collections::HashMap;
 
@@ -15,7 +15,8 @@ pub fn route_request(
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
     match path {
-        path if path.ends_with("/api/generate") => handle_generate(query_params),
+        path if path.ends_with("/api/custom") => handle_custom(query_params),
+        path if path.ends_with("/api/generate") => handle_custom(query_params), // Backward compatibility
         path if path.ends_with("/api/password") => handle_password(query_params),
         path if path.ends_with("/api/api-key") => handle_api_key(query_params),
         path if path.ends_with("/api/version") => handle_version(),
@@ -28,16 +29,17 @@ fn handle_not_found() -> anyhow::Result<Response> {
     let help_message = r#"Not Found
 
 Available endpoints:
-- GET /api/generate?length=21&alphabet=base58&prefix=&suffix=&raw=true
+- GET /api/custom?length=21&alphabet=base58&prefix=&suffix=&raw=true
+- GET /api/generate?length=21&alphabet=base58&prefix=&suffix=&raw=true (alias for /api/custom)
 - GET /api/password?length=21&alphabet=full-with-symbols&raw=true  
 - GET /api/api-key?length=44&alphabet=full&raw=true
 - GET /api/version
 
 Parameters:
-- length: 2-128 (generate), 21-44 (password), 44-64 (api-key)
+- length: 2-128 (custom), 21-44 (password), 44-64 (api-key)
 - alphabet: base58, no-look-alike, full, full-with-symbols
 - raw: true (default), false (adds newline)
-- prefix/suffix: max 32 chars each (generate only)"#;
+- prefix/suffix: max 32 chars each (custom only)"#;
 
     Ok(Response::builder()
         .status(404)

@@ -3,10 +3,10 @@ import "@sveltejs/kit/internal";
 import "../../../chunks/exports.js";
 import "../../../chunks/utils.js";
 import "../../../chunks/state.svelte.js";
+import { p as page, r as resultState, i as isLoading, e as error } from "../../../chunks/result.js";
 import "clsx";
 import { I as Icon, i as isRTL, _, c as currentLanguage } from "../../../chunks/rtl.js";
 import { I as Iconize, F as Footer } from "../../../chunks/Footer.js";
-import { r as resultState, i as isLoading, e as error } from "../../../chunks/result.js";
 function BackButton($$payload, $$props) {
   push();
   var $$store_subs;
@@ -115,6 +115,7 @@ function _page($$payload, $$props) {
         return "gray";
     }
   }
+  store_get($$store_subs ??= {}, "$page", page).url.searchParams;
   getEndpointDisplayName = (endpoint) => {
     switch (endpoint) {
       case "custom":

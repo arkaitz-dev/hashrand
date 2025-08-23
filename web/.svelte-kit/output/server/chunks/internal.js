@@ -504,18 +504,16 @@ const options = {
 				error: false
 			};
 
-			// Load sprite after DOM is ready
+			// Load sprite immediately
 			function loadSprite() {
-				// Add 10 second delay for testing placeholder functionality
-				setTimeout(() => {
-					fetch('` + assets + `/icons-sprite.svg')
-					.then(response => {
+				fetch('` + assets + `/icons-sprite.svg')
+					.then((response) => {
 						if (!response.ok) {
 							throw new Error(\`HTTP \${response.status}\`);
 						}
 						return response.text();
 					})
-					.then(svgContent => {
+					.then((svgContent) => {
 						// Inject sprite SVG directly at end of body
 						const parser = new DOMParser();
 						const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
@@ -534,7 +532,7 @@ const options = {
 						// Dispatch custom event for Svelte reactivity
 						window.dispatchEvent(new CustomEvent('sprite-loaded'));
 					})
-					.catch(error => {
+					.catch((error) => {
 						console.error('[SpriteLoader] Failed to load sprite:', error);
 						window.__SPRITE_STATE__ = {
 							loaded: false,
@@ -545,13 +543,12 @@ const options = {
 						// Dispatch error event
 						window.dispatchEvent(new CustomEvent('sprite-error', { detail: error }));
 					});
-				}, 10000); // 10 second delay for testing
 			}
 
 			// Start loading
 			loadSprite();
 		<\/script>
-		
+
 		<!-- Preload critical fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -632,7 +629,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1emsxjs"
+  version_hash: "81vvx2"
 };
 async function get_hooks() {
   let handle;

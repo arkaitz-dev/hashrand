@@ -6,7 +6,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
-	import { setResult, setLoading, setError, isLoading, resultState } from '$lib/stores/result';
+	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
 
@@ -58,8 +58,8 @@
 		urlParams.set('endpoint', 'password');
 
 		// Add generation parameters
-		urlParams.set('length', params.length.toString());
-		urlParams.set('alphabet', params.alphabet);
+		urlParams.set('length', (params.length ?? 21).toString());
+		urlParams.set('alphabet', params.alphabet ?? 'full-with-symbols');
 
 		goto(`/result?${urlParams.toString()}`);
 	}
