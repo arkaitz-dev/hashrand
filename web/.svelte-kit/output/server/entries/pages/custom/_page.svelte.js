@@ -1,11 +1,10 @@
-import { E as store_get, O as ensure_array_like, K as head, N as escape_html, I as attr, P as maybe_selected, F as attr_class, J as unsubscribe_stores, D as pop, A as push } from "../../../chunks/index.js";
+import { D as store_get, N as ensure_array_like, J as head, M as escape_html, G as attr, O as maybe_selected, E as attr_class, I as unsubscribe_stores, B as pop, z as push } from "../../../chunks/index.js";
 import "@sveltejs/kit/internal";
 import "../../../chunks/exports.js";
 import "../../../chunks/utils.js";
 import "../../../chunks/state.svelte.js";
 import { L as LoadingSpinner } from "../../../chunks/LoadingSpinner.js";
-import { F as Footer } from "../../../chunks/Footer.js";
-import { I as Iconize } from "../../../chunks/Iconize.js";
+import { I as Iconize, F as Footer } from "../../../chunks/Footer.js";
 import { i as isLoading } from "../../../chunks/result.js";
 import { _ } from "../../../chunks/rtl.js";
 function _page($$payload, $$props) {
@@ -94,15 +93,19 @@ function _page($$payload, $$props) {
     $$payload.out.push(`<!----> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.loading"))}...`);
   } else {
     $$payload.out.push("<!--[!-->");
-    $$payload.out.push(`${escape_html(store_get($$store_subs ??= {}, "$_", _)("custom.generateHash"))}`);
+    Iconize($$payload, {
+      conf: { emoji: "▶", iconSize: "text-lg", spacing: "gap-2" },
+      children: ($$payload2) => {
+        $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("custom.generateHash"))}`);
+      }
+    });
   }
-  $$payload.out.push(`<!--]--></button> <button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
+  $$payload.out.push(`<!--]--></button> <button type="button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
   Iconize($$payload, {
-    conf: { icon: "briefcase", iconSize: "w-5 h-5" },
+    conf: { icon: "home", iconSize: "w-5 h-5" },
     children: ($$payload2) => {
       $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.backToMenu"))}`);
-    },
-    $$slots: { default: true }
+    }
   });
   $$payload.out.push(`<!----></button></div></form></div></div> `);
   Footer($$payload);

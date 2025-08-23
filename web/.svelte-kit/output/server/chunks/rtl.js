@@ -1,11 +1,151 @@
-import { F as attr_class, I as attr, D as pop, A as push, G as stringify } from "./index.js";
+import { D as store_get, E as attr_class, G as attr, M as escape_html, I as unsubscribe_stores, B as pop, z as push, F as stringify } from "./index.js";
 import { w as writable, i as derived } from "./exports.js";
+function getInitialState() {
+  if (typeof window !== "undefined" && window.__SPRITE_STATE__) {
+    return window.__SPRITE_STATE__;
+  }
+  return {
+    loaded: false,
+    loading: true,
+    error: false
+  };
+}
+const spriteState = writable(getInitialState());
+const iconEmojis = {
+  // Theme icons
+  "sun": "☀️",
+  // Light mode icon
+  "moon": "🌙",
+  // Dark mode icon
+  // Navigation icons
+  "arrow-left": ">",
+  // Simple arrow for choose buttons (LTR) - flips to < in RTL
+  "arrow-right": ">",
+  // Simple arrow for choose buttons (RTL) - flips to < in RTL
+  "chevron-down": "🔽",
+  // Chevron down for expandable sections
+  "home": "🏠",
+  // Home/house icon for back to menu buttons
+  // UI icons
+  "heart": "❤️",
+  // Heart for "made with love"
+  "check": "✅",
+  // Checkmark for success states
+  "copy": "📋",
+  // Copy to clipboard
+  "refresh": "🔄",
+  // Refresh/regenerate icon
+  "settings": "⚙️",
+  // Settings/gear icon
+  // Flag emojis
+  // Countries with standard UTF flag emojis
+  "saudi": "🇸🇦",
+  // Saudi Arabia (Arabic)
+  "germany": "🇩🇪",
+  // Germany (Deutsch)
+  "uk": "🇬🇧",
+  // United Kingdom (English)
+  "spain": "🇪🇸",
+  // Spain (Español)
+  "france": "🇫🇷",
+  // France (Français)
+  "india": "🇮🇳",
+  // India (Hindi)
+  "japan": "🇯🇵",
+  // Japan (日本語)
+  "portugal": "🇵🇹",
+  // Portugal (Português)
+  "russia": "🇷🇺",
+  // Russia (Русский)
+  "china": "🇨🇳",
+  // China (中文)
+  // Regional flags without standard UTF emojis - use white flag
+  "catalonia": "🏳️",
+  // Catalonia (no UTF emoji) - use white flag
+  "basque": "🏳️",
+  // Basque Country (no UTF emoji) - use white flag  
+  "galicia": "🏳️",
+  // Galicia (no UTF emoji) - use white flag
+  // Generic fallback for any unknown icon
+  "unknown": "❓"
+};
+function getIconEmoji(iconName) {
+  return iconEmojis[iconName] || iconEmojis.unknown;
+}
+function hasProperIconEmoji(iconName) {
+  const emoji = iconEmojis[iconName];
+  return Boolean(emoji && emoji !== iconEmojis.unknown);
+}
 function Icon($$payload, $$props) {
   push();
-  let { name, size = "w-5 h-5", class: className = "" } = $$props;
-  const iconId = `/icons-sprite.svg#icon-${name}`;
-  $$payload.out.push(`<svg${attr_class(`${stringify(size)} ${stringify(className)}`)} aria-hidden="true"><use${attr("href", iconId)}></use></svg>`);
+  var $$store_subs;
+  let {
+    name,
+    size = "w-5 h-5",
+    class: className = "",
+    placeholder = "auto"
+  } = $$props;
+  const iconId = `#icon-${name}`;
+  const computedPlaceholder = () => {
+    if (placeholder === "auto") {
+      if (hasProperIconEmoji(name)) {
+        return getIconEmoji(name);
+      }
+      return "spinner";
+    }
+    return placeholder;
+  };
+  if (store_get($$store_subs ??= {}, "$spriteState", spriteState).loaded) {
+    $$payload.out.push("<!--[-->");
+    $$payload.out.push(`<svg${attr_class(`${stringify(size)} ${stringify(className)}`)} aria-hidden="true"><use${attr("href", iconId)}></use></svg>`);
+  } else {
+    $$payload.out.push("<!--[!-->");
+    if (computedPlaceholder() === "spinner") {
+      $$payload.out.push("<!--[-->");
+      $$payload.out.push(`<div${attr_class(`${stringify(size)} ${stringify(className)} flex items-center justify-center`)}><svg class="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>`);
+    } else {
+      $$payload.out.push("<!--[!-->");
+      $$payload.out.push(`<div${attr_class(`${stringify(size)} ${stringify(className)} flex items-center justify-center text-lg`)}>${escape_html(computedPlaceholder())}</div>`);
+    }
+    $$payload.out.push(`<!--]-->`);
+  }
+  $$payload.out.push(`<!--]-->`);
+  if ($$store_subs) unsubscribe_stores($$store_subs);
   pop();
+}
+const languages = [
+  { code: "ar", name: "العربية", flag: "saudi" },
+  // Arabiya
+  { code: "ca", name: "Català", flag: "catalonia" },
+  // Catala
+  { code: "de", name: "Deutsch", flag: "germany" },
+  // Deutsch
+  { code: "en", name: "English", flag: "uk" },
+  // English
+  { code: "es", name: "Español", flag: "spain" },
+  // Espanol
+  { code: "eu", name: "Euskera", flag: "basque" },
+  // Euskera
+  { code: "fr", name: "Français", flag: "france" },
+  // Francais
+  { code: "gl", name: "Galego", flag: "galicia" },
+  // Galego
+  { code: "hi", name: "हिंदी", flag: "india" },
+  // Hindi
+  { code: "ja", name: "日本語", flag: "japan" },
+  // Nihongo
+  { code: "pt", name: "Português", flag: "portugal" },
+  // Portugues
+  { code: "ru", name: "Русский", flag: "russia" },
+  // Russkiy
+  { code: "zh", name: "中文", flag: "china" }
+  // Zhongwen
+];
+function findLanguageByCode(code) {
+  return languages.find((lang) => lang.code === code) || languages[0];
+}
+function getSupportedLanguageCodes() {
+  return languages.map((lang) => lang.code);
 }
 const en = {
   common: {
@@ -97,21 +237,19 @@ const en = {
     alphabet: "Character Set",
     standardAlphanumericDescription: "Standard alphanumeric (62 chars)",
     noConfusingDescription: "No confusing letters (49 chars)",
-    formatNote: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random letters generated (prefix not counted).',
-    securityWarning: "Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.",
+    formatNotice: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random letters generated (prefix not counted).',
+    securityNotice: "Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.",
     randomCharacters: "random characters using",
     noLookAlikeAlphabet: "(easy to type)",
     fullAlphanumericAlphabet: "(maximum compatibility)",
     noLookAlikeNote: "No Look-alike excludes confusing characters. Minimum {0} characters for equivalent security.",
     fullAlphanumericNote: "Full alphanumeric provides maximum compatibility. Minimum {0} characters for strong security.",
-    formatNotice: 'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random characters generated (prefix not counted).',
-    securityNotice: "Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.",
     failedToGenerateApiKey: "Failed to generate API key"
   },
   alphabets: {
-    "base58": "Base58 (Bitcoin alphabet)",
+    base58: "Base58 (Bitcoin alphabet)",
     "no-look-alike": "No Look-alike",
-    "full": "Full Alphanumeric",
+    full: "Full Alphanumeric",
     "full-with-symbols": "Full with Symbols"
   }
 };
@@ -203,8 +341,8 @@ const hi = {
     alphabet: "कैरेक्टर सेट",
     standardAlphanumericDescription: "स्टैंडर्ड अल्फान्यूमेरिक (62 अक्षर)",
     noConfusingDescription: "भ्रामक अक्षर नहीं (49 अक्षर)",
-    formatNote: 'सभी API की आसान पहचान के लिए "ak_" प्रीफिक्स के साथ जनरेट होती हैं। निर्दिष्ट लेंथ केवल जनरेट किए गए रैंडम अक्षरों को संदर्भित करती है (प्रीफिक्स गिना नहीं जाता)।',
-    securityWarning: "API की को सुरक्षित रूप से स्टोर करें और उन्हें क्लाइंट-साइड कोड या वर्जन कंट्रोल में कभी एक्सपोज न करें। उन्हें पासवर्ड की तरह सावधानी से ट्रीट करें।",
+    formatNotice: 'सभी API की आसान पहचान के लिए "ak_" प्रीफिक्स के साथ जनरेट होती हैं। निर्दिष्ट लेंथ केवल जनरेट किए गए रैंडम अक्षरों को संदर्भित करती है (प्रीफिक्स गिना नहीं जाता)।',
+    securityNotice: "API की को सुरक्षित रूप से स्टोर करें और उन्हें क्लाइंट-साइड कोड या वर्जन कंट्रोल में कभी एक्सपोज न करें। उन्हें पासवर्ड की तरह सावधानी से ट्रीट करें।",
     formatPrefix: "ak_ प्रीफिक्स +",
     randomCharacters: "रैंडम अक्षर के साथ",
     noLookAlikeAlphabet: "नो लुक-अलाइक अल्फाबेट (टाइप करने में आसान)",
@@ -212,9 +350,9 @@ const hi = {
     failedToGenerateApiKey: "API की जनरेट नहीं हुई"
   },
   alphabets: {
-    "base58": "Base58 (बिटकॉइन अल्फाबेट)",
+    base58: "Base58 (बिटकॉइन अल्फाबेट)",
     "no-look-alike": "नो लुक-अलाइक",
-    "full": "पूर्ण अल्फान्यूमेरिक",
+    full: "पूर्ण अल्फान्यूमेरिक",
     "full-with-symbols": "प्रतीकों के साथ पूर्ण"
   }
 };
@@ -306,8 +444,8 @@ const ja = {
     alphabet: "文字セット",
     standardAlphanumericDescription: "標準英数字（62文字）",
     noConfusingDescription: "紛らわしい文字なし（49文字）",
-    formatNote: "すべてのAPIキーは識別しやすくするために「ak_」プレフィックスが付加されます。指定した文字数は生成されるランダム文字のみを指します（プレフィックスは含みません）。",
-    securityWarning: "APIキーは安全に保存し、クライアント側コードやバージョン管理システムに絶対に公開しないでください。パスワードと同じように慎重に扱ってください。",
+    formatNotice: "すべてのAPIキーは識別しやすくするために「ak_」プレフィックスが付加されます。指定した文字数は生成されるランダム文字のみを指します（プレフィックスは含みません）。",
+    securityNotice: "APIキーは安全に保存し、クライアント側コードやバージョン管理システムに絶対に公開しないでください。パスワードと同じように慎重に扱ってください。",
     formatPrefix: "ak_プレフィックス +",
     randomCharacters: "ランダム文字を使用：",
     noLookAlikeAlphabet: "紛らわしくないアルファベット（入力しやすい）",
@@ -315,9 +453,9 @@ const ja = {
     failedToGenerateApiKey: "APIキーの生成に失敗しました"
   },
   alphabets: {
-    "base58": "Base58（ビットコインアルファベット）",
+    base58: "Base58（ビットコインアルファベット）",
     "no-look-alike": "紛らわしくない",
-    "full": "完全英数字",
+    full: "完全英数字",
     "full-with-symbols": "記号を含む完全"
   }
 };
@@ -411,8 +549,8 @@ const es = {
     alphabet: "Conjunto de Caracteres",
     standardAlphanumericDescription: "Alfanumérico estándar (62 chars)",
     noConfusingDescription: "Sin letras confusas (49 chars)",
-    formatNote: 'Todas las claves API se generan con el prefijo "ak_" para fácil identificación. La longitud especificada se refiere solo a las letras aleatorias generadas (prefijo no contado).',
-    securityWarning: "Almacena las claves API de forma segura y nunca las expongas en código del lado del cliente o control de versiones. Trátalas con el mismo cuidado que las contraseñas.",
+    formatNotice: 'Todas las claves API se generan con el prefijo "ak_" para fácil identificación. La longitud especificada se refiere solo a las letras aleatorias generadas (prefijo no contado).',
+    securityNotice: "Almacena las claves API de forma segura y nunca las expongas en código del lado del cliente o control de versiones. Trátalas con el mismo cuidado que las contraseñas.",
     formatPrefix: "prefijo ak_ +",
     randomCharacters: "letras aleatorias con",
     noLookAlikeAlphabet: "alfabeto sin confusión (fácil de escribir)",
@@ -420,9 +558,9 @@ const es = {
     failedToGenerateApiKey: "Error al generar clave API"
   },
   alphabets: {
-    "base58": "Base58 (alfabeto Bitcoin)",
+    base58: "Base58 (alfabeto Bitcoin)",
     "no-look-alike": "Sin Confusión",
-    "full": "Alfanumérico Completo",
+    full: "Alfanumérico Completo",
     "full-with-symbols": "Completo con Símbolos"
   }
 };
@@ -514,8 +652,8 @@ const pt = {
     alphabet: "Conjunto de Caracteres",
     standardAlphanumericDescription: "Alfanumérico padrão (62 chars)",
     noConfusingDescription: "Sem letras confusas (49 chars)",
-    formatNote: 'Todas as chaves API são geradas com o prefixo "ak_" para fácil identificação. O comprimento especificado refere-se apenas às letras aleatórias geradas (prefixo não contado).',
-    securityWarning: "Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as senhas.",
+    formatNotice: 'Todas as chaves API são geradas com o prefixo "ak_" para fácil identificação. O comprimento especificado refere-se apenas às letras aleatórias geradas (prefixo não contado).',
+    securityNotice: "Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as senhas.",
     formatPrefix: "prefixo ak_ +",
     randomCharacters: "caracteres aleatórios com",
     noLookAlikeAlphabet: "alfabeto sem confusão (fácil de digitar)",
@@ -523,9 +661,9 @@ const pt = {
     failedToGenerateApiKey: "Falha ao gerar chave API"
   },
   alphabets: {
-    "base58": "Base58 (alfabeto Bitcoin)",
+    base58: "Base58 (alfabeto Bitcoin)",
     "no-look-alike": "Sem Confusão",
-    "full": "Alfanumérico Completo",
+    full: "Alfanumérico Completo",
     "full-with-symbols": "Completo com Símbolos"
   }
 };
@@ -619,8 +757,8 @@ const fr = {
     alphabet: "Jeu de Caractères",
     standardAlphanumericDescription: "Alphanumérique standard (62 chars)",
     noConfusingDescription: "Aucune lettre confuse (49 chars)",
-    formatNote: 'Toutes les clés API sont générées avec le préfixe "ak_" pour une identification facile. La longueur spécifiée ne concerne que les caractères aléatoires générés (préfixe non compté).',
-    securityWarning: "Stockez les clés API en sécurité et ne les exposez jamais dans le code côté client ou le contrôle de version. Traitez-les avec le même soin que les mots de passe.",
+    formatNotice: 'Toutes les clés API sont générées avec le préfixe "ak_" pour une identification facile. La longueur spécifiée ne concerne que les caractères aléatoires générés (préfixe non compté).',
+    securityNotice: "Stockez les clés API en sécurité et ne les exposez jamais dans le code côté client ou le contrôle de version. Traitez-les avec le même soin que les mots de passe.",
     formatPrefix: "préfixe ak_ +",
     randomCharacters: "lettres aléatoires avec",
     noLookAlikeAlphabet: "alphabet sans ambiguïté (facile à taper)",
@@ -628,9 +766,9 @@ const fr = {
     failedToGenerateApiKey: "Échec de la génération de la clé API"
   },
   alphabets: {
-    "base58": "Base58 (alphabet Bitcoin)",
+    base58: "Base58 (alphabet Bitcoin)",
     "no-look-alike": "Sans Ambiguïté",
-    "full": "Alphanumérique Complet",
+    full: "Alphanumérique Complet",
     "full-with-symbols": "Complet avec Symboles"
   }
 };
@@ -722,8 +860,8 @@ const de = {
     alphabet: "Zeichensatz",
     standardAlphanumericDescription: "Standard-Alphanumerisch (62 Zeichen)",
     noConfusingDescription: "Keine verwirrenden Zeichen (49 Zeichen)",
-    formatNote: 'Alle API-Schlüssel werden mit dem Präfix "ak_" zur leichten Identifizierung generiert. Die angegebene Länge bezieht sich nur auf die generierten Zufallszeichen (Präfix nicht mitgezählt).',
-    securityWarning: "Speichern Sie API-Schlüssel sicher und setzen Sie sie niemals in clientseitigem Code oder der Versionskontrolle frei. Behandeln Sie sie mit derselben Sorgfalt wie Passwörter.",
+    formatNotice: 'Alle API-Schlüssel werden mit dem Präfix "ak_" zur leichten Identifizierung generiert. Die angegebene Länge bezieht sich nur auf die generierten Zufallszeichen (Präfix nicht mitgezählt).',
+    securityNotice: "Speichern Sie API-Schlüssel sicher und setzen Sie sie niemals in clientseitigem Code oder der Versionskontrolle frei. Behandeln Sie sie mit derselben Sorgfalt wie Passwörter.",
     formatPrefix: "ak_-Präfix +",
     randomCharacters: "Zufallszeichen mit",
     noLookAlikeAlphabet: "Alphabet ohne Verwechslung (leicht zu tippen)",
@@ -731,9 +869,9 @@ const de = {
     failedToGenerateApiKey: "API-Schlüssel-Generierung fehlgeschlagen"
   },
   alphabets: {
-    "base58": "Base58 (Bitcoin-Alphabet)",
+    base58: "Base58 (Bitcoin-Alphabet)",
     "no-look-alike": "Ohne Verwechslung",
-    "full": "Vollständig Alphanumerisch",
+    full: "Vollständig Alphanumerisch",
     "full-with-symbols": "Vollständig mit Symbolen"
   }
 };
@@ -825,8 +963,8 @@ const ru = {
     alphabet: "Набор символов",
     standardAlphanumericDescription: "Стандартный алфавитно-цифровой (62 символа)",
     noConfusingDescription: "Без путающих символов (49 символов)",
-    formatNote: 'Все API-ключи генерируются с префиксом "ak_" для лёгкой идентификации. Указанная длина относится только к генерируемым случайным символам (префикс не считается).',
-    securityWarning: "Храните API-ключи безопасно и никогда не выставляйте их в клиентском коде или системе контроля версий. Обращайтесь с ними так же осторожно, как с паролями.",
+    formatNotice: 'Все API-ключи генерируются с префиксом "ak_" для лёгкой идентификации. Указанная длина относится только к генерируемым случайным символам (префикс не считается).',
+    securityNotice: "Храните API-ключи безопасно и никогда не выставляйте их в клиентском коде или системе контроля версий. Обращайтесь с ними так же осторожно, как с паролями.",
     formatPrefix: "префикс ak_ +",
     randomCharacters: "случайных символов с",
     noLookAlikeAlphabet: "алфавит без путаницы (легко набирать)",
@@ -834,9 +972,9 @@ const ru = {
     failedToGenerateApiKey: "Не удалось сгенерировать API-ключ"
   },
   alphabets: {
-    "base58": "Base58 (алфавит Bitcoin)",
+    base58: "Base58 (алфавит Bitcoin)",
     "no-look-alike": "Без путаницы",
-    "full": "Полный алфавитно-цифровой",
+    full: "Полный алфавитно-цифровой",
     "full-with-symbols": "Полный с символами"
   }
 };
@@ -928,8 +1066,8 @@ const zh = {
     alphabet: "字符集",
     standardAlphanumericDescription: "标准字母数字（62个字符）",
     noConfusingDescription: "无混淆字符（49个字符）",
-    formatNote: '所有API密钥都生成带"ak_"前缀以便识别。指定长度仅指生成的随机字符（不计算前缀）。',
-    securityWarning: "安全存储API密钥，永远不要在客户端代码或版本控制中暴露它们。像对待密码一样谨慎对待它们。",
+    formatNotice: '所有API密钥都生成带"ak_"前缀以便识别。指定长度仅指生成的随机字符（不计算前缀）。',
+    securityNotice: "安全存储API密钥，永远不要在客户端代码或版本控制中暴露它们。像对待密码一样谨慎对待它们。",
     formatPrefix: "ak_前缀 +",
     randomCharacters: "个随机字符，采用",
     noLookAlikeAlphabet: "无相似字母表（易输入）",
@@ -937,9 +1075,9 @@ const zh = {
     failedToGenerateApiKey: "生成API密钥失败"
   },
   alphabets: {
-    "base58": "Base58（比特币字母表）",
+    base58: "Base58（比特币字母表）",
     "no-look-alike": "无相似",
-    "full": "完整字母数字",
+    full: "完整字母数字",
     "full-with-symbols": "带符号完整"
   }
 };
@@ -1033,8 +1171,8 @@ const ar = {
     alphabet: "مجموعة الأحرف",
     standardAlphanumericDescription: "أبجدية رقمية قياسية (62 حرف)",
     noConfusingDescription: "بدون أحرف مربكة (49 حرف)",
-    formatNote: 'جميع مفاتيح API تُولد مع البادئة "ak_" للتعرف السهل. الطول المحدد يشير فقط إلى الأحرف العشوائية المولدة (البادئة غير محسوبة).',
-    securityWarning: "احفظ مفاتيح API بأمان ولا تعرضها أبداً في كود العميل أو التحكم في الإصدارات. عاملها بنفس عناية كلمات المرور.",
+    formatNotice: 'جميع مفاتيح API تُولد مع البادئة "ak_" للتعرف السهل. الطول المحدد يشير فقط إلى الأحرف العشوائية المولدة (البادئة غير محسوبة).',
+    securityNotice: "احفظ مفاتيح API بأمان ولا تعرضها أبداً في كود العميل أو التحكم في الإصدارات. عاملها بنفس عناية كلمات المرور.",
     formatPrefix: "بادئة ak_ +",
     randomCharacters: "حرف عشوائي مع",
     noLookAlikeAlphabet: "أبجدية عدم التشابه (سهل الكتابة)",
@@ -1042,9 +1180,9 @@ const ar = {
     failedToGenerateApiKey: "فشل في توليد مفتاح API"
   },
   alphabets: {
-    "base58": "أبجدية البيتكوين (Base58)",
+    base58: "أبجدية البيتكوين (Base58)",
     "no-look-alike": "عدم التشابه",
-    "full": "أبجدية رقمية كاملة",
+    full: "أبجدية رقمية كاملة",
     "full-with-symbols": "كاملة مع الرموز"
   }
 };
@@ -1136,8 +1274,8 @@ const eu = {
     alphabet: "Hizki-multzoa",
     standardAlphanumericDescription: "Alfabeto alfanumeriko estandarra (62 hizki)",
     noConfusingDescription: "Hizki nahasgarririk gabe (49 hizki)",
-    formatNote: 'API gako guztiak "ak_" aurrizkiarekin sortzen dira identifikazioa errazagoa izateko. Zehaztutako luzerak soilik sortutako ausazko hizkiak hartzen ditu kontuan (aurrizkirik gabe).',
-    securityWarning: "API gakoak modu seguruan gorde eta inoiz ez jarri bezero-aldeko kodean edo bertsio-kontrolean. Pasahitzekin bezalako arretaz tratatu.",
+    formatNotice: 'API gako guztiak "ak_" aurrizkiarekin sortzen dira identifikazioa errazagoa izateko. Zehaztutako luzerak soilik sortutako ausazko hizkiak hartzen ditu kontuan (aurrizkirik gabe).',
+    securityNotice: "API gakoak modu seguruan gorde eta inoiz ez jarri bezero-aldeko kodean edo bertsio-kontrolean. Pasahitzekin bezalako arretaz tratatu.",
     formatPrefix: "ak_ aurrizkia +",
     randomCharacters: "ausazko hizki hauek erabiliz",
     noLookAlikeAlphabet: "hizki nahasgarririk gabeko alfabetoa (erraz idazteko)",
@@ -1145,9 +1283,9 @@ const eu = {
     failedToGenerateApiKey: "API gakoa sortzeak huts egin du"
   },
   alphabets: {
-    "base58": "Base58 (Bitcoin alfabetoa)",
+    base58: "Base58 (Bitcoin alfabetoa)",
     "no-look-alike": "Nahasgarririk gabe",
-    "full": "Alfabeto Alfanumeriko Osoa",
+    full: "Alfabeto Alfanumeriko Osoa",
     "full-with-symbols": "Osoa Sinboloekin"
   }
 };
@@ -1239,8 +1377,8 @@ const ca = {
     alphabet: "Conjunt de lletres",
     standardAlphanumericDescription: "Alfanumèric estàndard (62 caràcters)",
     noConfusingDescription: "Sense caràcters confusos (49 caràcters)",
-    formatNote: 'Totes les claus API es generen amb el prefix "ak_" per facilitar la identificació. La longitud especificada es refereix només als caràcters aleatoris generats (prefix no comptat).',
-    securityWarning: "Emmagatzemeu les claus API de forma segura i mai les exposeu en codi del costat del client o control de versions. Tracteu-les amb la mateixa cura que les contrasenyes.",
+    formatNotice: 'Totes les claus API es generen amb el prefix "ak_" per facilitar la identificació. La longitud especificada es refereix només als caràcters aleatoris generats (prefix no comptat).',
+    securityNotice: "Emmagatzemeu les claus API de forma segura i mai les exposeu en codi del costat del client o control de versions. Tracteu-les amb la mateixa cura que les contrasenyes.",
     formatPrefix: "prefix ak_ +",
     randomCharacters: "lletres aleatòries amb",
     noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
@@ -1248,9 +1386,9 @@ const ca = {
     failedToGenerateApiKey: "Ha fallat generar la clau API"
   },
   alphabets: {
-    "base58": "Base58 (alfabet Bitcoin)",
+    base58: "Base58 (alfabet Bitcoin)",
     "no-look-alike": "Sense confusió",
-    "full": "Alfanumèric complet",
+    full: "Alfanumèric complet",
     "full-with-symbols": "Complet amb símbols"
   }
 };
@@ -1342,8 +1480,8 @@ const gl = {
     alphabet: "Conxunto de caracteres",
     standardAlphanumericDescription: "Alfanumérico estándar (62 caracteres)",
     noConfusingDescription: "Sen letras confusas (49 letras)",
-    formatNote: 'Todas as chaves API xéranse co prefixo "ak_" para facilitar a identificación. A lonxitude especificada refírese só ás letras aleatorias xeradas (prefixo non contado).',
-    securityWarning: "Almacena as chaves API de forma segura e nunca as exponñas en código do lado do cliente ou control de versións. Trátalas co mesmo coidado que os contrasinais.",
+    formatNotice: 'Todas as chaves API xéranse co prefixo "ak_" para facilitar a identificación. A lonxitude especificada refírese só ás letras aleatorias xeradas (prefixo non contado).',
+    securityNotice: "Almacena as chaves API de forma segura e nunca as exponñas en código do lado do cliente ou control de versións. Trátalas co mesmo coidado que os contrasinais.",
     formatPrefix: "prefixo ak_ +",
     randomCharacters: "letras aleatorias con",
     noLookAlikeAlphabet: "alfabeto sen confusión (fácil de escribir)",
@@ -1351,9 +1489,9 @@ const gl = {
     failedToGenerateApiKey: "Fallou xerar a chave API"
   },
   alphabets: {
-    "base58": "Base58 (alfabeto Bitcoin)",
+    base58: "Base58 (alfabeto Bitcoin)",
     "no-look-alike": "Sen confusión",
-    "full": "Alfanumérico completo",
+    full: "Alfanumérico completo",
     "full-with-symbols": "Completo con símbolos"
   }
 };
@@ -1361,25 +1499,8 @@ function detectBrowserLanguage() {
   if (typeof window === "undefined") {
     return "en";
   }
-  const browserLanguages = [
-    navigator.language,
-    ...navigator.languages || []
-  ];
-  const supportedLanguages = /* @__PURE__ */ new Set([
-    "en",
-    "es",
-    "pt",
-    "fr",
-    "de",
-    "ru",
-    "zh",
-    "ar",
-    "eu",
-    "ca",
-    "gl",
-    "hi",
-    "ja"
-  ]);
+  const browserLanguages = [navigator.language, ...navigator.languages || []];
+  const supportedLanguages = new Set(getSupportedLanguageCodes());
   for (const browserLang of browserLanguages) {
     const langCode = browserLang.split("-")[0].toLowerCase();
     if (supportedLanguages.has(langCode)) {
@@ -1393,7 +1514,7 @@ function initializeLanguage() {
     return "en";
   }
   const storedLang = localStorage.getItem("preferred-language");
-  if (storedLang && ["en", "es", "pt", "fr", "de", "ru", "zh", "ar", "eu", "ca", "gl", "hi", "ja"].includes(storedLang)) {
+  if (storedLang && getSupportedLanguageCodes().includes(storedLang)) {
     return storedLang;
   }
   const detectedLang = detectBrowserLanguage();
@@ -1451,5 +1572,6 @@ export {
   Icon as I,
   _,
   currentLanguage as c,
+  findLanguageByCode as f,
   isRTL as i
 };

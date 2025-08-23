@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
@@ -22,6 +23,14 @@
 
 	// Form state - will be initialized in onMount
 	let params: GenerateParams = getDefaultParams();
+
+	// Get URL parameters reactively
+	$: searchParams = $page.url.searchParams;
+
+	// Function to validate alphabet parameter
+	function isValidAlphabet(value: string): value is AlphabetType {
+		return ['base58', 'no-look-alike', 'full', 'full-with-symbols'].includes(value);
+	}
 
 	// Reactive alphabet options that update when language changes
 	$: alphabetOptions = [
@@ -53,29 +62,21 @@
 	$: suffixValid = !params.suffix || params.suffix.length <= 32;
 	$: formValid = lengthValid && prefixValid && suffixValid;
 
-	async function handleGenerate(event: Event) {
+	function handleGenerate(event: Event) {
 		event.preventDefault();
-		if (!formValid || $isLoading) return;
+		if (!formValid) return;
 
-		setLoading(true);
+		// Create URL parameters for result page - result will handle API call
+		const urlParams = new URLSearchParams();
+		urlParams.set('endpoint', 'custom');
 
-		try {
-			const { api } = await import('$lib/api');
-			const result = await api.generate(params);
+		// Add generation parameters
+		urlParams.set('length', params.length.toString());
+		urlParams.set('alphabet', params.alphabet);
+		if (params.prefix) urlParams.set('prefix', params.prefix);
+		if (params.suffix) urlParams.set('suffix', params.suffix);
 
-			setResult({
-				value: result,
-				params: { ...params },
-				endpoint: 'custom',
-				timestamp: new Date()
-			});
-
-			goto('/result');
-		} catch (error) {
-			setError(error instanceof Error ? error.message : $_('custom.failedToGenerateHash'));
-		} finally {
-			setLoading(false);
-		}
+		goto(`/result?${urlParams.toString()}`);
 	}
 
 	// Initialize params based on navigation source
@@ -91,6 +92,31 @@
 		} else {
 			// Coming from menu or fresh load - use defaults
 			params = getDefaultParams();
+		}
+
+		// Override with URL parameters if present
+		const urlLength = searchParams.get('length');
+		const urlAlphabet = searchParams.get('alphabet');
+		const urlPrefix = searchParams.get('prefix');
+		const urlSuffix = searchParams.get('suffix');
+
+		if (urlLength) {
+			const lengthNum = parseInt(urlLength);
+			if (!isNaN(lengthNum) && lengthNum >= 2 && lengthNum <= 128) {
+				params.length = lengthNum;
+			}
+		}
+
+		if (urlAlphabet && isValidAlphabet(urlAlphabet)) {
+			params.alphabet = urlAlphabet;
+		}
+
+		if (urlPrefix !== null && urlPrefix.length <= 32) {
+			params.prefix = urlPrefix;
+		}
+
+		if (urlSuffix !== null && urlSuffix.length <= 32) {
+			params.suffix = urlSuffix;
 		}
 	});
 </script>

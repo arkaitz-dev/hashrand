@@ -29,7 +29,7 @@ export const navigationItems: NavItem[] = [
 ];
 
 export function navigateTo(path: string) {
-	previousRoute.update(current => {
+	previousRoute.update((current) => {
 		currentRoute.set(path);
 		return current;
 	});

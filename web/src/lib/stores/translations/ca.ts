@@ -8,7 +8,7 @@ export const ca: I18nTexts = {
 		copied: 'Copiat!',
 		backToMenu: 'Tornar al menú',
 		loading: 'Generant...',
-		error: 'S\'ha produït un error',
+		error: "S'ha produït un error",
 		result: 'Resultat',
 		choose: 'Triar',
 		type: 'Tipus',
@@ -29,14 +29,15 @@ export const ca: I18nTexts = {
 		characters: 'lletres',
 		alphabet: 'Alfabet',
 		generatedValue: 'Valor generat',
-		clickToSelect: 'Feu clic a l\'àrea de text per seleccionar-ho tot, o utilitzeu el botó de copiar',
+		clickToSelect:
+			"Feu clic a l'àrea de text per seleccionar-ho tot, o utilitzeu el botó de copiar",
 		waitGenerating: 'Si us plau, espereu mentre es genera un nou valor...',
-		unknownEndpoint: 'Tipus d\'endpoint desconegut',
+		unknownEndpoint: "Tipus d'endpoint desconegut",
 		failedToCopy: 'Ha fallat la còpia',
 		fallbackCopyFailed: 'Ha fallat la còpia de reserva',
 		failedToRegenerate: 'Ha fallat la regeneració',
 		failedToLoadVersions: 'Ha fallat carregar les versions',
-		mustBeBetween: 'ha d\'estar entre',
+		mustBeBetween: "ha d'estar entre",
 		and: 'i',
 		cannotExceed: 'no pot superar',
 		optionalPrefix: 'Prefix opcional',
@@ -56,10 +57,10 @@ export const ca: I18nTexts = {
 		description: 'Genereu hashs aleatoris personalitzats',
 		generateHash: 'Generar Hash',
 		length: 'Longitud',
-		alphabet: 'Tipus d\'alfabet',
+		alphabet: "Tipus d'alfabet",
 		prefix: 'Prefix',
 		suffix: 'Sufix',
-		lengthMustBeBetween: 'La longitud ha d\'estar entre 2 i 128',
+		lengthMustBeBetween: "La longitud ha d'estar entre 2 i 128",
 		bitcoinDescription: 'Alfabet Bitcoin, exclou lletres confuses',
 		maxReadabilityDescription: 'Màxima llegibilitat, 49 lletres',
 		completeAlphanumericDescription: 'Conjunt alfanumèric complet',
@@ -75,9 +76,12 @@ export const ca: I18nTexts = {
 		maxSecurityDescription: 'Màxima seguretat amb símbols (73 caràcters)',
 		easyReadDescription: 'Fàcil de llegir i escriure (49 caràcters)',
 		securityNote: 'Nota de seguretat:',
-		securityDescription: 'Les contrasenyes es generen utilitzant generació aleatòria criptogràficament segura. No s\'emmagatzemen ni es registren enlloc.',
-		noLookAlikeNote: 'L\'alfabet sense confusió exclou caràcters confusos. Mínim {0} caràcters per seguretat equivalent.',
-		fullAlphabetNote: 'L\'alfabet complet amb símbols proporciona màxima entropia. Mínim {0} caràcters per seguretat forta.',
+		securityDescription:
+			"Les contrasenyes es generen utilitzant generació aleatòria criptogràficament segura. No s'emmagatzemen ni es registren enlloc.",
+		noLookAlikeNote:
+			"L'alfabet sense confusió exclou caràcters confusos. Mínim {0} caràcters per seguretat equivalent.",
+		fullAlphabetNote:
+			"L'alfabet complet amb símbols proporciona màxima entropia. Mínim {0} caràcters per seguretat forta.",
 		failedToGeneratePassword: 'Ha fallat generar la contrasenya'
 	},
 	apiKey: {
@@ -88,18 +92,20 @@ export const ca: I18nTexts = {
 		alphabet: 'Conjunt de lletres',
 		standardAlphanumericDescription: 'Alfanumèric estàndard (62 caràcters)',
 		noConfusingDescription: 'Sense caràcters confusos (49 caràcters)',
-		formatNotice: 'Totes les claus API es generen amb el prefix "ak_" per facilitar la identificació. La longitud especificada es refereix només als caràcters aleatoris generats (prefix no comptat).',
-		securityNotice: 'Emmagatzemeu les claus API de forma segura i mai les exposeu en codi del costat del client o control de versions. Tracteu-les amb la mateixa cura que les contrasenyes.',
+		formatNotice:
+			'Totes les claus API es generen amb el prefix "ak_" per facilitar la identificació. La longitud especificada es refereix només als caràcters aleatoris generats (prefix no comptat).',
+		securityNotice:
+			'Emmagatzemeu les claus API de forma segura i mai les exposeu en codi del costat del client o control de versions. Tracteu-les amb la mateixa cura que les contrasenyes.',
 		formatPrefix: 'prefix ak_ +',
 		randomCharacters: 'lletres aleatòries amb',
-		noLookAlikeAlphabet: 'alfabet sense confusió (fàcil d\'escriure)',
+		noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
 		fullAlphanumericAlphabet: 'alfabet alfanumèric complet',
 		failedToGenerateApiKey: 'Ha fallat generar la clau API'
 	},
 	alphabets: {
-		'base58': 'Base58 (alfabet Bitcoin)',
+		base58: 'Base58 (alfabet Bitcoin)',
 		'no-look-alike': 'Sense confusió',
-		'full': 'Alfanumèric complet',
+		full: 'Alfanumèric complet',
 		'full-with-symbols': 'Complet amb símbols'
 	}
 };

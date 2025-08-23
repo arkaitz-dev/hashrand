@@ -1,4 +1,4 @@
-import { F as attr_class, G as stringify } from "./index.js";
+import { E as attr_class, F as stringify } from "./index.js";
 import { I as Icon } from "./rtl.js";
 function LoadingSpinner($$payload, $$props) {
   let { size = "md", class: className = "" } = $$props;

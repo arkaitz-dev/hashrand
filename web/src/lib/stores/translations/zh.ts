@@ -88,8 +88,10 @@ export const zh: I18nTexts = {
 		alphabet: '字符集',
 		standardAlphanumericDescription: '标准字母数字（62个字符）',
 		noConfusingDescription: '无混淆字符（49个字符）',
-		formatNotice: '所有API密钥都生成带"ak_"前缀以便识别。指定长度仅指生成的随机字符（不计算前缀）。',
-		securityNotice: '安全存储API密钥，永远不要在客户端代码或版本控制中暴露它们。像对待密码一样谨慎对待它们。',
+		formatNotice:
+			'所有API密钥都生成带"ak_"前缀以便识别。指定长度仅指生成的随机字符（不计算前缀）。',
+		securityNotice:
+			'安全存储API密钥，永远不要在客户端代码或版本控制中暴露它们。像对待密码一样谨慎对待它们。',
 		formatPrefix: 'ak_前缀 +',
 		randomCharacters: '个随机字符，采用',
 		noLookAlikeAlphabet: '无相似字母表（易输入）',
@@ -97,9 +99,9 @@ export const zh: I18nTexts = {
 		failedToGenerateApiKey: '生成API密钥失败'
 	},
 	alphabets: {
-		'base58': 'Base58（比特币字母表）',
+		base58: 'Base58（比特币字母表）',
 		'no-look-alike': '无相似',
-		'full': '完整字母数字',
+		full: '完整字母数字',
 		'full-with-symbols': '带符号完整'
 	}
 };

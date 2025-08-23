@@ -3,32 +3,10 @@
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
+	import { languages, findLanguageByCode } from '$lib/languageConfig';
 
 	let showDropdown = $state(false);
 	let isTransitioning = $state(false);
-	
-	// Language options with their flag icons
-	// Ordered alphabetically by native name transcribed to Latin alphabet
-	const languages = [
-		{ code: 'ar', name: 'العربية', flag: 'saudi' },      // Arabiya
-		{ code: 'ca', name: 'Català', flag: 'catalonia' },   // Catala  
-		{ code: 'de', name: 'Deutsch', flag: 'germany' },    // Deutsch
-		{ code: 'en', name: 'English', flag: 'uk' },         // English
-		{ code: 'es', name: 'Español', flag: 'spain' },      // Espanol
-		{ code: 'eu', name: 'Euskera', flag: 'basque' },     // Euskera
-		{ code: 'fr', name: 'Français', flag: 'france' },    // Francais
-		{ code: 'gl', name: 'Galego', flag: 'galicia' },     // Galego
-		{ code: 'hi', name: 'हिंदी', flag: 'india' },         // Hindi
-		{ code: 'ja', name: '日本語', flag: 'japan' },         // Nihongo
-		{ code: 'pt', name: 'Português', flag: 'portugal' }, // Portugues
-		{ code: 'ru', name: 'Русский', flag: 'russia' },     // Russkiy
-		{ code: 'zh', name: '中文', flag: 'china' }           // Zhongwen
-	];
-
-	// Find language object by code
-	function findLanguageByCode(code: string) {
-		return languages.find(lang => lang.code === code) || languages[0];
-	}
 
 	// Initialize selected language based on current language store
 	let selectedLanguage = $state(findLanguageByCode($currentLanguage));
@@ -37,15 +15,15 @@
 		showDropdown = !showDropdown;
 	}
 
-	function selectLanguage(lang: typeof languages[0]) {
+	function selectLanguage(lang: (typeof languages)[0]) {
 		selectedLanguage = lang;
 		currentLanguage.set(lang.code);
-		
+
 		// Persist user preference
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('preferred-language', lang.code);
 		}
-		
+
 		showDropdown = false;
 	}
 
@@ -78,8 +56,11 @@
 <svelte:window on:click={handleClickOutside} />
 
 <!-- Top Controls Container -->
-<div class="top-controls absolute top-0.5 md:top-4 z-50 flex items-center gap-1 bg-gray-200/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-1 md:p-1 shadow-lg border border-gray-400/50 dark:border-gray-700/50 transition-opacity duration-[1500ms] {$isRTL ? 'left-0.5 md:left-4' : 'right-0.5 md:right-4'} {isTransitioning ? 'opacity-0' : 'opacity-100'}">
-	
+<div
+	class="top-controls absolute top-0.5 md:top-4 z-50 flex items-center gap-1 bg-gray-200/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-1 md:p-1 shadow-lg border border-gray-400/50 dark:border-gray-700/50 transition-opacity duration-[1500ms] {$isRTL
+		? 'left-0.5 md:left-4'
+		: 'right-0.5 md:right-4'} {isTransitioning ? 'opacity-0' : 'opacity-100'}"
+>
 	<!-- Language Selector -->
 	<div class="relative">
 		<button
@@ -93,11 +74,15 @@
 			aria-label="Select language"
 			onclick={toggleDropdown}
 		>
-			<Icon name={selectedLanguage.flag} size="w-12 h-12" />
+			<Icon name={selectedLanguage.flag} size="w-12 h-12" placeholder="auto" />
 		</button>
 
 		{#if showDropdown}
-			<div class="absolute top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[200px] max-h-64 overflow-y-auto force-ltr {$isRTL ? 'left-0' : 'right-0'}">
+			<div
+				class="absolute top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[200px] max-h-64 overflow-y-auto force-ltr {$isRTL
+					? 'left-0'
+					: 'right-0'}"
+			>
 				{#each languages as lang}
 					<button
 						class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-150"
@@ -105,7 +90,7 @@
 						class:bg-gray-100={selectedLanguage.code === lang.code}
 						class:dark:bg-gray-700={selectedLanguage.code === lang.code}
 					>
-						<Icon name={lang.flag} size="w-5 h-5" />
+						<Icon name={lang.flag} size="w-5 h-5" placeholder="auto" />
 						<span class="text-sm font-medium">{lang.name}</span>
 					</button>
 				{/each}
@@ -128,5 +113,4 @@
 			{/if}
 		</div>
 	</button>
-	
 </div>

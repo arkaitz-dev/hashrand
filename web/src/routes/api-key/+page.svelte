@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
@@ -21,6 +22,14 @@
 	// Form state - will be initialized in onMount
 	let params: ApiKeyParams = getDefaultParams();
 
+	// Get URL parameters reactively
+	$: searchParams = $page.url.searchParams;
+
+	// Function to validate alphabet parameter
+	function isValidApiKeyAlphabet(value: string): value is 'full' | 'no-look-alike' {
+		return ['full', 'no-look-alike'].includes(value);
+	}
+
 	// Reactive alphabet options that update when language changes
 	$: alphabetOptions = [
 		{
@@ -40,29 +49,19 @@
 	$: lengthValid = params.length && params.length >= minLength && params.length <= 64;
 	$: formValid = lengthValid;
 
-	async function handleGenerate(event: Event) {
+	function handleGenerate(event: Event) {
 		event.preventDefault();
-		if (!formValid || $isLoading) return;
+		if (!formValid) return;
 
-		setLoading(true);
+		// Create URL parameters for result page - result will handle API call
+		const urlParams = new URLSearchParams();
+		urlParams.set('endpoint', 'api-key');
 
-		try {
-			const { api } = await import('$lib/api');
-			const result = await api.generateApiKey(params);
+		// Add generation parameters
+		urlParams.set('length', params.length.toString());
+		urlParams.set('alphabet', params.alphabet);
 
-			setResult({
-				value: result,
-				params: { ...params },
-				endpoint: 'api-key',
-				timestamp: new Date()
-			});
-
-			goto('/result');
-		} catch (error) {
-			setError(error instanceof Error ? error.message : $_('apiKey.failedToGenerateApiKey'));
-		} finally {
-			setLoading(false);
-		}
+		goto(`/result?${urlParams.toString()}`);
 	}
 
 	// Update length when alphabet changes with smooth adjustment
@@ -86,6 +85,21 @@
 		} else {
 			// Coming from menu or fresh load - use defaults
 			params = getDefaultParams();
+		}
+
+		// Override with URL parameters if present
+		const urlLength = searchParams.get('length');
+		const urlAlphabet = searchParams.get('alphabet');
+
+		if (urlLength) {
+			const lengthNum = parseInt(urlLength);
+			if (!isNaN(lengthNum) && lengthNum >= 44 && lengthNum <= 64) {
+				params.length = lengthNum;
+			}
+		}
+
+		if (urlAlphabet && isValidApiKeyAlphabet(urlAlphabet)) {
+			params.alphabet = urlAlphabet;
 		}
 	});
 </script>

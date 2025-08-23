@@ -75,9 +75,12 @@ export const gl: I18nTexts = {
 		maxSecurityDescription: 'Máxima seguridade con símbolos (73 caracteres)',
 		easyReadDescription: 'Fácil de ler e escribir (49 caracteres)',
 		securityNote: 'Nota de seguridade:',
-		securityDescription: 'Os contrasinais xéranse usando xeración aleatoria criptograficamente segura. Non se almacenan nin se rexistran en ningures.',
-		noLookAlikeNote: 'O alfabeto sen confusión exclúe letras confundibles. Mínimo {0} letras para seguridade equivalente.',
-		fullAlphabetNote: 'O alfabeto completo con símbolos proporciona máxima entropía. Mínimo {0} letras para seguridade forte.',
+		securityDescription:
+			'Os contrasinais xéranse usando xeración aleatoria criptograficamente segura. Non se almacenan nin se rexistran en ningures.',
+		noLookAlikeNote:
+			'O alfabeto sen confusión exclúe letras confundibles. Mínimo {0} letras para seguridade equivalente.',
+		fullAlphabetNote:
+			'O alfabeto completo con símbolos proporciona máxima entropía. Mínimo {0} letras para seguridade forte.',
 		failedToGeneratePassword: 'Fallou xerar o contrasinal'
 	},
 	apiKey: {
@@ -88,8 +91,10 @@ export const gl: I18nTexts = {
 		alphabet: 'Conxunto de caracteres',
 		standardAlphanumericDescription: 'Alfanumérico estándar (62 caracteres)',
 		noConfusingDescription: 'Sen letras confusas (49 letras)',
-		formatNotice: 'Todas as chaves API xéranse co prefixo "ak_" para facilitar a identificación. A lonxitude especificada refírese só ás letras aleatorias xeradas (prefixo non contado).',
-		securityNotice: 'Almacena as chaves API de forma segura e nunca as exponñas en código do lado do cliente ou control de versións. Trátalas co mesmo coidado que os contrasinais.',
+		formatNotice:
+			'Todas as chaves API xéranse co prefixo "ak_" para facilitar a identificación. A lonxitude especificada refírese só ás letras aleatorias xeradas (prefixo non contado).',
+		securityNotice:
+			'Almacena as chaves API de forma segura e nunca as exponñas en código do lado do cliente ou control de versións. Trátalas co mesmo coidado que os contrasinais.',
 		formatPrefix: 'prefixo ak_ +',
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sen confusión (fácil de escribir)',
@@ -97,9 +102,9 @@ export const gl: I18nTexts = {
 		failedToGenerateApiKey: 'Fallou xerar a chave API'
 	},
 	alphabets: {
-		'base58': 'Base58 (alfabeto Bitcoin)',
+		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sen confusión',
-		'full': 'Alfanumérico completo',
+		full: 'Alfanumérico completo',
 		'full-with-symbols': 'Completo con símbolos'
 	}
 };

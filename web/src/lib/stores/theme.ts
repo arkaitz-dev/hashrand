@@ -14,14 +14,14 @@ export type Theme = 'light' | 'dark';
 // Initialize theme from localStorage or system preference
 function getInitialTheme(): Theme {
 	if (!browser) return 'dark'; // SSR fallback
-	
+
 	// Check if user has manually set a preference
 	const stored = localStorage.getItem('theme') as Theme | null;
 	if (stored === 'light' || stored === 'dark') {
 		// User has made a manual choice, use it
 		return stored;
 	}
-	
+
 	// No manual preference stored, use system preference
 	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
@@ -32,21 +32,21 @@ export const theme = writable<Theme>(getInitialTheme());
 // Apply theme to document
 export function applyTheme(newTheme: Theme) {
 	if (!browser) return;
-	
+
 	const html = document.documentElement;
-	
+
 	// Add a smooth transition class for theme changes
 	html.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-	
+
 	if (newTheme === 'dark') {
 		html.classList.add('dark');
 	} else {
 		html.classList.remove('dark');
 	}
-	
+
 	// Store in localStorage
 	localStorage.setItem('theme', newTheme);
-	
+
 	// Update meta theme-color for mobile browser UI
 	const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 	if (metaThemeColor) {
@@ -56,7 +56,7 @@ export function applyTheme(newTheme: Theme) {
 
 // Toggle theme function - this represents a manual user choice
 export function toggleTheme() {
-	theme.update(current => {
+	theme.update((current) => {
 		const newTheme = current === 'dark' ? 'light' : 'dark';
 		// The store subscription will handle calling applyTheme
 		return newTheme;
@@ -66,10 +66,10 @@ export function toggleTheme() {
 // Optional: Reset to system preference (for future use)
 export function resetToSystemTheme() {
 	if (!browser) return;
-	
+
 	// Remove manual preference
 	localStorage.removeItem('theme');
-	
+
 	// Use system preference
 	const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 	theme.set(systemTheme);

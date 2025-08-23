@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import type { I18nTexts } from '$lib/types';
+import { getSupportedLanguageCodes } from '$lib/languageConfig';
 
 // Import individual language files
 import { en } from './translations/en';
@@ -26,21 +27,7 @@ function detectBrowserLanguage(): string {
 	const browserLanguages = [navigator.language, ...(navigator.languages || [])];
 
 	// Map of supported languages
-	const supportedLanguages = new Set([
-		'en',
-		'es',
-		'pt',
-		'fr',
-		'de',
-		'ru',
-		'zh',
-		'ar',
-		'eu',
-		'ca',
-		'gl',
-		'hi',
-		'ja'
-	]);
+	const supportedLanguages = new Set(getSupportedLanguageCodes());
 
 	// Check each browser language preference
 	for (const browserLang of browserLanguages) {
@@ -64,12 +51,7 @@ function initializeLanguage(): string {
 
 	// First check localStorage for user preference
 	const storedLang = localStorage.getItem('preferred-language');
-	if (
-		storedLang &&
-		['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(
-			storedLang
-		)
-	) {
+	if (storedLang && getSupportedLanguageCodes().includes(storedLang)) {
 		return storedLang;
 	}
 
@@ -118,21 +100,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 		},
 		getStoredLanguage: () => localStorage.getItem('preferred-language'),
 		detectLanguage: () => detectBrowserLanguage(),
-		getSupportedLanguages: () => [
-			'en',
-			'es',
-			'pt',
-			'fr',
-			'de',
-			'ru',
-			'zh',
-			'ar',
-			'eu',
-			'ca',
-			'gl',
-			'hi',
-			'ja'
-		],
+		getSupportedLanguages: () => getSupportedLanguageCodes(),
 		resetLanguage: () => {
 			localStorage.removeItem('preferred-language');
 			const detected = detectBrowserLanguage();
@@ -140,11 +108,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 			return detected;
 		},
 		setLanguage: (lang: string) => {
-			if (
-				['en', 'es', 'pt', 'fr', 'de', 'ru', 'zh', 'ar', 'eu', 'ca', 'gl', 'hi', 'ja'].includes(
-					lang
-				)
-			) {
+			if (getSupportedLanguageCodes().includes(lang)) {
 				currentLanguage.set(lang);
 				return lang;
 			}

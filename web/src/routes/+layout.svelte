@@ -8,15 +8,19 @@
 	// Import theme store to ensure it's initialized
 	import '$lib/stores/theme';
 	import { isRTL, textDirection } from '$lib/stores/rtl';
-	
+	import { initializeSpriteLoader } from '$lib/stores/spriteLoader';
+
 	let { children } = $props();
 
-	// Update current route in store
+	// Update current route in store and initialize sprite detection
 	onMount(() => {
 		const unsubscribe = page.subscribe(($page) => {
 			currentRoute.set($page.url.pathname);
 		});
-		
+
+		// Initialize sprite preload detection
+		initializeSpriteLoader();
+
 		return unsubscribe;
 	});
 
@@ -39,6 +43,6 @@
 <main class="min-h-screen relative">
 	<!-- Top Controls Container -->
 	<TopControls />
-	
+
 	{@render children?.()}
 </main>

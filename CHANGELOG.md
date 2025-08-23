@@ -11,6 +11,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.14.0] - 2025-08-23
+
+### Web Interface Changes (v0.14.0)
+#### Added
+- **🖼️ Progressive Sprite Loading System**: Advanced icon loading with immediate fallbacks
+  - **Deferred Loading**: 10-second delayed sprite loading after DOM ready (testing mode)
+  - **UTF Placeholder System**: Instant visual feedback with Unicode emojis during sprite loading
+    - 🏠 for home icons, ☀️/🌙 for theme toggle, > for choose arrows
+    - Complete emoji mapping for all 16 flags and UI icons in `flagEmojis.ts`
+    - Zero layout shift during sprite transition
+  - **Global State Management**: `window.__SPRITE_STATE__` tracks loading progress
+  - **Custom Events**: `sprite-loaded` event for cross-component synchronization
+  - **Smart Fallbacks**: Graceful degradation when sprite fails to load
+- **🚩 Professional Flag Integration**: Full-resolution flag SVGs with zero compromise
+  - **189KB Sprite**: Complex flag SVGs from `/home/arkaitz/proyectos/web/svg-flags/`
+  - **16 Complete Flags**: All 13 language flags plus 3 regional Spanish flags
+    - **National**: Spain, UK, France, Germany, Portugal, Russia, Saudi Arabia, China, Japan, India
+    - **Regional Spanish**: Euskadi (Basque), Catalonia, Galicia from `/regions/` directory
+  - **SVG Reference Fixes**: Fixed internal references with unique prefixes (e.g., `china-cn-a`)
+  - **Modern SVG Syntax**: Replaced `xlink:href` with `href` for better compatibility
+- **📁 Centralized Language Configuration**: Eliminated duplicate code across components
+  - **`/web/src/lib/languageConfig.ts`**: Shared configuration file for all language data
+  - **DRY Architecture**: Single source of truth for languages, names, and flags
+  - **Helper Functions**: `getLanguageByCode()`, `getLanguageName()` utilities
+  - **Type Safety**: Complete TypeScript definitions for language structures
+- **🔗 Universal URL Parameter Support**: Complete GET parameter integration across all routes
+  - **Generator Pages**: `/custom/`, `/password/`, `/api-key/` read and apply URL parameters
+  - **Parameter Validation**: Client-side validation for all parameter types and ranges
+  - **Persistent State**: URL parameters override stored state and defaults
+  - **Shareable URLs**: Complete configuration can be shared via URL parameters
+
+#### Enhanced
+- **🏗️ Centralized API Architecture**: Reorganized generation workflow for better maintainability
+  - **Generator Pages**: Handle only UI, validation, and navigation (NO API calls)
+  - **Result Page**: Centralized API calling via `generateFromParams()` function
+  - **Fresh Generation**: Result page ALWAYS generates new values, never displays cached data
+  - **Parameter Flow**: Generators → URL params → Result → API call → Display
+  - **Error Handling**: Centralized error handling in result page with proper fallbacks
+- **🎯 Icon Component Evolution**: Enhanced placeholder system with loading states
+  - **Dynamic Placeholders**: Icons show UTF emojis until sprite loads
+  - **State Subscriptions**: React to sprite loading events for smooth transitions
+  - **RTL-Aware Placeholders**: Choose buttons show ">" in both LTR and RTL correctly
+  - **Loading Indicators**: Subtle visual feedback during sprite loading
+
+#### Fixed
+- **🔧 SVG Internal References**: Resolved flag display issues with complex SVGs
+  - **Unique ID Prefixes**: Added country prefixes to prevent ID conflicts (e.g., `#cn-a` → `#china-cn-a`)
+  - **Bulk Processing**: Processed 1,764 SVG files, fixed 574 with internal references
+  - **Python Script**: Created `/tmp/fix_all_svg_references.py` for automated fixes
+  - **Complete Coverage**: All flag SVGs now display correctly with proper internal links
+
+#### Architecture Changes
+- **Navigation Flow**: Enhanced user experience with parameter persistence
+  - **Menu → Generator**: Loads defaults or URL parameters
+  - **Generator → Result**: Passes configuration via URL parameters
+  - **Result → Generator**: Returns with current configuration intact
+  - **Bookmarkable States**: Any configuration state can be bookmarked and shared
+- **Code Quality**: Comprehensive elimination of duplicate logic
+  - **Language Configuration**: Shared between TopControls and LanguageSelector
+  - **Type Definitions**: Centralized language types and interfaces
+  - **Component Reuse**: Consistent component usage patterns
+
+#### Technical Implementation
+- **Sprite Loading Pipeline**: Sophisticated loading system with fallbacks
+  ```javascript
+  // app.html - Deferred loading with 10s delay
+  window.__SPRITE_STATE__ = { loaded: false, loading: true, error: false };
+  setTimeout(() => { /* fetch and inject sprite */ }, 10000);
+  ```
+- **Parameter Processing**: URL parameter parsing in all generator pages
+  ```typescript
+  // onMount in generator pages
+  const urlLength = searchParams.get('length');
+  if (urlLength && isValid(urlLength)) params.length = parseInt(urlLength);
+  ```
+- **Result Generation**: Unified API calling based on endpoint parameter
+  ```typescript
+  switch (endpoint) {
+    case 'custom': result = await api.generate(params); break;
+    case 'password': result = await api.generatePassword(params); break;
+    case 'api-key': result = await api.generateApiKey(params); break;
+  }
+  ```
+
+---
+
 ## [API v1.0.0 / Web v0.13.0] - 2025-08-23
 
 ### Web Interface Changes (v0.13.0)

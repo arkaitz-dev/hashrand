@@ -27,7 +27,10 @@
 
 /* Smooth transitions */
 * {
-	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 /* Custom fast spin animation - 1.5 rotations per second */
@@ -45,39 +48,39 @@
 }
 
 /* RTL Support */
-[data-rtl="true"] {
+[data-rtl='true'] {
 	direction: rtl;
 }
 
 /* RTL-specific overrides for components that need special handling */
-[data-rtl="true"] .rtl-flip {
+[data-rtl='true'] .rtl-flip {
 	transform: scaleX(-1);
 }
 
 /* For flex items that should reverse order in RTL */
-[data-rtl="true"] .rtl-reverse {
+[data-rtl='true'] .rtl-reverse {
 	flex-direction: row-reverse;
 }
 
 /* Language selector positioning in RTL */
-[data-rtl="true"] .language-selector {
+[data-rtl='true'] .language-selector {
 	left: 3.5rem !important;
 	right: auto !important;
 }
 
 /* Theme toggle positioning in RTL */
-[data-rtl="true"] .theme-toggle {
+[data-rtl='true'] .theme-toggle {
 	left: 1rem !important;
 	right: auto !important;
 }
 
 /* Chevron icons that should flip in RTL */
-[data-rtl="true"] .rtl-flip-chevron {
+[data-rtl='true'] .rtl-flip-chevron {
 	transform: scaleX(-1);
 }
 
 /* Float elements to appropriate side */
-[data-rtl="true"] .rtl-float-right {
+[data-rtl='true'] .rtl-float-right {
 	float: right;
 }
 
@@ -97,20 +100,20 @@
 }
 
 /* RTL support for select elements */
-[data-rtl="true"] select:not(.force-ltr):not(.force-ltr *) {
+[data-rtl='true'] select:not(.force-ltr):not(.force-ltr *) {
 	text-align: right !important;
 	direction: rtl !important;
 	text-align-last: right !important;
 }
 
-[data-rtl="true"] select:not(.force-ltr):not(.force-ltr *) option {
+[data-rtl='true'] select:not(.force-ltr):not(.force-ltr *) option {
 	text-align: right !important;
 	direction: rtl !important;
 }
 
 /* Force stronger RTL for form selects specifically */
-[data-rtl="true"] form select,
-[data-rtl="true"] .form-control select {
+[data-rtl='true'] form select,
+[data-rtl='true'] .form-control select {
 	text-align: right !important;
 	direction: rtl !important;
 	text-align-last: right !important;

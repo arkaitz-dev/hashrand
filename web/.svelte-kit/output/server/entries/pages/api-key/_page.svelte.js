@@ -1,8 +1,10 @@
-import { E as store_get, O as ensure_array_like, K as head, N as escape_html, I as attr, P as maybe_selected, F as attr_class, G as stringify, J as unsubscribe_stores, D as pop, A as push } from "../../../chunks/index.js";
-import { g as goto } from "../../../chunks/client.js";
+import { D as store_get, N as ensure_array_like, J as head, M as escape_html, G as attr, O as maybe_selected, E as attr_class, F as stringify, I as unsubscribe_stores, B as pop, z as push } from "../../../chunks/index.js";
+import "@sveltejs/kit/internal";
+import "../../../chunks/exports.js";
+import "../../../chunks/utils.js";
+import "../../../chunks/state.svelte.js";
 import { L as LoadingSpinner } from "../../../chunks/LoadingSpinner.js";
-import { F as Footer } from "../../../chunks/Footer.js";
-import { B as Button } from "../../../chunks/Button.js";
+import { I as Iconize, F as Footer } from "../../../chunks/Footer.js";
 import { i as isLoading } from "../../../chunks/result.js";
 import { _ } from "../../../chunks/rtl.js";
 function _page($$payload, $$props) {
@@ -54,11 +56,15 @@ function _page($$payload, $$props) {
   $$payload.out.push(`<!--]--></div> <div><label for="length" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.length"))} (${escape_html(minLength)}-64 ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.characters"))})</label> <div class="flex items-center gap-4"><input type="range" id="length"${attr("value", params.length)}${attr("min", minLength)} max="64" class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"/> <span class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center">${escape_html(params.length)}</span></div> `);
   if (!lengthValid) {
     $$payload.out.push("<!--[-->");
-    $$payload.out.push(`<p class="text-red-500 text-sm mt-1">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.length"))} ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.mustBeBetween"))} ${escape_html(minLength)} ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.and"))} 64</p>`);
+    $$payload.out.push(`<p class="text-red-500 text-sm mt-1">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.length"))}
+								${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.mustBeBetween"))}
+								${escape_html(minLength)}
+								${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.and"))} 64</p>`);
   } else {
     $$payload.out.push("<!--[!-->");
   }
-  $$payload.out.push(`<!--]--> <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"><p class="text-sm text-blue-800 dark:text-blue-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.format"))}:</strong> ak_ prefix + ${escape_html(params.length)} ${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.randomCharacters"))} `);
+  $$payload.out.push(`<!--]--> <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"><p class="text-sm text-blue-800 dark:text-blue-200"><strong>${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.format"))}:</strong> ak_ prefix + ${escape_html(params.length)}
+								${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.randomCharacters"))} `);
   {
     $$payload.out.push("<!--[!-->");
     $$payload.out.push(`${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.fullAlphanumericAlphabet"))}`);
@@ -75,20 +81,21 @@ function _page($$payload, $$props) {
     $$payload.out.push(`<!----> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.loading"))}...`);
   } else {
     $$payload.out.push("<!--[!-->");
-    $$payload.out.push(`${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.generateApiKey"))}`);
+    Iconize($$payload, {
+      conf: { emoji: "▶", iconSize: "text-lg", spacing: "gap-2" },
+      children: ($$payload2) => {
+        $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("apiKey.generateApiKey"))}`);
+      }
+    });
   }
-  $$payload.out.push(`<!--]--></button> `);
-  Button($$payload, {
-    onclick: () => goto(),
-    class: "flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2",
-    icon: "briefcase",
-    iconSize: "w-5 h-5",
+  $$payload.out.push(`<!--]--></button> <button type="button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
+  Iconize($$payload, {
+    conf: { icon: "home", iconSize: "w-5 h-5" },
     children: ($$payload2) => {
       $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.backToMenu"))}`);
-    },
-    $$slots: { default: true }
+    }
   });
-  $$payload.out.push(`<!----></div></form></div></div> `);
+  $$payload.out.push(`<!----></button></div></form></div></div> `);
   Footer($$payload);
   $$payload.out.push(`<!----></div></div>`);
   if ($$store_subs) unsubscribe_stores($$store_subs);

@@ -1,4 +1,4 @@
-import { X as noop, Y as safe_not_equal, Z as subscribe_to_store, _ as run_all } from "./index.js";
+import { Q as noop, R as safe_not_equal, S as subscribe_to_store, T as run_all } from "./index.js";
 const internal = new URL("sveltekit-internal://");
 function resolve(base, path) {
   if (path[0] === "/" && path[1] === "/") return path;

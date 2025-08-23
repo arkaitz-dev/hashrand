@@ -280,9 +280,23 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.13.0)
+## Current State (v0.14.0)
 
 The application now includes:
+- **Progressive Sprite Loading System**: Advanced icon system with UTF placeholders and deferred loading
+  - **189KB Professional Sprite**: Full-resolution flag SVGs with zero compromise on quality
+  - **Instant Placeholders**: UTF emoji fallbacks for immediate visual feedback
+  - **Smart Loading**: Deferred sprite loading with global state management
+  - **Zero Layout Shift**: Seamless transition from placeholders to SVG icons
+- **Universal URL Parameter Support**: Complete GET parameter integration across all generator routes
+  - **Shareable URLs**: All generator configurations can be shared via URL parameters
+  - **Parameter Persistence**: URL parameters override stored state and defaults
+  - **Centralized API Architecture**: Only result page calls API, generators handle UI/navigation
+  - **Fresh Generation**: Result page always generates new values, never displays cached data
+- **Centralized Language Configuration**: Eliminated duplicate code with shared language config
+  - **DRY Architecture**: Single source of truth for all language data
+  - **Type Safety**: Complete TypeScript definitions for language structures
+  - **Helper Functions**: Utility functions for language operations
 - **Enterprise-Grade Linting System**: Comprehensive code quality tools unified through Vite
   - **Modern ESLint v9**: Latest flat config with TypeScript and Svelte 5 support
   - **Vite Integration**: Real-time linting during development with instant feedback
@@ -329,14 +343,26 @@ The application implements a complete random hash generator solution with both A
 
 ### Web Interface Features
 - **Menu-driven Navigation**: Clean card-based interface for endpoint selection
+- **URL Parameter Support**: All generator pages support GET parameters for direct configuration
+  - `/custom/?length=32&alphabet=base58&prefix=app_&suffix=_v1`
+  - `/password/?length=25&alphabet=no-look-alike`
+  - `/api-key/?length=50&alphabet=full`
+- **Centralized API Architecture**: Only result page calls API, generators handle UI and navigation
+  - **Generator Pages**: Parameter forms with validation and URL parameter parsing
+  - **Result Page**: Unified API calling based on endpoint and parameters
+  - **Fresh Generation**: Always generates new values, never displays cached results
+- **Progressive Icon Loading**: Advanced sprite system with placeholder fallbacks
+  - **UTF Placeholders**: Instant visual feedback with emoji fallbacks (🏠, ☀️, 🌙, >)
+  - **189KB Professional Sprite**: Full-resolution flag SVGs for all 13 languages
+  - **Deferred Loading**: Non-blocking sprite loading after DOM ready
 - **Parameter Forms**: Real-time validation with dynamic minimum lengths
 - **Result Display**: Formatted output with copy-to-clipboard functionality
 - **Responsive Design**: Mobile-first approach works on all screen sizes
-- **Dark/Light Mode**: Automatic theme switching based on system preferences
+- **Dark/Light Mode**: Manual theme toggle with system preference detection
 - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **Type Safety**: Full TypeScript integration with API type definitions
-- **State Management**: Svelte stores for navigation, results, and internationalization
-- **Error Handling**: User-friendly error messages with API integration
+- **State Management**: Svelte stores for navigation, results, internationalization, and theme
+- **Error Handling**: User-friendly error messages with centralized API integration
 - **Professional UI**: Smooth transitions, loading states, visual feedback
 
 ### Technical Implementation

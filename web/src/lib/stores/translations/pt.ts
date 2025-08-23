@@ -75,9 +75,12 @@ export const pt: I18nTexts = {
 		maxSecurityDescription: 'Máxima segurança com símbolos (73 chars)',
 		easyReadDescription: 'Fácil de ler e digitar (49 chars)',
 		securityNote: 'Nota de Segurança:',
-		securityDescription: 'As senhas são geradas usando geração aleatória criptograficamente segura. Não são armazenadas nem registadas em qualquer lugar.',
-		noLookAlikeNote: 'O alfabeto Sem Confusão exclui letras confundíveis. Mínimo {0} letras para segurança equivalente.',
-		fullAlphabetNote: 'O alfabeto completo com símbolos fornece máxima entropia. Mínimo {0} letras para segurança forte.',
+		securityDescription:
+			'As senhas são geradas usando geração aleatória criptograficamente segura. Não são armazenadas nem registadas em qualquer lugar.',
+		noLookAlikeNote:
+			'O alfabeto Sem Confusão exclui letras confundíveis. Mínimo {0} letras para segurança equivalente.',
+		fullAlphabetNote:
+			'O alfabeto completo com símbolos fornece máxima entropia. Mínimo {0} letras para segurança forte.',
 		failedToGeneratePassword: 'Falha ao gerar senha'
 	},
 	apiKey: {
@@ -88,8 +91,10 @@ export const pt: I18nTexts = {
 		alphabet: 'Conjunto de Caracteres',
 		standardAlphanumericDescription: 'Alfanumérico padrão (62 chars)',
 		noConfusingDescription: 'Sem letras confusas (49 chars)',
-		formatNotice: 'Todas as chaves API são geradas com o prefixo "ak_" para fácil identificação. O comprimento especificado refere-se apenas às letras aleatórias geradas (prefixo não contado).',
-		securityNotice: 'Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as senhas.',
+		formatNotice:
+			'Todas as chaves API são geradas com o prefixo "ak_" para fácil identificação. O comprimento especificado refere-se apenas às letras aleatórias geradas (prefixo não contado).',
+		securityNotice:
+			'Armazene as chaves API com segurança e nunca as exponha em código do lado do cliente ou controlo de versões. Trate-as com o mesmo cuidado que as senhas.',
 		formatPrefix: 'prefixo ak_ +',
 		randomCharacters: 'caracteres aleatórios com',
 		noLookAlikeAlphabet: 'alfabeto sem confusão (fácil de digitar)',
@@ -97,9 +102,9 @@ export const pt: I18nTexts = {
 		failedToGenerateApiKey: 'Falha ao gerar chave API'
 	},
 	alphabets: {
-		'base58': 'Base58 (alfabeto Bitcoin)',
+		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sem Confusão',
-		'full': 'Alfanumérico Completo',
+		full: 'Alfanumérico Completo',
 		'full-with-symbols': 'Completo com Símbolos'
 	}
 };

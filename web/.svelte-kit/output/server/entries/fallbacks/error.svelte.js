@@ -1,7 +1,22 @@
-import { M as getContext, N as escape_html, D as pop, A as push } from "../../chunks/index.js";
+import { K as getContext, M as escape_html, B as pop, z as push } from "../../chunks/index.js";
 import "clsx";
 import "../../chunks/state.svelte.js";
-import { s as stores } from "../../chunks/client.js";
+import "@sveltejs/kit/internal";
+import { w as writable } from "../../chunks/exports.js";
+import "../../chunks/utils.js";
+function create_updated_store() {
+  const { set, subscribe } = writable(false);
+  {
+    return {
+      subscribe,
+      // eslint-disable-next-line @typescript-eslint/require-await
+      check: async () => false
+    };
+  }
+}
+const stores = {
+  updated: /* @__PURE__ */ create_updated_store()
+};
 ({
   check: stores.updated.check
 });

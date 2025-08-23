@@ -8,6 +8,15 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	// Global sprite state from HTML defer script
+	interface Window {
+		__SPRITE_STATE__: {
+			loaded: boolean;
+			loading: boolean;
+			error: boolean;
+		};
+	}
 }
 
 export {};

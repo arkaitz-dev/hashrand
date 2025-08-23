@@ -77,9 +77,12 @@ export const es: I18nTexts = {
 		maxSecurityDescription: 'Máxima seguridad con símbolos (73 chars)',
 		easyReadDescription: 'Fácil de leer y escribir (49 chars)',
 		securityNote: 'Nota de Seguridad:',
-		securityDescription: 'Las contraseñas se generan usando generación aleatoria criptográficamente segura. No se almacenan ni registran en ningún lugar.',
-		noLookAlikeNote: 'El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} letras para seguridad equivalente.',
-		fullAlphabetNote: 'El alfabeto completo con símbolos proporciona máxima entropía. Mínimo {0} letras para seguridad fuerte.',
+		securityDescription:
+			'Las contraseñas se generan usando generación aleatoria criptográficamente segura. No se almacenan ni registran en ningún lugar.',
+		noLookAlikeNote:
+			'El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} letras para seguridad equivalente.',
+		fullAlphabetNote:
+			'El alfabeto completo con símbolos proporciona máxima entropía. Mínimo {0} letras para seguridad fuerte.',
 		failedToGeneratePassword: 'Error al generar contraseña'
 	},
 	apiKey: {
@@ -90,8 +93,10 @@ export const es: I18nTexts = {
 		alphabet: 'Conjunto de Caracteres',
 		standardAlphanumericDescription: 'Alfanumérico estándar (62 chars)',
 		noConfusingDescription: 'Sin letras confusas (49 chars)',
-		formatNotice: 'Todas las claves API se generan con el prefijo "ak_" para fácil identificación. La longitud especificada se refiere solo a las letras aleatorias generadas (prefijo no contado).',
-		securityNotice: 'Almacena las claves API de forma segura y nunca las expongas en código del lado del cliente o control de versiones. Trátalas con el mismo cuidado que las contraseñas.',
+		formatNotice:
+			'Todas las claves API se generan con el prefijo "ak_" para fácil identificación. La longitud especificada se refiere solo a las letras aleatorias generadas (prefijo no contado).',
+		securityNotice:
+			'Almacena las claves API de forma segura y nunca las expongas en código del lado del cliente o control de versiones. Trátalas con el mismo cuidado que las contraseñas.',
 		formatPrefix: 'prefijo ak_ +',
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sin confusión (fácil de escribir)',
@@ -99,9 +104,9 @@ export const es: I18nTexts = {
 		failedToGenerateApiKey: 'Error al generar clave API'
 	},
 	alphabets: {
-		'base58': 'Base58 (alfabeto Bitcoin)',
+		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sin Confusión',
-		'full': 'Alfanumérico Completo',
+		full: 'Alfanumérico Completo',
 		'full-with-symbols': 'Completo con Símbolos'
 	}
 };

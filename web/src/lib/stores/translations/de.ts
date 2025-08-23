@@ -29,7 +29,8 @@ export const de: I18nTexts = {
 		characters: 'Zeichen',
 		alphabet: 'Alphabet',
 		generatedValue: 'Generierter Wert',
-		clickToSelect: 'Klicken Sie auf das Textfeld, um alles auszuwählen, oder verwenden Sie die Schaltfläche Kopieren',
+		clickToSelect:
+			'Klicken Sie auf das Textfeld, um alles auszuwählen, oder verwenden Sie die Schaltfläche Kopieren',
 		waitGenerating: 'Bitte warten Sie, während ein neuer Wert generiert wird...',
 		unknownEndpoint: 'Unbekannter Endpunkt-Typ',
 		failedToCopy: 'Kopieren fehlgeschlagen',
@@ -75,9 +76,12 @@ export const de: I18nTexts = {
 		maxSecurityDescription: 'Maximale Sicherheit mit Symbolen (73 Zeichen)',
 		easyReadDescription: 'Leicht zu lesen und zu tippen (49 Zeichen)',
 		securityNote: 'Sicherheitshinweis:',
-		securityDescription: 'Passwörter werden mit kryptographisch sicherer Zufallsgenerierung erzeugt. Sie werden nirgends gespeichert oder protokolliert.',
-		noLookAlikeNote: 'Das Alphabet ohne Verwechslung schließt verwechselbare Zeichen aus. Mindestens {0} Zeichen für gleichwertige Sicherheit.',
-		fullAlphabetNote: 'Das vollständige Alphabet mit Symbolen bietet maximale Entropie. Mindestens {0} Zeichen für starke Sicherheit.',
+		securityDescription:
+			'Passwörter werden mit kryptographisch sicherer Zufallsgenerierung erzeugt. Sie werden nirgends gespeichert oder protokolliert.',
+		noLookAlikeNote:
+			'Das Alphabet ohne Verwechslung schließt verwechselbare Zeichen aus. Mindestens {0} Zeichen für gleichwertige Sicherheit.',
+		fullAlphabetNote:
+			'Das vollständige Alphabet mit Symbolen bietet maximale Entropie. Mindestens {0} Zeichen für starke Sicherheit.',
 		failedToGeneratePassword: 'Passwort-Generierung fehlgeschlagen'
 	},
 	apiKey: {
@@ -88,8 +92,10 @@ export const de: I18nTexts = {
 		alphabet: 'Zeichensatz',
 		standardAlphanumericDescription: 'Standard-Alphanumerisch (62 Zeichen)',
 		noConfusingDescription: 'Keine verwirrenden Zeichen (49 Zeichen)',
-		formatNotice: 'Alle API-Schlüssel werden mit dem Präfix "ak_" zur leichten Identifizierung generiert. Die angegebene Länge bezieht sich nur auf die generierten Zufallszeichen (Präfix nicht mitgezählt).',
-		securityNotice: 'Speichern Sie API-Schlüssel sicher und setzen Sie sie niemals in clientseitigem Code oder der Versionskontrolle frei. Behandeln Sie sie mit derselben Sorgfalt wie Passwörter.',
+		formatNotice:
+			'Alle API-Schlüssel werden mit dem Präfix "ak_" zur leichten Identifizierung generiert. Die angegebene Länge bezieht sich nur auf die generierten Zufallszeichen (Präfix nicht mitgezählt).',
+		securityNotice:
+			'Speichern Sie API-Schlüssel sicher und setzen Sie sie niemals in clientseitigem Code oder der Versionskontrolle frei. Behandeln Sie sie mit derselben Sorgfalt wie Passwörter.',
 		formatPrefix: 'ak_-Präfix +',
 		randomCharacters: 'Zufallszeichen mit',
 		noLookAlikeAlphabet: 'Alphabet ohne Verwechslung (leicht zu tippen)',
@@ -97,9 +103,9 @@ export const de: I18nTexts = {
 		failedToGenerateApiKey: 'API-Schlüssel-Generierung fehlgeschlagen'
 	},
 	alphabets: {
-		'base58': 'Base58 (Bitcoin-Alphabet)',
+		base58: 'Base58 (Bitcoin-Alphabet)',
 		'no-look-alike': 'Ohne Verwechslung',
-		'full': 'Vollständig Alphanumerisch',
+		full: 'Vollständig Alphanumerisch',
 		'full-with-symbols': 'Vollständig mit Symbolen'
 	}
 };

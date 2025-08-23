@@ -25,15 +25,6 @@ function deferred() {
   });
   return { promise, resolve, reject };
 }
-function fallback(value, fallback2, lazy = false) {
-  return value === void 0 ? lazy ? (
-    /** @type {() => V} */
-    fallback2()
-  ) : (
-    /** @type {V} */
-    fallback2
-  ) : value;
-}
 function equals(value) {
   return value === this.v;
 }
@@ -105,8 +96,6 @@ function state_unsafe_mutation() {
 const HYDRATION_START = "[";
 const HYDRATION_END = "]";
 const HYDRATION_ERROR = {};
-const ELEMENT_IS_NAMESPACED = 1;
-const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 const UNINITIALIZED = Symbol();
 let tracing_mode_flag = false;
 let component_context = null;
@@ -1624,44 +1613,6 @@ const STATUS_MASK = -7169;
 function set_signal_status(signal, status) {
   signal.f = signal.f & STATUS_MASK | status;
 }
-const DOM_BOOLEAN_ATTRIBUTES = [
-  "allowfullscreen",
-  "async",
-  "autofocus",
-  "autoplay",
-  "checked",
-  "controls",
-  "default",
-  "disabled",
-  "formnovalidate",
-  "hidden",
-  "indeterminate",
-  "inert",
-  "ismap",
-  "loop",
-  "multiple",
-  "muted",
-  "nomodule",
-  "novalidate",
-  "open",
-  "playsinline",
-  "readonly",
-  "required",
-  "reversed",
-  "seamless",
-  "selected",
-  "webkitdirectory",
-  "defer",
-  "disablepictureinpicture",
-  "disableremoteplayback"
-];
-function is_boolean_attribute(name) {
-  return DOM_BOOLEAN_ATTRIBUTES.includes(name);
-}
-const PASSIVE_EVENTS = ["touchstart", "touchmove"];
-function is_passive_event(name) {
-  return PASSIVE_EVENTS.includes(name);
-}
 const ATTR_REGEX = /[&"<]/g;
 const CONTENT_REGEX = /[&<]/g;
 function escape_html(value, is_attr) {
@@ -1821,7 +1772,6 @@ function abort() {
   controller?.abort(STALE_REACTION);
   controller = null;
 }
-const INVALID_ATTR_NAME_CHAR_REGEX = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 let on_destroy = [];
 function render(component, options = {}) {
   try {
@@ -1865,26 +1815,6 @@ function head(payload, fn) {
   fn(head_payload);
   head_payload.out.push(BLOCK_CLOSE);
 }
-function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
-  if (attrs.class) {
-    attrs.class = clsx(attrs.class);
-  }
-  let attr_str = "";
-  let name;
-  const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
-  const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
-  for (name in attrs) {
-    if (typeof attrs[name] === "function") continue;
-    if (name[0] === "$" && name[1] === "$") continue;
-    if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-    var value = attrs[name];
-    if (lowercase) {
-      name = name.toLowerCase();
-    }
-    attr_str += attr(name, value, is_html && is_boolean_attribute(name));
-  }
-  return attr_str;
-}
 function stringify(value) {
   return typeof value === "string" ? value : value == null ? "" : value + "";
 }
@@ -1911,38 +1841,6 @@ function unsubscribe_stores(store_values) {
     store_values[store_name][1]();
   }
 }
-function slot(payload, $$props, name, slot_props, fallback_fn) {
-  var slot_fn = $$props.$$slots?.[name];
-  if (slot_fn === true) {
-    slot_fn = $$props["children"];
-  }
-  if (slot_fn !== void 0) {
-    slot_fn(payload, slot_props);
-  }
-}
-function rest_props(props, rest) {
-  const rest_props2 = {};
-  let key;
-  for (key in props) {
-    if (!rest.includes(key)) {
-      rest_props2[key] = props[key];
-    }
-  }
-  return rest_props2;
-}
-function sanitize_props(props) {
-  const { children, $$slots, ...sanitized } = props;
-  return sanitized;
-}
-function bind_props(props_parent, props_now) {
-  for (const key in props_now) {
-    const initial_value = props_parent[key];
-    const value = props_now[key];
-    if (initial_value === void 0 && value !== void 0 && Object.getOwnPropertyDescriptor(props_parent, key)?.set) {
-      props_parent[key] = value;
-    }
-  }
-}
 function ensure_array_like(array_like_or_iterator) {
   if (array_like_or_iterator) {
     return array_like_or_iterator.length !== void 0 ? array_like_or_iterator : Array.from(array_like_or_iterator);
@@ -1953,33 +1851,26 @@ function maybe_selected(payload, value) {
   return value === payload.select_value ? " selected" : "";
 }
 export {
-  push as A,
-  setContext as B,
+  setContext as A,
+  pop as B,
   COMMENT_NODE as C,
-  pop as D,
-  store_get as E,
-  attr_class as F,
-  stringify as G,
+  store_get as D,
+  attr_class as E,
+  stringify as F,
+  attr as G,
   HYDRATION_ERROR as H,
-  attr as I,
-  unsubscribe_stores as J,
-  head as K,
+  unsubscribe_stores as I,
+  head as J,
+  getContext as K,
   LEGACY_PROPS as L,
-  getContext as M,
-  escape_html as N,
-  ensure_array_like as O,
-  maybe_selected as P,
-  clsx as Q,
-  slot as R,
-  sanitize_props as S,
-  rest_props as T,
-  fallback as U,
-  spread_attributes as V,
-  bind_props as W,
-  noop as X,
-  safe_not_equal as Y,
-  subscribe_to_store as Z,
-  run_all as _,
+  escape_html as M,
+  ensure_array_like as N,
+  maybe_selected as O,
+  clsx as P,
+  noop as Q,
+  safe_not_equal as R,
+  subscribe_to_store as S,
+  run_all as T,
   set_active_effect as a,
   active_effect as b,
   active_reaction as c,
@@ -1994,16 +1885,16 @@ export {
   clear_text_content as l,
   array_from as m,
   component_root as n,
-  is_passive_event as o,
-  create_text as p,
-  branch as q,
-  push$1 as r,
+  create_text as o,
+  branch as p,
+  push$1 as q,
+  component_context as r,
   set_active_reaction as s,
-  component_context as t,
-  pop$1 as u,
-  set as v,
-  get as w,
-  flushSync as x,
-  mutable_source as y,
-  render as z
+  pop$1 as t,
+  set as u,
+  get as v,
+  flushSync as w,
+  mutable_source as x,
+  render as y,
+  push as z
 };

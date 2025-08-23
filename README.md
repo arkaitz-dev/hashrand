@@ -26,7 +26,11 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **✨ Dynamic Feedback**: Context-aware help text and real-time parameter validation
 - **🎬 Loading Animations**: Smooth spinning animations during hash generation
 - **📋 Copy to Clipboard**: One-click copying with visual feedback
-- **🖼️ Optimized Icons**: SVG sprite system for fast loading and consistent UI
+- **🖼️ Advanced Icon System**: Progressive SVG sprite loading with UTF placeholders
+  - **Deferred Loading**: Non-blocking sprite loading after DOM ready
+  - **Instant Placeholders**: UTF emoji placeholders for immediate visual feedback
+  - **189KB Sprite**: Professional flag SVGs and UI icons with zero compromise on quality
+  - **Smart Loading States**: Visual feedback during sprite loading with smooth transitions
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages
   - **Universal Iconize Component**: Revolutionary RTL-aware wrapper for any content
@@ -34,6 +38,7 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
   - **Language Ordering**: Alphabetically organized by native language names
   - **Seamless Direction Changes**: Smooth transitions between text directions
   - **Zero-Config RTL**: Built-in RTL support using browser-native behavior - never manually handle text direction
+  - **Complex Flag Integration**: Full-resolution flag SVGs from multiple regions including Euskadi, Catalonia, and Galicia
 
 ## API Endpoints
 
@@ -96,7 +101,7 @@ GET /api/version
 ```json
 {
   "api_version": "1.0.0",
-  "ui_version": "0.11.0"
+  "ui_version": "0.14.0"
 }
 ```
 
@@ -108,6 +113,30 @@ GET /api/version
 | `no-look-alike` | `346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz` | 49 | Maximum readability (excludes confusing chars) |
 | `full` | `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz` | 62 | Complete alphanumeric |
 | `full-with-symbols` | `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_*^@#+!?$%` | 73 | Maximum entropy with symbols |
+
+## URL Parameter Support
+
+All generator pages now support GET parameters for direct configuration and sharing:
+
+```bash
+# Custom hash generator with parameters
+http://localhost:5173/custom/?length=32&alphabet=base58&prefix=app_&suffix=_v1
+
+# Password generator with specific settings  
+http://localhost:5173/password/?length=25&alphabet=no-look-alike
+
+# API key generator with custom length
+http://localhost:5173/api-key/?length=50&alphabet=full
+
+# Result page generates fresh values from parameters (never accepts value parameter)
+http://localhost:5173/result/?endpoint=custom&length=16&alphabet=full&prefix=test_
+```
+
+### Centralized API Architecture
+- **Generator Pages** (`/custom/`, `/password/`, `/api-key/`): Handle UI and navigation with GET parameter support
+- **Result Page** (`/result/`): Centralized API calling based on URL parameters  
+- **Fresh Generation**: Result page always generates new values, never displays cached results
+- **Shareable URLs**: Complete configuration can be shared via URL parameters
 
 ## Quick Start
 

@@ -16,5 +16,9 @@
 </script>
 
 <div class="inline-flex items-center justify-center {className}">
-	<Icon name="spinner" size="{sizeClasses[size]} animate-spin" class="text-blue-600 dark:text-blue-400" />
+	<Icon
+		name="spinner"
+		size="{sizeClasses[size]} animate-spin"
+		class="text-blue-600 dark:text-blue-400"
+	/>
 </div>

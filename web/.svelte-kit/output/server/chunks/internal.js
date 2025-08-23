@@ -1,4 +1,4 @@
-import { H as HYDRATION_ERROR, g as get_next_sibling, d as define_property, s as set_active_reaction, a as set_active_effect, i as is_array, b as active_effect, c as active_reaction, e as init_operations, f as get_first_child, C as COMMENT_NODE, h as HYDRATION_START, j as HYDRATION_END, k as hydration_failed, l as clear_text_content, m as array_from, n as component_root, o as is_passive_event, p as create_text, q as branch, r as push, t as component_context, u as pop, v as set, L as LEGACY_PROPS, w as get, x as flushSync, y as mutable_source, z as render, A as push$1, B as setContext, D as pop$1 } from "./index.js";
+import { H as HYDRATION_ERROR, g as get_next_sibling, d as define_property, s as set_active_reaction, a as set_active_effect, i as is_array, b as active_effect, c as active_reaction, e as init_operations, f as get_first_child, C as COMMENT_NODE, h as HYDRATION_START, j as HYDRATION_END, k as hydration_failed, l as clear_text_content, m as array_from, n as component_root, o as create_text, p as branch, q as push, r as component_context, t as pop, u as set, L as LEGACY_PROPS, v as get, w as flushSync, x as mutable_source, y as render, z as push$1, A as setContext, B as pop$1 } from "./index.js";
 import "clsx";
 import "./environment.js";
 let public_env = {};
@@ -33,6 +33,10 @@ function hydrate_next() {
     /** @type {TemplateNode} */
     get_next_sibling(hydrate_node)
   );
+}
+const PASSIVE_EVENTS = ["touchstart", "touchmove"];
+function is_passive_event(name) {
+  return PASSIVE_EVENTS.includes(name);
 }
 const all_registered_events = /* @__PURE__ */ new Set();
 const root_event_handles = /* @__PURE__ */ new Set();
@@ -463,7 +467,100 @@ const options = {
   service_worker: false,
   service_worker_options: void 0,
   templates: {
-    app: ({ head, body, assets, nonce, env }) => '<!doctype html>\n<html lang="en" class="%sveltekit.theme%">\n	<head>\n		<meta charset="utf-8" />\n		<link rel="icon" href="' + assets + '/favicon.png" />\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\n		<meta name="description" content="Professional hash, password, and API key generator with customizable parameters" />\n		<meta name="keywords" content="hash generator, password generator, API key generator, random, security, cryptography" />\n		<meta name="author" content="HashRand Spin" />\n		\n		<!-- Open Graph / Facebook -->\n		<meta property="og:type" content="website" />\n		<meta property="og:title" content="Hash Generator - Professional Random Generation Tool" />\n		<meta property="og:description" content="Professional hash, password, and API key generator with customizable parameters" />\n		\n		<!-- Twitter -->\n		<meta name="twitter:card" content="summary" />\n		<meta name="twitter:title" content="Hash Generator - Professional Random Generation Tool" />\n		<meta name="twitter:description" content="Professional hash, password, and API key generator with customizable parameters" />\n		\n		<!-- Preload critical fonts -->\n		<link rel="preconnect" href="https://fonts.googleapis.com" />\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />\n		\n		' + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover" class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>",
+    app: ({ head, body, assets, nonce, env }) => '<!doctype html>\n<html lang="en" class="%sveltekit.theme%">\n	<head>\n		<meta charset="utf-8" />\n		<link rel="icon" href="' + assets + `/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+		<meta
+			name="keywords"
+			content="hash generator, password generator, API key generator, random, security, cryptography"
+		/>
+		<meta name="author" content="HashRand Spin" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Hash Generator - Professional Random Generation Tool" />
+		<meta
+			property="og:description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:title" content="Hash Generator - Professional Random Generation Tool" />
+		<meta
+			name="twitter:description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+
+		<!-- Deferred sprite loader -->
+		<script defer>
+			// Global sprite loading state
+			window.__SPRITE_STATE__ = {
+				loaded: false,
+				loading: true,
+				error: false
+			};
+
+			// Load sprite after DOM is ready
+			function loadSprite() {
+				// Add 10 second delay for testing placeholder functionality
+				setTimeout(() => {
+					fetch('` + assets + `/icons-sprite.svg')
+					.then(response => {
+						if (!response.ok) {
+							throw new Error(\`HTTP \${response.status}\`);
+						}
+						return response.text();
+					})
+					.then(svgContent => {
+						// Inject sprite SVG directly at end of body
+						const parser = new DOMParser();
+						const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+						const svgElement = svgDoc.documentElement;
+						svgElement.style.display = 'none';
+						svgElement.id = 'icons-sprite-cache';
+						document.body.appendChild(svgElement);
+
+						// Update global state
+						window.__SPRITE_STATE__ = {
+							loaded: true,
+							loading: false,
+							error: false
+						};
+
+						// Dispatch custom event for Svelte reactivity
+						window.dispatchEvent(new CustomEvent('sprite-loaded'));
+					})
+					.catch(error => {
+						console.error('[SpriteLoader] Failed to load sprite:', error);
+						window.__SPRITE_STATE__ = {
+							loaded: false,
+							loading: false,
+							error: true
+						};
+
+						// Dispatch error event
+						window.dispatchEvent(new CustomEvent('sprite-error', { detail: error }));
+					});
+				}, 10000); // 10 second delay for testing
+			}
+
+			// Start loading
+			loadSprite();
+		<\/script>
+		
+		<!-- Preload critical fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		` + head + '\n	</head>\n	<body\n		data-sveltekit-preload-data="hover"\n		class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white"\n	>\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n",
     error: ({ status, message }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<title>' + message + `</title>
 
 		<style>
@@ -535,7 +632,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1ivppw3"
+  version_hash: "1emsxjs"
 };
 async function get_hooks() {
   let handle;

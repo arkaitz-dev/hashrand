@@ -8,7 +8,7 @@ export const fr: I18nTexts = {
 		copied: 'Copié !',
 		backToMenu: 'Retour au Menu',
 		loading: 'Génération...',
-		error: 'Une erreur s\'est produite',
+		error: "Une erreur s'est produite",
 		result: 'Résultat',
 		choose: 'Choisir',
 		type: 'Type',
@@ -29,8 +29,9 @@ export const fr: I18nTexts = {
 		characters: 'lettres',
 		alphabet: 'Alphabet',
 		generatedValue: 'Valeur Générée',
-		clickToSelect: 'Cliquez sur la zone de texte pour tout sélectionner, ou utilisez le bouton copier',
-		waitGenerating: 'Veuillez patienter pendant la génération d\'une nouvelle valeur...',
+		clickToSelect:
+			'Cliquez sur la zone de texte pour tout sélectionner, ou utilisez le bouton copier',
+		waitGenerating: "Veuillez patienter pendant la génération d'une nouvelle valeur...",
 		unknownEndpoint: 'Type de point de terminaison inconnu',
 		failedToCopy: 'Échec de la copie',
 		fallbackCopyFailed: 'Échec de la copie de secours',
@@ -58,7 +59,7 @@ export const fr: I18nTexts = {
 		description: 'Générez des hashs aléatoires personnalisés',
 		generateHash: 'Générer Hash',
 		length: 'Longueur',
-		alphabet: 'Type d\'Alphabet',
+		alphabet: "Type d'Alphabet",
 		prefix: 'Préfixe',
 		suffix: 'Suffixe',
 		lengthMustBeBetween: 'La longueur doit être entre 2 et 128',
@@ -77,9 +78,12 @@ export const fr: I18nTexts = {
 		maxSecurityDescription: 'Sécurité maximale avec symboles (73 chars)',
 		easyReadDescription: 'Facile à lire et taper (49 chars)',
 		securityNote: 'Note de Sécurité :',
-		securityDescription: 'Les mots de passe sont générés en utilisant une génération aléatoire cryptographiquement sécurisée. Ils ne sont stockés ni journalisés nulle part.',
-		noLookAlikeNote: 'L\'alphabet Sans Ambiguïté exclut les lettres confuses. Minimum {0} lettres pour une sécurité équivalente.',
-		fullAlphabetNote: 'L\'alphabet complet avec symboles fournit une entropie maximale. Minimum {0} lettres pour une sécurité forte.',
+		securityDescription:
+			'Les mots de passe sont générés en utilisant une génération aléatoire cryptographiquement sécurisée. Ils ne sont stockés ni journalisés nulle part.',
+		noLookAlikeNote:
+			"L'alphabet Sans Ambiguïté exclut les lettres confuses. Minimum {0} lettres pour une sécurité équivalente.",
+		fullAlphabetNote:
+			"L'alphabet complet avec symboles fournit une entropie maximale. Minimum {0} lettres pour une sécurité forte.",
 		failedToGeneratePassword: 'Échec de la génération du mot de passe'
 	},
 	apiKey: {
@@ -90,8 +94,10 @@ export const fr: I18nTexts = {
 		alphabet: 'Jeu de Caractères',
 		standardAlphanumericDescription: 'Alphanumérique standard (62 chars)',
 		noConfusingDescription: 'Aucune lettre confuse (49 chars)',
-		formatNotice: 'Toutes les clés API sont générées avec le préfixe "ak_" pour une identification facile. La longueur spécifiée ne concerne que les caractères aléatoires générés (préfixe non compté).',
-		securityNotice: 'Stockez les clés API en sécurité et ne les exposez jamais dans le code côté client ou le contrôle de version. Traitez-les avec le même soin que les mots de passe.',
+		formatNotice:
+			'Toutes les clés API sont générées avec le préfixe "ak_" pour une identification facile. La longueur spécifiée ne concerne que les caractères aléatoires générés (préfixe non compté).',
+		securityNotice:
+			'Stockez les clés API en sécurité et ne les exposez jamais dans le code côté client ou le contrôle de version. Traitez-les avec le même soin que les mots de passe.',
 		formatPrefix: 'préfixe ak_ +',
 		randomCharacters: 'lettres aléatoires avec',
 		noLookAlikeAlphabet: 'alphabet sans ambiguïté (facile à taper)',
@@ -99,9 +105,9 @@ export const fr: I18nTexts = {
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
 	alphabets: {
-		'base58': 'Base58 (alphabet Bitcoin)',
+		base58: 'Base58 (alphabet Bitcoin)',
 		'no-look-alike': 'Sans Ambiguïté',
-		'full': 'Alphanumérique Complet',
+		full: 'Alphanumérique Complet',
 		'full-with-symbols': 'Complet avec Symboles'
 	}
 };

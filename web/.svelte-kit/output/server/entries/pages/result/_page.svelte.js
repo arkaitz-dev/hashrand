@@ -1,14 +1,12 @@
-import { F as attr_class, E as store_get, N as escape_html, J as unsubscribe_stores, D as pop, A as push, G as stringify, K as head, O as ensure_array_like } from "../../../chunks/index.js";
-import { g as goto } from "../../../chunks/client.js";
+import { E as attr_class, D as store_get, M as escape_html, I as unsubscribe_stores, B as pop, z as push, F as stringify, P as clsx, J as head, N as ensure_array_like, G as attr } from "../../../chunks/index.js";
 import "@sveltejs/kit/internal";
 import "../../../chunks/exports.js";
 import "../../../chunks/utils.js";
-import "clsx";
 import "../../../chunks/state.svelte.js";
+import "clsx";
 import { I as Icon, i as isRTL, _, c as currentLanguage } from "../../../chunks/rtl.js";
-import { F as Footer } from "../../../chunks/Footer.js";
-import { B as Button } from "../../../chunks/Button.js";
-import { r as resultState, i as isLoading, e as error, s as setLoading, a as setResult, b as setError } from "../../../chunks/result.js";
+import { I as Iconize, F as Footer } from "../../../chunks/Footer.js";
+import { r as resultState, i as isLoading, e as error } from "../../../chunks/result.js";
 function BackButton($$payload, $$props) {
   push();
   var $$store_subs;
@@ -16,52 +14,79 @@ function BackButton($$payload, $$props) {
   $$payload.out.push(`<button${attr_class(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-all duration-200 ${stringify(className)}`)}>`);
   Icon($$payload, {
     name: store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "arrow-right" : "arrow-left",
-    size: "w-4 h-4"
+    size: "w-4 h-4",
+    placeholder: "auto"
   });
   $$payload.out.push(`<!----> ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.back"))}</button>`);
+  if ($$store_subs) unsubscribe_stores($$store_subs);
+  pop();
+}
+function DateTimeLocalized($$payload, $$props) {
+  push();
+  var $$store_subs;
+  let { timestamp, options, class: wrapperClass = "" } = $$props;
+  const defaultOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  };
+  const formattedTimestamp = (() => {
+    if (store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage) === "eu") {
+      const euskeraMonths = [
+        "urtarril",
+        "otsail",
+        "martxo",
+        "apiril",
+        "maiatz",
+        "ekain",
+        "uztail",
+        "abuztu",
+        "irail",
+        "urri",
+        "azaro",
+        "abendu"
+      ];
+      const year = timestamp.getFullYear();
+      const monthName = euskeraMonths[timestamp.getMonth()];
+      const day = timestamp.getDate();
+      const hours = String(timestamp.getHours()).padStart(2, "0");
+      const minutes = String(timestamp.getMinutes()).padStart(2, "0");
+      const seconds = String(timestamp.getSeconds()).padStart(2, "0");
+      return `${year}ko ${monthName}ak ${day}, ${hours}:${minutes}:${seconds}`;
+    }
+    const localeMap = {
+      en: "en-US",
+      es: "es-ES",
+      pt: "pt-PT",
+      fr: "fr-FR",
+      de: "de-DE",
+      ru: "ru-RU",
+      zh: "zh-CN",
+      ar: "ar-SA",
+      hi: "hi-IN",
+      ja: "ja-JP",
+      ca: "ca-ES",
+      gl: "gl-ES"
+    };
+    const locale = localeMap[store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage)] || "en-US";
+    const formatOptions = options || defaultOptions;
+    try {
+      return new Intl.DateTimeFormat(locale, formatOptions).format(timestamp);
+    } catch {
+      return new Intl.DateTimeFormat("en-US", formatOptions).format(timestamp);
+    }
+  })();
+  $$payload.out.push(`<span${attr_class(clsx(wrapperClass))}>${escape_html(formattedTimestamp)}</span>`);
   if ($$store_subs) unsubscribe_stores($$store_subs);
   pop();
 }
 function _page($$payload, $$props) {
   push();
   var $$store_subs;
-  let getEndpointDisplayName, formattedTimestamp, translateParameterKey, translateParameterValue;
-  let copySuccess = false;
-  let copyTimeout;
-  async function copyToClipboard() {
-    if (!store_get($$store_subs ??= {}, "$resultState", resultState)?.value) return;
-    try {
-      await navigator.clipboard.writeText(store_get($$store_subs ??= {}, "$resultState", resultState).value);
-      copySuccess = true;
-      clearTimeout(copyTimeout);
-      copyTimeout = setTimeout(
-        () => {
-          copySuccess = false;
-        },
-        2e3
-      );
-    } catch (err) {
-      console.error("Failed to copy:", err);
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = store_get($$store_subs ??= {}, "$resultState", resultState).value;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        copySuccess = true;
-        clearTimeout(copyTimeout);
-        copyTimeout = setTimeout(
-          () => {
-            copySuccess = false;
-          },
-          2e3
-        );
-      } catch (fallbackErr) {
-        console.error("Fallback copy failed:", fallbackErr);
-      }
-    }
-  }
+  let getEndpointDisplayName, translateParameterKey, translateParameterValue;
   function getEndpointIcon(endpoint) {
     switch (endpoint) {
       case "custom":
@@ -90,51 +115,6 @@ function _page($$payload, $$props) {
         return "gray";
     }
   }
-  function getPreviousPath() {
-    if (!store_get($$store_subs ??= {}, "$resultState", resultState)) return "/";
-    const endpointRoutes = {
-      "custom": "/custom",
-      "generate": "/custom",
-      // backward compatibility
-      "password": "/password",
-      "api-key": "/api-key"
-    };
-    return endpointRoutes[store_get($$store_subs ??= {}, "$resultState", resultState).endpoint] || "/";
-  }
-  async function regenerateHash() {
-    if (!store_get($$store_subs ??= {}, "$resultState", resultState) || store_get($$store_subs ??= {}, "$isLoading", isLoading)) return;
-    copySuccess = false;
-    setLoading(true);
-    try {
-      const { api } = await import("../../../chunks/api.js");
-      let result;
-      switch (store_get($$store_subs ??= {}, "$resultState", resultState).endpoint) {
-        case "custom":
-        case "generate":
-          result = await api.generate(store_get($$store_subs ??= {}, "$resultState", resultState).params);
-          break;
-        case "password":
-          result = await api.generatePassword(store_get($$store_subs ??= {}, "$resultState", resultState).params);
-          break;
-        case "api-key":
-          result = await api.generateApiKey(store_get($$store_subs ??= {}, "$resultState", resultState).params);
-          break;
-        default:
-          throw new Error(store_get($$store_subs ??= {}, "$_", _)("common.unknownEndpoint"));
-      }
-      setResult({
-        value: result,
-        params: store_get($$store_subs ??= {}, "$resultState", resultState).params,
-        endpoint: store_get($$store_subs ??= {}, "$resultState", resultState).endpoint,
-        timestamp: /* @__PURE__ */ new Date()
-      });
-      copySuccess = false;
-    } catch (error2) {
-      setError(error2 instanceof Error ? error2.message : store_get($$store_subs ??= {}, "$_", _)("common.failedToRegenerate"));
-    } finally {
-      setLoading(false);
-    }
-  }
   getEndpointDisplayName = (endpoint) => {
     switch (endpoint) {
       case "custom":
@@ -149,32 +129,6 @@ function _page($$payload, $$props) {
         return endpoint;
     }
   };
-  formattedTimestamp = store_get($$store_subs ??= {}, "$resultState", resultState)?.timestamp ? (() => {
-    const localeMap = {
-      "en": "en-US",
-      "es": "es-ES",
-      "pt": "pt-PT",
-      "fr": "fr-FR",
-      "de": "de-DE",
-      "ru": "ru-RU",
-      "zh": "zh-CN",
-      "ar": "ar-SA",
-      "hi": "hi-IN",
-      "ja": "ja-JP",
-      "eu": "eu-ES",
-      "ca": "ca-ES",
-      "gl": "gl-ES"
-    };
-    const locale = localeMap[store_get($$store_subs ??= {}, "$currentLanguage", currentLanguage)] || "en-US";
-    return new Intl.DateTimeFormat(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    }).format(store_get($$store_subs ??= {}, "$resultState", resultState).timestamp);
-  })() : "";
   translateParameterKey = (key) => {
     const translations = {
       length: store_get($$store_subs ??= {}, "$_", _)("common.length"),
@@ -208,16 +162,14 @@ function _page($$payload, $$props) {
     $$payload.out.push(`</textarea> `);
     if (!store_get($$store_subs ??= {}, "$isLoading", isLoading)) {
       $$payload.out.push("<!--[-->");
-      Button($$payload, {
-        onclick: copyToClipboard,
-        class: `absolute bottom-3 ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "left-3" : "right-3")} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 ${stringify(copySuccess ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white")}`,
-        icon: copySuccess ? "check" : "copy",
-        iconSize: "w-3 h-3",
+      $$payload.out.push(`<button${attr_class(`absolute bottom-3 ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "left-3" : "right-3")} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 ${stringify("bg-blue-600 hover:bg-blue-700 text-white")}`)}>`);
+      Iconize($$payload, {
+        conf: { icon: "copy", iconSize: "w-3 h-3" },
         children: ($$payload2) => {
-          $$payload2.out.push(`<!---->${escape_html(copySuccess ? store_get($$store_subs ??= {}, "$_", _)("common.copied") : store_get($$store_subs ??= {}, "$_", _)("common.copy"))}`);
-        },
-        $$slots: { default: true }
+          $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.copy"))}`);
+        }
       });
+      $$payload.out.push(`<!----></button>`);
     } else {
       $$payload.out.push("<!--[!-->");
     }
@@ -225,12 +177,24 @@ function _page($$payload, $$props) {
     Icon($$payload, {
       name: "chevron-down",
       size: "w-5 h-5",
+      placeholder: "auto",
       class: `text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 ${stringify("")} ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "rtl-flip-chevron" : "")}`
     });
-    $$payload.out.push(`<!----></button> <dl${attr_class(`space-y-2 ${stringify("hidden")} md:block`)}><div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.type"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">${escape_html(getEndpointDisplayName(store_get($$store_subs ??= {}, "$resultState", resultState).endpoint))}</dd></div> <div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.length"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).value.length)} ${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.characters"))}</dd></div> <div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generated"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">${escape_html(formattedTimestamp)}</dd></div></dl></div> <div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.parametersUsed"))}</h3> `);
+    $$payload.out.push(`<!----></button> <dl${attr_class(`space-y-2 ${stringify("hidden")} md:block`)}><div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.type"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">${escape_html(getEndpointDisplayName(store_get($$store_subs ??= {}, "$resultState", resultState).endpoint))}</dd></div> <div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.length"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).value.length)}
+										${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.characters"))}</dd></div> <div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generated"))}</dt> <dd class="text-sm text-gray-900 dark:text-white">`);
+    if (store_get($$store_subs ??= {}, "$resultState", resultState).timestamp) {
+      $$payload.out.push("<!--[-->");
+      DateTimeLocalized($$payload, {
+        timestamp: store_get($$store_subs ??= {}, "$resultState", resultState).timestamp
+      });
+    } else {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]--></dd></div></dl></div> <div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.parametersUsed"))}</h3> `);
     Icon($$payload, {
       name: "chevron-down",
       size: "w-5 h-5",
+      placeholder: "auto",
       class: `text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 ${stringify("")} ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "rtl-flip-chevron" : "")}`
     });
     $$payload.out.push(`<!----></button> <dl${attr_class(`space-y-2 ${stringify("hidden")} md:block`)}><!--[-->`);
@@ -244,39 +208,28 @@ function _page($$payload, $$props) {
       }
       $$payload.out.push(`<!--]-->`);
     }
-    $$payload.out.push(`<!--]--></dl></div></div></div> <div class="flex flex-col sm:flex-row gap-4 justify-center">`);
-    Button($$payload, {
-      onclick: regenerateHash,
-      disabled: store_get($$store_subs ??= {}, "$isLoading", isLoading),
-      class: `px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] ${stringify(store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer")}`,
-      icon: "refresh",
-      iconClass: store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "animate-spin-fast" : "",
+    $$payload.out.push(`<!--]--></dl></div></div> <div class="flex flex-col sm:flex-row gap-4 mt-6"><button${attr("disabled", store_get($$store_subs ??= {}, "$isLoading", isLoading), true)}${attr_class(`flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 ${stringify(store_get($$store_subs ??= {}, "$isLoading", isLoading) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg")}`)}>`);
+    Iconize($$payload, {
+      conf: { icon: "refresh", iconSize: "w-5 h-5" },
       children: ($$payload2) => {
         $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generateAnother"))}`);
-      },
-      $$slots: { default: true }
+      }
     });
-    $$payload.out.push(`<!----> `);
-    Button($$payload, {
-      onclick: () => goto(getPreviousPath()),
-      class: "px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]",
-      icon: "settings",
+    $$payload.out.push(`<!----></button> <button class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
+    Iconize($$payload, {
+      conf: { icon: "settings", iconSize: "w-5 h-5" },
       children: ($$payload2) => {
         $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.adjustSettings"))}`);
-      },
-      $$slots: { default: true }
+      }
     });
-    $$payload.out.push(`<!----> `);
-    Button($$payload, {
-      onclick: () => goto(),
-      class: "px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]",
-      icon: "briefcase",
+    $$payload.out.push(`<!----></button> <button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">`);
+    Iconize($$payload, {
+      conf: { icon: "home", iconSize: "w-5 h-5" },
       children: ($$payload2) => {
         $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.backToMenu"))}`);
-      },
-      $$slots: { default: true }
+      }
     });
-    $$payload.out.push(`<!----></div></div> `);
+    $$payload.out.push(`<!----></button></div></div></div> `);
     Footer($$payload);
     $$payload.out.push(`<!----></div></div>`);
   } else {

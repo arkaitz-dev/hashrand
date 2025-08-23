@@ -4,28 +4,103 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="description" content="Professional hash, password, and API key generator with customizable parameters" />
-		<meta name="keywords" content="hash generator, password generator, API key generator, random, security, cryptography" />
+		<meta
+			name="description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+		<meta
+			name="keywords"
+			content="hash generator, password generator, API key generator, random, security, cryptography"
+		/>
 		<meta name="author" content="HashRand Spin" />
-		
+
 		<!-- Open Graph / Facebook -->
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Hash Generator - Professional Random Generation Tool" />
-		<meta property="og:description" content="Professional hash, password, and API key generator with customizable parameters" />
-		
+		<meta
+			property="og:description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+
 		<!-- Twitter -->
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:title" content="Hash Generator - Professional Random Generation Tool" />
-		<meta name="twitter:description" content="Professional hash, password, and API key generator with customizable parameters" />
-		
+		<meta
+			name="twitter:description"
+			content="Professional hash, password, and API key generator with customizable parameters"
+		/>
+
+		<!-- Deferred sprite loader -->
+		<script defer>
+			// Global sprite loading state
+			window.__SPRITE_STATE__ = {
+				loaded: false,
+				loading: true,
+				error: false
+			};
+
+			// Load sprite after DOM is ready
+			function loadSprite() {
+				// Add 10 second delay for testing placeholder functionality
+				setTimeout(() => {
+					fetch('%sveltekit.assets%/icons-sprite.svg')
+						.then((response) => {
+							if (!response.ok) {
+								throw new Error(`HTTP ${response.status}`);
+							}
+							return response.text();
+						})
+						.then((svgContent) => {
+							// Inject sprite SVG directly at end of body
+							const parser = new DOMParser();
+							const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+							const svgElement = svgDoc.documentElement;
+							svgElement.style.display = 'none';
+							svgElement.id = 'icons-sprite-cache';
+							document.body.appendChild(svgElement);
+
+							// Update global state
+							window.__SPRITE_STATE__ = {
+								loaded: true,
+								loading: false,
+								error: false
+							};
+
+							// Dispatch custom event for Svelte reactivity
+							window.dispatchEvent(new CustomEvent('sprite-loaded'));
+						})
+						.catch((error) => {
+							console.error('[SpriteLoader] Failed to load sprite:', error);
+							window.__SPRITE_STATE__ = {
+								loaded: false,
+								loading: false,
+								error: true
+							};
+
+							// Dispatch error event
+							window.dispatchEvent(new CustomEvent('sprite-error', { detail: error }));
+						});
+				}, 10000); // 10 second delay for testing
+			}
+
+			// Start loading
+			loadSprite();
+		</script>
+
 		<!-- Preload critical fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-		
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover" class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+	<body
+		data-sveltekit-preload-data="hover"
+		class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+	>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

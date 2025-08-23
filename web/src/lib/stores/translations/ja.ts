@@ -75,9 +75,12 @@ export const ja: I18nTexts = {
 		maxSecurityDescription: '記号を含む最大セキュリティ（73文字）',
 		easyReadDescription: '読みやすく入力しやすい（49文字）',
 		securityNote: 'セキュリティに関する注意：',
-		securityDescription: 'パスワードは暗号学的に安全な乱数生成を使用して作成されます。どこにも保存やログ記録されません。',
-		noLookAlikeNote: '紛らわしくないアルファベットは混同しやすい文字を除外します。同等のセキュリティには最低{0}文字が必要です。',
-		fullAlphabetNote: '記号を含む完全なアルファベットは最大エントロピーを提供します。強力なセキュリティには最低{0}文字が必要です。',
+		securityDescription:
+			'パスワードは暗号学的に安全な乱数生成を使用して作成されます。どこにも保存やログ記録されません。',
+		noLookAlikeNote:
+			'紛らわしくないアルファベットは混同しやすい文字を除外します。同等のセキュリティには最低{0}文字が必要です。',
+		fullAlphabetNote:
+			'記号を含む完全なアルファベットは最大エントロピーを提供します。強力なセキュリティには最低{0}文字が必要です。',
 		failedToGeneratePassword: 'パスワードの生成に失敗しました'
 	},
 	apiKey: {
@@ -88,8 +91,10 @@ export const ja: I18nTexts = {
 		alphabet: '文字セット',
 		standardAlphanumericDescription: '標準英数字（62文字）',
 		noConfusingDescription: '紛らわしい文字なし（49文字）',
-		formatNotice: 'すべてのAPIキーは識別しやすくするために「ak_」プレフィックスが付加されます。指定した文字数は生成されるランダム文字のみを指します（プレフィックスは含みません）。',
-		securityNotice: 'APIキーは安全に保存し、クライアント側コードやバージョン管理システムに絶対に公開しないでください。パスワードと同じように慎重に扱ってください。',
+		formatNotice:
+			'すべてのAPIキーは識別しやすくするために「ak_」プレフィックスが付加されます。指定した文字数は生成されるランダム文字のみを指します（プレフィックスは含みません）。',
+		securityNotice:
+			'APIキーは安全に保存し、クライアント側コードやバージョン管理システムに絶対に公開しないでください。パスワードと同じように慎重に扱ってください。',
 		formatPrefix: 'ak_プレフィックス +',
 		randomCharacters: 'ランダム文字を使用：',
 		noLookAlikeAlphabet: '紛らわしくないアルファベット（入力しやすい）',
@@ -97,9 +102,9 @@ export const ja: I18nTexts = {
 		failedToGenerateApiKey: 'APIキーの生成に失敗しました'
 	},
 	alphabets: {
-		'base58': 'Base58（ビットコインアルファベット）',
+		base58: 'Base58（ビットコインアルファベット）',
 		'no-look-alike': '紛らわしくない',
-		'full': '完全英数字',
+		full: '完全英数字',
 		'full-with-symbols': '記号を含む完全'
 	}
 };

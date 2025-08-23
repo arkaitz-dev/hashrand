@@ -40,6 +40,6 @@ declare module "$app/types" {
 		};
 		Pathname(): "/" | "/api-key" | "/custom" | "/password" | "/result";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
-		Asset(): "/favicon.png" | "/icons-sprite.svg" | "/robots.txt";
+		Asset(): "/favicon.png" | "/icons-sprite.svg" | "/icons-sprite.svg.backup" | "/robots.txt";
 	}
 }

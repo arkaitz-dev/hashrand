@@ -75,9 +75,12 @@ export const eu: I18nTexts = {
 		maxSecurityDescription: 'Segurtasun handiena sinboloekin (73 hizki)',
 		easyReadDescription: 'Erraz irakurri eta idazteko (49 hizki)',
 		securityNote: 'Segurtasunari buruzko oharra:',
-		securityDescription: 'Pasahitzak kriptografikoki segurua den ausazko sorkuntzaren bidez sortzen dira. Ez dira inon gordetzen edo erregistratzen.',
-		noLookAlikeNote: 'Hizki nahasgarririk gabeko alfabetoak hizki antzekoak kanpoan uzten ditu. Gutxieneko {0} hizki behar dira segurtasun baliokidea lortzeko.',
-		fullAlphabetNote: 'Sinboloak dituen alfabeto osoak entropia handiena ematen du. Gutxieneko {0} hizki behar dira segurtasun sendoa lortzeko.',
+		securityDescription:
+			'Pasahitzak kriptografikoki segurua den ausazko sorkuntzaren bidez sortzen dira. Ez dira inon gordetzen edo erregistratzen.',
+		noLookAlikeNote:
+			'Hizki nahasgarririk gabeko alfabetoak hizki antzekoak kanpoan uzten ditu. Gutxieneko {0} hizki behar dira segurtasun baliokidea lortzeko.',
+		fullAlphabetNote:
+			'Sinboloak dituen alfabeto osoak entropia handiena ematen du. Gutxieneko {0} hizki behar dira segurtasun sendoa lortzeko.',
 		failedToGeneratePassword: 'Pasahitza sortzeak huts egin du'
 	},
 	apiKey: {
@@ -88,8 +91,10 @@ export const eu: I18nTexts = {
 		alphabet: 'Hizki-multzoa',
 		standardAlphanumericDescription: 'Alfabeto alfanumeriko estandarra (62 hizki)',
 		noConfusingDescription: 'Hizki nahasgarririk gabe (49 hizki)',
-		formatNotice: 'API gako guztiak "ak_" aurrizkiarekin sortzen dira identifikazioa errazagoa izateko. Zehaztutako luzerak soilik sortutako ausazko hizkiak hartzen ditu kontuan (aurrizkirik gabe).',
-		securityNotice: 'API gakoak modu seguruan gorde eta inoiz ez jarri bezero-aldeko kodean edo bertsio-kontrolean. Pasahitzekin bezalako arretaz tratatu.',
+		formatNotice:
+			'API gako guztiak "ak_" aurrizkiarekin sortzen dira identifikazioa errazagoa izateko. Zehaztutako luzerak soilik sortutako ausazko hizkiak hartzen ditu kontuan (aurrizkirik gabe).',
+		securityNotice:
+			'API gakoak modu seguruan gorde eta inoiz ez jarri bezero-aldeko kodean edo bertsio-kontrolean. Pasahitzekin bezalako arretaz tratatu.',
 		formatPrefix: 'ak_ aurrizkia +',
 		randomCharacters: 'ausazko hizki hauek erabiliz',
 		noLookAlikeAlphabet: 'hizki nahasgarririk gabeko alfabetoa (erraz idazteko)',
@@ -97,9 +102,9 @@ export const eu: I18nTexts = {
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
 	alphabets: {
-		'base58': 'Base58 (Bitcoin alfabetoa)',
+		base58: 'Base58 (Bitcoin alfabetoa)',
 		'no-look-alike': 'Nahasgarririk gabe',
-		'full': 'Alfabeto Alfanumeriko Osoa',
+		full: 'Alfabeto Alfanumeriko Osoa',
 		'full-with-symbols': 'Osoa Sinboloekin'
 	}
 };

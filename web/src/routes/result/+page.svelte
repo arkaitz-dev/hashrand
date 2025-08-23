@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import BackButton from '$lib/components/BackButton.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -31,12 +32,81 @@
 		showParametersUsed = !showParametersUsed;
 	}
 
-	// Redirect if no result
-	onMount(() => {
-		if (!$resultState) {
+	// Get URL parameters reactively
+	$: searchParams = $page.url.searchParams;
+
+	// Handle result state and API calls
+	onMount(async () => {
+		// If there's no result state and no URL parameters, redirect to home
+		if (!$resultState && searchParams.size === 0) {
 			goto('/');
+			return;
+		}
+
+		// If there are URL parameters but no result state, generate from parameters
+		if (!$resultState && searchParams.size > 0) {
+			await generateFromParams();
 		}
 	});
+
+	// Function to generate result from URL parameters
+	async function generateFromParams() {
+		const endpoint = searchParams.get('endpoint');
+		if (!endpoint) {
+			goto('/');
+			return;
+		}
+
+		setLoading(true);
+
+		try {
+			const { api } = await import('$lib/api');
+
+			// Build parameters object
+			const params: any = { raw: true };
+
+			// Get common parameters
+			const length = searchParams.get('length');
+			const alphabet = searchParams.get('alphabet');
+			const prefix = searchParams.get('prefix');
+			const suffix = searchParams.get('suffix');
+
+			if (length) params.length = parseInt(length);
+			if (alphabet) params.alphabet = alphabet;
+			if (prefix) params.prefix = prefix;
+			if (suffix) params.suffix = suffix;
+
+			let result: string;
+
+			// Call the appropriate API method based on endpoint
+			switch (endpoint) {
+				case 'custom':
+				case 'generate':
+					result = await api.generate(params);
+					break;
+				case 'password':
+					result = await api.generatePassword(params);
+					break;
+				case 'api-key':
+					result = await api.generateApiKey(params);
+					break;
+				default:
+					throw new Error($_('common.unknownEndpoint'));
+			}
+
+			// Set the result state
+			setResult({
+				value: result,
+				params,
+				endpoint,
+				timestamp: new Date()
+			});
+		} catch (error) {
+			setError(error instanceof Error ? error.message : $_('common.failedToGenerate'));
+		} finally {
+			setLoading(false);
+		}
+	}
 
 	async function copyToClipboard() {
 		if (!$resultState?.value) return;
@@ -145,6 +215,7 @@
 
 	function getPreviousPath(): string {
 		if (!$resultState) return '/';
+
 		// Map endpoint names to actual route paths
 		const endpointRoutes: Record<string, string> = {
 			custom: '/custom',
@@ -152,7 +223,36 @@
 			password: '/password',
 			'api-key': '/api-key'
 		};
-		return endpointRoutes[$resultState.endpoint] || '/';
+
+		const basePath = endpointRoutes[$resultState.endpoint] || '/';
+
+		// Add parameters to URL if they exist
+		if ($resultState.params && Object.keys($resultState.params).length > 0) {
+			const urlParams = new URLSearchParams();
+
+			// Add common parameters
+			if ($resultState.params.length) {
+				urlParams.set('length', $resultState.params.length.toString());
+			}
+			if ($resultState.params.alphabet) {
+				urlParams.set('alphabet', $resultState.params.alphabet);
+			}
+
+			// Add endpoint-specific parameters
+			if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
+				if ($resultState.params.prefix) {
+					urlParams.set('prefix', $resultState.params.prefix);
+				}
+				if ($resultState.params.suffix) {
+					urlParams.set('suffix', $resultState.params.suffix);
+				}
+			}
+
+			const queryString = urlParams.toString();
+			return queryString ? `${basePath}?${queryString}` : basePath;
+		}
+
+		return basePath;
 	}
 
 	async function regenerateHash() {
@@ -286,6 +386,7 @@
 								<Icon
 									name="chevron-down"
 									size="w-5 h-5"
+									placeholder="auto"
 									class="text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showGenerationDetails
 										? 'rotate-180'
 										: ''} {$isRTL ? 'rtl-flip-chevron' : ''}"
@@ -338,6 +439,7 @@
 								<Icon
 									name="chevron-down"
 									size="w-5 h-5"
+									placeholder="auto"
 									class="text-gray-500 dark:text-gray-400 md:hidden transition-transform duration-200 {showParametersUsed
 										? 'rotate-180'
 										: ''} {$isRTL ? 'rtl-flip-chevron' : ''}"

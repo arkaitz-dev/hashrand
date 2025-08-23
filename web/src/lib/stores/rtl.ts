@@ -17,9 +17,10 @@ export const textDirection = derived(isRTL, (rtl) => {
 // Helper function to get appropriate CSS classes based on direction
 export const getDirectionClasses = (ltrClasses: string, rtlClasses: string = '') => {
 	return derived(isRTL, (rtl) => {
-		return rtl ? (rtlClasses || ltrClasses.replace(/left|right/g, (match) => 
-			match === 'left' ? 'right' : 'left'
-		)) : ltrClasses;
+		return rtl
+			? rtlClasses ||
+					ltrClasses.replace(/left|right/g, (match) => (match === 'left' ? 'right' : 'left'))
+			: ltrClasses;
 	});
 };
 
