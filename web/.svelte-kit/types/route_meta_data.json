@@ -1,0 +1,18 @@
+{
+	"/": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/api-key": [
+		"src/routes/+layout.ts"
+	],
+	"/custom": [
+		"src/routes/+layout.ts"
+	],
+	"/password": [
+		"src/routes/+layout.ts"
+	],
+	"/result": [
+		"src/routes/+layout.ts"
+	]
+}

@@ -195,7 +195,9 @@
 								<LoadingSpinner size="sm" class="mr-2" />
 								{$_('common.loading')}...
 							{:else}
-								{$_('custom.generateHash')}
+								<Iconize conf={{emoji: "▶", iconSize: "text-lg", spacing: "gap-2"}}>
+									{$_('custom.generateHash')}
+								</Iconize>
 							{/if}
 						</button>
 						
@@ -207,7 +209,7 @@
 						>
 							<Iconize 
 								conf={{
-									icon: "briefcase",
+									icon: "home",
 									iconSize: "w-5 h-5"
 								}}
 							>

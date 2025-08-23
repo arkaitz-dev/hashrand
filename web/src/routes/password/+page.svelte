@@ -186,7 +186,9 @@
 								<LoadingSpinner size="sm" class="mr-2" />
 								{$_('common.loading')}...
 							{:else}
-								{$_('password.generatePassword')}
+								<Iconize conf={{emoji: "▶", iconSize: "text-lg", spacing: "gap-2"}}>
+									{$_('password.generatePassword')}
+								</Iconize>
 							{/if}
 						</button>
 						
@@ -198,7 +200,7 @@
 						>
 							<Iconize 
 								conf={{
-									icon: "briefcase",
+									icon: "home",
 									iconSize: "w-5 h-5"
 								}}
 							>

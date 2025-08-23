@@ -7,6 +7,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
+	import DateTimeLocalized from '$lib/components/DateTimeLocalized.svelte';
 	import { resultState, error, setResult, setLoading, setError, isLoading } from '$lib/stores/result';
 	import { _, currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
@@ -95,36 +96,6 @@
 		}
 	}
 
-	// Reactive formatted timestamp that updates when language changes
-	$: formattedTimestamp = $resultState?.timestamp ? (() => {
-		// Map language codes to locale identifiers for date formatting
-		const localeMap: Record<string, string> = {
-			'en': 'en-US',
-			'es': 'es-ES', 
-			'pt': 'pt-PT',
-			'fr': 'fr-FR',
-			'de': 'de-DE',
-			'ru': 'ru-RU',
-			'zh': 'zh-CN',
-			'ar': 'ar-SA',
-			'hi': 'hi-IN',
-			'ja': 'ja-JP',
-			'eu': 'eu-ES',
-			'ca': 'ca-ES',
-			'gl': 'gl-ES'
-		};
-		
-		const locale = localeMap[$currentLanguage] || 'en-US';
-		
-		return new Intl.DateTimeFormat(locale, {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit'
-		}).format($resultState.timestamp);
-	})() : '';
 
 	// Reactive parameter key translation that updates when language changes
 	$: translateParameterKey = (key: string): string => {
@@ -295,7 +266,11 @@
 								</div>
 								<div>
 									<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{$_('common.generated')}</dt>
-									<dd class="text-sm text-gray-900 dark:text-white">{formattedTimestamp}</dd>
+									<dd class="text-sm text-gray-900 dark:text-white">
+										{#if $resultState.timestamp}
+											<DateTimeLocalized timestamp={$resultState.timestamp} />
+										{/if}
+									</dd>
 								</div>
 							</dl>
 						</div>
@@ -333,56 +308,56 @@
 							</dl>
 						</div>
 					</div>
-				</div>
 
-				<!-- Actions -->
-				<div class="flex flex-col sm:flex-row gap-4 justify-center">
-					<!-- RTL-aware regenerate button -->
-					<button
-						onclick={regenerateHash}
-						disabled={$isLoading}
-						class="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px] {$isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'}"
-					>
-						<Iconize 
-							conf={{
-								icon: "refresh",
-								iconClass: $isLoading ? 'animate-spin-fast' : '',
-								iconSize: "w-4 h-4"
-							}}
+					<!-- Actions -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-6">
+						<!-- RTL-aware regenerate button -->
+						<button
+							onclick={regenerateHash}
+							disabled={$isLoading}
+							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center gap-2 {$isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer hover:shadow-lg'}"
 						>
-							{$_('common.generateAnother')}
-						</Iconize>
-					</button>
-					
-					<!-- RTL-aware adjust settings button -->
-					<button
-						onclick={() => goto(getPreviousPath())}
-						class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
-					>
-						<Iconize 
-							conf={{
-								icon: "settings",
-								iconSize: "w-4 h-4"
-							}}
+							<Iconize 
+								conf={{
+									icon: "refresh",
+									iconClass: $isLoading ? 'animate-spin-fast' : '',
+									iconSize: "w-5 h-5"
+								}}
+							>
+								{$_('common.generateAnother')}
+							</Iconize>
+						</button>
+						
+						<!-- RTL-aware adjust settings button -->
+						<button
+							onclick={() => goto(getPreviousPath())}
+							class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
 						>
-							{$_('common.adjustSettings')}
-						</Iconize>
-					</button>
-					
-					<!-- RTL-aware back to menu button -->
-					<button
-						onclick={() => goto('/')}
-						class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-w-[180px]"
-					>
-						<Iconize 
-							conf={{
-								icon: "briefcase",
-								iconSize: "w-4 h-4"
-							}}
+							<Iconize 
+								conf={{
+									icon: "settings",
+									iconSize: "w-5 h-5"
+								}}
+							>
+								{$_('common.adjustSettings')}
+							</Iconize>
+						</button>
+						
+						<!-- RTL-aware back to menu button -->
+						<button
+							onclick={() => goto('/')}
+							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
 						>
-							{$_('common.backToMenu')}
-						</Iconize>
-					</button>
+							<Iconize 
+								conf={{
+									icon: "home",
+									iconSize: "w-5 h-5"
+								}}
+							>
+								{$_('common.backToMenu')}
+							</Iconize>
+						</button>
+					</div>
 				</div>
 			</div>
 			

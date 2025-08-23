@@ -67,24 +67,26 @@
 					aria-label="{$_('common.navigateTo')} {getTranslatedTitle(item.id)}"
 				>
 					<div class="p-6">
-						<div class="mb-4">
-							<Iconize conf={{emoji: item.icon, iconSize: "text-3xl", spacing: "gap-3"}}>
-								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-									{getTranslatedTitle(item.id)}
-								</h2>
+						<div class="mb-4 flex items-center gap-3">
+							<Iconize conf={{emoji: item.icon, iconSize: "text-3xl"}}>
 							</Iconize>
+							<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+								{getTranslatedTitle(item.id)}
+							</h2>
 						</div>
 						<p class="text-gray-600 dark:text-gray-300 leading-relaxed">
 							{getTranslatedDescription(item.id)}
 						</p>
 						<div class="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium {$isRTL ? 'rtl-float-right' : 'rtl-float-left'}">
-							{#if $isRTL}
+							<Iconize conf={{
+								icon: "arrow-right", 
+								rtlIcon: "arrow-left",
+								iconSize: "w-4 h-4",
+								spacing: "gap-1",
+								invertposition: true
+							}}>
 								{$_('common.choose')}
-								<Icon name="arrow-left" size="w-4 h-4 ml-1" />
-							{:else}
-								{$_('common.choose')}
-								<Icon name="arrow-right" size="w-4 h-4 ml-1" />
-							{/if}
+							</Iconize>
 						</div>
 						<div class="clear-both"></div>
 					</div>

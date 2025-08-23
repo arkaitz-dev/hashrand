@@ -11,6 +11,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.0.0 / Web v0.12.0] - 2025-08-23
+
+### Web Interface Changes (v0.12.0)
+#### Added
+- **📅 DateTimeLocalized Component**: Portable date/time formatting component for internationalization
+  - **Universal Date Formatting**: Handles 13 languages with proper locale detection and formatting
+  - **Custom Euskera Format**: Special handling for Basque language with authentic format: `{year}ko {month}ak {day}, {time}`
+  - **Basque Month Names**: Complete array of Euskera month names (`urtarril`, `otsail`, `martxo`, etc.)
+  - **Configurable Options**: Accepts `Intl.DateTimeFormatOptions` for custom formatting
+  - **Portable Design**: Can be reused in any project, similar to Iconize component
+  - **Automatic Reactivity**: Updates when language changes without manual intervention
+  - **Fallback Support**: Graceful fallback to English if locale fails
+- **▶️ Play Icon Integration**: Added play symbols to all generate buttons for better UX
+  - **Minimalist Design**: Uses Unicode ▶ (triangle) without emoji decorations or frames
+  - **Consistent Implementation**: Applied across custom, password, and API key generators
+  - **RTL-Aware**: Properly positioned using Iconize component for automatic RTL support
+  - **Visual Clarity**: Suggests "execute" or "run" action, improving user understanding
+- **🏠 Home Icon System**: Replaced briefcase icons with intuitive home icons
+  - **New SVG Icon**: Added professional home icon to sprite system with house outline design
+  - **Universal Navigation**: Applied to all "back to menu" buttons across the application
+  - **Icon Cleanup**: Removed unused briefcase icon from sprite to reduce bundle size
+  - **Better Semantics**: Home icon is more intuitive for navigation to main menu
+
+#### Enhanced
+- **🔧 Iconize Component Improvements**: Advanced positioning control with `invertposition` parameter
+  - **Flexible Positioning**: New `invertposition` parameter (default: `false`) controls content order
+    - `false` (default): Icon first, then content → "▶ Generate"
+    - `true`: Content first, then icon → "Choose >"
+  - **Simplified Logic**: Removed complex `position` parameter in favor of boolean toggle
+  - **Conditional Slot Rendering**: Smart slot positioning based on `invertposition` value
+  - **RTL Compatibility**: Works seamlessly with existing RTL icon swapping logic
+  - **Surgical Implementation**: Minimal code changes for maximum functionality improvement
+- **🎯 Result Page Button Styling**: Enhanced buttons to match form page consistency
+  - **Unified Button Sizes**: All result buttons now use same size as custom/password/api-key pages
+  - **Professional Padding**: Upgraded to `px-6 py-4` (from `px-6 py-3`) for better touch targets
+  - **Typography Enhancement**: Changed to `font-semibold` (from `font-medium`) for better readability  
+  - **Consistent Spacing**: Added `hover:shadow-lg` effects matching other page buttons
+  - **Icon Size Standardization**: Increased icon sizes to `w-5 h-5` (from `w-4 h-4`) for consistency
+  - **Container Integration**: Moved buttons inside result container for better visual hierarchy
+- **📐 Component Structure Optimization**: Improved semantic organization of interface elements
+  - **Header Icon Separation**: Fixed Iconize usage in menu cards to wrap only emoji, not h2 title
+  - **Semantic HTML**: H2 elements now properly outside Iconize wrapper for correct document structure
+  - **Clean Component Boundaries**: Clear separation between icon decoration and semantic content
+  - **Flexbox Layout**: Used native flexbox for proper spacing between emojis and titles
+
+#### Fixed
+- **🔧 Svelte 5 Syntax Issues**: Corrected reactive syntax in components
+  - **DateTimeLocalized**: Fixed `$derived(() => {})` to `$derived.by(() => {})` syntax error
+  - **Iconize**: Resolved function code display issue by using correct reactive syntax
+  - **Rendering Problems**: Fixed cases where function code appeared in UI instead of computed values
+  - **Modern Svelte**: Ensured compatibility with Svelte 5 runes mode throughout application
+- **🎨 UI Visual Issues**: Resolved component display and positioning problems
+  - **Menu Card Structure**: Fixed h2 elements being incorrectly wrapped inside Iconize
+  - **Button Consistency**: Standardized button sizes across all pages for uniform appearance
+  - **Icon Positioning**: Improved icon placement in various UI components using Iconize
+
+#### Technical Implementation
+- **Portable Component Design**: Both DateTimeLocalized and enhanced Iconize follow portable design patterns
+  - **Zero Project Dependencies**: Components can be easily copied to other projects
+  - **Clean Interfaces**: Simple, well-defined props with TypeScript support
+  - **Minimal Coupling**: Only depend on standard i18n store, no project-specific logic
+  - **Reusable Architecture**: Follow same patterns as successful Iconize component
+- **Advanced Date Formatting**: Sophisticated internationalization handling
+  - **Locale Mapping**: Complete mapping from language codes to proper locale identifiers
+  - **Custom Formatting Logic**: Special handling for languages lacking native Intl support
+  - **Error Handling**: Graceful fallback mechanism for unsupported locales
+  - **Performance Optimized**: Reactive updates without unnecessary re-computation
+
+---
+
 ## [API v1.0.0 / Web v0.11.0] - 2025-08-22
 
 ### Web Interface Changes (v0.11.0)
@@ -626,6 +696,9 @@ web/
 
 ## Version History Summary
 
+- **[API v1.0.0 / Web v0.12.0]** (2025-08-23) - DateTimeLocalized component, enhanced Iconize with invertposition, play/home icons, and result page improvements
+- **[API v1.0.0 / Web v0.11.0]** (2025-08-22) - Universal Iconize Component with RTL-aware automatic positioning and simplified implementation
+- **[API v1.0.0 / Web v0.10.0]** (2025-08-21) - RTL-aware Button component and improved language ordering
 - **[API v1.0.0 / Web v0.9.0]** (2025-08-21) - Advanced RTL transition system, unified top controls container, and enhanced mobile UX
 - **[API v1.0.0 / Web v0.8.0]** (2025-08-20) - Complete translation system restoration with 13 languages and language selector UI improvements
 - **[API v1.0.0 / Web v0.7.0]** (2025-08-20) - Enhanced development workflow with unified commands and Tailscale integration

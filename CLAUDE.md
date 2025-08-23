@@ -138,7 +138,8 @@ hashrand-spin/
 │   │   │   ├── api.ts      # Type-safe API service layer
 │   │   │   ├── components/ # Reusable Svelte components
 │   │   │   │   ├── BackButton.svelte      # Navigation component
-│   │   │   │   ├── Iconize.svelte         # Universal RTL-aware icon wrapper
+│   │   │   │   ├── DateTimeLocalized.svelte # Internationalized date/time formatting
+│   │   │   │   ├── Iconize.svelte         # Universal RTL-aware icon wrapper with invertposition
 │   │   │   │   ├── LoadingSpinner.svelte  # Loading animation
 │   │   │   │   └── ThemeToggle.svelte     # Dark/light mode toggle
 │   │   │   ├── stores/     # State management stores
@@ -252,14 +253,16 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.11.0)
+## Current State (v0.12.0)
 
 The application now includes:
 - **Complete Internationalization**: Full i18n system with 13 languages operational
-- **Universal Iconize Component**: Revolutionary RTL-aware wrapper for any content with automatic icon positioning
+- **DateTimeLocalized Component**: Portable internationalized date/time formatting with custom Euskera support
+- **Enhanced Iconize Component**: Advanced RTL-aware wrapper with `invertposition` parameter for flexible icon positioning
+- **Professional Icon System**: Play icons (▶) for generate buttons and home icons (🏠) for navigation
 - **RTL Implementation Complete**: Full right-to-left text direction support for Arabic with automatic behavior
+- **Consistent UI Design**: Unified button styling and spacing across all pages
 - **Advanced RTL System**: Uses HTML `dir` attribute and browser-native flexbox behavior for perfect RTL support
-- **Developer Branding**: Personal branding with heart icon across all pages
 - **Translation Infrastructure**: Svelte store-based i18n system fully operational
 
 ## Current Functionality
@@ -317,6 +320,34 @@ The application implements a complete random hash generator solution with both A
 - **API Integration**: Type-safe service layer with error handling
 - **Build Pipeline**: Optimized production builds with code splitting
 - **Development Proxy**: Automatic API proxying for seamless development
+
+### Portable Components
+
+The project includes several highly reusable components that can be easily ported to other projects:
+
+#### DateTimeLocalized Component
+- **Purpose**: Internationalized date/time formatting with custom locale support
+- **Usage**: `<DateTimeLocalized timestamp={new Date()} options={{...}} />`
+- **Features**:
+  - Supports 13 languages with proper locale mapping
+  - Custom Euskera formatting with authentic month names
+  - Configurable `Intl.DateTimeFormatOptions`
+  - Automatic reactivity when language changes
+  - Graceful fallback to English for unsupported locales
+- **Location**: `web/src/lib/components/DateTimeLocalized.svelte`
+
+#### Enhanced Iconize Component  
+- **Purpose**: Universal RTL-aware wrapper for icons and content
+- **Usage**: `<Iconize conf={{icon: "home", invertposition: true}}>Content</Iconize>`
+- **Features**:
+  - Automatic RTL/LTR icon positioning with `rtlIcon` support
+  - `invertposition` parameter for flexible content order
+  - Support for both SVG icons and Unicode emojis
+  - Configurable sizing, spacing, and styling
+  - Works with any slot content (text, HTML elements, components)
+- **Location**: `web/src/lib/components/Iconize.svelte`
+
+Both components follow clean interface design with minimal dependencies and can be easily copied to other projects.
 
 ## Special Instructions
 
