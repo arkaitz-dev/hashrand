@@ -27,7 +27,9 @@ class ApiError extends Error {
 }
 
 // Handle both JSON and text responses automatically
-async function handleResponse(response: Response): Promise<string | HashResponse | CustomHashResponse> {
+async function handleResponse(
+	response: Response
+): Promise<string | HashResponse | CustomHashResponse> {
 	if (!response.ok) {
 		const errorText = await response.text();
 		throw new ApiError(errorText || `HTTP ${response.status}`, response.status);

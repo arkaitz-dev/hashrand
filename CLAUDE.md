@@ -8,7 +8,7 @@ This is a complete random hash generator solution consisting of:
 1. **API Backend**: Fermyon Spin WebAssembly HTTP component built with Rust
 2. **Web Interface**: Professional SPA built with SvelteKit, TypeScript, and TailwindCSS 4.0
 
-The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, and API keys. Features a sophisticated theme system with manual dark/light mode toggle, intelligent system preference detection, and complete internationalization support for 11 languages including right-to-left (RTL) preparation.
+The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, API keys, and BIP39 mnemonic phrases. Features a sophisticated theme system with manual dark/light mode toggle, intelligent system preference detection, and complete internationalization support for 11 languages including right-to-left (RTL) preparation.
 
 ## Development Commands
 
@@ -116,7 +116,7 @@ The project now includes **comprehensive linting and formatting** unified throug
 hashrand-spin/
 ├── Cargo.toml              # Workspace configuration
 ├── spin.toml               # Spin application configuration
-├── final_test.sh           # Comprehensive test suite (43 tests)
+├── final_test.sh           # Comprehensive test suite (64 tests)
 ├── justfile                # Development task automation
 ├── README.md               # Project documentation
 ├── CHANGELOG.md            # Version history (now with independent API/Web versioning)
@@ -134,6 +134,7 @@ hashrand-spin/
 │       │   ├── generate.rs     # /api/generate endpoint
 │       │   ├── password.rs     # /api/password endpoint
 │       │   ├── api_key.rs      # /api/api-key endpoint
+│       │   ├── mnemonic.rs     # /api/mnemonic endpoint (BIP39)
 │       │   └── version.rs      # /api/version endpoint
 │       └── utils/          # Utility functions
 │           ├── mod.rs
@@ -218,6 +219,7 @@ hashrand-spin/
 - `serde = "1.0.219"` - Serialization framework with derive features
 - `serde_json = "1.0.142"` - JSON serialization for /api/version
 - `anyhow = "1"` - Error handling library
+- `bip39 = { version = "2.2.0", features = [...] }` - BIP39 mnemonic generation with all language support
 
 #### Web Interface (Node.js)
 - `@sveltejs/kit = "^2.22.0"` - Modern web framework
@@ -280,11 +282,16 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v0.16.0)
+## Current State (v1.2.0)
 
-The application now includes comprehensive **seed-based deterministic generation** functionality:
-- **🌱 Complete Seed-Based Generation System**: Universal deterministic generation across all three endpoints
-  - **Dual API Modes**: Both GET (random) and POST (deterministic with seed) support for `/api/custom`, `/api/password`, and `/api/api-key`
+The application now includes comprehensive **BIP39 mnemonic generation** and complete deterministic generation functionality:
+- **🔐 Complete BIP39 Mnemonic System**: Full Bitcoin Improvement Proposal 39 implementation
+  - **New Endpoint**: `/api/mnemonic` with GET and POST support
+  - **10 Languages**: english, spanish, french, portuguese, japanese, chinese (simplified & traditional), italian, korean, czech
+  - **Dual Word Counts**: 12-word (128-bit) and 24-word (256-bit) entropy support
+  - **Standard Compliance**: Full compatibility with hardware wallets and cryptocurrency software
+- **🌱 Complete Seed-Based Generation System**: Universal deterministic generation across all four endpoints
+  - **Dual API Modes**: Both GET (random) and POST (deterministic with seed) support for `/api/custom`, `/api/password`, `/api/api-key`, and `/api/mnemonic`
   - **64-Character Hex Seeds**: Cryptographically secure seed format for perfect reproducibility
   - **UI Integration**: Optional seed fields in all generator forms with real-time validation
   - **Smart Behavior**: Regenerate button hidden for deterministic seeds, seed reuse dialog when returning to settings
@@ -322,7 +329,7 @@ The application now includes comprehensive **seed-based deterministic generation
 
 ## Current Functionality
 
-The application implements a complete random hash generator solution with both API and web interface:
+The application implements a complete random hash generator solution with both API and web interface, including full BIP39 mnemonic phrase generation:
 
 ### API Endpoints
 - **GET /api/generate** - Customizable hash generation with parameters:
@@ -340,6 +347,12 @@ The application implements a complete random hash generator solution with both A
   - `length` (44-64, dynamic minimum based on alphabet)
   - `alphabet` (full default, no-look-alike)
   - `raw` (true/false)
+
+- **GET/POST /api/mnemonic** - BIP39 mnemonic phrase generation:
+  - `language` (english, spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech)
+  - `words` (12 or 24, default: 12)
+  - Both GET (random) and POST (deterministic with seed) support
+  - Full BIP39 standard compliance for cryptocurrency applications
 
 - **GET /api/version** - Returns JSON with version information
 

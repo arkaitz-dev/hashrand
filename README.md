@@ -6,15 +6,28 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 
 ### Core API
 - **🔐 Secure Generation**: Uses `nanoid` for cryptographically secure random generation
-- **🎯 Multiple Endpoints**: Generate hashes, passwords, and API keys
+- **🎯 Multiple Endpoints**: Generate hashes, passwords, API keys, and BIP39 mnemonic phrases
 - **🌱 Deterministic Generation**: Seed-based reproducible generation for all endpoints (NEW)
   - **Dual Mode Support**: Both random (GET) and deterministic (POST with seed) generation
   - **Base58 Seeds**: Cryptographically secure 44-character base58 seed format for reproducible results
   - **Same API Response**: Consistent JSON format for both random and seeded generation
 - **🔤 Multiple Alphabets**: Support for Base58, no-look-alike, full alphanumeric, symbols, and numeric (0-9)
 - **⚡ WebAssembly**: Fast and lightweight serverless architecture
-- **🧪 Comprehensive Testing**: 43 automated test cases covering all scenarios
+- **🧪 Comprehensive Testing**: 64 automated test cases covering all scenarios including BIP39 mnemonic generation
 - **🏗️ Modular Architecture**: Clean separation of concerns for maintainability
+
+### BIP39 Mnemonic Generation
+- **🔐 Complete BIP39 Standard**: Full implementation of Bitcoin Improvement Proposal 39
+- **🌍 10-Language Support**: Generate mnemonic phrases in 10 different languages
+  - **Western**: English, Spanish, French, Portuguese, Italian
+  - **Eastern**: Chinese (Simplified & Traditional), Japanese, Korean
+  - **Central European**: Czech
+- **🎯 Dual Length Support**: Generate 12-word or 24-word mnemonic phrases
+  - **12 words**: 128-bit entropy (standard security)
+  - **24 words**: 256-bit entropy (maximum security)
+- **🔄 Deterministic & Random**: Both GET (random) and POST (seed-based) generation
+- **✅ Cryptographically Secure**: Uses proper BIP39 entropy and word list validation
+- **🔗 Standard Compliance**: Full compatibility with hardware and software wallets
 
 ### Web Interface
 - **🎨 Professional UI**: Modern SPA built with SvelteKit + TypeScript + TailwindCSS 4.0
@@ -140,17 +153,61 @@ GET /api/api-key         # Random generation
 POST /api/api-key        # Deterministic generation with seed
 ```
 
+### Generate BIP39 Mnemonic Phrases
+```
+GET /api/mnemonic        # Random generation
+POST /api/mnemonic       # Deterministic generation with seed
+```
+
 **GET Parameters:**
+- `language` (string, default: "english") - Language for mnemonic words
+- `words` (12 or 24, default: 12) - Number of words to generate
+
+**POST Body (JSON):**
+- `seed` (required) - 44-character base58 string for deterministic generation
+- `language` (string) - Language for mnemonic words
+- `words` (12 or 24) - Number of words to generate
+
+**Supported Languages (10 total):**
+- **English** (english, en) - Default language
+- **Spanish** (spanish, es) - Español
+- **French** (french, fr) - Français
+- **Portuguese** (portuguese, pt) - Português
+- **Japanese** (japanese, ja) - 日本語
+- **Chinese Simplified** (chinese, zh) - 中文简体
+- **Chinese Traditional** (chinese-traditional, zh-tw) - 中文繁體
+- **Italian** (italian, it) - Italiano
+- **Korean** (korean, ko) - 한국어
+- **Czech** (czech, cs) - Čeština
+
+**Examples:**
+```bash
+# Random 12-word English mnemonic
+curl "http://localhost:3000/api/mnemonic"
+# Response: {"hash":"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","otp":"123456789","timestamp":1692812400}
+
+# Random 24-word Spanish mnemonic
+curl "http://localhost:3000/api/mnemonic?language=spanish&words=24"
+# Response: {"hash":"ábaco ábaco ábaco...","seed":"...","otp":"...","timestamp":...}
+
+# Deterministic generation with seed
+curl -X POST "http://localhost:3000/api/mnemonic" \
+  -H "Content-Type: application/json" \
+  -d '{"seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","language":"japanese","words":24}'
+# Response: {"hash":"あいこくしん あいこくしん...","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","otp":"...","timestamp":...}
+```
+
+**GET Parameters (API Key):**
 - `length` (44-64, default: 44) - Length of key part (excluding ak_ prefix)
 - `alphabet` (string, default: "full") - Character set
 - `raw` (boolean, default: true) - Output formatting
 
-**POST Body (JSON):**
+**POST Body (API Key - JSON):**
 - `seed` (required) - 44-character base58 string for deterministic generation
 - `length` (44-64) - Length of key part (excluding ak_ prefix)
 - `alphabet` (string) - Character set
 
-**Examples:**
+**API Key Examples:**
 ```bash
 # Random generation
 curl "http://localhost:3000/api/api-key?length=50"
@@ -171,8 +228,8 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.1.0",
-  "ui_version": "0.17.1"
+  "api_version": "1.2.0",
+  "ui_version": "0.17.2"
 }
 ```
 
@@ -355,7 +412,7 @@ just up
 ### Testing
 
 ```bash
-# Run comprehensive test suite (43 tests)
+# Run comprehensive test suite (64 tests)
 just test
 
 # Run test with auto-started dev server
@@ -389,7 +446,7 @@ just clean-build  # Same as rebuild
 just clean        # Clean all build artifacts (Rust + npm)
 
 # Code Quality & Testing  
-just test         # Run comprehensive test suite (43 tests)
+just test         # Run comprehensive test suite (64 tests)
 just test-dev     # Run tests with auto-managed server
 just check        # Run complete quality checks (clippy + fmt + ESLint + svelte-check)
 just fmt          # Format code (Rust + Prettier)
@@ -426,6 +483,7 @@ hashrand-spin/
 │       │   ├── generate.rs    # Hash generation
 │       │   ├── password.rs    # Password generation
 │       │   ├── api_key.rs     # API key generation
+│       │   ├── mnemonic.rs    # BIP39 mnemonic generation
 │       │   └── version.rs     # Version information
 │       └── utils/         # Utility functions
 │           ├── query.rs       # Query parameter parsing
@@ -525,6 +583,17 @@ just check    # Pre-commit verification (strict, must pass)
 - **Educational**: Clear error messages help improve code quality
 
 ### Dependencies
+
+#### API Backend (Rust)
+```toml
+[dependencies]
+spin-sdk = "3.1.0"          # Core Spin framework for HTTP components
+nanoid = "0.4.0"            # Cryptographically secure random generation
+serde = "1.0.219"           # Serialization framework with derive features
+serde_json = "1.0.142"      # JSON serialization
+anyhow = "1"                # Error handling
+bip39 = { version = "2.2.0", features = ["spanish", "french", "portuguese", "chinese-simplified", "chinese-traditional", "japanese", "italian", "korean", "czech"] }  # BIP39 mnemonic generation with all language support
+```
 
 #### Linting & Formatting Tools
 ```json

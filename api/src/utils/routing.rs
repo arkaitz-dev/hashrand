@@ -1,7 +1,7 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::{
-    handle_api_key_request, handle_custom, handle_from_seed, handle_password_request,
-    handle_version,
+    handle_api_key_request, handle_custom, handle_from_seed, handle_mnemonic_request, 
+    handle_password_request, handle_version,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -28,6 +28,7 @@ pub fn route_request_with_req(
         path if path.ends_with("/api/custom") => handle_custom_request(req),
         path if path.ends_with("/api/password") => handle_password_request(req),
         path if path.ends_with("/api/api-key") => handle_api_key_request(req),
+        path if path.ends_with("/api/mnemonic") => handle_mnemonic_request(req),
 
         // GET-only endpoints
         path if path.ends_with("/api/generate") => {
@@ -35,7 +36,7 @@ pub fn route_request_with_req(
                 &Method::Get => handle_custom(query_params), // Backward compatibility
                 _ => handle_method_not_allowed(),
             }
-        }
+        },
         path if path.ends_with("/api/version") => match method {
             &Method::Get => handle_version(),
             _ => handle_method_not_allowed(),
@@ -105,12 +106,16 @@ Available endpoints:
 - POST /api/password (JSON body with optional seed parameter)
 - GET /api/api-key?length=44&alphabet=full&raw=true
 - POST /api/api-key (JSON body with optional seed parameter)
+- GET /api/mnemonic?language=english&words=12 (BIP39 mnemonic phrases)
+- POST /api/mnemonic (JSON body with seed parameter)
 - GET /api/version
 - POST /api/from-seed (JSON body required)
 
 Parameters:
 - length: 2-128 (custom), 21-44 (password), 44-64 (api-key)
 - alphabet: base58, no-look-alike, full, full-with-symbols
+- language: english (default), spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech (mnemonic only)
+- words: 12 (default), 24 (mnemonic only)
 - raw: true (default), false (adds newline)
 - prefix/suffix: max 32 chars each (custom only)
 - seed: 64 hex characters (optional for POST requests)"#;

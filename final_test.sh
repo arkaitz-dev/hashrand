@@ -18,14 +18,25 @@ test_api() {
     local url="$2"
     local expected_status="$3"
     local length_check="$4"  # Optional length to check
+    local method="${5:-GET}"  # Optional method, defaults to GET
+    local post_data="$6"      # Optional POST data
     
     ((TOTAL++))
     echo -e "\n${BLUE}[$TOTAL] $name${NC}"
     echo "URL: $url"
+    if [[ "$method" == "POST" ]]; then
+        echo "Method: POST"
+        echo "Data: $post_data"
+    fi
     
     # Make request and capture response
     local temp_file=$(mktemp)
-    local status=$(curl -s -w "%{http_code}" -o "$temp_file" "$url")
+    local status
+    if [[ "$method" == "POST" ]]; then
+        status=$(curl -s -X POST -H "Content-Type: application/json" -w "%{http_code}" -o "$temp_file" -d "$post_data" "$url")
+    else
+        status=$(curl -s -w "%{http_code}" -o "$temp_file" "$url")
+    fi
     local body=$(cat "$temp_file")
     rm "$temp_file"
     
@@ -41,19 +52,32 @@ test_api() {
     
     # Optional length check
     if [[ -n "$length_check" && "$status" == "200" ]]; then
-        local actual_length=${#body}
-        if [[ $actual_length -ne $length_check ]]; then
-            echo -e "${YELLOW}⚠ WARNING - Length: expected $length_check, got $actual_length${NC}"
+        # Extract hash from JSON response
+        local hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+        if [[ -n "$hash" && "$hash" != "null" ]]; then
+            local actual_length=${#hash}
+            if [[ $actual_length -ne $length_check ]]; then
+                echo -e "${YELLOW}⚠ WARNING - Hash length: expected $length_check, got $actual_length${NC}"
+            fi
+        else
+            # Fallback to body length for non-JSON responses
+            local actual_length=${#body}
+            if [[ $actual_length -ne $length_check ]]; then
+                echo -e "${YELLOW}⚠ WARNING - Response length: expected $length_check, got $actual_length${NC}"
+            fi
         fi
     fi
     
     # Additional checks for specific endpoints
     case "$url" in
         *"/api/api-key"*)
-            if [[ "$status" == "200" && ! "$body" == "ak_"* ]]; then
-                echo -e "${RED}✗ FAIL - API key missing 'ak_' prefix${NC}"
-                ((FAILED++))
-                return
+            if [[ "$status" == "200" ]]; then
+                local hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+                if [[ ! "$hash" == "ak_"* ]]; then
+                    echo -e "${RED}✗ FAIL - API key missing 'ak_' prefix${NC}"
+                    ((FAILED++))
+                    return
+                fi
             fi
             ;;
         *"/api/version"*)
@@ -112,6 +136,82 @@ test_api "API key generation" \
 test_api "API key with custom params" \
     "$BASE_URL/api/api-key?length=50&alphabet=no-look-alike" \
     "200"
+
+test_api "Mnemonic generation" \
+    "$BASE_URL/api/mnemonic" \
+    "200"
+
+test_api "Mnemonic in Spanish" \
+    "$BASE_URL/api/mnemonic?language=spanish" \
+    "200"
+
+test_api "Mnemonic in French" \
+    "$BASE_URL/api/mnemonic?language=french" \
+    "200"
+
+test_api "Mnemonic in Portuguese" \
+    "$BASE_URL/api/mnemonic?language=portuguese" \
+    "200"
+
+test_api "Mnemonic in Japanese" \
+    "$BASE_URL/api/mnemonic?language=japanese" \
+    "200"
+
+test_api "Mnemonic in Chinese" \
+    "$BASE_URL/api/mnemonic?language=chinese" \
+    "200"
+
+test_api "Mnemonic in Chinese Traditional" \
+    "$BASE_URL/api/mnemonic?language=chinese-traditional" \
+    "200"
+
+test_api "Mnemonic in Italian" \
+    "$BASE_URL/api/mnemonic?language=italian" \
+    "200"
+
+test_api "Mnemonic in Korean" \
+    "$BASE_URL/api/mnemonic?language=korean" \
+    "200"
+
+test_api "Mnemonic in Czech" \
+    "$BASE_URL/api/mnemonic?language=czech" \
+    "200"
+
+test_api "Mnemonic 12 words (default)" \
+    "$BASE_URL/api/mnemonic?words=12" \
+    "200"
+
+test_api "Mnemonic 24 words" \
+    "$BASE_URL/api/mnemonic?words=24" \
+    "200"
+
+test_api "Mnemonic Spanish 24 words" \
+    "$BASE_URL/api/mnemonic?language=spanish&words=24" \
+    "200"
+
+# POST mnemonic tests
+echo -e "\n${BLUE}Testing POST /api/mnemonic with seed${NC}"
+
+test_api "POST Mnemonic with seed" \
+    "$BASE_URL/api/mnemonic" \
+    "200" \
+    "" \
+    "POST" \
+    '{"seed":"2rfuWV8mXicE8TWKzEHFS91hJdezQ5TN1A8sXVsV5iDd"}'
+
+test_api "POST Mnemonic with seed 24 words" \
+    "$BASE_URL/api/mnemonic" \
+    "200" \
+    "" \
+    "POST" \
+    '{"seed":"2rfuWV8mXicE8TWKzEHFS91hJdezQ5TN1A8sXVsV5iDd","words":24}'
+
+test_api "POST Mnemonic Spanish with seed" \
+    "$BASE_URL/api/mnemonic" \
+    "200" \
+    "" \
+    "POST" \
+    '{"seed":"2rfuWV8mXicE8TWKzEHFS91hJdezQ5TN1A8sXVsV5iDd","language":"spanish"}'
 
 test_api "Version endpoint" \
     "$BASE_URL/api/version" \
@@ -213,6 +313,32 @@ test_api "No-look-alike password too short" \
 test_api "No-look-alike API key too short" \
     "$BASE_URL/api/api-key?length=46&alphabet=no-look-alike" \
     "400"
+
+test_api "Invalid mnemonic language" \
+    "$BASE_URL/api/mnemonic?language=invalid" \
+    "400"
+
+test_api "Invalid mnemonic words (15)" \
+    "$BASE_URL/api/mnemonic?words=15" \
+    "400"
+
+test_api "Invalid mnemonic words (text)" \
+    "$BASE_URL/api/mnemonic?words=invalid" \
+    "400"
+
+test_api "POST Mnemonic missing seed" \
+    "$BASE_URL/api/mnemonic" \
+    "400" \
+    "" \
+    "POST" \
+    '{}'
+
+test_api "POST Mnemonic invalid seed" \
+    "$BASE_URL/api/mnemonic" \
+    "400" \
+    "" \
+    "POST" \
+    '{"seed":"invalid-seed-123"}'
 
 # 404 tests
 echo -e "\n${YELLOW}=== 404 Error Tests ===${NC}"

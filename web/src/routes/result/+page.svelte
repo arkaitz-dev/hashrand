@@ -216,7 +216,6 @@
 		}
 	}
 
-
 	// Reactive endpoint display name that updates when language changes
 	$: getEndpointDisplayName = (endpoint: string): string => {
 		switch (endpoint) {
@@ -431,7 +430,7 @@
 			// Build parameters excluding seed - force GET request by not including seed
 			const paramsForGeneration = { ...$resultState.params };
 			delete paramsForGeneration.seed; // Ensure no seed is passed for GET request
-			
+
 			// Call the appropriate API method based on endpoint
 			switch ($resultState.endpoint) {
 				case 'custom':
@@ -565,7 +564,6 @@
 							{/if}
 						</div>
 					</div>
-
 
 					<!-- Metadata -->
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
