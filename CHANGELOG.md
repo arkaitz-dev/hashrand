@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.1.0 / Web v0.17.1] - 2025-08-24
+
+### Web Interface Changes (v0.17.1)
+#### Fixed
+- **🔄 Regenerate Button Behavior**: Corrected regenerate functionality to always perform GET requests without seed
+  - **Problem**: Regenerate button was including seed in API call parameters, causing deterministic instead of random generation  
+  - **Solution**: Modified `regenerateHash()` function to explicitly exclude seed from parameters (`delete paramsForGeneration.seed`)
+  - **Result**: Regenerate button now correctly generates new random values while preserving other parameters (length, alphabet, prefix, suffix)
+  - **Consistency**: Maintains intended behavior where regenerate always produces different results regardless of how the original was generated
+
+---
+
 ## [API v1.1.0 / Web v0.17.0] - 2025-08-24
 
 ### Major Breaking Change: Base58 Seed Format Migration
@@ -1059,6 +1071,8 @@ web/
 
 ## Version History Summary
 
+- **[API v1.1.0 / Web v0.17.1]** (2025-08-24) - **BUGFIX**: Fixed regenerate button to correctly perform GET requests without seed parameters
+- **[API v1.1.0 / Web v0.17.0]** (2025-08-24) - **MAJOR**: Base58 seed format migration, numeric alphabet, OTP generation, and simplified UI seed handling
 - **[API v1.0.0 / Web v0.16.0]** (2025-08-23) - **MAJOR**: Comprehensive seed-based deterministic generation system for all endpoints with complete UI integration
 - **[API v1.0.0 / Web v0.15.0]** (2025-08-23) - Translation naturalness improvements across all 13 languages and enhanced DateTimeLocalized component robustness
 - **[API v1.0.0 / Web v0.14.0]** (2025-08-23) - Progressive sprite loading system with UTF placeholders, universal URL parameter support, and centralized API architecture
@@ -1088,8 +1102,8 @@ web/
 
 ### Web Interface Versioning  
 - **Development Versioning**: Web interface follows 0.x.x series during active development
-- **Rapid Iteration**: Minor versions (0.1.0, 0.2.0) for UI/UX improvements and new features
-- **Breaking UI Changes**: Major versions in 0.x.x series (0.1.0 → 0.2.0) for significant UI restructures
+- **Rapid Iteration**: Minor versions (0.17.0, 0.17.1) for UI/UX improvements and bug fixes
+- **Breaking UI Changes**: Major versions in 0.x.x series (0.16.0 → 0.17.0) for significant UI restructures
 - **Stability Target**: Will reach 1.0.0 when feature-complete and UI/UX is finalized
 
 ### Release Tags
@@ -1101,7 +1115,7 @@ web/
 - **GET /api/version**: Returns both component versions
   ```json
   {
-    "api_version": "1.0.0",
-    "ui_version": "0.8.0"
+    "api_version": "1.1.0",
+    "ui_version": "0.17.1"
   }
   ```

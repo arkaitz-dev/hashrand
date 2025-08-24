@@ -172,7 +172,7 @@ GET /api/version
 ```json
 {
   "api_version": "1.1.0",
-  "ui_version": "0.17.0"
+  "ui_version": "0.17.1"
 }
 ```
 

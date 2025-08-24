@@ -5,7 +5,6 @@
 	import BackButton from '$lib/components/BackButton.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	// import Button from '$lib/components/Button.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
 	import DateTimeLocalized from '$lib/components/DateTimeLocalized.svelte';
 	import {
@@ -429,17 +428,21 @@
 			const { api } = await import('$lib/api');
 			let response: string | import('$lib/types').HashResponse;
 
+			// Build parameters excluding seed - force GET request by not including seed
+			const paramsForGeneration = { ...$resultState.params };
+			delete paramsForGeneration.seed; // Ensure no seed is passed for GET request
+			
 			// Call the appropriate API method based on endpoint
 			switch ($resultState.endpoint) {
 				case 'custom':
 				case 'generate':
-					response = await api.generate($resultState.params);
+					response = await api.generate(paramsForGeneration);
 					break;
 				case 'password':
-					response = await api.generatePassword($resultState.params);
+					response = await api.generatePassword(paramsForGeneration);
 					break;
 				case 'api-key':
-					response = await api.generateApiKey($resultState.params);
+					response = await api.generateApiKey(paramsForGeneration);
 					break;
 				default:
 					throw new Error($_('common.unknownEndpoint'));
@@ -476,7 +479,7 @@
 				value,
 				seed,
 				otp,
-				params: $resultState.params,
+				params: paramsForGeneration,
 				endpoint: $resultState.endpoint,
 				timestamp: responseTimestamp
 			});
