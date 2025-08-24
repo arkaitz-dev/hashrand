@@ -1,26 +1,11 @@
 use crate::types::{AlphabetType, HashResponse};
-use crate::utils::{generate_random_seed, generate_with_seed, seed_to_hex};
+use crate::utils::{generate_random_seed, generate_with_seed, seed_to_base58, base58_to_seed};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
 /// Helper function to check if a string contains unwanted patterns
 fn contains_unwanted_patterns(s: &str) -> bool {
     s.contains("--") || s.contains("__")
-}
-
-/// Convert hex string to 32-byte seed array
-fn hex_to_seed(hex_str: &str) -> Result<[u8; 32], String> {
-    if hex_str.len() != 64 {
-        return Err("Seed must be exactly 64 hex characters".to_string());
-    }
-    
-    let mut seed = [0u8; 32];
-    for i in 0..32 {
-        let hex_byte = &hex_str[i*2..i*2+2];
-        seed[i] = u8::from_str_radix(hex_byte, 16)
-            .map_err(|_| "Invalid hex character in seed".to_string())?;
-    }
-    Ok(seed)
 }
 
 /// Handle password requests (both GET and POST)
@@ -39,10 +24,7 @@ pub fn handle_password_request(req: Request) -> anyhow::Result<Response> {
 /// Handle GET request for password generation
 fn handle_password_get(req: Request) -> anyhow::Result<Response> {
     let uri_string = req.uri().to_string();
-    let query_string = uri_string
-        .split('?')
-        .nth(1)
-        .unwrap_or("");
+    let query_string = uri_string.split('?').nth(1).unwrap_or("");
     let params = crate::utils::query::parse_query_params(query_string);
     handle_password(params)
 }
@@ -52,17 +34,17 @@ fn handle_password_post(req: Request) -> anyhow::Result<Response> {
     let body = req.body();
     let json_str = String::from_utf8(body.to_vec())
         .map_err(|_| anyhow::anyhow!("Invalid UTF-8 in request body"))?;
-    
+
     let json_value: serde_json::Value = serde_json::from_str(&json_str)
         .map_err(|_| anyhow::anyhow!("Invalid JSON in request body"))?;
-    
-    let seed_str = json_value.get("seed")
+
+    let seed_str = json_value
+        .get("seed")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("Missing 'seed' field in JSON body"))?;
-    
-    let seed_32 = hex_to_seed(seed_str)
-        .map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
-    
+
+    let seed_32 = base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
+
     // Extract other parameters from JSON
     let mut params = HashMap::new();
     if let Some(length) = json_value.get("length").and_then(|v| v.as_u64()) {
@@ -71,7 +53,7 @@ fn handle_password_post(req: Request) -> anyhow::Result<Response> {
     if let Some(alphabet) = json_value.get("alphabet").and_then(|v| v.as_str()) {
         params.insert("alphabet".to_string(), alphabet.to_string());
     }
-    
+
     handle_password_with_seed(params, seed_32)
 }
 
@@ -83,7 +65,10 @@ fn handle_password(params: HashMap<String, String>) -> anyhow::Result<Response> 
 }
 
 /// Handle password generation with provided seed
-fn handle_password_with_seed(params: HashMap<String, String>, seed_32: [u8; 32]) -> anyhow::Result<Response> {
+fn handle_password_with_seed(
+    params: HashMap<String, String>,
+    seed_32: [u8; 32],
+) -> anyhow::Result<Response> {
     let alphabet_type = params
         .get("alphabet")
         .map(|s| AlphabetType::from_str(s))
@@ -118,14 +103,14 @@ fn handle_password_with_seed(params: HashMap<String, String>, seed_32: [u8; 32])
             .build());
     }
 
-    let seed_hex = seed_to_hex(&seed_32);
+    let seed_base58 = seed_to_base58(&seed_32);
 
     // Generate password using seeded generator with unwanted pattern avoidance
     let alphabet = alphabet_type.as_chars();
     let password = generate_password_avoiding_unwanted_patterns(length, &alphabet, seed_32);
 
     // Create JSON response
-    let response = HashResponse::new(password, seed_hex);
+    let response = HashResponse::new(password, seed_base58);
     let json_body = serde_json::to_string(&response)?;
 
     Ok(Response::builder()
@@ -142,24 +127,27 @@ fn generate_password_avoiding_unwanted_patterns(
     seed: [u8; 32],
 ) -> String {
     const MAX_ATTEMPTS: usize = 50; // Reasonable limit to avoid infinite loops
-    
+
     for attempt in 1..=MAX_ATTEMPTS {
         // Create a slightly different seed for each attempt to ensure different results
         let mut attempt_seed = seed;
         attempt_seed[0] = attempt_seed[0].wrapping_add(attempt as u8);
-        
+
         let password = generate_with_seed(attempt_seed, length, alphabet);
-        
+
         if !contains_unwanted_patterns(&password) {
             return password;
         }
-        
+
         // Log warning if we're having trouble finding a good result
         if attempt == MAX_ATTEMPTS {
-            eprintln!("[WARN] Reached max attempts ({}) avoiding unwanted patterns in password. Using last result.", MAX_ATTEMPTS);
+            eprintln!(
+                "[WARN] Reached max attempts ({}) avoiding unwanted patterns in password. Using last result.",
+                MAX_ATTEMPTS
+            );
         }
     }
-    
+
     // Fallback: return a result even if it contains unwanted patterns
     generate_with_seed(seed, length, alphabet)
 }

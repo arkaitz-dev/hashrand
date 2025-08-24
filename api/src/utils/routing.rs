@@ -1,6 +1,9 @@
-use crate::handlers::{handle_api_key_request, handle_custom, handle_from_seed, handle_password_request, handle_version};
 use crate::handlers::custom::handle_custom_request;
-use spin_sdk::http::{Request, Response, Method};
+use crate::handlers::{
+    handle_api_key_request, handle_custom, handle_from_seed, handle_password_request,
+    handle_version,
+};
+use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
 /// Routes the request to the corresponding handler based on the path and method
@@ -25,35 +28,32 @@ pub fn route_request_with_req(
         path if path.ends_with("/api/custom") => handle_custom_request(req),
         path if path.ends_with("/api/password") => handle_password_request(req),
         path if path.ends_with("/api/api-key") => handle_api_key_request(req),
-        
+
         // GET-only endpoints
         path if path.ends_with("/api/generate") => {
             match method {
                 &Method::Get => handle_custom(query_params), // Backward compatibility
                 _ => handle_method_not_allowed(),
             }
+        }
+        path if path.ends_with("/api/version") => match method {
+            &Method::Get => handle_version(),
+            _ => handle_method_not_allowed(),
         },
-        path if path.ends_with("/api/version") => {
-            match method {
-                &Method::Get => handle_version(),
-                _ => handle_method_not_allowed(),
-            }
-        },
-        
+
         // POST-only endpoints
-        path if path.ends_with("/api/from-seed") => {
-            match method {
-                &Method::Post => handle_from_seed(body),
-                _ => handle_method_not_allowed(),
-            }
+        path if path.ends_with("/api/from-seed") => match method {
+            &Method::Post => handle_from_seed(body),
+            _ => handle_method_not_allowed(),
         },
-        
+
         // Not found
         _ => handle_not_found(),
     }
 }
 
 /// Legacy routing function for backward compatibility
+#[allow(dead_code)]
 pub fn route_request(
     path: &str,
     query_params: HashMap<String, String>,
@@ -67,23 +67,27 @@ pub fn route_request(
         (path, &Method::Get) if path.ends_with("/api/password") => {
             // Legacy routing not used in current implementation
             handle_method_not_allowed()
-        },
+        }
         (path, &Method::Get) if path.ends_with("/api/api-key") => {
             // Legacy routing not used in current implementation
             handle_method_not_allowed()
-        },
+        }
         (path, &Method::Get) if path.ends_with("/api/version") => handle_version(),
-        
+
         // POST endpoints
         (path, &Method::Post) if path.ends_with("/api/from-seed") => handle_from_seed(body),
-        
+
         // Method not allowed for existing endpoints
-        (path, _) if path.ends_with("/api/custom") || 
-                     path.ends_with("/api/generate") || 
-                     path.ends_with("/api/password") || 
-                     path.ends_with("/api/api-key") || 
-                     path.ends_with("/api/version") => handle_method_not_allowed(),
-        
+        (path, _)
+            if path.ends_with("/api/custom")
+                || path.ends_with("/api/generate")
+                || path.ends_with("/api/password")
+                || path.ends_with("/api/api-key")
+                || path.ends_with("/api/version") =>
+        {
+            handle_method_not_allowed()
+        }
+
         // Not found
         _ => handle_not_found(),
     }

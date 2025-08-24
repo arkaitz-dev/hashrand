@@ -50,9 +50,11 @@ export const ja: I18nTexts = {
 		optionalSeed: 'オプションのシード（64文字の16進数）',
 		seedInvalid: 'シードは正確に64文字の16進数である必要があります',
 		reuseSeedTitle: '同じシードを再利用しますか？',
-		reuseSeedMessage: '同じ結果を得るために同じシードを再利用しますか、それとも新しいランダムシードを生成することを好みますか？',
+		reuseSeedMessage:
+			'同じ結果を得るために同じシードを再利用しますか、それとも新しいランダムシードを生成することを好みますか？',
 		keepSameSeed: '同じシードを保持',
-		generateNewSeed: '新しいシードを生成'
+		generateNewSeed: '新しいシードを生成',
+		seed: 'シード'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -109,7 +111,8 @@ export const ja: I18nTexts = {
 		randomCharacters: 'ランダム文字を使用：',
 		noLookAlikeAlphabet: '紛らわしくないアルファベット（入力しやすい）',
 		fullAlphanumericAlphabet: '完全英数字アルファベット',
-		fullAlphanumericNote: '完全英数字アルファベットは最大の互換性を提供します。強力なセキュリティには最低{0}文字が必要です。',
+		fullAlphanumericNote:
+			'完全英数字アルファベットは最大の互換性を提供します。強力なセキュリティには最低{0}文字が必要です。',
 		failedToGenerateApiKey: 'APIキーの生成に失敗しました'
 	},
 	alphabets: {

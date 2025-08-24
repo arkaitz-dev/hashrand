@@ -50,9 +50,11 @@ export const ar: I18nTexts = {
 		optionalSeed: 'بذرة اختيارية (64 حرف سادس عشري)',
 		seedInvalid: 'يجب أن تكون البذرة 64 حرفاً سادس عشرياً بالضبط',
 		reuseSeedTitle: 'إعادة استخدام نفس البذرة؟',
-		reuseSeedMessage: 'هل تريد إعادة استخدام نفس البذرة لتوليد نفس النتيجة، أم تفضل توليد بذرة عشوائية جديدة؟',
+		reuseSeedMessage:
+			'هل تريد إعادة استخدام نفس البذرة لتوليد نفس النتيجة، أم تفضل توليد بذرة عشوائية جديدة؟',
 		keepSameSeed: 'الاحتفاظ بنفس البذرة',
-		generateNewSeed: 'توليد بذرة جديدة'
+		generateNewSeed: 'توليد بذرة جديدة',
+		seed: 'بذرة'
 	},
 	menu: {
 		title: 'مولد الهاش',
@@ -109,7 +111,8 @@ export const ar: I18nTexts = {
 		randomCharacters: 'حرف عشوائي مع',
 		noLookAlikeAlphabet: 'أبجدية واضحة (سهلة الكتابة)',
 		fullAlphanumericAlphabet: 'أبجدية رقمية كاملة',
-		fullAlphanumericNote: 'توفر الأبجدية الرقمية الكاملة أقصى توافق. الحد الأدنى {0} حرفاً للأمان القوي.',
+		fullAlphanumericNote:
+			'توفر الأبجدية الرقمية الكاملة أقصى توافق. الحد الأدنى {0} حرفاً للأمان القوي.',
 		failedToGenerateApiKey: 'فشل في توليد مفتاح API'
 	},
 	alphabets: {

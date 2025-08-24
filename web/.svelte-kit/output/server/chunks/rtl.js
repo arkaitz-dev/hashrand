@@ -199,7 +199,9 @@ const en = {
     reuseSeedTitle: "Reuse the same seed?",
     reuseSeedMessage: "Do you want to reuse the same seed to generate the same result, or do you prefer to generate a new random seed?",
     keepSameSeed: "Keep the same seed",
-    generateNewSeed: "Generate new seed"
+    generateNewSeed: "Generate new seed",
+    seed: "Seed",
+    otp: "OTP"
   },
   menu: {
     title: "Hash Generator",
@@ -221,6 +223,7 @@ const en = {
     maxReadabilityDescription: "Maximum readability, 49 letters",
     completeAlphanumericDescription: "Complete alphanumeric set",
     maxEntropyDescription: "Maximum entropy with symbols",
+    numericDescription: "Only digits 0-9, requires longer length",
     failedToGenerateHash: "Failed to generate hash"
   },
   password: {
@@ -258,7 +261,8 @@ const en = {
     base58: "Base58 (Bitcoin alphabet)",
     "no-look-alike": "No Look-alike",
     full: "Full Alphanumeric",
-    "full-with-symbols": "Full with Symbols"
+    "full-with-symbols": "Full with Symbols",
+    numeric: "Numeric (0-9)"
   }
 };
 const hi = {
@@ -311,7 +315,8 @@ const hi = {
     reuseSeedTitle: "वही सीड दोबारा इस्तेमाल करें?",
     reuseSeedMessage: "क्या आप वही परिणाम पाने के लिए वही सीड दोबारा इस्तेमाल करना चाहते हैं, या आप नया रैंडम सीड जनरेट करना पसंद करेंगे?",
     keepSameSeed: "वही सीड रखें",
-    generateNewSeed: "नया सीड जनरेट करें"
+    generateNewSeed: "नया सीड जनरेट करें",
+    seed: "सीड"
   },
   menu: {
     title: "हैश जनरेटर",
@@ -425,7 +430,8 @@ const ja = {
     reuseSeedTitle: "同じシードを再利用しますか？",
     reuseSeedMessage: "同じ結果を得るために同じシードを再利用しますか、それとも新しいランダムシードを生成することを好みますか？",
     keepSameSeed: "同じシードを保持",
-    generateNewSeed: "新しいシードを生成"
+    generateNewSeed: "新しいシードを生成",
+    seed: "シード"
   },
   menu: {
     title: "ハッシュ生成器",
@@ -539,7 +545,9 @@ const es = {
     reuseSeedTitle: "¿Reutilizar la misma semilla?",
     reuseSeedMessage: "¿Deseas reutilizar la misma semilla para generar el mismo resultado, o prefieres generar una nueva semilla aleatoria?",
     keepSameSeed: "Mantener la misma semilla",
-    generateNewSeed: "Generar nueva semilla"
+    generateNewSeed: "Generar nueva semilla",
+    seed: "Semilla",
+    otp: "OTP"
   },
   menu: {
     title: "Generador de Hash",
@@ -561,6 +569,7 @@ const es = {
     maxReadabilityDescription: "Máxima legibilidad, 49 letras",
     completeAlphanumericDescription: "Conjunto alfanumérico completo",
     maxEntropyDescription: "Máxima entropía con símbolos",
+    numericDescription: "Solo dígitos 0-9, requiere mayor longitud",
     failedToGenerateHash: "Error al generar hash"
   },
   password: {
@@ -599,7 +608,8 @@ const es = {
     base58: "Base58 (alfabeto Bitcoin)",
     "no-look-alike": "Sin Confusión",
     full: "Alfanumérico Completo",
-    "full-with-symbols": "Completo con Símbolos"
+    "full-with-symbols": "Completo con Símbolos",
+    numeric: "Numérico (0-9)"
   }
 };
 const pt = {
@@ -654,7 +664,9 @@ const pt = {
     reuseSeedTitle: "Reutilizar a mesma semente?",
     reuseSeedMessage: "Deseja reutilizar a mesma semente para gerar o mesmo resultado, ou prefere gerar uma nova semente aleatória?",
     keepSameSeed: "Manter a mesma semente",
-    generateNewSeed: "Gerar nova semente"
+    generateNewSeed: "Gerar nova semente",
+    seed: "Semente",
+    otp: "OTP"
   },
   menu: {
     title: "Gerador de Hash",
@@ -676,6 +688,7 @@ const pt = {
     maxReadabilityDescription: "Máxima legibilidade, 49 letras",
     completeAlphanumericDescription: "Conjunto alfanumérico completo",
     maxEntropyDescription: "Máxima entropia com símbolos",
+    numericDescription: "Apenas dígitos 0-9, requer comprimento maior",
     failedToGenerateHash: "Falha ao gerar hash"
   },
   password: {
@@ -713,7 +726,8 @@ const pt = {
     base58: "Base58 (alfabeto Bitcoin)",
     "no-look-alike": "Sem Confusão",
     full: "Alfanumérico Completo",
-    "full-with-symbols": "Completo com Símbolos"
+    "full-with-symbols": "Completo com Símbolos",
+    numeric: "Numérico (0-9)"
   }
 };
 const fr = {
@@ -768,7 +782,8 @@ const fr = {
     reuseSeedTitle: "Réutiliser la même graine?",
     reuseSeedMessage: "Voulez-vous réutiliser la même graine pour générer le même résultat, ou préférez-vous générer une nouvelle graine aléatoire?",
     keepSameSeed: "Garder la même graine",
-    generateNewSeed: "Générer une nouvelle graine"
+    generateNewSeed: "Générer une nouvelle graine",
+    seed: "Graine"
   },
   menu: {
     title: "Générateur de Hash",
@@ -880,7 +895,8 @@ const de = {
     reuseSeedTitle: "Denselben Seed wiederverwenden?",
     reuseSeedMessage: "Möchten Sie denselben Seed wiederverwenden, um das gleiche Ergebnis zu erhalten, oder bevorzugen Sie es, einen neuen zufälligen Seed zu generieren?",
     keepSameSeed: "Denselben Seed behalten",
-    generateNewSeed: "Neuen Seed generieren"
+    generateNewSeed: "Neuen Seed generieren",
+    seed: "Seed"
   },
   menu: {
     title: "Hash-Generator",
@@ -992,7 +1008,8 @@ const ru = {
     reuseSeedTitle: "Переиспользовать то же зерно?",
     reuseSeedMessage: "Хотите переиспользовать то же зерно для получения того же результата, или предпочитаете сгенерировать новое случайное зерно?",
     keepSameSeed: "Оставить то же зерно",
-    generateNewSeed: "Сгенерировать новое зерно"
+    generateNewSeed: "Сгенерировать новое зерно",
+    seed: "Зерно"
   },
   menu: {
     title: "Генератор хешей",
@@ -1104,7 +1121,8 @@ const zh = {
     reuseSeedTitle: "重用相同的种子？",
     reuseSeedMessage: "您想重用相同的种子来生成相同的结果，还是更愿意生成新的随机种子？",
     keepSameSeed: "保持相同的种子",
-    generateNewSeed: "生成新种子"
+    generateNewSeed: "生成新种子",
+    seed: "种子"
   },
   menu: {
     title: "哈希生成器",
@@ -1218,7 +1236,8 @@ const ar = {
     reuseSeedTitle: "إعادة استخدام نفس البذرة؟",
     reuseSeedMessage: "هل تريد إعادة استخدام نفس البذرة لتوليد نفس النتيجة، أم تفضل توليد بذرة عشوائية جديدة؟",
     keepSameSeed: "الاحتفاظ بنفس البذرة",
-    generateNewSeed: "توليد بذرة جديدة"
+    generateNewSeed: "توليد بذرة جديدة",
+    seed: "بذرة"
   },
   menu: {
     title: "مولد الهاش",
@@ -1330,7 +1349,8 @@ const eu = {
     reuseSeedTitle: "Hazia berrerabili?",
     reuseSeedMessage: "Emaitza bera sortzeko hazi bera berrerabili nahi duzu, ala ausazko hazi berria sortu nahi duzu?",
     keepSameSeed: "Hazi bera mantendu",
-    generateNewSeed: "Hazi berria sortu"
+    generateNewSeed: "Hazi berria sortu",
+    seed: "Hazia"
   },
   menu: {
     title: "Hash-Sortzailea",
@@ -1442,7 +1462,8 @@ const ca = {
     reuseSeedTitle: "Reutilitzar la mateixa llavor?",
     reuseSeedMessage: "Voleu reutilitzar la mateixa llavor per generar el mateix resultat, o preferiu generar una nova llavor aleatòria?",
     keepSameSeed: "Mantenir la mateixa llavor",
-    generateNewSeed: "Generar nova llavor"
+    generateNewSeed: "Generar nova llavor",
+    seed: "Llavor"
   },
   menu: {
     title: "Generador de Hash",
@@ -1554,7 +1575,8 @@ const gl = {
     reuseSeedTitle: "Reutilizar a mesma semente?",
     reuseSeedMessage: "Queres reutilizar a mesma semente para xerar o mesmo resultado, ou prefires xerar unha nova semente aleatoria?",
     keepSameSeed: "Manter a mesma semente",
-    generateNewSeed: "Xerar nova semente"
+    generateNewSeed: "Xerar nova semente",
+    seed: "Semente"
   },
   menu: {
     title: "Xerador de Hash",

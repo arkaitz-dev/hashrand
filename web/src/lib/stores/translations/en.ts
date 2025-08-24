@@ -50,9 +50,12 @@ export const en: I18nTexts = {
 		optionalSeed: 'Optional seed (64 hex characters)',
 		seedInvalid: 'Seed must be exactly 64 hexadecimal characters',
 		reuseSeedTitle: 'Reuse the same seed?',
-		reuseSeedMessage: 'Do you want to reuse the same seed to generate the same result, or do you prefer to generate a new random seed?',
+		reuseSeedMessage:
+			'Do you want to reuse the same seed to generate the same result, or do you prefer to generate a new random seed?',
 		keepSameSeed: 'Keep the same seed',
-		generateNewSeed: 'Generate new seed'
+		generateNewSeed: 'Generate new seed',
+		seed: 'Seed',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -74,6 +77,7 @@ export const en: I18nTexts = {
 		maxReadabilityDescription: 'Maximum readability, 49 letters',
 		completeAlphanumericDescription: 'Complete alphanumeric set',
 		maxEntropyDescription: 'Maximum entropy with symbols',
+		numericDescription: 'Only digits 0-9, requires longer length',
 		failedToGenerateHash: 'Failed to generate hash'
 	},
 	password: {
@@ -118,6 +122,7 @@ export const en: I18nTexts = {
 		base58: 'Base58 (Bitcoin alphabet)',
 		'no-look-alike': 'No Look-alike',
 		full: 'Full Alphanumeric',
-		'full-with-symbols': 'Full with Symbols'
+		'full-with-symbols': 'Full with Symbols',
+		numeric: 'Numeric (0-9)'
 	}
 };

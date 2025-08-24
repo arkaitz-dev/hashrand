@@ -51,9 +51,11 @@ export const fr: I18nTexts = {
 		optionalSeed: 'Graine optionnelle (64 caractères hex)',
 		seedInvalid: 'La graine doit avoir exactement 64 caractères hexadécimaux',
 		reuseSeedTitle: 'Réutiliser la même graine?',
-		reuseSeedMessage: 'Voulez-vous réutiliser la même graine pour générer le même résultat, ou préférez-vous générer une nouvelle graine aléatoire?',
+		reuseSeedMessage:
+			'Voulez-vous réutiliser la même graine pour générer le même résultat, ou préférez-vous générer une nouvelle graine aléatoire?',
 		keepSameSeed: 'Garder la même graine',
-		generateNewSeed: 'Générer une nouvelle graine'
+		generateNewSeed: 'Générer une nouvelle graine',
+		seed: 'Graine'
 	},
 	menu: {
 		title: 'Générateur de Hash',
@@ -110,7 +112,8 @@ export const fr: I18nTexts = {
 		randomCharacters: 'caractères aléatoires avec',
 		noLookAlikeAlphabet: 'alphabet sans ambiguïté (facile à taper)',
 		fullAlphanumericAlphabet: 'alphabet alphanumérique complet',
-		fullAlphanumericNote: 'L\'alphabet alphanumérique complet offre une compatibilité maximale. Minimum {0} caractères pour une sécurité forte.',
+		fullAlphanumericNote:
+			"L'alphabet alphanumérique complet offre une compatibilité maximale. Minimum {0} caractères pour une sécurité forte.",
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
 	alphabets: {

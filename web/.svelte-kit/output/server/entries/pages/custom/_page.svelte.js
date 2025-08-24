@@ -10,7 +10,7 @@ import { _ } from "../../../chunks/rtl.js";
 function _page($$payload, $$props) {
   push();
   var $$store_subs;
-  let alphabetOptions, lengthValid, prefixValid, suffixValid, seedValid, formValid;
+  let alphabetOptions, lengthValid, prefixValid, suffixValid, formValid;
   function getDefaultParams() {
     return {
       length: 21,
@@ -21,10 +21,6 @@ function _page($$payload, $$props) {
     };
   }
   let params = getDefaultParams();
-  let seedInput = "";
-  function isValidHexSeed(seed) {
-    return true;
-  }
   store_get($$store_subs ??= {}, "$page", page).url.searchParams;
   alphabetOptions = [
     {
@@ -46,13 +42,17 @@ function _page($$payload, $$props) {
       value: "full-with-symbols",
       label: store_get($$store_subs ??= {}, "$_", _)("alphabets.full-with-symbols"),
       description: store_get($$store_subs ??= {}, "$_", _)("custom.maxEntropyDescription")
+    },
+    {
+      value: "numeric",
+      label: store_get($$store_subs ??= {}, "$_", _)("alphabets.numeric"),
+      description: store_get($$store_subs ??= {}, "$_", _)("custom.numericDescription")
     }
   ];
   lengthValid = params.length <= 128;
   prefixValid = true;
   suffixValid = true;
-  seedValid = isValidHexSeed();
-  formValid = lengthValid && prefixValid && suffixValid && seedValid;
+  formValid = lengthValid && prefixValid && suffixValid;
   const each_array = ensure_array_like(alphabetOptions);
   head($$payload, ($$payload2) => {
     $$payload2.title = `<title>${escape_html(store_get($$store_subs ??= {}, "$_", _)("custom.title"))}</title>`;
@@ -92,19 +92,11 @@ function _page($$payload, $$props) {
   } else {
     $$payload.out.push("<!--[!-->");
   }
-  $$payload.out.push(`<!--]--></div> <div><label for="seed" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.optionalSeed"))}</label> <textarea id="seed" maxlength="64" rows="2"${attr_class("w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none", void 0, { "border-red-500": !seedValid })}${attr("placeholder", store_get($$store_subs ??= {}, "$_", _)("common.optionalSeed"))}>`);
-  const $$body = escape_html(seedInput);
-  if ($$body) {
-    $$payload.out.push(`${$$body}`);
-  }
-  $$payload.out.push(`</textarea> `);
-  if (!seedValid) {
-    $$payload.out.push("<!--[-->");
-    $$payload.out.push(`<p class="text-red-500 text-sm mt-1">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedInvalid"))}</p>`);
-  } else {
+  $$payload.out.push(`<!--]--></div> `);
+  {
     $$payload.out.push("<!--[!-->");
   }
-  $$payload.out.push(`<!--]--></div> <div class="flex flex-col sm:flex-row gap-4 mt-4"><button type="submit"${attr("disabled", !formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading), true)} class="flex-1 text-white bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">`);
+  $$payload.out.push(`<!--]--> <div class="flex flex-col sm:flex-row gap-4 mt-4"><button type="submit"${attr("disabled", !formValid || store_get($$store_subs ??= {}, "$isLoading", isLoading), true)} class="flex-1 text-white bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">`);
   if (store_get($$store_subs ??= {}, "$isLoading", isLoading)) {
     $$payload.out.push("<!--[-->");
     LoadingSpinner($$payload, { size: "sm", class: "mr-2" });

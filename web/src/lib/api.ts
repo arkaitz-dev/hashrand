@@ -1,4 +1,14 @@
-import type { GenerateParams, PasswordParams, ApiKeyParams, VersionResponse, HashResponse, SeedGenerateRequest, SeedPasswordRequest, SeedApiKeyRequest } from './types';
+import type {
+	GenerateParams,
+	PasswordParams,
+	ApiKeyParams,
+	VersionResponse,
+	HashResponse,
+	CustomHashResponse,
+	SeedGenerateRequest,
+	SeedPasswordRequest,
+	SeedApiKeyRequest
+} from './types';
 
 const API_BASE = '/api';
 
@@ -17,7 +27,7 @@ class ApiError extends Error {
 }
 
 // Handle both JSON and text responses automatically
-async function handleResponse(response: Response): Promise<string | HashResponse> {
+async function handleResponse(response: Response): Promise<string | HashResponse | CustomHashResponse> {
 	if (!response.ok) {
 		const errorText = await response.text();
 		throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
@@ -26,7 +36,9 @@ async function handleResponse(response: Response): Promise<string | HashResponse
 	// Check content type to determine response format
 	const contentType = response.headers.get('content-type');
 	if (contentType?.includes('application/json')) {
-		return response.json() as Promise<HashResponse>;
+		// Parse JSON and check if it's a CustomHashResponse (has otp field)
+		const jsonResponse = await response.json();
+		return jsonResponse as HashResponse | CustomHashResponse;
 	} else {
 		return response.text();
 	}
@@ -85,16 +97,16 @@ export const api = {
 		const response = await fetch(`${API_BASE}/custom`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
-		
+
 		if (!response.ok) {
 			const errorText = await response.text();
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
-		
+
 		return response.json() as Promise<HashResponse>;
 	},
 
@@ -102,16 +114,16 @@ export const api = {
 		const response = await fetch(`${API_BASE}/password`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
-		
+
 		if (!response.ok) {
 			const errorText = await response.text();
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
-		
+
 		return response.json() as Promise<HashResponse>;
 	},
 
@@ -119,16 +131,16 @@ export const api = {
 		const response = await fetch(`${API_BASE}/api-key`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
-		
+
 		if (!response.ok) {
 			const errorText = await response.text();
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
-		
+
 		return response.json() as Promise<HashResponse>;
 	}
 };

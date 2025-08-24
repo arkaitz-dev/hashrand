@@ -50,7 +50,8 @@ export const zh: I18nTexts = {
 		reuseSeedTitle: '重用相同的种子？',
 		reuseSeedMessage: '您想重用相同的种子来生成相同的结果，还是更愿意生成新的随机种子？',
 		keepSameSeed: '保持相同的种子',
-		generateNewSeed: '生成新种子'
+		generateNewSeed: '生成新种子',
+		seed: '种子'
 	},
 	menu: {
 		title: '哈希生成器',

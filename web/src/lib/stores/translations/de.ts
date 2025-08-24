@@ -49,9 +49,11 @@ export const de: I18nTexts = {
 		optionalSeed: 'Optionaler Seed (64 Hex-Zeichen)',
 		seedInvalid: 'Seed muss genau 64 hexadezimale Zeichen haben',
 		reuseSeedTitle: 'Denselben Seed wiederverwenden?',
-		reuseSeedMessage: 'Möchten Sie denselben Seed wiederverwenden, um das gleiche Ergebnis zu erhalten, oder bevorzugen Sie es, einen neuen zufälligen Seed zu generieren?',
+		reuseSeedMessage:
+			'Möchten Sie denselben Seed wiederverwenden, um das gleiche Ergebnis zu erhalten, oder bevorzugen Sie es, einen neuen zufälligen Seed zu generieren?',
 		keepSameSeed: 'Denselben Seed behalten',
-		generateNewSeed: 'Neuen Seed generieren'
+		generateNewSeed: 'Neuen Seed generieren',
+		seed: 'Seed'
 	},
 	menu: {
 		title: 'Hash-Generator',
@@ -108,7 +110,8 @@ export const de: I18nTexts = {
 		randomCharacters: 'Zufallszeichen mit',
 		noLookAlikeAlphabet: 'eindeutigem Alphabet (leicht einzugeben)',
 		fullAlphanumericAlphabet: 'vollständigem alphanumerischem Alphabet',
-		fullAlphanumericNote: 'Das vollständige alphanumerische Alphabet bietet maximale Kompatibilität. Mindestens {0} Zeichen für starke Sicherheit.',
+		fullAlphanumericNote:
+			'Das vollständige alphanumerische Alphabet bietet maximale Kompatibilität. Mindestens {0} Zeichen für starke Sicherheit.',
 		failedToGenerateApiKey: 'API-Schlüssel-Generierung fehlgeschlagen'
 	},
 	alphabets: {

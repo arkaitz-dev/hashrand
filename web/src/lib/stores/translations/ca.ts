@@ -49,9 +49,11 @@ export const ca: I18nTexts = {
 		optionalSeed: 'Llavor opcional (64 caràcters hex)',
 		seedInvalid: 'La llavor ha de tenir exactament 64 caràcters hexadecimals',
 		reuseSeedTitle: 'Reutilitzar la mateixa llavor?',
-		reuseSeedMessage: 'Voleu reutilitzar la mateixa llavor per generar el mateix resultat, o preferiu generar una nova llavor aleatòria?',
+		reuseSeedMessage:
+			'Voleu reutilitzar la mateixa llavor per generar el mateix resultat, o preferiu generar una nova llavor aleatòria?',
 		keepSameSeed: 'Mantenir la mateixa llavor',
-		generateNewSeed: 'Generar nova llavor'
+		generateNewSeed: 'Generar nova llavor',
+		seed: 'Llavor'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -108,7 +110,8 @@ export const ca: I18nTexts = {
 		randomCharacters: 'caràcters aleatoris amb',
 		noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
 		fullAlphanumericAlphabet: 'alfabet alfanumèric complet',
-		fullAlphanumericNote: "L'alfabet alfanumèric complet proporciona màxima compatibilitat. Mínim {0} caràcters per a seguretat forta.",
+		fullAlphanumericNote:
+			"L'alfabet alfanumèric complet proporciona màxima compatibilitat. Mínim {0} caràcters per a seguretat forta.",
 		failedToGenerateApiKey: 'Ha fallat generar la clau API'
 	},
 	alphabets: {

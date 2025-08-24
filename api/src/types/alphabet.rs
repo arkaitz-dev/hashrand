@@ -5,6 +5,7 @@ pub enum AlphabetType {
     NoLookAlike,     // 49 characters - Maximum readability
     Full,            // 62 characters - Full alphanumeric
     FullWithSymbols, // 73 characters - Maximum entropy
+    Numeric,         // 10 characters - Only digits 0-9
 }
 
 impl AlphabetType {
@@ -17,6 +18,7 @@ impl AlphabetType {
             AlphabetType::FullWithSymbols => {
                 "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_*^@#+!?$%"
             }
+            AlphabetType::Numeric => "0123456789",
         }
     }
 
@@ -32,6 +34,7 @@ impl AlphabetType {
             "no-look-alike" => AlphabetType::NoLookAlike,
             "full" => AlphabetType::Full,
             "full-with-symbols" => AlphabetType::FullWithSymbols,
+            "numeric" => AlphabetType::Numeric,
             _ => AlphabetType::Base58, // Default
         }
     }
@@ -44,6 +47,7 @@ impl AlphabetType {
             AlphabetType::NoLookAlike => 24,
             AlphabetType::Full => 21,
             AlphabetType::FullWithSymbols => 21,
+            AlphabetType::Numeric => 35, // Higher due to lower entropy (10 vs 58+ chars)
         }
     }
 }

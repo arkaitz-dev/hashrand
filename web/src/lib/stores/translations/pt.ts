@@ -50,9 +50,12 @@ export const pt: I18nTexts = {
 		optionalSeed: 'Semente opcional (64 caracteres hex)',
 		seedInvalid: 'A semente deve ter exatamente 64 caracteres hexadecimais',
 		reuseSeedTitle: 'Reutilizar a mesma semente?',
-		reuseSeedMessage: 'Deseja reutilizar a mesma semente para gerar o mesmo resultado, ou prefere gerar uma nova semente aleatória?',
+		reuseSeedMessage:
+			'Deseja reutilizar a mesma semente para gerar o mesmo resultado, ou prefere gerar uma nova semente aleatória?',
 		keepSameSeed: 'Manter a mesma semente',
-		generateNewSeed: 'Gerar nova semente'
+		generateNewSeed: 'Gerar nova semente',
+		seed: 'Semente',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Gerador de Hash',
@@ -74,6 +77,7 @@ export const pt: I18nTexts = {
 		maxReadabilityDescription: 'Máxima legibilidade, 49 letras',
 		completeAlphanumericDescription: 'Conjunto alfanumérico completo',
 		maxEntropyDescription: 'Máxima entropia com símbolos',
+		numericDescription: 'Apenas dígitos 0-9, requer comprimento maior',
 		failedToGenerateHash: 'Falha ao gerar hash'
 	},
 	password: {
@@ -109,13 +113,15 @@ export const pt: I18nTexts = {
 		randomCharacters: 'caracteres aleatórios com',
 		noLookAlikeAlphabet: 'alfabeto sem confusão (fácil de digitar)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
-		fullAlphanumericNote: 'O alfabeto alfanumérico completo oferece máxima compatibilidade. Mínimo de {0} caracteres para segurança forte.',
+		fullAlphanumericNote:
+			'O alfabeto alfanumérico completo oferece máxima compatibilidade. Mínimo de {0} caracteres para segurança forte.',
 		failedToGenerateApiKey: 'Falha ao gerar chave API'
 	},
 	alphabets: {
 		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sem Confusão',
 		full: 'Alfanumérico Completo',
-		'full-with-symbols': 'Completo com Símbolos'
+		'full-with-symbols': 'Completo com Símbolos',
+		numeric: 'Numérico (0-9)'
 	}
 };

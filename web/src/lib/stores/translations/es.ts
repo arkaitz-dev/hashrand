@@ -50,9 +50,12 @@ export const es: I18nTexts = {
 		optionalSeed: 'Semilla opcional (64 caracteres hex)',
 		seedInvalid: 'La semilla debe tener exactamente 64 caracteres hexadecimales',
 		reuseSeedTitle: '¿Reutilizar la misma semilla?',
-		reuseSeedMessage: '¿Deseas reutilizar la misma semilla para generar el mismo resultado, o prefieres generar una nueva semilla aleatoria?',
+		reuseSeedMessage:
+			'¿Deseas reutilizar la misma semilla para generar el mismo resultado, o prefieres generar una nueva semilla aleatoria?',
 		keepSameSeed: 'Mantener la misma semilla',
-		generateNewSeed: 'Generar nueva semilla'
+		generateNewSeed: 'Generar nueva semilla',
+		seed: 'Semilla',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -74,6 +77,7 @@ export const es: I18nTexts = {
 		maxReadabilityDescription: 'Máxima legibilidad, 49 letras',
 		completeAlphanumericDescription: 'Conjunto alfanumérico completo',
 		maxEntropyDescription: 'Máxima entropía con símbolos',
+		numericDescription: 'Solo dígitos 0-9, requiere mayor longitud',
 		failedToGenerateHash: 'Error al generar hash'
 	},
 	password: {
@@ -109,14 +113,17 @@ export const es: I18nTexts = {
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sin confusión (fácil de escribir)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
-		noLookAlikeNote: 'El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} caracteres para seguridad equivalente.',
-		fullAlphanumericNote: 'El alfabeto completo alfanumérico proporciona buena entropía. Mínimo {0} caracteres para seguridad fuerte.',
+		noLookAlikeNote:
+			'El alfabeto Sin Confusión excluye letras confundibles. Mínimo {0} caracteres para seguridad equivalente.',
+		fullAlphanumericNote:
+			'El alfabeto completo alfanumérico proporciona buena entropía. Mínimo {0} caracteres para seguridad fuerte.',
 		failedToGenerateApiKey: 'Error al generar clave API'
 	},
 	alphabets: {
 		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sin Confusión',
 		full: 'Alfanumérico Completo',
-		'full-with-symbols': 'Completo con Símbolos'
+		'full-with-symbols': 'Completo con Símbolos',
+		numeric: 'Numérico (0-9)'
 	}
 };

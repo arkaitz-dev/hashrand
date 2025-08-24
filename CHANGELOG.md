@@ -11,6 +11,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.1.0 / Web v0.17.0] - 2025-08-24
+
+### Major Breaking Change: Base58 Seed Format Migration
+#### Changed
+- **🔄 Seed Format Migration**: Complete migration from hexadecimal to base58 seed encoding
+  - **API Breaking Change**: All endpoints now use 44-character base58 seeds instead of 64-character hexadecimal
+  - **Enhanced Security**: Base58 encoding eliminates confusing characters (0, O, I, l) for better usability
+  - **Compact Representation**: Shorter seed strings (44 vs 64 chars) while maintaining same 256-bit entropy
+  - **Bitcoin Standard**: Uses same base58 alphabet as Bitcoin for consistency and familiarity
+  - **Backward Incompatibility**: Old hex seeds no longer accepted - requires migration for existing implementations
+
+#### Enhanced
+- **📊 Custom Endpoint Improvements**: Major enhancements to /api/custom endpoint
+  - **🔢 Numeric Alphabet**: New `numeric` alphabet type supporting only digits 0-9
+    - Perfect for generating numeric codes, PINs, or numeric-only identifiers
+    - Requires longer lengths due to reduced entropy (10 characters vs 58+ in other alphabets)
+    - Integrated with existing validation and UI systems
+  - **🔐 OTP Generation**: 9-digit one-time password generation using same seed
+    - Generated using seed with XOR nonce variation for different but deterministic output
+    - Displayed in generation details as additional security feature
+    - Uses numeric alphabet internally for guaranteed 9-digit output
+  - **⏰ Timestamp Integration**: Unix timestamp included in all custom endpoint responses
+    - Enables generation date/time tracking for audit purposes
+    - Displayed as localized date/time in web interface
+    - Consistent across all custom generation requests
+- **🎯 UI Seed Handling Simplification**: Streamlined seed management in web interface
+  - **Read-Only Display**: Seeds shown only when provided via URL GET parameters
+  - **No Input Fields**: Removed all seed input capabilities from generator forms
+  - **No Copy Functionality**: Simplified seed display as informational metadata only
+  - **URL Parameter Only**: Seeds can be passed via URL but not entered manually
+  - **Smart Regenerate Logic**: Regenerate button hidden only when seed comes from URL parameters, not API responses
+
+#### Fixed
+- **🔧 Regenerate Button Logic**: Corrected regenerate button visibility logic
+  - **Problem**: Button was hidden whenever any seed was present (including API-generated ones)
+  - **Solution**: Only hide when seed parameter comes from URL GET parameters (`searchParams.has('seed')`)
+  - **Benefit**: Users can regenerate hashes that were initially random but still see seed information
+- **🧹 Code Quality**: Comprehensive cleanup of unused code and dependencies
+  - Removed unused hex seed validation functions
+  - Cleaned up commented seed-related code
+  - Updated API response type definitions for new custom endpoint structure
+  - Simplified UI components by removing complex seed handling logic
+
+#### Technical Implementation
+- **Backend Changes**: 
+  - Added `bs58` crate dependency for base58 encoding/decoding
+  - Updated all seed handling functions to use base58 format
+  - Modified custom endpoint to return structured JSON with hash, seed, OTP, and timestamp
+  - Added numeric alphabet support with proper character validation
+- **Frontend Changes**:
+  - Simplified seed handling throughout all generator forms
+  - Updated TypeScript types to match new API responses
+  - Enhanced result display to show OTP and timestamp information
+  - Removed all seed copying and input functionality from UI
+
+#### Migration Notes
+- **API Clients**: Must update to use base58 seed format (44 characters) instead of hexadecimal (64 characters)
+- **Existing Seeds**: Cannot be directly converted - new base58 seeds must be generated
+- **URL Parameters**: Seed parameters in URLs must now use base58 format
+- **Testing**: All existing tests updated to use new base58 seed format
+
+---
+
 ## [API v1.0.0 / Web v0.16.0] - 2025-08-23
 
 ### Major New Feature: Seed-Based Deterministic Generation

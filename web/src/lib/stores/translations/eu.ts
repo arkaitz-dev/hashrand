@@ -48,9 +48,11 @@ export const eu: I18nTexts = {
 		optionalSeed: 'Aukerako hazia (64 hex karaktere)',
 		seedInvalid: 'Haziak 64 karaktere hexadezimal izan behar ditu',
 		reuseSeedTitle: 'Hazia berrerabili?',
-		reuseSeedMessage: 'Emaitza bera sortzeko hazi bera berrerabili nahi duzu, ala ausazko hazi berria sortu nahi duzu?',
+		reuseSeedMessage:
+			'Emaitza bera sortzeko hazi bera berrerabili nahi duzu, ala ausazko hazi berria sortu nahi duzu?',
 		keepSameSeed: 'Hazi bera mantendu',
-		generateNewSeed: 'Hazi berria sortu'
+		generateNewSeed: 'Hazi berria sortu',
+		seed: 'Hazia'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',
@@ -107,7 +109,8 @@ export const eu: I18nTexts = {
 		randomCharacters: 'ausazko hizki hauek erabiliz',
 		noLookAlikeAlphabet: 'hizki nahasgarririk gabeko alfabetoa (erraz idazteko)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumeriko osoa',
-		fullAlphanumericNote: 'Alfabeto alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Segurtasun sendorako gutxienez {0} hizki behar.',
+		fullAlphanumericNote:
+			'Alfabeto alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Segurtasun sendorako gutxienez {0} hizki behar.',
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
 	alphabets: {

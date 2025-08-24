@@ -20,9 +20,7 @@
 	import { isRTL } from '$lib/stores/rtl';
 
 	let copySuccess = false;
-	let copySeedSuccess = false;
 	let copyTimeout: ReturnType<typeof setTimeout>;
-	let copySeedTimeout: ReturnType<typeof setTimeout>;
 	let showGenerationDetails = false; // Collapsed by default on mobile
 	let showParametersUsed = false; // Collapsed by default on mobile
 	let showSeedDialog = false; // Custom dialog for seed reuse
@@ -37,9 +35,10 @@
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
-	
-	// Detect if we arrived with a provided seed (deterministic generation)
-	$: usedProvidedSeed = searchParams.get('seed') !== null;
+
+	// Only treat as "provided seed" if seed parameter comes from URL GET parameters
+	// (this controls whether to show the regenerate button)
+	$: usedProvidedSeed = searchParams.has('seed');
 
 	// Handle result state and API calls
 	onMount(async () => {
@@ -94,30 +93,33 @@
 						seed: inputSeed,
 						endpoint
 					} as import('$lib/types').SeedGenerateRequest;
-					
+
 					if (params.length) customSeedRequest.length = params.length as number;
-					if (params.alphabet) customSeedRequest.alphabet = params.alphabet as import('$lib/types').AlphabetType;
+					if (params.alphabet)
+						customSeedRequest.alphabet = params.alphabet as import('$lib/types').AlphabetType;
 					if (params.prefix) customSeedRequest.prefix = params.prefix as string;
 					if (params.suffix) customSeedRequest.suffix = params.suffix as string;
-					
+
 					response = await api.generateWithSeed(customSeedRequest);
 				} else if (endpoint === 'password') {
 					const passwordSeedRequest = {
 						seed: inputSeed
 					} as import('$lib/types').SeedPasswordRequest;
-					
+
 					if (params.length) passwordSeedRequest.length = params.length as number;
-					if (params.alphabet) passwordSeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full-with-symbols';
-					
+					if (params.alphabet)
+						passwordSeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full-with-symbols';
+
 					response = await api.generatePasswordWithSeed(passwordSeedRequest);
 				} else if (endpoint === 'api-key') {
 					const apiKeySeedRequest = {
 						seed: inputSeed
 					} as import('$lib/types').SeedApiKeyRequest;
-					
+
 					if (params.length) apiKeySeedRequest.length = params.length as number;
-					if (params.alphabet) apiKeySeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full';
-					
+					if (params.alphabet)
+						apiKeySeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full';
+
 					response = await api.generateApiKeyWithSeed(apiKeySeedRequest);
 				} else {
 					throw new Error($_('common.unknownEndpoint'));
@@ -143,22 +145,37 @@
 			// Handle both string and JSON responses
 			let value: string;
 			let seed: string | undefined;
+			let otp: string | undefined;
+			let responseTimestamp: Date;
 
 			if (typeof response === 'string') {
 				value = response;
 				seed = undefined;
+				otp = undefined;
+				responseTimestamp = new Date();
+			} else if ('otp' in response) {
+				// CustomHashResponse from custom endpoint
+				const customResponse = response as import('$lib/types').CustomHashResponse;
+				value = customResponse.hash;
+				seed = customResponse.seed;
+				otp = customResponse.otp;
+				responseTimestamp = new Date(customResponse.timestamp * 1000); // Convert from seconds to ms
 			} else {
+				// Standard HashResponse
 				value = response.hash;
 				seed = response.seed;
+				otp = undefined;
+				responseTimestamp = new Date();
 			}
 
 			// Set the result state
 			setResult({
 				value,
 				seed,
+				otp,
 				params,
 				endpoint,
-				timestamp: new Date()
+				timestamp: responseTimestamp
 			});
 		} catch (error) {
 			setError(error instanceof Error ? error.message : $_('common.failedToGenerate'));
@@ -200,38 +217,6 @@
 		}
 	}
 
-	async function copySeedToClipboard() {
-		if (!$resultState?.seed) return;
-
-		try {
-			await navigator.clipboard.writeText($resultState.seed);
-			copySeedSuccess = true;
-
-			// Clear success state after 2 seconds
-			clearTimeout(copySeedTimeout);
-			copySeedTimeout = setTimeout(() => {
-				copySeedSuccess = false;
-			}, 2000);
-		} catch (err) {
-			console.error('Failed to copy seed:', err);
-			// Fallback for older browsers
-			try {
-				const textArea = document.createElement('textarea');
-				textArea.value = $resultState.seed;
-				document.body.appendChild(textArea);
-				textArea.select();
-				document.execCommand('copy');
-				document.body.removeChild(textArea);
-				copySeedSuccess = true;
-				clearTimeout(copySeedTimeout);
-				copySeedTimeout = setTimeout(() => {
-					copySeedSuccess = false;
-				}, 2000);
-			} catch (fallbackErr) {
-				console.error('Fallback seed copy failed:', fallbackErr);
-			}
-		}
-	}
 
 	// Reactive endpoint display name that updates when language changes
 	$: getEndpointDisplayName = (endpoint: string): string => {
@@ -438,7 +423,6 @@
 
 		// Reset copy success state immediately
 		copySuccess = false;
-		copySeedSuccess = false;
 		setLoading(true);
 
 		try {
@@ -464,27 +448,41 @@
 			// Handle both string and JSON responses
 			let value: string;
 			let seed: string | undefined;
+			let otp: string | undefined;
+			let responseTimestamp: Date;
 
 			if (typeof response === 'string') {
 				value = response;
 				seed = undefined;
+				otp = undefined;
+				responseTimestamp = new Date();
+			} else if ('otp' in response) {
+				// CustomHashResponse from custom endpoint
+				const customResponse = response as import('$lib/types').CustomHashResponse;
+				value = customResponse.hash;
+				seed = customResponse.seed;
+				otp = customResponse.otp;
+				responseTimestamp = new Date(customResponse.timestamp * 1000); // Convert from seconds to ms
 			} else {
+				// Standard HashResponse
 				value = response.hash;
 				seed = response.seed;
+				otp = undefined;
+				responseTimestamp = new Date();
 			}
 
 			// Update result with new value but keep same parameters and endpoint
 			setResult({
 				value,
 				seed,
+				otp,
 				params: $resultState.params,
 				endpoint: $resultState.endpoint,
-				timestamp: new Date()
+				timestamp: responseTimestamp
 			});
 
 			// Reset copy success state
 			copySuccess = false;
-			copySeedSuccess = false;
 		} catch (error) {
 			setError(error instanceof Error ? error.message : $_('common.failedToRegenerate'));
 		} finally {
@@ -565,59 +563,6 @@
 						</div>
 					</div>
 
-					<!-- Seed Display (when available) -->
-					{#if $resultState.seed}
-						<div class="mb-6">
-							{#if usedProvidedSeed}
-								<!-- Seed as informational text when provided by user -->
-								<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-									<h4 class="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
-										{$_('common.seedUsed') || 'Seed Used'}
-									</h4>
-									<p class="text-xs font-mono text-blue-700 dark:text-blue-300 break-all">
-										{$resultState.seed}
-									</p>
-								</div>
-							{:else}
-								<!-- Seed with copy functionality when auto-generated -->
-								<label
-									for="seed-value"
-									class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
-								>
-									{$_('common.seedUsed') || 'Seed Used'}
-								</label>
-								<div class="relative">
-									<textarea
-										id="seed-value"
-										readonly
-										value={$resultState.seed}
-										class="w-full p-3 pb-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-xs resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px] text-gray-600 dark:text-gray-400"
-										onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
-									></textarea>
-									{#if !$isLoading}
-										<!-- RTL-aware copy seed button -->
-										<button
-											onclick={copySeedToClipboard}
-											class="absolute bottom-2 {$isRTL
-												? 'left-2'
-												: 'right-2'} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySeedSuccess
-												? 'bg-green-600 hover:bg-green-700 text-white'
-												: 'bg-blue-600 hover:bg-blue-700 text-white'}"
-										>
-											<Iconize
-												conf={{
-													icon: copySeedSuccess ? 'check' : 'copy',
-													iconSize: 'w-3 h-3'
-												}}
-											>
-												{copySeedSuccess ? $_('common.copied') : $_('common.copySeed')}
-											</Iconize>
-										</button>
-									{/if}
-								</div>
-							{/if}
-						</div>
-					{/if}
 
 					<!-- Metadata -->
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -671,6 +616,26 @@
 										{/if}
 									</dd>
 								</div>
+								{#if $resultState.seed}
+									<div>
+										<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+											{$_('common.seed')}
+										</dt>
+										<dd class="text-xs font-mono text-gray-900 dark:text-white break-all">
+											{$resultState.seed}
+										</dd>
+									</div>
+								{/if}
+								{#if $resultState.otp}
+									<div>
+										<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+											{$_('common.otp')}
+										</dt>
+										<dd class="text-sm font-mono text-gray-900 dark:text-white">
+											{$resultState.otp}
+										</dd>
+									</div>
+								{/if}
 							</dl>
 						</div>
 
@@ -738,7 +703,9 @@
 						<!-- RTL-aware adjust settings button -->
 						<button
 							onclick={handleAdjustSettings}
-							class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 {usedProvidedSeed ? 'w-full' : ''}"
+							class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 {usedProvidedSeed
+								? 'w-full'
+								: ''}"
 						>
 							<Iconize
 								conf={{
@@ -775,9 +742,26 @@
 
 	<!-- Seed Reuse Dialog -->
 	{#if showSeedDialog}
-		<div class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm" style="background-color: rgba(0, 0, 0, 0.15);" onclick={closeSeedDialog}>
-			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 m-4 max-w-md w-full" onclick={(e) => e.stopPropagation()}>
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+		<div
+			class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
+			style="background-color: rgba(0, 0, 0, 0.15);"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="seed-dialog-title"
+			tabindex="-1"
+			onclick={closeSeedDialog}
+			onkeydown={(e) => e.key === 'Escape' && closeSeedDialog()}
+		>
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
+			<div
+				class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 m-4 max-w-md w-full"
+				role="document"
+				onclick={(e) => e.stopPropagation()}
+			>
+				<h3
+					id="seed-dialog-title"
+					class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center"
+				>
 					{$_('common.reuseSeedTitle')}
 				</h3>
 				<p class="text-gray-600 dark:text-gray-300 mb-6">

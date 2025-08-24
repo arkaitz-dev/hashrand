@@ -9,9 +9,9 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **🎯 Multiple Endpoints**: Generate hashes, passwords, and API keys
 - **🌱 Deterministic Generation**: Seed-based reproducible generation for all endpoints (NEW)
   - **Dual Mode Support**: Both random (GET) and deterministic (POST with seed) generation
-  - **64-Char Hex Seeds**: Cryptographically secure seed format for reproducible results
+  - **Base58 Seeds**: Cryptographically secure 44-character base58 seed format for reproducible results
   - **Same API Response**: Consistent JSON format for both random and seeded generation
-- **🔤 Multiple Alphabets**: Support for Base58, no-look-alike, full alphanumeric, and symbols
+- **🔤 Multiple Alphabets**: Support for Base58, no-look-alike, full alphanumeric, symbols, and numeric (0-9)
 - **⚡ WebAssembly**: Fast and lightweight serverless architecture
 - **🧪 Comprehensive Testing**: 43 automated test cases covering all scenarios
 - **🏗️ Modular Architecture**: Clean separation of concerns for maintainability
@@ -37,12 +37,11 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
   - **Smart Loading States**: Visual feedback during sprite loading with smooth transitions
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **🌱 Seed-Based Generation UI**: Complete deterministic generation interface integration (NEW)
-  - **Optional Seed Fields**: Available in all three generators (custom, password, api-key)
-  - **Real-time Validation**: 64-character hexadecimal seed validation with visual feedback
-  - **Smart UI Behavior**: Regenerate button hidden for deterministic seeds (prevents confusion)
-  - **Seed Reuse Dialog**: Interactive prompt when returning to settings with previous seed
-  - **Dual Display Modes**: User seeds as informational text, auto-generated as copyable textarea
-  - **Complete Integration**: Seamless flow from form → API → result with seed persistence
+  - **Read-only Seed Display**: Seeds shown only when provided via URL parameters (non-editable)
+  - **Base58 Validation**: 44-character base58 seed format with visual feedback
+  - **Smart UI Behavior**: Regenerate button hidden only when seed provided via URL parameters
+  - **Informational Display**: Seeds shown as informational text without copy functionality
+  - **Simplified Integration**: Clean seed handling without complex UI interactions
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages featuring enhanced naturalness
   - **Professional Translation Quality**: Comprehensive review and enhancement of all 13 language translations
     - **Linguistic Authenticity**: Native terminology preferred over anglicisms (Hindi "लंबाई" vs "लेंथ")
@@ -65,20 +64,45 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 
 ### Generate Custom Hashes
 ```
-GET /api/generate
+GET /api/custom         # Random generation
+POST /api/custom        # Deterministic generation with seed
 ```
 
-**Parameters:**
+**GET Parameters:**
 - `length` (2-128, default: 21) - Length of generated hash
 - `alphabet` (string, default: "base58") - Character set to use
 - `prefix` (string, max 32 chars) - Text to prepend
 - `suffix` (string, max 32 chars) - Text to append
 - `raw` (boolean, default: true) - If false, adds newline
 
-**Example:**
+**POST Body (JSON):**
+- `seed` (required) - 44-character base58 string for deterministic generation
+- `length` (2-128) - Length of generated hash
+- `alphabet` (string) - Character set to use
+- `prefix` (string, max 32 chars) - Text to prepend
+- `suffix` (string, max 32 chars) - Text to append
+
+**Response Format:**
+```json
+{
+  "hash": "generated_hash_here",
+  "seed": "base58_seed_string",
+  "otp": "123456789",
+  "timestamp": 1692812400
+}
+```
+
+**Examples:**
 ```bash
-curl "http://localhost:3000/api/generate?length=16&alphabet=full&prefix=app_&suffix=_key"
-# Response: app_A1b2C3d4E5f6G7h8_key
+# Random generation
+curl "http://localhost:3000/api/custom?length=16&alphabet=full&prefix=app_&suffix=_key"
+# Response: {"hash":"app_A1b2C3d4E5f6G7h8_key","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","otp":"743628951","timestamp":1692812400}
+
+# Deterministic generation with seed
+curl -X POST "http://localhost:3000/api/custom" \
+  -H "Content-Type: application/json" \
+  -d '{"seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","length":16,"alphabet":"full","prefix":"app_","suffix":"_key"}'
+# Response: {"hash":"app_T4sHeyqXb1on6mAH_key","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","otp":"743628951","timestamp":1692812400}
 ```
 
 ### Generate Secure Passwords
@@ -93,7 +117,7 @@ POST /api/password       # Deterministic generation with seed
 - `raw` (boolean, default: true) - Output formatting
 
 **POST Body (JSON):**
-- `seed` (required) - 64-character hexadecimal string for deterministic generation
+- `seed` (required) - 44-character base58 string for deterministic generation
 - `length` (21-44) - Length of password
 - `alphabet` (string) - Character set
 
@@ -106,8 +130,8 @@ curl "http://localhost:3000/api/password?length=32&alphabet=no-look-alike"
 # Deterministic generation with seed
 curl -X POST "http://localhost:3000/api/password" \
   -H "Content-Type: application/json" \
-  -d '{"seed":"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890","length":25,"alphabet":"full-with-symbols"}'
-# Response: {"hash":"xxFu2q4H4al2vNkW7r*uJoe!C","seed":"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"}
+  -d '{"seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","length":25,"alphabet":"full-with-symbols"}'
+# Response: {"hash":"xxFu2q4H4al2vNkW7r*uJoe!C","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR"}
 ```
 
 ### Generate API Keys
@@ -122,7 +146,7 @@ POST /api/api-key        # Deterministic generation with seed
 - `raw` (boolean, default: true) - Output formatting
 
 **POST Body (JSON):**
-- `seed` (required) - 64-character hexadecimal string for deterministic generation
+- `seed` (required) - 44-character base58 string for deterministic generation
 - `length` (44-64) - Length of key part (excluding ak_ prefix)
 - `alphabet` (string) - Character set
 
@@ -135,8 +159,8 @@ curl "http://localhost:3000/api/api-key?length=50"
 # Deterministic generation with seed
 curl -X POST "http://localhost:3000/api/api-key" \
   -H "Content-Type: application/json" \
-  -d '{"seed":"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890","length":50,"alphabet":"full"}'
-# Response: {"hash":"ak_T4sHeyqXb1on6mAHwhLo9Nl0HZFc0dDR91qitMPziLJwQghFqq","seed":"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"}
+  -d '{"seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","length":50,"alphabet":"full"}'
+# Response: {"hash":"ak_T4sHeyqXb1on6mAHwhLo9Nl0HZFc0dDR91qitMPziLJwQghFqq","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR"}
 ```
 
 ### Get Version Information
@@ -147,19 +171,20 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.0.0",
-  "ui_version": "0.16.0"
+  "api_version": "1.1.0",
+  "ui_version": "0.17.0"
 }
 ```
 
 ## Seed-Based Deterministic Generation
 
 ### Overview
-All three generators (custom, password, api-key) now support **deterministic generation** using a 64-character hexadecimal seed. This enables:
+All three generators (custom, password, api-key) now support **deterministic generation** using a 44-character base58 seed. This enables:
 
 - **Reproducible Results**: Same seed always produces the same output
 - **Consistent Generation**: Perfect for testing, demonstrations, or reproducible deployments
 - **Audit Trails**: Track generation parameters including the seed used
+- **Enhanced Security**: Base58 encoding eliminates confusing characters and provides compact representation
 
 ### Usage Patterns
 
@@ -173,19 +198,19 @@ curl "http://localhost:3000/api/password?length=25"
 ```bash
 curl -X POST "http://localhost:3000/api/password" \
   -H "Content-Type: application/json" \
-  -d '{"seed":"your-64-char-hex-seed","length":25}'
+  -d '{"seed":"your-44-char-base58-seed","length":25}'
 # Always returns the same result for the same seed
 ```
 
 ### Web Interface Integration
 The web interface includes:
-- **Optional seed fields** in all three generators (custom, password, api-key)
-- **Seed validation** - ensures exactly 64 hexadecimal characters
-- **Smart UI behavior** - hides "regenerate" button when using deterministic seeds
-- **Seed reuse dialog** - asks whether to reuse the same seed when returning to settings
-- **Seed display modes**:
-  - **User-provided seed**: Shows as informational text
-  - **Auto-generated seed**: Shows as copyable textarea for reuse
+- **Read-only seed display** - seeds shown only when provided via URL parameters
+- **Base58 validation** - ensures exactly 44 base58 characters when provided via URL
+- **Smart UI behavior** - hides "regenerate" button only when seed provided via URL parameters
+- **Simplified seed handling** - no seed input fields or complex interactions
+- **Informational display**:
+  - **URL-provided seeds**: Shows as read-only informational text
+  - **API-generated seeds**: Displayed as informational metadata without copy functionality
 
 ## Alphabet Types
 
@@ -195,6 +220,7 @@ The web interface includes:
 | `no-look-alike` | `346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz` | 49 | Maximum readability (excludes confusing chars) |
 | `full` | `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz` | 62 | Complete alphanumeric |
 | `full-with-symbols` | `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_*^@#+!?$%` | 73 | Maximum entropy with symbols |
+| `numeric` | `0123456789` | 10 | Only digits 0-9 (requires longer length for security) |
 
 ## URL Parameter Support
 

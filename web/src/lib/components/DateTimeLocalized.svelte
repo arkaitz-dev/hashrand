@@ -57,13 +57,25 @@
 		// Custom format for Galician (gallego) as fallback if Intl fails
 		if ($currentLanguage === 'gl') {
 			const galegoMonths = [
-				'xan.', 'feb.', 'mar.', 'abr.', 'mai.', 'xuñ.',
-				'xul.', 'ago.', 'set.', 'out.', 'nov.', 'dec.'
+				'xan.',
+				'feb.',
+				'mar.',
+				'abr.',
+				'mai.',
+				'xuñ.',
+				'xul.',
+				'ago.',
+				'set.',
+				'out.',
+				'nov.',
+				'dec.'
 			];
-			
+
 			// Try Intl first, fall back to custom if it fails
 			try {
-				const result = new Intl.DateTimeFormat('gl-ES', options || defaultOptions).format(timestamp);
+				const result = new Intl.DateTimeFormat('gl-ES', options || defaultOptions).format(
+					timestamp
+				);
 				// Test if the formatting actually worked (some browsers return English month names)
 				if (result.includes('Jan') || result.includes('Feb') || result.includes('Mar')) {
 					throw new Error('Intl fallback needed');
@@ -100,21 +112,42 @@
 		try {
 			const formatter = new Intl.DateTimeFormat(locale, formatOptions);
 			const result = formatter.format(timestamp);
-			
+
 			// Additional validation: check if the result contains expected localized content
 			// If we get English month names when expecting another language, try fallback
 			if (locale !== 'en-US' && locale !== 'en-GB') {
-				const englishMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-									  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-									  'January', 'February', 'March', 'April', 'June',
-									  'July', 'August', 'September', 'October', 'November', 'December'];
-				
-				const hasEnglishMonth = englishMonths.some(month => result.includes(month));
+				const englishMonths = [
+					'Jan',
+					'Feb',
+					'Mar',
+					'Apr',
+					'May',
+					'Jun',
+					'Jul',
+					'Aug',
+					'Sep',
+					'Oct',
+					'Nov',
+					'Dec',
+					'January',
+					'February',
+					'March',
+					'April',
+					'June',
+					'July',
+					'August',
+					'September',
+					'October',
+					'November',
+					'December'
+				];
+
+				const hasEnglishMonth = englishMonths.some((month) => result.includes(month));
 				if (hasEnglishMonth) {
 					throw new Error('Locale not properly supported, falling back');
 				}
 			}
-			
+
 			return result;
 		} catch {
 			// Fallback to English if locale is not supported

@@ -13,9 +13,9 @@ use spin_sdk::http::Response;
 pub fn handle_from_seed(_body: &[u8]) -> anyhow::Result<Response> {
     // TODO: Implement seed-based generation
     // For now, return a placeholder response
-    
+
     let response_body = "from-seed endpoint - POST only";
-    
+
     Ok(Response::builder()
         .status(200)
         .header("content-type", "text/plain")

@@ -190,7 +190,7 @@ function _page($$payload, $$props) {
     }
   }
   searchParams = store_get($$store_subs ??= {}, "$page", page).url.searchParams;
-  usedProvidedSeed = searchParams.get("seed") !== null;
+  usedProvidedSeed = searchParams.has("seed");
   getEndpointDisplayName = (endpoint) => {
     switch (endpoint) {
       case "custom":
@@ -249,44 +249,7 @@ function _page($$payload, $$props) {
     } else {
       $$payload.out.push("<!--[!-->");
     }
-    $$payload.out.push(`<!--]--></div></div> `);
-    if (store_get($$store_subs ??= {}, "$resultState", resultState).seed) {
-      $$payload.out.push("<!--[-->");
-      $$payload.out.push(`<div class="mb-6">`);
-      if (usedProvidedSeed) {
-        $$payload.out.push("<!--[-->");
-        $$payload.out.push(`<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"><h4 class="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedUsed") || "Seed Used")}</h4> <p class="text-xs font-mono text-blue-700 dark:text-blue-300 break-all">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).seed)}</p></div>`);
-      } else {
-        $$payload.out.push("<!--[!-->");
-        $$payload.out.push(`<label for="seed-value" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seedUsed") || "Seed Used")}</label> <div class="relative"><textarea id="seed-value" readonly class="w-full p-3 pb-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-xs resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px] text-gray-600 dark:text-gray-400">`);
-        const $$body_1 = escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).seed);
-        if ($$body_1) {
-          $$payload.out.push(`${$$body_1}`);
-        }
-        $$payload.out.push(`</textarea> `);
-        if (!store_get($$store_subs ??= {}, "$isLoading", isLoading)) {
-          $$payload.out.push("<!--[-->");
-          $$payload.out.push(`<button${attr_class(`absolute bottom-2 ${stringify(store_get($$store_subs ??= {}, "$isRTL", isRTL) ? "left-2" : "right-2")} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 ${stringify("bg-blue-600 hover:bg-blue-700 text-white")}`)}>`);
-          Iconize($$payload, {
-            conf: {
-              icon: "copy",
-              iconSize: "w-3 h-3"
-            },
-            children: ($$payload2) => {
-              $$payload2.out.push(`<!---->${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.copySeed"))}`);
-            }
-          });
-          $$payload.out.push(`<!----></button>`);
-        } else {
-          $$payload.out.push("<!--[!-->");
-        }
-        $$payload.out.push(`<!--]--></div>`);
-      }
-      $$payload.out.push(`<!--]--></div>`);
-    } else {
-      $$payload.out.push("<!--[!-->");
-    }
-    $$payload.out.push(`<!--]--> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generationDetails"))}</h3> `);
+    $$payload.out.push(`<!--]--></div></div> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.generationDetails"))}</h3> `);
     Icon($$payload, {
       name: "chevron-down",
       size: "w-5 h-5",
@@ -303,7 +266,21 @@ function _page($$payload, $$props) {
     } else {
       $$payload.out.push("<!--[!-->");
     }
-    $$payload.out.push(`<!--]--></dd></div></dl></div> <div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.parametersUsed"))}</h3> `);
+    $$payload.out.push(`<!--]--></dd></div> `);
+    if (store_get($$store_subs ??= {}, "$resultState", resultState).seed) {
+      $$payload.out.push("<!--[-->");
+      $$payload.out.push(`<div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.seed"))}</dt> <dd class="text-xs font-mono text-gray-900 dark:text-white break-all">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).seed)}</dd></div>`);
+    } else {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]--> `);
+    if (store_get($$store_subs ??= {}, "$resultState", resultState).otp) {
+      $$payload.out.push("<!--[-->");
+      $$payload.out.push(`<div><dt class="text-sm font-medium text-gray-500 dark:text-gray-400">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.otp"))}</dt> <dd class="text-sm font-mono text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$resultState", resultState).otp)}</dd></div>`);
+    } else {
+      $$payload.out.push("<!--[!-->");
+    }
+    $$payload.out.push(`<!--]--></dl></div> <div><button class="w-full text-left flex items-center justify-between md:pointer-events-none md:cursor-default mb-3"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">${escape_html(store_get($$store_subs ??= {}, "$_", _)("common.parametersUsed"))}</h3> `);
     Icon($$payload, {
       name: "chevron-down",
       size: "w-5 h-5",

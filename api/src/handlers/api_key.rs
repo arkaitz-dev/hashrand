@@ -1,22 +1,7 @@
 use crate::types::{AlphabetType, HashResponse};
-use crate::utils::{generate_random_seed, generate_with_seed, seed_to_hex};
+use crate::utils::{generate_random_seed, generate_with_seed, seed_to_base58, base58_to_seed};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
-
-/// Convert hex string to 32-byte seed array
-fn hex_to_seed(hex_str: &str) -> Result<[u8; 32], String> {
-    if hex_str.len() != 64 {
-        return Err("Seed must be exactly 64 hex characters".to_string());
-    }
-    
-    let mut seed = [0u8; 32];
-    for i in 0..32 {
-        let hex_byte = &hex_str[i*2..i*2+2];
-        seed[i] = u8::from_str_radix(hex_byte, 16)
-            .map_err(|_| "Invalid hex character in seed".to_string())?;
-    }
-    Ok(seed)
-}
 
 /// Handle API key requests (both GET and POST)
 pub fn handle_api_key_request(req: Request) -> anyhow::Result<Response> {
@@ -34,10 +19,7 @@ pub fn handle_api_key_request(req: Request) -> anyhow::Result<Response> {
 /// Handle GET request for API key generation
 fn handle_api_key_get(req: Request) -> anyhow::Result<Response> {
     let uri_string = req.uri().to_string();
-    let query_string = uri_string
-        .split('?')
-        .nth(1)
-        .unwrap_or("");
+    let query_string = uri_string.split('?').nth(1).unwrap_or("");
     let params = crate::utils::query::parse_query_params(query_string);
     handle_api_key(params)
 }
@@ -47,17 +29,17 @@ fn handle_api_key_post(req: Request) -> anyhow::Result<Response> {
     let body = req.body();
     let json_str = String::from_utf8(body.to_vec())
         .map_err(|_| anyhow::anyhow!("Invalid UTF-8 in request body"))?;
-    
+
     let json_value: serde_json::Value = serde_json::from_str(&json_str)
         .map_err(|_| anyhow::anyhow!("Invalid JSON in request body"))?;
-    
-    let seed_str = json_value.get("seed")
+
+    let seed_str = json_value
+        .get("seed")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("Missing 'seed' field in JSON body"))?;
-    
-    let seed_32 = hex_to_seed(seed_str)
-        .map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
-    
+
+    let seed_32 = base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
+
     // Extract other parameters from JSON
     let mut params = HashMap::new();
     if let Some(length) = json_value.get("length").and_then(|v| v.as_u64()) {
@@ -66,7 +48,7 @@ fn handle_api_key_post(req: Request) -> anyhow::Result<Response> {
     if let Some(alphabet) = json_value.get("alphabet").and_then(|v| v.as_str()) {
         params.insert("alphabet".to_string(), alphabet.to_string());
     }
-    
+
     handle_api_key_with_seed(params, seed_32)
 }
 
@@ -78,7 +60,10 @@ fn handle_api_key(params: HashMap<String, String>) -> anyhow::Result<Response> {
 }
 
 /// Handle API key generation with provided seed
-fn handle_api_key_with_seed(params: HashMap<String, String>, seed_32: [u8; 32]) -> anyhow::Result<Response> {
+fn handle_api_key_with_seed(
+    params: HashMap<String, String>,
+    seed_32: [u8; 32],
+) -> anyhow::Result<Response> {
     let alphabet_type = params
         .get("alphabet")
         .map(|s| AlphabetType::from_str(s))
@@ -113,7 +98,7 @@ fn handle_api_key_with_seed(params: HashMap<String, String>, seed_32: [u8; 32]) 
             .build());
     }
 
-    let seed_hex = seed_to_hex(&seed_32);
+    let seed_base58 = seed_to_base58(&seed_32);
 
     // Generate API key with ak_ prefix using seeded generator
     let alphabet = alphabet_type.as_chars();
@@ -121,7 +106,7 @@ fn handle_api_key_with_seed(params: HashMap<String, String>, seed_32: [u8; 32]) 
     let api_key = format!("ak_{}", key_part);
 
     // Create JSON response
-    let response = HashResponse::new(api_key, seed_hex);
+    let response = HashResponse::new(api_key, seed_base58);
     let json_body = serde_json::to_string(&response)?;
 
     Ok(Response::builder()

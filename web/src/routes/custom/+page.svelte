@@ -23,14 +23,14 @@
 
 	// Form state - will be initialized in onMount
 	let params: GenerateParams = getDefaultParams();
-	let seedInput: string = ''; // Optional seed input
+	let urlProvidedSeed: string = ''; // Seed from URL parameters (read-only)
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
 
 	// Function to validate alphabet parameter
 	function isValidAlphabet(value: string): value is AlphabetType {
-		return ['base58', 'no-look-alike', 'full', 'full-with-symbols'].includes(value);
+		return ['base58', 'no-look-alike', 'full', 'full-with-symbols', 'numeric'].includes(value);
 	}
 
 	// Reactive alphabet options that update when language changes
@@ -54,22 +54,26 @@
 			value: 'full-with-symbols' as AlphabetType,
 			label: $_('alphabets.full-with-symbols'),
 			description: $_('custom.maxEntropyDescription')
+		},
+		{
+			value: 'numeric' as AlphabetType,
+			label: $_('alphabets.numeric'),
+			description: $_('custom.numericDescription')
 		}
 	];
 
-	// Seed validation functions
-	function isValidHexSeed(seed: string): boolean {
-		if (!seed) return true; // Empty seed is valid (optional)
-		// Must be exactly 64 characters (32 bytes in hex) and only hex characters
-		return /^[0-9a-fA-F]{64}$/.test(seed);
-	}
+	// Seed validation functions (commented out as we now only show seeds read-only)
+	// function isValidHexSeed(seed: string): boolean {
+	// 	if (!seed) return true; // Empty seed is valid (optional)
+	// 	// Must be exactly 64 characters (32 bytes in hex) and only hex characters
+	// 	return /^[0-9a-fA-F]{64}$/.test(seed);
+	// }
 
 	// Validation
 	$: lengthValid = params.length && params.length >= 2 && params.length <= 128;
 	$: prefixValid = !params.prefix || params.prefix.length <= 32;
 	$: suffixValid = !params.suffix || params.suffix.length <= 32;
-	$: seedValid = isValidHexSeed(seedInput);
-	$: formValid = lengthValid && prefixValid && suffixValid && seedValid;
+	$: formValid = lengthValid && prefixValid && suffixValid;
 
 	function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -84,10 +88,10 @@
 		urlParams.set('alphabet', params.alphabet ?? 'base58');
 		if (params.prefix) urlParams.set('prefix', params.prefix);
 		if (params.suffix) urlParams.set('suffix', params.suffix);
-		
-		// Add seed if provided
-		if (seedInput && isValidHexSeed(seedInput)) {
-			urlParams.set('seed', seedInput);
+
+		// Add seed if provided from URL
+		if (urlProvidedSeed) {
+			urlParams.set('seed', urlProvidedSeed);
 		}
 
 		goto(`/result?${urlParams.toString()}`);
@@ -134,8 +138,8 @@
 			params.suffix = urlSuffix;
 		}
 
-		if (urlSeed && isValidHexSeed(urlSeed)) {
-			seedInput = urlSeed;
+		if (urlSeed) {
+			urlProvidedSeed = urlSeed;
 		}
 	});
 </script>
@@ -266,27 +270,24 @@
 						{/if}
 					</div>
 
-					<!-- Seed -->
-					<div>
-						<label
-							for="seed"
-							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-						>
-							{$_('common.optionalSeed')}
-						</label>
-						<textarea
-							id="seed"
-							bind:value={seedInput}
-							maxlength="64"
-							rows="2"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
-							class:border-red-500={!seedValid}
-							placeholder={$_('common.optionalSeed')}
-						/>
-						{#if !seedValid}
-							<p class="text-red-500 text-sm mt-1">{$_('common.seedInvalid')}</p>
-						{/if}
-					</div>
+					<!-- Seed (only show if provided via URL) -->
+					{#if urlProvidedSeed}
+						<div>
+							<label
+								for="seed"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+							>
+								{$_('common.seed')}
+							</label>
+							<input
+								id="seed"
+								type="text"
+								value={urlProvidedSeed}
+								disabled
+								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+							/>
+						</div>
+					{/if}
 
 					<!-- Action Buttons -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-4">

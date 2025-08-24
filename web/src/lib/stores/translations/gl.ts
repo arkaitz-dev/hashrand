@@ -48,9 +48,11 @@ export const gl: I18nTexts = {
 		optionalSeed: 'Semente opcional (64 caracteres hex)',
 		seedInvalid: 'A semente debe ter exactamente 64 caracteres hexadecimais',
 		reuseSeedTitle: 'Reutilizar a mesma semente?',
-		reuseSeedMessage: 'Queres reutilizar a mesma semente para xerar o mesmo resultado, ou prefires xerar unha nova semente aleatoria?',
+		reuseSeedMessage:
+			'Queres reutilizar a mesma semente para xerar o mesmo resultado, ou prefires xerar unha nova semente aleatoria?',
 		keepSameSeed: 'Manter a mesma semente',
-		generateNewSeed: 'Xerar nova semente'
+		generateNewSeed: 'Xerar nova semente',
+		seed: 'Semente'
 	},
 	menu: {
 		title: 'Xerador de Hash',
@@ -107,7 +109,8 @@ export const gl: I18nTexts = {
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sen confusión (fácil de escribir)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
-		fullAlphanumericNote: 'O alfabeto alfanumérico completo proporciona máxima compatibilidade. Mínimo {0} caracteres para seguridade forte.',
+		fullAlphanumericNote:
+			'O alfabeto alfanumérico completo proporciona máxima compatibilidade. Mínimo {0} caracteres para seguridade forte.',
 		failedToGenerateApiKey: 'Fallou xerar a chave API'
 	},
 	alphabets: {

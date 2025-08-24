@@ -1,5 +1,5 @@
 // API types matching the backend
-export type AlphabetType = 'base58' | 'no-look-alike' | 'full' | 'full-with-symbols';
+export type AlphabetType = 'base58' | 'no-look-alike' | 'full' | 'full-with-symbols' | 'numeric';
 
 export interface GenerateParams {
 	length?: number;
@@ -49,6 +49,13 @@ export interface HashResponse {
 	seed: string;
 }
 
+export interface CustomHashResponse {
+	hash: string;
+	seed: string;
+	otp: string; // 9-digit OTP
+	timestamp: number; // Unix timestamp in seconds
+}
+
 export interface VersionResponse {
 	api_version: string;
 	ui_version: string;
@@ -67,9 +74,10 @@ export interface NavItem {
 export interface ResultState {
 	value: string;
 	seed?: string; // Hexadecimal seed when available
+	otp?: string; // 9-digit OTP (only for custom endpoint)
+	timestamp: Date;
 	params: Record<string, string | number | boolean>;
 	endpoint: string;
-	timestamp: Date;
 }
 
 // Translation support
