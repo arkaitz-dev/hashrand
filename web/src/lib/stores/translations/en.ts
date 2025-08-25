@@ -118,6 +118,35 @@ export const en: I18nTexts = {
 			'Full alphanumeric provides maximum compatibility. Minimum {0} characters for strong security.',
 		failedToGenerateApiKey: 'Failed to generate API key'
 	},
+	mnemonic: {
+		title: 'BIP39 Mnemonic Generator',
+		description: 'Generate BIP39 mnemonic phrases for cryptocurrency wallets',
+		generateMnemonic: 'Generate Mnemonic',
+		language: 'Language',
+		wordCount: 'Word Count',
+		languageDescription: 'Select the language for your mnemonic phrase',
+		words12: '12 words (128-bit entropy)',
+		words12Description: '128-bit entropy - compatible with most wallets',
+		words24: '24 words (256-bit entropy)',
+		words24Description: '256-bit entropy - maximum security for large amounts',
+		formatNotice:
+			'Generated phrases follow BIP39 standard and are compatible with most cryptocurrency wallets.',
+		securityNotice:
+			'Never share your mnemonic phrase with anyone. Anyone with access to your mnemonic can control your funds. Store it offline in a secure location.',
+		failedToGenerateMnemonic: 'Failed to generate mnemonic',
+		languages: {
+			english: 'English',
+			spanish: 'Spanish',
+			french: 'French',
+			portuguese: 'Portuguese',
+			japanese: 'Japanese',
+			chinese: 'Chinese (Simplified)',
+			chineseTraditional: 'Chinese (Traditional)',
+			italian: 'Italian',
+			korean: 'Korean',
+			czech: 'Czech'
+		}
+	},
 	alphabets: {
 		base58: 'Base58 (Bitcoin alphabet)',
 		'no-look-alike': 'No Look-alike',

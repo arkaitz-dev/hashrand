@@ -119,6 +119,35 @@ export const es: I18nTexts = {
 			'El alfabeto completo alfanumérico proporciona buena entropía. Mínimo {0} caracteres para seguridad fuerte.',
 		failedToGenerateApiKey: 'Error al generar clave API'
 	},
+	mnemonic: {
+		title: 'Generador de Frases Mnemónicas BIP39',
+		description: 'Genera frases mnemónicas BIP39 para billeteras de criptomonedas',
+		generateMnemonic: 'Generar Frase Mnemónica',
+		language: 'Idioma',
+		wordCount: 'Cantidad de Palabras',
+		languageDescription: 'Selecciona el idioma para tu frase mnemónica',
+		words12: '12 palabras (entropía de 128 bits)',
+		words12Description: 'Entropía de 128 bits - compatible con la mayoría de billeteras',
+		words24: '24 palabras (entropía de 256 bits)',
+		words24Description: 'Entropía de 256 bits - seguridad máxima para grandes cantidades',
+		formatNotice:
+			'Las frases generadas siguen el estándar BIP39 y son compatibles con la mayoría de billeteras de criptomonedas.',
+		securityNotice:
+			'Nunca compartas tu frase mnemónica con nadie. Cualquier persona con acceso a tu frase mnemónica puede controlar tus fondos. Guárdala sin conexión en un lugar seguro.',
+		failedToGenerateMnemonic: 'Error al generar frase mnemónica',
+		languages: {
+			english: 'Inglés',
+			spanish: 'Español',
+			french: 'Francés',
+			portuguese: 'Portugués',
+			japanese: 'Japonés',
+			chinese: 'Chino (Simplificado)',
+			chineseTraditional: 'Chino (Tradicional)',
+			italian: 'Italiano',
+			korean: 'Coreano',
+			czech: 'Checo'
+		}
+	},
 	alphabets: {
 		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sin Confusión',

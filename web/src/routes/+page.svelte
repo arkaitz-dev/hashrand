@@ -25,6 +25,8 @@
 				return $_('password.title');
 			case 'api-key':
 				return $_('apiKey.title');
+			case 'mnemonic':
+				return $_('mnemonic.title');
 			default:
 				return '';
 		}
@@ -38,6 +40,8 @@
 				return $_('password.description');
 			case 'api-key':
 				return $_('apiKey.description');
+			case 'mnemonic':
+				return $_('mnemonic.description');
 			default:
 				return '';
 		}

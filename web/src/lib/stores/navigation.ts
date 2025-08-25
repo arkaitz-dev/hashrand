@@ -25,6 +25,13 @@ export const navigationItems: NavItem[] = [
 		description: 'Generate API keys with ak_ prefix for applications',
 		path: '/api-key',
 		icon: '🔑'
+	},
+	{
+		id: 'mnemonic',
+		title: 'BIP39 Mnemonic',
+		description: 'Generate BIP39 mnemonic phrases for cryptocurrency wallets',
+		path: '/mnemonic',
+		icon: '💾'
 	}
 ];
 

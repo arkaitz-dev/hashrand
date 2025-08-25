@@ -77,12 +77,18 @@
 			const suffix = searchParams.get('suffix');
 			const inputSeed = searchParams.get('seed');
 
+			// Get mnemonic-specific parameters
+			const language = searchParams.get('language');
+			const words = searchParams.get('words');
+
 			if (length) params.length = parseInt(length);
 			if (alphabet) params.alphabet = alphabet;
 			if (prefix) params.prefix = prefix;
 			if (suffix) params.suffix = suffix;
+			if (language) params.language = language;
+			if (words) params.words = parseInt(words);
 
-			let response: string | import('$lib/types').HashResponse;
+			let response: import('$lib/types').CustomHashResponse;
 
 			// If we have a seed, use POST to the appropriate endpoint
 			if (inputSeed) {
@@ -120,6 +126,15 @@
 						apiKeySeedRequest.alphabet = params.alphabet as 'no-look-alike' | 'full';
 
 					response = await api.generateApiKeyWithSeed(apiKeySeedRequest);
+				} else if (endpoint === 'mnemonic') {
+					const mnemonicSeedRequest = {
+						seed: inputSeed
+					} as import('$lib/types').SeedMnemonicRequest;
+
+					if (params.language) mnemonicSeedRequest.language = params.language as string;
+					if (params.words) mnemonicSeedRequest.words = params.words as 12 | 24;
+
+					response = await api.generateMnemonicWithSeed(mnemonicSeedRequest);
 				} else {
 					throw new Error($_('common.unknownEndpoint'));
 				}
@@ -136,36 +151,19 @@
 					case 'api-key':
 						response = await api.generateApiKey(params);
 						break;
+					case 'mnemonic':
+						response = await api.generateMnemonic(params);
+						break;
 					default:
 						throw new Error($_('common.unknownEndpoint'));
 				}
 			}
 
-			// Handle both string and JSON responses
-			let value: string;
-			let seed: string | undefined;
-			let otp: string | undefined;
-			let responseTimestamp: Date;
-
-			if (typeof response === 'string') {
-				value = response;
-				seed = undefined;
-				otp = undefined;
-				responseTimestamp = new Date();
-			} else if ('otp' in response) {
-				// CustomHashResponse from custom endpoint
-				const customResponse = response as import('$lib/types').CustomHashResponse;
-				value = customResponse.hash;
-				seed = customResponse.seed;
-				otp = customResponse.otp;
-				responseTimestamp = new Date(customResponse.timestamp * 1000); // Convert from seconds to ms
-			} else {
-				// Standard HashResponse
-				value = response.hash;
-				seed = response.seed;
-				otp = undefined;
-				responseTimestamp = new Date();
-			}
+			// All endpoints now return CustomHashResponse
+			const value = response.hash;
+			const seed = response.seed;
+			const otp = response.otp;
+			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
 			// Set the result state
 			setResult({
@@ -227,6 +225,8 @@
 				return $_('password.title');
 			case 'api-key':
 				return $_('apiKey.title');
+			case 'mnemonic':
+				return $_('mnemonic.title');
 			default:
 				return endpoint;
 		}
@@ -242,6 +242,8 @@
 				return '🔐';
 			case 'api-key':
 				return '🔑';
+			case 'mnemonic':
+				return '💾';
 			default:
 				return '📝';
 		}
@@ -257,6 +259,8 @@
 				return 'blue';
 			case 'api-key':
 				return 'blue';
+			case 'mnemonic':
+				return 'blue';
 			default:
 				return 'gray';
 		}
@@ -268,7 +272,9 @@
 			length: $_('common.length'),
 			alphabet: $_('common.alphabet'),
 			prefix: $_('custom.prefix') || 'Prefix',
-			suffix: $_('custom.suffix') || 'Suffix'
+			suffix: $_('custom.suffix') || 'Suffix',
+			language: $_('mnemonic.language'),
+			words: $_('mnemonic.wordCount')
 		};
 
 		return translations[key] || key.replace(/([A-Z])/g, ' $1').trim();
@@ -283,6 +289,16 @@
 		// Translate alphabet types
 		if (key === 'alphabet' && typeof value === 'string') {
 			return $_(`alphabets.${value}`) || value;
+		}
+
+		// Translate language values
+		if (key === 'language' && typeof value === 'string') {
+			return $_(`mnemonic.languages.${value}`) || value;
+		}
+
+		// Translate words count with descriptive text
+		if (key === 'words' && typeof value === 'number') {
+			return value === 12 ? $_('mnemonic.words12') : $_('mnemonic.words24');
 		}
 
 		return String(value);
@@ -335,7 +351,8 @@
 			custom: '/custom',
 			generate: '/custom', // backward compatibility
 			password: '/password',
-			'api-key': '/api-key'
+			'api-key': '/api-key',
+			mnemonic: '/mnemonic'
 		};
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
@@ -360,6 +377,13 @@
 				if ($resultState.params.suffix) {
 					urlParams.set('suffix', String($resultState.params.suffix));
 				}
+			} else if ($resultState.endpoint === 'mnemonic') {
+				if ($resultState.params.language) {
+					urlParams.set('language', String($resultState.params.language));
+				}
+				if ($resultState.params.words) {
+					urlParams.set('words', String($resultState.params.words));
+				}
 			}
 
 			// Add seed if available
@@ -382,7 +406,8 @@
 			custom: '/custom',
 			generate: '/custom', // backward compatibility
 			password: '/password',
-			'api-key': '/api-key'
+			'api-key': '/api-key',
+			mnemonic: '/mnemonic'
 		};
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
@@ -407,6 +432,13 @@
 				if ($resultState.params.suffix) {
 					urlParams.set('suffix', String($resultState.params.suffix));
 				}
+			} else if ($resultState.endpoint === 'mnemonic') {
+				if ($resultState.params.language) {
+					urlParams.set('language', String($resultState.params.language));
+				}
+				if ($resultState.params.words) {
+					urlParams.set('words', String($resultState.params.words));
+				}
 			}
 
 			const queryString = urlParams.toString();
@@ -425,7 +457,7 @@
 
 		try {
 			const { api } = await import('$lib/api');
-			let response: string | import('$lib/types').HashResponse;
+			let response: import('$lib/types').CustomHashResponse;
 
 			// Build parameters excluding seed - force GET request by not including seed
 			const paramsForGeneration = { ...$resultState.params };
@@ -443,35 +475,18 @@
 				case 'api-key':
 					response = await api.generateApiKey(paramsForGeneration);
 					break;
+				case 'mnemonic':
+					response = await api.generateMnemonic(paramsForGeneration);
+					break;
 				default:
 					throw new Error($_('common.unknownEndpoint'));
 			}
 
-			// Handle both string and JSON responses
-			let value: string;
-			let seed: string | undefined;
-			let otp: string | undefined;
-			let responseTimestamp: Date;
-
-			if (typeof response === 'string') {
-				value = response;
-				seed = undefined;
-				otp = undefined;
-				responseTimestamp = new Date();
-			} else if ('otp' in response) {
-				// CustomHashResponse from custom endpoint
-				const customResponse = response as import('$lib/types').CustomHashResponse;
-				value = customResponse.hash;
-				seed = customResponse.seed;
-				otp = customResponse.otp;
-				responseTimestamp = new Date(customResponse.timestamp * 1000); // Convert from seconds to ms
-			} else {
-				// Standard HashResponse
-				value = response.hash;
-				seed = response.seed;
-				otp = undefined;
-				responseTimestamp = new Date();
-			}
+			// All endpoints now return CustomHashResponse
+			const value = response.hash;
+			const seed = response.seed;
+			const otp = response.otp;
+			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
 			// Update result with new value but keep same parameters and endpoint
 			setResult({

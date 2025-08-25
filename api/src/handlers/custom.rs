@@ -1,5 +1,7 @@
 use crate::types::{AlphabetType, CustomHashResponse};
-use crate::utils::{generate_random_seed, generate_with_seed, seed_to_base58, base58_to_seed};
+use crate::utils::{
+    base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
+};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -8,21 +10,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 fn contains_unwanted_patterns(s: &str) -> bool {
     s.contains("--") || s.contains("__")
 }
-
-/// Generate a 9-digit OTP using the same seed with a different nonce
-fn generate_otp(seed: [u8; 32]) -> String {
-    // Create a modified seed for OTP generation by XORing with a constant
-    let mut otp_seed = seed;
-    // XOR the first 8 bytes with a constant to create variation
-    for (i, byte) in otp_seed.iter_mut().take(8).enumerate() {
-        *byte ^= (0x5A + i) as u8; // Use different nonce for OTP
-    }
-    
-    // Generate OTP using numeric alphabet (0-9)
-    let numeric_alphabet = AlphabetType::Numeric.as_chars();
-    generate_with_seed(otp_seed, 9, &numeric_alphabet)
-}
-
 
 /// Generate hash avoiding unwanted patterns using seeded generator
 fn generate_avoiding_unwanted_patterns(
@@ -204,11 +191,9 @@ pub fn handle_custom_with_params(
 
     // Generate OTP using the same seed
     let otp = generate_otp(seed_32);
-    
+
     // Get current timestamp
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs();
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
     // Create JSON response
     let response = CustomHashResponse::new(hash, seed_base58, otp, timestamp);

@@ -11,6 +11,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.2.1] - 2025-08-25
+
+### API Backend Changes (v1.2.1)
+#### Enhanced
+- **🔐 ChaCha8 OTP Generation**: Refactored OTP generation for complete cryptographic consistency
+  - **Unified Cryptographic Architecture**: All random generation now uses ChaCha8Rng throughout the system
+    - **Hash Generation**: Uses `ChaCha8Rng::from_seed()` for main hash/password/api-key generation (existing)
+    - **OTP Generation**: Now uses `ChaCha8Rng::from_seed()` for 9-digit OTP generation (NEW)
+    - **Professional Implementation**: Replaced simple XOR approach with industry-standard ChaCha8
+  - **Enhanced Domain Separation**: Elegant cryptographic domain separation technique
+    - **Previous**: Modified first 8 bytes with XOR pattern (`0x5A + i`)
+    - **Current**: Single-byte domain separation on last byte (`otp_seed[31] ^= 0x5A`)
+    - **Cleaner Logic**: Minimal seed modification with maximum cryptographic effectiveness
+  - **Algorithm Consistency**: Single cryptographic family (ChaCha8) for all pseudorandom generation
+    - **Better Security**: ChaCha8 is cryptographically robust and industry-audited
+    - **Code Maintainability**: One RNG technology instead of mixed approaches
+    - **Professional Standards**: Follows established cryptographic best practices
+
+#### Fixed
+- **🔧 Deprecated API Usage**: Updated to modern Rust rand API
+  - **Method Migration**: Changed `rng.gen_range()` to `rng.random_range()` 
+  - **Compiler Compliance**: Eliminated deprecation warnings during build process
+  - **Future-Proof**: Updated to latest rand crate API standards
+
+#### Technical Implementation
+- **Cryptographic Architecture**: Complete ChaCha8 ecosystem implementation
+  - **Single Dependency**: `rand_chacha = "0.9.0"` handles all random generation needs
+  - **Seed Management**: Consistent 32-byte seed format across all generation functions
+  - **Domain Separation**: Professional approach using minimal seed variation
+  - **Performance**: No performance impact - ChaCha8 was already in use for main generation
+
+---
+
 ## [API v1.2.0 / Web v0.17.2] - 2025-08-24
 
 ### Major New Feature: Complete BIP39 Mnemonic Generation System
@@ -1141,6 +1174,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.2.1]** (2025-08-25) - **ENHANCED**: ChaCha8 OTP generation refactoring for complete cryptographic consistency and deprecated API fixes
 - **[API v1.2.0 / Web v0.17.2]** (2025-08-24) - **MAJOR**: Complete BIP39 mnemonic generation system with 10 languages, dual word counts, and deterministic/random modes
 - **[API v1.1.0 / Web v0.17.1]** (2025-08-24) - **BUGFIX**: Fixed regenerate button to correctly perform GET requests without seed parameters
 - **[API v1.1.0 / Web v0.17.0]** (2025-08-24) - **MAJOR**: Base58 seed format migration, numeric alphabet, OTP generation, and simplified UI seed handling
@@ -1186,7 +1220,7 @@ web/
 - **GET /api/version**: Returns both component versions
   ```json
   {
-    "api_version": "1.2.0",
+    "api_version": "1.2.1",
     "ui_version": "0.17.2"
   }
   ```

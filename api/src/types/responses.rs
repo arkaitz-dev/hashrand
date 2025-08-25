@@ -1,18 +1,20 @@
 use serde::Serialize;
 
-/// Standard response structure for all hash generation endpoints
-///
-/// Contains the generated hash and the hexadecimal representation
-/// of the 32-byte seed used to generate it
-#[derive(Serialize, Debug)]
-pub struct HashResponse {
-    /// The generated hash/ID/password/key
-    pub hash: String,
-    /// Hexadecimal representation of the 32-byte seed used for generation
-    pub seed: String,
-}
+// /// Standard response structure for hash generation endpoints
+// /// NOTE: Deprecated in favor of CustomHashResponse for all endpoints
+// ///
+// /// Contains the generated hash and the hexadecimal representation
+// /// of the 32-byte seed used to generate it
+// #[derive(Serialize, Debug)]
+// #[allow(dead_code)]
+// pub struct HashResponse {
+//     /// The generated hash/ID/password/key
+//     pub hash: String,
+//     /// Hexadecimal representation of the 32-byte seed used for generation
+//     pub seed: String,
+// }
 
-/// Enhanced response structure for custom endpoint
+/// Enhanced response structure for all hash generation endpoints
 ///
 /// Contains the generated hash, seed, plus additional OTP and timestamp
 #[derive(Serialize, Debug)]
@@ -27,16 +29,17 @@ pub struct CustomHashResponse {
     pub timestamp: u64,
 }
 
-impl HashResponse {
-    /// Creates a new HashResponse
-    ///
-    /// # Arguments
-    /// * `hash` - The generated hash string
-    /// * `seed` - The 32-byte seed as hexadecimal string
-    pub fn new(hash: String, seed: String) -> Self {
-        Self { hash, seed }
-    }
-}
+// impl HashResponse {
+//     /// Creates a new HashResponse
+//     ///
+//     /// # Arguments
+//     /// * `hash` - The generated hash string
+//     /// * `seed` - The 32-byte seed as hexadecimal string
+//     #[allow(dead_code)]
+//     pub fn new(hash: String, seed: String) -> Self {
+//         Self { hash, seed }
+//     }
+// }
 
 impl CustomHashResponse {
     /// Creates a new CustomHashResponse

@@ -1,6 +1,6 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::{
-    handle_api_key_request, handle_custom, handle_from_seed, handle_mnemonic_request, 
+    handle_api_key_request, handle_custom, handle_from_seed, handle_mnemonic_request,
     handle_password_request, handle_version,
 };
 use spin_sdk::http::{Method, Request, Response};
@@ -36,7 +36,7 @@ pub fn route_request_with_req(
                 &Method::Get => handle_custom(query_params), // Backward compatibility
                 _ => handle_method_not_allowed(),
             }
-        },
+        }
         path if path.ends_with("/api/version") => match method {
             &Method::Get => handle_version(),
             _ => handle_method_not_allowed(),

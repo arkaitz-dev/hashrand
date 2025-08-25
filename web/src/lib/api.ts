@@ -2,12 +2,13 @@ import type {
 	GenerateParams,
 	PasswordParams,
 	ApiKeyParams,
+	MnemonicParams,
 	VersionResponse,
-	HashResponse,
 	CustomHashResponse,
 	SeedGenerateRequest,
 	SeedPasswordRequest,
-	SeedApiKeyRequest
+	SeedApiKeyRequest,
+	SeedMnemonicRequest
 } from './types';
 
 const API_BASE = '/api';
@@ -26,26 +27,6 @@ class ApiError extends Error {
 	}
 }
 
-// Handle both JSON and text responses automatically
-async function handleResponse(
-	response: Response
-): Promise<string | HashResponse | CustomHashResponse> {
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
-	}
-
-	// Check content type to determine response format
-	const contentType = response.headers.get('content-type');
-	if (contentType?.includes('application/json')) {
-		// Parse JSON and check if it's a CustomHashResponse (has otp field)
-		const jsonResponse = await response.json();
-		return jsonResponse as HashResponse | CustomHashResponse;
-	} else {
-		return response.text();
-	}
-}
-
 async function handleJsonResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
 		const errorText = await response.text();
@@ -55,7 +36,7 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
-	async generate(params: GenerateParams): Promise<string | HashResponse> {
+	async generate(params: GenerateParams): Promise<CustomHashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -65,10 +46,16 @@ export const api = {
 		if (params.raw) searchParams.set('raw', 'true');
 
 		const response = await fetch(`${API_BASE}/custom?${searchParams}`);
-		return handleResponse(response);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<CustomHashResponse>;
 	},
 
-	async generatePassword(params: PasswordParams): Promise<string | HashResponse> {
+	async generatePassword(params: PasswordParams): Promise<CustomHashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -76,10 +63,16 @@ export const api = {
 		if (params.raw) searchParams.set('raw', 'true');
 
 		const response = await fetch(`${API_BASE}/password?${searchParams}`);
-		return handleResponse(response);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<CustomHashResponse>;
 	},
 
-	async generateApiKey(params: ApiKeyParams): Promise<string | HashResponse> {
+	async generateApiKey(params: ApiKeyParams): Promise<CustomHashResponse> {
 		const searchParams = new URLSearchParams();
 
 		if (params.length !== undefined) searchParams.set('length', params.length.toString());
@@ -87,7 +80,13 @@ export const api = {
 		if (params.raw) searchParams.set('raw', 'true');
 
 		const response = await fetch(`${API_BASE}/api-key?${searchParams}`);
-		return handleResponse(response);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<CustomHashResponse>;
 	},
 
 	async getVersion(): Promise<VersionResponse> {
@@ -95,7 +94,7 @@ export const api = {
 		return handleJsonResponse<VersionResponse>(response);
 	},
 
-	async generateWithSeed(seedRequest: SeedGenerateRequest): Promise<HashResponse> {
+	async generateWithSeed(seedRequest: SeedGenerateRequest): Promise<CustomHashResponse> {
 		const response = await fetch(`${API_BASE}/custom`, {
 			method: 'POST',
 			headers: {
@@ -109,10 +108,10 @@ export const api = {
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
 
-		return response.json() as Promise<HashResponse>;
+		return response.json() as Promise<CustomHashResponse>;
 	},
 
-	async generatePasswordWithSeed(seedRequest: SeedPasswordRequest): Promise<HashResponse> {
+	async generatePasswordWithSeed(seedRequest: SeedPasswordRequest): Promise<CustomHashResponse> {
 		const response = await fetch(`${API_BASE}/password`, {
 			method: 'POST',
 			headers: {
@@ -126,10 +125,10 @@ export const api = {
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
 
-		return response.json() as Promise<HashResponse>;
+		return response.json() as Promise<CustomHashResponse>;
 	},
 
-	async generateApiKeyWithSeed(seedRequest: SeedApiKeyRequest): Promise<HashResponse> {
+	async generateApiKeyWithSeed(seedRequest: SeedApiKeyRequest): Promise<CustomHashResponse> {
 		const response = await fetch(`${API_BASE}/api-key`, {
 			method: 'POST',
 			headers: {
@@ -143,7 +142,41 @@ export const api = {
 			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 		}
 
-		return response.json() as Promise<HashResponse>;
+		return response.json() as Promise<CustomHashResponse>;
+	},
+
+	async generateMnemonic(params: MnemonicParams = {}): Promise<CustomHashResponse> {
+		const urlParams = new URLSearchParams();
+		if (params.language) urlParams.set('language', params.language);
+		if (params.words) urlParams.set('words', params.words.toString());
+		if (params.raw !== undefined) urlParams.set('raw', params.raw.toString());
+
+		const url = `${API_BASE}/mnemonic${urlParams.toString() ? `?${urlParams}` : ''}`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<CustomHashResponse>;
+	},
+
+	async generateMnemonicWithSeed(seedRequest: SeedMnemonicRequest): Promise<CustomHashResponse> {
+		const response = await fetch(`${API_BASE}/mnemonic`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(seedRequest)
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<CustomHashResponse>;
 	}
 };
 

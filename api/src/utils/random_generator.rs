@@ -84,14 +84,37 @@ pub fn base58_to_seed(base58_str: &str) -> Result<[u8; 32], String> {
     let decoded = bs58::decode(base58_str)
         .into_vec()
         .map_err(|e| format!("Invalid base58 string: {}", e))?;
-    
+
     if decoded.len() != 32 {
-        return Err(format!("Seed must be exactly 32 bytes, got {} bytes", decoded.len()));
+        return Err(format!(
+            "Seed must be exactly 32 bytes, got {} bytes",
+            decoded.len()
+        ));
     }
-    
+
     let mut seed = [0u8; 32];
     seed.copy_from_slice(&decoded);
     Ok(seed)
+}
+
+/// Generate a 9-digit OTP using ChaCha8 with domain separation
+pub fn generate_otp(seed: [u8; 32]) -> String {
+    use crate::types::AlphabetType;
+    use rand::Rng;
+
+    // Create domain-separated seed for OTP generation (professional approach)
+    let mut otp_seed = seed;
+    // Modify last byte to create cryptographic domain separation
+    otp_seed[31] ^= 0x5A; // Use different nonce for OTP domain
+
+    // Generate OTP using ChaCha8Rng (consistent with rest of system)
+    let mut rng = ChaCha8Rng::from_seed(otp_seed);
+    let numeric_alphabet = AlphabetType::Numeric.as_chars();
+
+    // Generate 9 digits using ChaCha8
+    (0..9)
+        .map(|_| numeric_alphabet[rng.random_range(0..numeric_alphabet.len())])
+        .collect()
 }
 
 #[cfg(test)]
@@ -102,7 +125,7 @@ mod tests {
     fn test_seeded_generator_deterministic() {
         let seed = [42u8; 32];
         let alphabet = ['a', 'b', 'c', 'd', 'e']; // Simple alphabet for testing
-        
+
         let result1 = generate_with_seed(seed, 10, &alphabet);
         let result2 = generate_with_seed(seed, 10, &alphabet);
 
@@ -138,10 +161,14 @@ mod tests {
     fn test_seed_to_base58() {
         let seed = [42u8; 32]; // Consistent seed for testing
         let base58 = seed_to_base58(&seed);
-        
+
         // Base58 string should not be empty and contain only valid base58 chars
         assert!(!base58.is_empty());
-        assert!(base58.chars().all(|c| "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".contains(c)));
+        assert!(
+            base58
+                .chars()
+                .all(|c| "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".contains(c))
+        );
     }
 
     #[test]
@@ -149,7 +176,7 @@ mod tests {
         let original_seed = [42u8; 32];
         let base58_str = seed_to_base58(&original_seed);
         let decoded_seed = base58_to_seed(&base58_str).unwrap();
-        
+
         assert_eq!(original_seed, decoded_seed);
     }
 
@@ -158,7 +185,7 @@ mod tests {
         // Test invalid base58 string
         let result = base58_to_seed("invalid_base58_0OIl");
         assert!(result.is_err());
-        
+
         // Test wrong length by manually creating a base58 string of wrong length
         // This should result in the wrong number of bytes when decoded
         let short_base58 = bs58::encode(&[42u8; 16]).into_string(); // 16 bytes instead of 32

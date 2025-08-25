@@ -1,7 +1,10 @@
-use crate::types::{AlphabetType, HashResponse};
-use crate::utils::{generate_random_seed, generate_with_seed, seed_to_base58, base58_to_seed};
+use crate::types::{AlphabetType, CustomHashResponse};
+use crate::utils::{
+    base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
+};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Handle API key requests (both GET and POST)
 pub fn handle_api_key_request(req: Request) -> anyhow::Result<Response> {
@@ -105,8 +108,14 @@ fn handle_api_key_with_seed(
     let key_part = generate_with_seed(seed_32, length, &alphabet);
     let api_key = format!("ak_{}", key_part);
 
+    // Generate OTP from seed
+    let otp = generate_otp(seed_32);
+
+    // Get current timestamp
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+
     // Create JSON response
-    let response = HashResponse::new(api_key, seed_base58);
+    let response = CustomHashResponse::new(api_key, seed_base58, otp, timestamp);
     let json_body = serde_json::to_string(&response)?;
 
     Ok(Response::builder()

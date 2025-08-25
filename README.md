@@ -228,7 +228,7 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.2.0",
+  "api_version": "1.2.1",
   "ui_version": "0.17.2"
 }
 ```
@@ -589,10 +589,15 @@ just check    # Pre-commit verification (strict, must pass)
 [dependencies]
 spin-sdk = "3.1.0"          # Core Spin framework for HTTP components
 nanoid = "0.4.0"            # Cryptographically secure random generation
+rand = "0.9.2"              # Random number generation utilities
+rand_chacha = "0.9.0"       # ChaCha8 cryptographically secure PRNG for unified generation
 serde = "1.0.219"           # Serialization framework with derive features
 serde_json = "1.0.142"      # JSON serialization
 anyhow = "1"                # Error handling
 bip39 = { version = "2.2.0", features = ["spanish", "french", "portuguese", "chinese-simplified", "chinese-traditional", "japanese", "italian", "korean", "czech"] }  # BIP39 mnemonic generation with all language support
+bs58 = "0.5.1"              # Base58 encoding for seed format
+hex = "0.4.3"               # Hexadecimal utilities
+sha3 = "0.10.8"             # SHA3-256 hashing for seed generation
 ```
 
 #### Linting & Formatting Tools
@@ -655,11 +660,23 @@ Length must be between 2 and 128
 
 ## Security Considerations
 
-- All generation uses cryptographically secure random number generation
-- No sensitive data is logged or stored
-- Stateless design with no data persistence
-- Input validation prevents injection attacks
-- Rate limiting handled at infrastructure level
+### Cryptographic Architecture
+- **ChaCha8 Unified Generation**: All pseudorandom generation uses ChaCha8Rng for cryptographic consistency
+  - **Hash/Password/API Key Generation**: Uses `ChaCha8Rng::from_seed()` with 32-byte seeds
+  - **OTP Generation**: Uses ChaCha8 with domain separation (last byte XOR) for independent randomness
+  - **Industry Standard**: ChaCha8 is cryptographically robust and widely audited
+  - **Domain Separation**: Professional technique ensures hash and OTP are cryptographically independent
+- **Seed Security**: All seeds use cryptographically secure random generation
+  - **Initial Generation**: Uses `nanoid` (128 characters) → SHA3-256 → 32-byte seed
+  - **Base58 Encoding**: Eliminates confusing characters (0, O, I, l) for better usability
+  - **Deterministic Reproducibility**: Same seed always produces same results for audit trails
+
+### General Security
+- **Stateless Design**: No data persistence or sensitive information storage
+- **Input Validation**: Comprehensive parameter validation prevents injection attacks
+- **Error Handling**: Descriptive error messages without information leakage
+- **Rate Limiting**: Handled at infrastructure level (reverse proxy/CDN)
+- **No Logging**: No sensitive data or generated values logged to system
 
 ## Performance
 

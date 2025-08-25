@@ -513,3 +513,95 @@ The web interface has been **fully reorganized** to eliminate deprecated warning
 - **Future-Proof**: Ready for SvelteKit v3 migration
 - **Standards Compliant**: Follows official SvelteKit best practices
 - **Independent Evolution**: API and Web can evolve at different speeds
+
+---
+
+# Session History
+
+## Session: 2025-08-25 - ChaCha8 OTP Refactoring & Mnemonic Integration
+
+### Accomplished Tasks
+
+#### 🔐 ChaCha8 OTP Generation Refactoring (API v1.2.1)
+- **Problem Identified**: Mixed cryptographic approaches (ChaCha8 for hashes, simple XOR for OTP)
+- **Solution Implemented**: Complete migration to ChaCha8 for all pseudorandom generation
+- **Technical Changes**:
+  - Refactored `generate_otp()` function in `api/src/utils/random_generator.rs`
+  - Replaced XOR approach with `ChaCha8Rng::from_seed()` 
+  - Improved domain separation: single byte XOR (`otp_seed[31] ^= 0x5A`) instead of 8-byte pattern
+  - Fixed deprecated `gen_range()` → `random_range()` API usage
+- **Benefits Achieved**:
+  - **Cryptographic Consistency**: Entire system now uses single RNG family (ChaCha8)
+  - **Professional Implementation**: Industry-standard approach replacing "homemade" XOR
+  - **Maintainability**: Unified technology stack for all random generation
+  - **Security Enhancement**: ChaCha8 is cryptographically robust and audited
+
+#### 📋 Complete Mnemonic Support Integration
+- **Frontend Integration**: Added mnemonic navigation card to main menu (`/`)
+- **Route Implementation**: Created `/routes/mnemonic/+page.svelte` with full configuration UI
+- **Parameter Support**: Language selection (10 languages) and word count (12/24) options
+- **Result Display**: Enhanced result page to show mnemonic-specific parameters
+- **Translation Updates**: Added mnemonic-related translations for English and Spanish
+- **API Verification**: Confirmed all endpoints (custom, password, api-key, mnemonic) generate OTP correctly
+
+#### 📚 Comprehensive Documentation Updates
+- **CHANGELOG.md**: Added detailed v1.2.1 entry documenting ChaCha8 improvements
+- **README.md**: Enhanced security section with cryptographic architecture details
+- **Version Updates**: Updated all version references to API v1.2.1
+- **Dependencies Documentation**: Complete dependency list with ChaCha8 explanations
+
+### Files Modified
+
+#### API Backend Changes
+- `api/Cargo.toml` - Version bump to 1.2.1
+- `api/src/utils/random_generator.rs` - ChaCha8 OTP implementation
+- `api/src/handlers/` - All handlers (custom, password, api_key, mnemonic) verified for OTP consistency
+
+#### Web Interface Changes  
+- `web/src/lib/stores/navigation.ts` - Added mnemonic navigation item
+- `web/src/routes/mnemonic/+page.svelte` - New mnemonic configuration page (NEW FILE)
+- `web/src/routes/+page.svelte` - Updated main menu with mnemonic card
+- `web/src/routes/result/+page.svelte` - Enhanced for mnemonic parameter display
+- `web/src/lib/types/index.ts` - Type definitions updated
+- `web/src/lib/stores/translations/` - Translation updates for mnemonic support
+
+#### Documentation Changes
+- `README.md` - Updated version, dependencies, and security sections
+- `CHANGELOG.md` - New v1.2.1 entry with comprehensive change documentation
+
+### Architectural Decisions Made
+
+#### Cryptographic Architecture
+- **Decision**: Standardize on ChaCha8 for all pseudorandom generation
+- **Rationale**: Professional consistency, industry standard, better maintainability
+- **Implementation**: Single-byte domain separation for OTP vs hash generation
+
+#### User Interface Design
+- **Decision**: Maintain existing UI patterns for mnemonic integration
+- **Rationale**: Consistency with password/api-key generators, familiar user experience
+- **Implementation**: Reused form patterns, navigation structure, and result display logic
+
+### Quality Assurance Completed
+- ✅ **Code Quality**: All linting and formatting checks pass (`just check`)
+- ✅ **Compilation**: Clean build with zero warnings
+- ✅ **Functionality**: All endpoints tested and verified working
+- ✅ **Version Consistency**: API version endpoint returns correct v1.2.1
+- ✅ **Documentation**: Complete documentation updates across all relevant files
+
+### Current State
+- **API Version**: 1.2.1 (stable, production-ready with ChaCha8 improvements)
+- **Web Version**: 0.17.2 (feature-complete with mnemonic support)
+- **System Status**: Fully functional with unified cryptographic architecture
+- **Documentation**: Up-to-date and comprehensive
+
+### Technical Context for Future Sessions
+- **Cryptographic Foundation**: System now uses ChaCha8 exclusively for all random generation
+- **Mnemonic Integration**: Complete BIP39 implementation with 10 languages and dual word counts
+- **Code Quality Standards**: Comprehensive linting system in place with zero warnings
+- **Version Management**: Independent versioning for API (stable 1.x.x) and Web (development 0.x.x)
+
+### No Pending Issues
+- All user requests completed successfully
+- No known bugs or issues identified
+- No technical debt created during this session
+- System ready for production use

@@ -21,6 +21,12 @@ export interface ApiKeyParams {
 	raw?: boolean;
 }
 
+export interface MnemonicParams {
+	language?: string;
+	words?: 12 | 24;
+	raw?: boolean;
+}
+
 // POST request body for seeded generation
 export interface SeedGenerateRequest {
 	length?: number;
@@ -43,11 +49,14 @@ export interface SeedApiKeyRequest {
 	seed: string; // 64-character hexadecimal string
 }
 
-// API Response types
-export interface HashResponse {
-	hash: string;
-	seed: string;
+export interface SeedMnemonicRequest {
+	language?: string;
+	words?: 12 | 24;
+	seed: string; // 64-character hexadecimal string
 }
+
+// API Response types
+// NOTE: HashResponse deprecated in favor of CustomHashResponse for all endpoints
 
 export interface CustomHashResponse {
 	hash: string;

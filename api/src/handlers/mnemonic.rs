@@ -1,8 +1,11 @@
-use crate::types::HashResponse;
-use crate::utils::{generate_random_seed, seed_to_base58, base58_to_seed, query::parse_query_params};
+use crate::types::CustomHashResponse;
+use crate::utils::{
+    base58_to_seed, generate_otp, generate_random_seed, query::parse_query_params, seed_to_base58,
+};
 use bip39::{Language, Mnemonic};
 use spin_sdk::http::{Request, Response};
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Handle mnemonic requests (GET and POST)
 pub fn handle_mnemonic_request(req: Request) -> anyhow::Result<Response> {
@@ -23,7 +26,7 @@ fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
     let uri_string = req.uri().to_string();
     let query_string = uri_string.split('?').nth(1).unwrap_or("");
     let params = parse_query_params(query_string);
-    
+
     // Parse language parameter
     let language = match params.get("language") {
         Some(lang_str) => match parse_language(lang_str) {
@@ -38,7 +41,7 @@ fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
         },
         None => Language::English,
     };
-    
+
     // Parse words parameter (12 or 24)
     let words = match params.get("words") {
         Some(words_str) => match words_str.parse::<u32>() {
@@ -48,7 +51,10 @@ fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
                 return Ok(Response::builder()
                     .status(400)
                     .header("content-type", "text/plain")
-                    .body(format!("Invalid words parameter: {}. Only 12 and 24 are supported.", other))
+                    .body(format!(
+                        "Invalid words parameter: {}. Only 12 and 24 are supported.",
+                        other
+                    ))
                     .build());
             }
             Err(_) => {
@@ -61,18 +67,19 @@ fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
         },
         None => 12, // Default to 12 words
     };
-    
+
     // Generate random 32-byte seed for consistency with other endpoints
     let seed_32 = generate_random_seed();
-    
+
     // Convert seed to base58
     let seed_base58 = seed_to_base58(&seed_32);
-    
+
     // Generate mnemonic based on requested word count
     let mnemonic = match words {
         12 => {
             // Use first 16 bytes of the 32-byte seed for 12-word mnemonic (128 bits entropy)
-            let entropy_16: [u8; 16] = seed_32[0..16].try_into()
+            let entropy_16: [u8; 16] = seed_32[0..16]
+                .try_into()
                 .map_err(|_| anyhow::anyhow!("Failed to extract 16 bytes from seed"))?;
             Mnemonic::from_entropy_in(language, &entropy_16)
                 .map_err(|e| anyhow::anyhow!("Failed to generate 12-word mnemonic: {}", e))?
@@ -82,14 +89,20 @@ fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
             Mnemonic::from_entropy_in(language, &seed_32)
                 .map_err(|e| anyhow::anyhow!("Failed to generate 24-word mnemonic: {}", e))?
         }
-        _ => unreachable!("Words parameter already validated to be 12 or 24")
+        _ => unreachable!("Words parameter already validated to be 12 or 24"),
     };
-    
+
     // Convert mnemonic to string (12 or 24 words separated by spaces)
     let mnemonic_phrase = mnemonic.to_string();
-    
+
+    // Generate OTP from seed
+    let otp = generate_otp(seed_32);
+
+    // Get current timestamp
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+
     // Create JSON response
-    let response = HashResponse::new(mnemonic_phrase, seed_base58);
+    let response = CustomHashResponse::new(mnemonic_phrase, seed_base58, otp, timestamp);
     let json_body = serde_json::to_string(&response)?;
 
     Ok(Response::builder()
@@ -179,7 +192,7 @@ fn handle_mnemonic_with_seed(
         },
         None => Language::English,
     };
-    
+
     // Parse words parameter (12 or 24)
     let words = match params.get("words") {
         Some(words_str) => match words_str.parse::<u32>() {
@@ -189,7 +202,10 @@ fn handle_mnemonic_with_seed(
                 return Ok(Response::builder()
                     .status(400)
                     .header("content-type", "text/plain")
-                    .body(format!("Invalid words parameter: {}. Only 12 and 24 are supported.", other))
+                    .body(format!(
+                        "Invalid words parameter: {}. Only 12 and 24 are supported.",
+                        other
+                    ))
                     .build());
             }
             Err(_) => {
@@ -202,15 +218,16 @@ fn handle_mnemonic_with_seed(
         },
         None => 12, // Default to 12 words
     };
-    
+
     // Convert seed to base58 for response
     let seed_base58 = seed_to_base58(&seed_32);
-    
+
     // Generate mnemonic based on requested word count
     let mnemonic = match words {
         12 => {
             // Use first 16 bytes of the 32-byte seed for 12-word mnemonic (128 bits entropy)
-            let entropy_16: [u8; 16] = seed_32[0..16].try_into()
+            let entropy_16: [u8; 16] = seed_32[0..16]
+                .try_into()
                 .map_err(|_| anyhow::anyhow!("Failed to extract 16 bytes from seed"))?;
             Mnemonic::from_entropy_in(language, &entropy_16)
                 .map_err(|e| anyhow::anyhow!("Failed to generate 12-word mnemonic: {}", e))?
@@ -220,14 +237,20 @@ fn handle_mnemonic_with_seed(
             Mnemonic::from_entropy_in(language, &seed_32)
                 .map_err(|e| anyhow::anyhow!("Failed to generate 24-word mnemonic: {}", e))?
         }
-        _ => unreachable!("Words parameter already validated to be 12 or 24")
+        _ => unreachable!("Words parameter already validated to be 12 or 24"),
     };
-    
+
     // Convert mnemonic to string (12 or 24 words separated by spaces)
     let mnemonic_phrase = mnemonic.to_string();
-    
+
+    // Generate OTP from seed
+    let otp = generate_otp(seed_32);
+
+    // Get current timestamp
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+
     // Create JSON response
-    let response = HashResponse::new(mnemonic_phrase, seed_base58);
+    let response = CustomHashResponse::new(mnemonic_phrase, seed_base58, otp, timestamp);
     let json_body = serde_json::to_string(&response)?;
 
     Ok(Response::builder()
@@ -242,7 +265,7 @@ fn parse_language(lang: &str) -> anyhow::Result<Language> {
     match lang.to_lowercase().as_str() {
         "english" | "en" => Ok(Language::English),
         "spanish" | "es" => Ok(Language::Spanish),
-        "french" | "fr" => Ok(Language::French), 
+        "french" | "fr" => Ok(Language::French),
         "portuguese" | "pt" => Ok(Language::Portuguese),
         "japanese" | "ja" => Ok(Language::Japanese),
         "chinese" | "zh" | "chinese-simplified" => Ok(Language::SimplifiedChinese),
@@ -250,6 +273,9 @@ fn parse_language(lang: &str) -> anyhow::Result<Language> {
         "italian" | "it" => Ok(Language::Italian),
         "korean" | "ko" => Ok(Language::Korean),
         "czech" | "cs" => Ok(Language::Czech),
-        _ => Err(anyhow::anyhow!("Unsupported language: {}. Supported: english, spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech", lang))
+        _ => Err(anyhow::anyhow!(
+            "Unsupported language: {}. Supported: english, spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech",
+            lang
+        )),
     }
 }
