@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { spriteState } from '$lib/stores/spriteLoader';
-	import { getIconEmoji, hasProperIconEmoji } from '$lib/flagEmojis';
+	import { getIconEmoji, hasProperIconEmoji } from '$lib/iconEmojis';
 
 	/**
 	 * Icon component that uses SVG sprite for optimized icon rendering
