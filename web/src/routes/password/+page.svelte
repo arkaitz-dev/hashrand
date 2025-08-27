@@ -2,10 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
-	import Iconize from '$lib/components/Iconize.svelte';
+	import GenerateButton from '$lib/components/GenerateButton.svelte';
+	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
+	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
@@ -147,29 +148,13 @@
 			>
 				<form onsubmit={handleGenerate} class="space-y-6">
 					<!-- Alphabet -->
-					<div>
-						<label
-							for="alphabet"
-							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-						>
-							{$_('password.alphabet')}
-						</label>
-						<select
-							id="alphabet"
-							bind:value={params.alphabet}
-							onchange={handleAlphabetChange}
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-						>
-							{#each alphabetOptions as option}
-								<option value={option.value}>{option.label}</option>
-							{/each}
-						</select>
-						{#if params.alphabet}
-							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-								{alphabetOptions.find((o) => o.value === params.alphabet)?.description}
-							</p>
-						{/if}
-					</div>
+					<AlphabetSelector
+						bind:value={params.alphabet}
+						options={alphabetOptions}
+						label={$_('password.alphabet')}
+						id="alphabet"
+						onChange={handleAlphabetChange}
+					/>
 
 					<!-- Length -->
 					<div>
@@ -249,40 +234,16 @@
 
 					<!-- Action Buttons -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-4">
-						<!-- Static generate password button -->
-						<button
+						<!-- Generate password button -->
+						<GenerateButton
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center {!formValid ||
-							$isLoading
-								? 'bg-gray-400 cursor-not-allowed'
-								: 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer'}"
-						>
-							{#if $isLoading}
-								<LoadingSpinner size="sm" class="mr-2" />
-								{$_('common.loading')}...
-							{:else}
-								<Iconize conf={{ emoji: '▶', iconSize: 'text-lg', spacing: 'gap-2' }}>
-									{$_('password.generatePassword')}
-								</Iconize>
-							{/if}
-						</button>
+							loading={$isLoading}
+							text={$_('password.generatePassword')}
+						/>
 
-						<!-- RTL-aware back to menu button -->
-						<button
-							type="button"
-							onclick={() => goto('/')}
-							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<Iconize
-								conf={{
-									icon: 'home',
-									iconSize: 'w-5 h-5'
-								}}
-							>
-								{$_('common.backToMenu')}
-							</Iconize>
-						</button>
+						<!-- Back to menu button -->
+						<BackToMenuButton />
 					</div>
 				</form>
 			</div>

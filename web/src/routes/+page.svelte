@@ -1,21 +1,15 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { navigationItems } from '$lib/stores/navigation';
 	import { clearResult } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
-	import { isRTL } from '$lib/stores/rtl';
-	import Iconize from '$lib/components/Iconize.svelte';
+	import MenuCard from '$lib/components/MenuCard.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
 	});
-
-	function navigateToItem(path: string) {
-		goto(path);
-	}
 
 	function getTranslatedTitle(itemId: string): string {
 		switch (itemId) {
@@ -73,43 +67,12 @@
 		<!-- Navigation Cards -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
 			{#each navigationItems as item}
-				<button
-					class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-200 dark:border-gray-700 {$isRTL
-						? 'text-right'
-						: 'text-left'}"
-					onclick={() => navigateToItem(item.path)}
-					aria-label="{$_('common.navigateTo')} {getTranslatedTitle(item.id)}"
-				>
-					<div class="p-6">
-						<div class="mb-4 flex items-center gap-3">
-							<Iconize conf={{ emoji: item.icon, iconSize: 'text-3xl' }}></Iconize>
-							<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-								{getTranslatedTitle(item.id)}
-							</h2>
-						</div>
-						<p class="text-gray-600 dark:text-gray-300 leading-relaxed">
-							{getTranslatedDescription(item.id)}
-						</p>
-						<div
-							class="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium {$isRTL
-								? 'rtl-float-right'
-								: 'rtl-float-left'}"
-						>
-							<Iconize
-								conf={{
-									icon: 'arrow-right',
-									rtlIcon: 'arrow-left',
-									iconSize: 'w-4 h-4',
-									spacing: 'gap-1',
-									invertposition: true
-								}}
-							>
-								{$_('common.choose')}
-							</Iconize>
-						</div>
-						<div class="clear-both"></div>
-					</div>
-				</button>
+				<MenuCard
+					path={item.path}
+					icon={item.icon}
+					title={getTranslatedTitle(item.id)}
+					description={getTranslatedDescription(item.id)}
+				/>
 			{/each}
 		</div>
 

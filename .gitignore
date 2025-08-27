@@ -3,6 +3,7 @@ target/
 .spin/
 .spin-dev.log
 .spin-dev.pid
+.npm-dev.pid
 *.wasm
 
 # Rust
@@ -10,7 +11,7 @@ target/
 *.exe
 
 # SvelteKit build artifacts
-/.svelte-kit/
+.svelte-kit/
 /web/dist/
 /web/build/
 
@@ -36,6 +37,8 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+*.back
+CLAUDE.md.back
 
 # Output directories
 .output

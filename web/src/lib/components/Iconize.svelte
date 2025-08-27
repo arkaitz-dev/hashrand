@@ -34,7 +34,7 @@
 			// Always use '>' for choose/forward buttons - the visual direction is handled by icon choice
 			return '>';
 		}
-		return 'auto'; // For all other icons, use auto to get emoji from flagEmojis.ts
+		return 'auto'; // For all other icons, use auto to get emoji from iconEmojis.ts
 	}
 </script>
 

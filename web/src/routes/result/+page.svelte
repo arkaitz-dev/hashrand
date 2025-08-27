@@ -5,6 +5,7 @@
 	import BackButton from '$lib/components/BackButton.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
 	import DateTimeLocalized from '$lib/components/DateTimeLocalized.svelte';
 	import {
@@ -733,20 +734,8 @@
 							</Iconize>
 						</button>
 
-						<!-- RTL-aware back to menu button -->
-						<button
-							onclick={() => goto('/')}
-							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<Iconize
-								conf={{
-									icon: 'home',
-									iconSize: 'w-5 h-5'
-								}}
-							>
-								{$_('common.backToMenu')}
-							</Iconize>
-						</button>
+						<!-- Back to menu button -->
+						<BackToMenuButton />
 					</div>
 				</div>
 			</div>

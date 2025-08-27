@@ -2,10 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
-	import Iconize from '$lib/components/Iconize.svelte';
+	import GenerateButton from '$lib/components/GenerateButton.svelte';
+	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
+	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
+	import TextInput from '$lib/components/TextInput.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
@@ -203,72 +205,44 @@
 					</div>
 
 					<!-- Alphabet -->
-					<div>
-						<label
-							for="alphabet"
-							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-						>
-							{$_('custom.alphabet')}
-						</label>
-						<select
-							id="alphabet"
-							bind:value={params.alphabet}
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-						>
-							{#each alphabetOptions as option}
-								<option value={option.value}>{option.label}</option>
-							{/each}
-						</select>
-						{#if params.alphabet}
-							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-								{alphabetOptions.find((o) => o.value === params.alphabet)?.description}
-							</p>
-						{/if}
-					</div>
+					<AlphabetSelector
+						bind:value={params.alphabet}
+						options={alphabetOptions}
+						label={$_('custom.alphabet')}
+						id="alphabet"
+					/>
 
 					<!-- Prefix -->
-					<div>
-						<label
-							for="prefix"
-							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-						>
-							{$_('custom.prefix')} ({$_('common.cannotExceed')} 32 {$_('common.characters')})
-						</label>
-						<input
-							type="text"
-							id="prefix"
-							bind:value={params.prefix}
-							maxlength="32"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-							class:border-red-500={!prefixValid}
-							placeholder={$_('common.optionalPrefix')}
-						/>
-						{#if !prefixValid}
-							<p class="text-red-500 text-sm mt-1">{$_('common.prefixCannotExceed')}</p>
-						{/if}
-					</div>
+					<TextInput
+						id="prefix"
+						label={$_('custom.prefix') +
+							' (' +
+							$_('common.cannotExceed') +
+							' 32 ' +
+							$_('common.characters') +
+							')'}
+						bind:value={params.prefix}
+						placeholder={$_('common.optionalPrefix')}
+						maxlength={32}
+						isValid={prefixValid}
+						errorMessage={$_('common.prefixCannotExceed')}
+					/>
 
 					<!-- Suffix -->
-					<div>
-						<label
-							for="suffix"
-							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-						>
-							{$_('custom.suffix')} ({$_('common.cannotExceed')} 32 {$_('common.characters')})
-						</label>
-						<input
-							type="text"
-							id="suffix"
-							bind:value={params.suffix}
-							maxlength="32"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-							class:border-red-500={!suffixValid}
-							placeholder={$_('common.optionalSuffix')}
-						/>
-						{#if !suffixValid}
-							<p class="text-red-500 text-sm mt-1">{$_('common.suffixCannotExceed')}</p>
-						{/if}
-					</div>
+					<TextInput
+						id="suffix"
+						label={$_('custom.suffix') +
+							' (' +
+							$_('common.cannotExceed') +
+							' 32 ' +
+							$_('common.characters') +
+							')'}
+						bind:value={params.suffix}
+						placeholder={$_('common.optionalSuffix')}
+						maxlength={32}
+						isValid={suffixValid}
+						errorMessage={$_('common.suffixCannotExceed')}
+					/>
 
 					<!-- Seed (only show if provided via URL) -->
 					{#if urlProvidedSeed}
@@ -291,37 +265,16 @@
 
 					<!-- Action Buttons -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-4">
-						<!-- TEST: Static button with explicit classes -->
-						<button
+						<!-- Generate hash button -->
+						<GenerateButton
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 text-white bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none"
-						>
-							{#if $isLoading}
-								<LoadingSpinner size="sm" class="mr-2" />
-								{$_('common.loading')}...
-							{:else}
-								<Iconize conf={{ emoji: '▶', iconSize: 'text-lg', spacing: 'gap-2' }}>
-									{$_('custom.generateHash')}
-								</Iconize>
-							{/if}
-						</button>
+							loading={$isLoading}
+							text={$_('custom.generateHash')}
+						/>
 
-						<!-- RTL-aware back to menu button with Iconize -->
-						<button
-							type="button"
-							onclick={() => goto('/')}
-							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<Iconize
-								conf={{
-									icon: 'home',
-									iconSize: 'w-5 h-5'
-								}}
-							>
-								{$_('common.backToMenu')}
-							</Iconize>
-						</button>
+						<!-- Back to menu button -->
+						<BackToMenuButton />
 					</div>
 				</form>
 			</div>

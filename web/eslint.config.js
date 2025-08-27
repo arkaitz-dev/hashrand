@@ -32,7 +32,9 @@ export default [
 				Event: 'readonly',
 				MouseEvent: 'readonly',
 				Element: 'readonly',
-				HTMLTextAreaElement: 'readonly'
+				HTMLTextAreaElement: 'readonly',
+				HTMLSelectElement: 'readonly',
+				HTMLInputElement: 'readonly'
 			}
 		},
 		plugins: {
@@ -69,7 +71,9 @@ export default [
 				Event: 'readonly',
 				MouseEvent: 'readonly',
 				Element: 'readonly',
-				HTMLTextAreaElement: 'readonly'
+				HTMLTextAreaElement: 'readonly',
+				HTMLSelectElement: 'readonly',
+				HTMLInputElement: 'readonly'
 			}
 		},
 		plugins: {

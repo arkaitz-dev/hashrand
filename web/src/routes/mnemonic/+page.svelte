@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import Iconize from '$lib/components/Iconize.svelte';
+	import GenerateButton from '$lib/components/GenerateButton.svelte';
+	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { MnemonicParams } from '$lib/types';
@@ -288,39 +288,15 @@
 					<!-- Action Buttons -->
 					<div class="flex flex-col sm:flex-row gap-4 mt-4">
 						<!-- Generate mnemonic button -->
-						<button
+						<GenerateButton
 							type="submit"
 							disabled={!formValid || $isLoading}
-							class="flex-1 text-white px-6 py-4 rounded-lg font-semibold border-none transition-all duration-200 flex items-center justify-center {!formValid ||
-							$isLoading
-								? 'bg-gray-400 cursor-not-allowed'
-								: 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg cursor-pointer'}"
-						>
-							{#if $isLoading}
-								<LoadingSpinner size="sm" class="mr-2" />
-								{$_('common.loading')}...
-							{:else}
-								<Iconize conf={{ emoji: '▶', iconSize: 'text-lg', spacing: 'gap-2' }}>
-									{$_('mnemonic.generateMnemonic')}
-								</Iconize>
-							{/if}
-						</button>
+							loading={$isLoading}
+							text={$_('mnemonic.generateMnemonic')}
+						/>
 
-						<!-- RTL-aware back to menu button -->
-						<button
-							type="button"
-							onclick={() => goto('/')}
-							class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-lg font-semibold border-none cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<Iconize
-								conf={{
-									icon: 'home',
-									iconSize: 'w-5 h-5'
-								}}
-							>
-								{$_('common.backToMenu')}
-							</Iconize>
-						</button>
+						<!-- Back to menu button -->
+						<BackToMenuButton />
 					</div>
 				</form>
 			</div>

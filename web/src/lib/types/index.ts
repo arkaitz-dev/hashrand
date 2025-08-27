@@ -77,6 +77,7 @@ export interface NavItem {
 	description: string;
 	path: string;
 	icon: string;
+	svgIcon?: string;
 }
 
 // Result state - updated to support both string and JSON responses
