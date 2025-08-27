@@ -220,6 +220,61 @@ curl -X POST "http://localhost:3000/api/api-key" \
 # Response: {"hash":"ak_T4sHeyqXb1on6mAHwhLo9Nl0HZFc0dDR91qitMPziLJwQghFqq","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR"}
 ```
 
+### User Management System
+```
+GET /api/users            # List all users  
+GET /api/users/:id        # Get specific user
+POST /api/users           # Create new user
+DELETE /api/users/:id     # Delete user
+```
+
+**Environment-Aware Database**: Automatically selects database based on request host:
+- **Development**: `localhost` or `elite.faun-pirate.ts.net` → `hashrand-dev` database
+- **Production**: All other hosts → `hashrand` database
+
+**GET /api/users Parameters:**
+- `limit` (optional) - Maximum number of users to return
+
+**POST /api/users Body (JSON):**
+```json
+{
+  "username": "user123",
+  "email": "user@example.com"
+}
+```
+
+**User Response Format:**
+```json
+{
+  "id": 1,
+  "username": "user123", 
+  "email": "user@example.com",
+  "created_at": "2025-08-27 01:18:42",
+  "updated_at": "2025-08-27 01:18:42"
+}
+```
+
+**Examples:**
+```bash
+# List all users
+curl "http://localhost:3000/api/users"
+# Response: {"count":2,"users":[{"id":1,"username":"admin","email":"admin@example.com",...}]}
+
+# Get specific user
+curl "http://localhost:3000/api/users/1"
+# Response: {"id":1,"username":"admin","email":"admin@example.com",...}
+
+# Create new user
+curl -X POST "http://localhost:3000/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"newuser","email":"newuser@example.com"}'
+# Response: {"id":3,"username":"newuser","email":"newuser@example.com",...}
+
+# Delete user
+curl -X DELETE "http://localhost:3000/api/users/3"
+# Response: {"message": "User deleted successfully"}
+```
+
 ### Get Version Information
 ```
 GET /api/version
@@ -228,7 +283,7 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.2.1",
+  "api_version": "1.3.0",
   "ui_version": "0.17.2"
 }
 ```
@@ -268,6 +323,46 @@ The web interface includes:
 - **Informational display**:
   - **URL-provided seeds**: Shows as read-only informational text
   - **API-generated seeds**: Displayed as informational metadata without copy functionality
+
+## SQLite Database System
+
+### Database Architecture
+The application includes a **complete SQLite database system** for user management with environment-aware database selection:
+
+- **Development Database**: `hashrand-dev.db` - Used for localhost and elite.faun-pirate.ts.net requests
+- **Production Database**: `hashrand.db` - Used for all other hosts
+- **Automatic Environment Detection**: Based on HTTP Host header in requests
+- **Table Auto-Creation**: Users table created automatically on first access
+
+### Database Schema
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Configuration Files
+- **`runtime-config.toml`**: Defines database paths and configuration
+- **`spin.toml`**: Declares SQLite database access permissions
+- **`data/`**: Directory containing SQLite database files
+
+### Development Usage
+The database system is fully integrated into the Spin application:
+
+```bash
+# Databases are created automatically when first accessed
+# Development requests (localhost) use hashrand-dev.db
+# Production requests use hashrand.db
+
+# Example: Create user in development
+curl -X POST "http://localhost:3000/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com"}'
+```
 
 ## Alphabet Types
 
@@ -470,12 +565,21 @@ hashrand-spin/
 ├── CLAUDE.md              # Development guidance
 ├── justfile               # Development task automation
 ├── final_test.sh          # API comprehensive test suite (43 tests)
+├── runtime-config.toml    # SQLite database configuration
 ├── Cargo.toml             # Workspace configuration
 ├── spin.toml              # Spin application configuration
+├── data/                  # SQLite database files
+│   ├── hashrand-dev.db    # Development database
+│   └── hashrand.db        # Production database (created when needed)
 ├── api/                   # API implementation (Rust + Spin)
 │   ├── Cargo.toml         # API crate configuration
 │   └── src/               # Modular source code
 │       ├── lib.rs         # Main HTTP handler
+│       ├── database/      # Database layer (NEW)
+│       │   ├── mod.rs         # Database module exports
+│       │   ├── connection.rs  # Environment-aware database connections
+│       │   ├── models.rs      # User model and data structures  
+│       │   └── operations.rs  # CRUD operations for user management
 │       ├── types/         # Data types and enums
 │       │   ├── alphabet.rs    # Alphabet type definitions
 │       │   └── responses.rs   # Response structures
@@ -484,6 +588,7 @@ hashrand-spin/
 │       │   ├── password.rs    # Password generation
 │       │   ├── api_key.rs     # API key generation
 │       │   ├── mnemonic.rs    # BIP39 mnemonic generation
+│       │   ├── users.rs       # User management endpoints (NEW)
 │       │   └── version.rs     # Version information
 │       └── utils/         # Utility functions
 │           ├── query.rs       # Query parameter parsing

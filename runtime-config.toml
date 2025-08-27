@@ -1,0 +1,12 @@
+# Runtime configuration for HashRand Spin SQLite databases
+# This file configures multiple database environments
+
+# Development database (used for localhost and elite.faun-pirate.ts.net)
+[sqlite_database.hashrand-dev]
+type = "spin"
+path = "./data/hashrand-dev.db"
+
+# Production database
+[sqlite_database.hashrand]
+type = "spin"
+path = "./data/hashrand.db"

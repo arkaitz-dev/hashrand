@@ -11,6 +11,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.3.0] - 2025-08-27
+
+### API Backend Changes (v1.3.0)
+#### Added
+- **🗄️ Complete SQLite Database System**: Full user management with environment-aware database selection
+  - **Database Module Architecture**: New modular database layer in `api/src/database/`
+    - **`connection.rs`**: Environment-aware database connections with automatic host detection
+    - **`models.rs`**: User model with complete data structures and TypeScript-compatible serialization  
+    - **`operations.rs`**: Full CRUD operations with proper error handling and SQL injection protection
+    - **`mod.rs`**: Clean module exports with unified database interface
+  - **Dual Environment Support**: Automatic database selection based on request origin
+    - **Development Database**: `hashrand-dev.db` for `localhost` and `elite.faun-pirate.ts.net` requests
+    - **Production Database**: `hashrand.db` for all other hosts
+    - **Intelligent Host Detection**: Automatic environment detection via HTTP Host header parsing
+    - **Seamless Switching**: No configuration needed - databases selected automatically
+  - **User Management REST API**: Complete CRUD operations for user entities
+    - **GET /api/users**: List users with optional limit parameter and count metadata
+    - **GET /api/users/:id**: Retrieve specific user by ID with full validation
+    - **POST /api/users**: Create new user with JSON body (username + email required)
+    - **DELETE /api/users/:id**: Delete user with existence validation and proper status codes
+    - **Professional Error Handling**: HTTP 400/404/500 responses with descriptive JSON error messages
+    - **Input Validation**: Server-side validation for usernames, emails, and ID formats
+
+#### Enhanced
+- **🏗️ Database Integration**: Seamless integration with existing Spin architecture
+  - **Configuration Setup**: New `runtime-config.toml` defining multiple database environments
+  - **Spin Configuration**: Updated `spin.toml` with SQLite database access permissions
+  - **Automatic Table Creation**: Users table created automatically on first database access
+  - **Data Directory**: Organized database files in dedicated `data/` directory
+  - **Zero-Configuration**: Databases created and initialized without manual setup
+- **🔧 Request Routing Enhancement**: Extended routing system for database endpoints
+  - **Method-Based Routing**: Support for GET, POST, DELETE methods on user endpoints
+  - **RESTful Patterns**: Clean REST API following standard conventions
+  - **Updated Help System**: Enhanced 404 responses include new user management endpoints
+  - **Backward Compatibility**: All existing endpoints remain unchanged
+
+#### Technical Implementation  
+- **Professional Database Architecture**: Industry-standard patterns and practices
+  - **Connection Pooling**: Efficient database connection management via Spin SDK
+  - **Transaction Safety**: Proper error handling with automatic rollback on failures
+  - **SQL Injection Protection**: Parameterized queries throughout all database operations
+  - **Type Safety**: Full Rust type safety from database to HTTP response
+  - **Memory Efficiency**: Optimized queries and data structures for WebAssembly constraints
+- **Development Experience**: Enhanced development workflow with database support
+  - **Runtime Configuration**: Flexible database configuration without code changes
+  - **Development vs Production**: Clear separation of environments without configuration complexity
+  - **Error Logging**: Comprehensive error logging for database operations
+  - **Testing Support**: Database operations fully testable in development environment
+
+#### Database Schema
+- **Users Table Structure**: Complete user entity with timestamps and constraints
+  ```sql
+  CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE, 
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  ```
+- **Constraint Enforcement**: Database-level uniqueness constraints for username and email
+- **Automatic Timestamps**: Server-managed creation and update timestamps
+- **Auto-Increment IDs**: Primary key generation handled automatically
+
+#### Integration Benefits
+- **Stateful Operations**: Enables user management and persistent data storage
+- **Scalable Architecture**: Foundation for future database-dependent features
+- **Development Efficiency**: Automatic environment detection eliminates configuration overhead
+- **Production Ready**: Separate databases ensure clean development/production isolation
+- **REST API Standards**: Professional API design following industry best practices
+
+---
+
 ## [API v1.2.1] - 2025-08-25
 
 ### API Backend Changes (v1.2.1)
@@ -1174,6 +1247,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.3.0]** (2025-08-27) - **MAJOR**: Complete SQLite database system with environment-aware database selection and full user management REST API
 - **[API v1.2.1]** (2025-08-25) - **ENHANCED**: ChaCha8 OTP generation refactoring for complete cryptographic consistency and deprecated API fixes
 - **[API v1.2.0 / Web v0.17.2]** (2025-08-24) - **MAJOR**: Complete BIP39 mnemonic generation system with 10 languages, dual word counts, and deterministic/random modes
 - **[API v1.1.0 / Web v0.17.1]** (2025-08-24) - **BUGFIX**: Fixed regenerate button to correctly perform GET requests without seed parameters

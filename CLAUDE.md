@@ -91,9 +91,10 @@ The project now includes **comprehensive linting and formatting** unified throug
 ## Architecture
 
 ### Overall Structure
-- **Root**: Workspace with API backend and web interface
-- **API Backend**: Rust + Fermyon Spin WebAssembly component
+- **Root**: Workspace with API backend, web interface, and SQLite database system
+- **API Backend**: Rust + Fermyon Spin WebAssembly component with database integration
 - **Web Interface**: SvelteKit SPA with TypeScript and TailwindCSS 4.0
+- **Database Layer**: SQLite with environment-aware dual database setup
 - **Development**: API runs on port 3000, web interface on port 5173 with proxy
 
 ### API Backend Structure
@@ -115,16 +116,25 @@ The project now includes **comprehensive linting and formatting** unified throug
 ```
 hashrand-spin/
 ├── Cargo.toml              # Workspace configuration
-├── spin.toml               # Spin application configuration
+├── spin.toml               # Spin application configuration with SQLite access
+├── runtime-config.toml     # SQLite database configuration (NEW)
 ├── final_test.sh           # Comprehensive test suite (64 tests)
 ├── justfile                # Development task automation
 ├── README.md               # Project documentation
 ├── CHANGELOG.md            # Version history (now with independent API/Web versioning)
 ├── CLAUDE.md               # This file - development guidance
+├── data/                   # SQLite database files (NEW)
+│   ├── hashrand-dev.db     # Development database
+│   └── hashrand.db         # Production database (created when needed)
 ├── api/                    # API implementation crate
 │   ├── Cargo.toml          # API crate configuration
 │   └── src/                # Modular source code
 │       ├── lib.rs          # Main HTTP handler and routing
+│       ├── database/       # Database layer (NEW)
+│       │   ├── mod.rs          # Database module exports
+│       │   ├── connection.rs   # Environment-aware database connections
+│       │   ├── models.rs       # User model and data structures
+│       │   └── operations.rs   # CRUD operations for user management
 │       ├── types/          # Data types and enums
 │       │   ├── mod.rs
 │       │   ├── alphabet.rs     # AlphabetType enum (4 types)
@@ -135,6 +145,7 @@ hashrand-spin/
 │       │   ├── password.rs     # /api/password endpoint
 │       │   ├── api_key.rs      # /api/api-key endpoint
 │       │   ├── mnemonic.rs     # /api/mnemonic endpoint (BIP39)
+│       │   ├── users.rs        # /api/users endpoints (NEW)
 │       │   └── version.rs      # /api/version endpoint
 │       └── utils/          # Utility functions
 │           ├── mod.rs
@@ -190,11 +201,21 @@ hashrand-spin/
 #### API Backend
 - `api/src/lib.rs` - Main HTTP handler and module organization
 - `api/src/handlers/` - Individual endpoint implementations
+- `api/src/database/` - **NEW**: Complete database layer with user management
 - `api/src/types/alphabet.rs` - Alphabet definitions and character sets
 - `api/src/utils/routing.rs` - Request routing and 404 handling
-- `spin.toml` - Spin application configuration and routing
+- `spin.toml` - Spin application configuration with SQLite access
+- `runtime-config.toml` - **NEW**: SQLite database configuration
 - `Cargo.toml` - Workspace configuration
 - `api/Cargo.toml` - API crate dependencies and configuration
+
+#### Database Layer
+- `api/src/database/connection.rs` - Environment-aware database connections
+- `api/src/database/models.rs` - User model and data structures
+- `api/src/database/operations.rs` - Complete CRUD operations with error handling
+- `api/src/handlers/users.rs` - User management REST API endpoints
+- `data/hashrand-dev.db` - Development SQLite database
+- `data/hashrand.db` - Production SQLite database
 
 #### Web Interface
 - `web/src/routes/+page.svelte` - Main menu with navigation cards
@@ -236,6 +257,64 @@ hashrand-spin/
 - `eslint-plugin-svelte = "^3.11.0"` - Svelte-specific linting rules
 - `prettier = "^3.6.2"` + `prettier-plugin-svelte` - Code formatting
 - `vite-plugin-eslint = "^1.8.1"` - Real-time ESLint integration in Vite
+
+### SQLite Database System Architecture
+
+#### Database Environment Detection
+The application features **intelligent environment detection** for automatic database selection:
+
+- **Environment Detection Logic**: Automatic host header analysis
+  - **Development Hosts**: `localhost` and `elite.faun-pirate.ts.net` → `hashrand-dev` database
+  - **Production Hosts**: All other hosts → `hashrand` database
+  - **Detection Method**: HTTP Host header parsing in `DatabaseEnvironment::from_request()`
+  - **Default Behavior**: Falls back to production environment for security
+
+#### Database Configuration Architecture
+- **Runtime Configuration**: `runtime-config.toml` defines database paths and settings
+  - **Development DB**: `./data/hashrand-dev.db` for isolated development data
+  - **Production DB**: `./data/hashrand.db` for production user data
+  - **Spin Integration**: `spin.toml` declares SQLite database access permissions
+  - **Automatic Creation**: Databases and tables created on first access
+
+#### Database Module Structure
+- **`database/connection.rs`**: Environment-aware connection management
+  - `DatabaseEnvironment` enum for development/production selection
+  - `get_database_connection()` function with error handling
+  - `initialize_database()` for automatic table creation
+- **`database/models.rs`**: Type-safe data structures
+  - `User` struct with complete serialization support
+  - Rust-to-JSON mapping for API responses
+  - Optional fields for auto-generated data (id, timestamps)
+- **`database/operations.rs`**: Complete CRUD operations
+  - `UserOperations` struct with static methods
+  - SQL injection protection via parameterized queries
+  - Proper error handling and type conversion
+  - Existence validation for delete operations
+
+#### User Management Schema
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### REST API Integration
+- **GET /api/users**: List users with optional limit and metadata
+- **GET /api/users/:id**: Retrieve specific user with full validation
+- **POST /api/users**: Create user with JSON body validation
+- **DELETE /api/users/:id**: Delete user with existence checking
+- **Error Handling**: Professional HTTP status codes (400/404/500) with JSON error messages
+- **Input Validation**: Server-side validation for all user input
+
+#### Development Benefits
+- **Zero Configuration**: Automatic database selection based on request origin
+- **Isolated Development**: Separate development database prevents production data pollution
+- **Type Safety**: Full Rust type safety from database to HTTP response
+- **Professional Patterns**: Industry-standard CRUD operations and error handling
 
 ### Theme System Architecture
 
@@ -282,9 +361,9 @@ hashrand-spin/
 - **Output**: Static files in `build/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v1.2.0)
+## Current State (v1.3.0)
 
-The application now includes comprehensive **BIP39 mnemonic generation** and complete deterministic generation functionality:
+The application now includes comprehensive **BIP39 mnemonic generation**, complete deterministic generation functionality, and **full SQLite database integration**:
 - **🔐 Complete BIP39 Mnemonic System**: Full Bitcoin Improvement Proposal 39 implementation
   - **New Endpoint**: `/api/mnemonic` with GET and POST support
   - **10 Languages**: english, spanish, french, portuguese, japanese, chinese (simplified & traditional), italian, korean, czech
@@ -298,6 +377,12 @@ The application now includes comprehensive **BIP39 mnemonic generation** and com
   - **Intelligent Display**: User-provided seeds as informational text, auto-generated seeds as copyable textarea
   - **Complete Flow**: Seamless integration from form input → API call → result display with seed persistence
   - **13-Language Support**: Fully translated interface including seed dialog and validation messages
+- **🗄️ Complete SQLite Database System**: Full user management with environment-aware database selection (NEW)
+  - **Dual Environment Support**: Automatic `hashrand-dev` vs `hashrand` database selection based on request host
+  - **User Management REST API**: Complete CRUD operations (GET, POST, DELETE) for user entities
+  - **Professional Database Architecture**: Environment detection, automatic table creation, and proper error handling
+  - **Type-Safe Operations**: Full Rust type safety from database to HTTP response with parameterized queries
+  - **Zero Configuration**: Automatic database selection and initialization without manual setup
 - **Progressive Sprite Loading System**: Advanced icon system with UTF placeholders and deferred loading
   - **189KB Professional Sprite**: Full-resolution flag SVGs with zero compromise on quality
   - **Instant Placeholders**: UTF emoji fallbacks for immediate visual feedback
@@ -481,23 +566,24 @@ spin-cli watch &
 
 The project now uses **independent versioning** for API and Web components:
 
-### API Backend (v1.0.0)
-- **Stable Version**: API has reached 1.0.0 stability
+### API Backend (v1.3.0)
+- **Stable Version**: API has reached mature 1.3.0 with SQLite database integration
 - **Semantic Versioning**: Follows strict semver for backward compatibility
-- **Production Ready**: Can be used in production environments
+- **Production Ready**: Can be used in production environments with full user management
+- **Latest Features**: Complete SQLite database system with environment-aware database selection
 
-### Web Interface (v0.16.0)
+### Web Interface (v0.17.2)
 - **Development Version**: Currently in 0.x.x series during active development
-- **Major Features**: Recently added comprehensive seed-based deterministic generation
-- **Rapid Iteration**: Frequent updates for UI/UX improvements
+- **Major Features**: BIP39 mnemonic generation and comprehensive seed-based deterministic generation
+- **Database Ready**: Ready for future user interface integration with database endpoints
 - **Modern Architecture**: Built with latest SvelteKit 2.x without deprecated warnings
 
 ### Version Endpoint
 The `/api/version` endpoint returns both component versions:
 ```json
 {
-  "api_version": "1.0.0",
-  "ui_version": "0.16.0"
+  "api_version": "1.3.0",
+  "ui_version": "0.17.2"
 }
 ```
 

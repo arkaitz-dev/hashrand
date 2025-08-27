@@ -1,7 +1,7 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::{
     handle_api_key_request, handle_custom, handle_from_seed, handle_mnemonic_request,
-    handle_password_request, handle_version,
+    handle_password_request, handle_users, handle_version,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -47,6 +47,9 @@ pub fn route_request_with_req(
             &Method::Post => handle_from_seed(body),
             _ => handle_method_not_allowed(),
         },
+
+        // User management endpoints (support GET, POST, DELETE)
+        path if path.starts_with("/api/users") => handle_users(req, path, query_params),
 
         // Not found
         _ => handle_not_found(),
@@ -108,6 +111,10 @@ Available endpoints:
 - POST /api/api-key (JSON body with optional seed parameter)
 - GET /api/mnemonic?language=english&words=12 (BIP39 mnemonic phrases)
 - POST /api/mnemonic (JSON body with seed parameter)
+- GET /api/users?limit=10 (List users)
+- GET /api/users/:id (Get specific user)
+- POST /api/users (Create user - JSON: {"username": "user", "email": "user@example.com"})
+- DELETE /api/users/:id (Delete user)
 - GET /api/version
 - POST /api/from-seed (JSON body required)
 

@@ -13,6 +13,7 @@ component = "hashrand-spin"
 [component.hashrand-spin]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 allowed_outbound_hosts = []
+sqlite_databases = ["hashrand-dev", "hashrand"]
 [component.hashrand-spin.build]
 command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]

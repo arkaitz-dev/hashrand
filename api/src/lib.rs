@@ -2,6 +2,7 @@ use spin_sdk::http::{IntoResponse, Request};
 use spin_sdk::http_component;
 
 // Project modules organized by functionality
+mod database;
 mod handlers;
 mod types;
 mod utils;
@@ -31,8 +32,15 @@ fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
 
     // Parse the URL to get path and query parameters
     let url_parts: Vec<&str> = full_url.split('?').collect();
-    let path = url_parts.first().unwrap_or(&"").to_string(); // Clone path
+    let full_path = url_parts.first().unwrap_or(&"");
     let query_string = url_parts.get(1).unwrap_or(&"");
+    
+    // Extract just the path part from the full URL
+    let path = if let Some(path_start) = full_path.find("/api") {
+        &full_path[path_start..]
+    } else {
+        full_path
+    }.to_string();
 
     // Parse query parameters
     let query_params = parse_query_params(query_string);
