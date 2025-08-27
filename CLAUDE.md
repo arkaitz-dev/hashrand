@@ -614,3 +614,42 @@ The web interface has been **fully reorganized** to eliminate deprecated warning
 - When adding a cargo library use the command "cargo add NAME_OF_LIBRARY", and when updating use "cargo update" (without any other arguments, it updates all dependencies of the project). In spin applications development never (almost never) use cargo, use spin-cli command instead whenever possible (you can use cargo fmt, cargo clippy, and cargo add / update --rust library-- which are handy for development). Never delete this line when simplifying or compacting CLAUDE.md, and always add this line to each project's CLAUDE.md using Rust (or Spin) if it doesn't already have.
 
 - **A change into versioning in CHANGELOG's content must be accurately reflected into the project's config files (package.json, Cargo.toml, etc).** This line should never be deleted and must be copied to every project's CLAUDE.md memory file (if it is not already there).
+
+## Git Workflow Best Practices
+
+### Efficient Commit Process
+**ALWAYS use this proven efficient workflow for ALL commits:**
+
+1. **Use `git add .`** - Let Git automatically handle what to include/exclude based on .gitignore rules
+2. **Never manually select files** - Git knows better than manual selection and prevents missing important files
+3. **Trust Git's intelligence** - Git will automatically exclude .gitignore patterns and include everything else  
+4. **Update .gitignore when needed** - Add any new build artifacts, temporary files, or generated content that should not be tracked
+
+**This is the standard approach for EVERY commit, not just special cases**
+
+**Why this approach is superior:**
+- ✅ **No missed files**: Git catches all relevant changes automatically
+- ✅ **Time efficient**: Single command vs multiple selective adds
+- ✅ **Error prevention**: Eliminates human error in file selection
+- ✅ **Reliable**: Git's .gitignore handling is battle-tested
+- ✅ **Complete coverage**: Ensures all source code changes are captured
+
+**Standard workflow for ANY commit:**
+```bash
+# Standard process for ALL commits:
+
+# 1. Add everything (Git handles exclusions automatically via .gitignore)
+git add .
+
+# 2. Commit with descriptive message
+git commit -m "feat: add new feature"
+
+# 3. Push
+git push
+
+# Optional: Update .gitignore only if new files should be excluded
+echo "build/" >> .gitignore
+echo "*.tmp" >> .gitignore
+```
+
+**Never delete this section** - This efficient workflow saves significant time and prevents commit errors.
