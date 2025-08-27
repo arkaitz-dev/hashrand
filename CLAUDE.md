@@ -8,7 +8,7 @@ This is a complete random hash generator solution consisting of:
 1. **API Backend**: Fermyon Spin WebAssembly HTTP component built with Rust
 2. **Web Interface**: Professional SPA built with SvelteKit, TypeScript, and TailwindCSS 4.0
 
-The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, API keys, and BIP39 mnemonic phrases. Features a sophisticated theme system with manual dark/light mode toggle, intelligent system preference detection, and complete internationalization support for 11 languages including right-to-left (RTL) preparation.
+The project provides both programmatic access via REST API and a user-friendly web interface for generating cryptographically secure hashes, passwords, API keys, and BIP39 mnemonic phrases. Features a sophisticated theme system with manual dark/light mode toggle, intelligent system preference detection, and complete internationalization support for 13 languages including right-to-left (RTL) preparation.
 
 ## Development Commands
 
@@ -117,20 +117,20 @@ The project now includes **comprehensive linting and formatting** unified throug
 hashrand-spin/
 ├── Cargo.toml              # Workspace configuration
 ├── spin.toml               # Spin application configuration with SQLite access
-├── runtime-config.toml     # SQLite database configuration (NEW)
+├── runtime-config.toml     # SQLite database configuration
 ├── final_test.sh           # Comprehensive test suite (64 tests)
 ├── justfile                # Development task automation
 ├── README.md               # Project documentation
 ├── CHANGELOG.md            # Version history (now with independent API/Web versioning)
 ├── CLAUDE.md               # This file - development guidance
-├── data/                   # SQLite database files (NEW)
+├── data/                   # SQLite database files
 │   ├── hashrand-dev.db     # Development database
 │   └── hashrand.db         # Production database (created when needed)
 ├── api/                    # API implementation crate
 │   ├── Cargo.toml          # API crate configuration
 │   └── src/                # Modular source code
 │       ├── lib.rs          # Main HTTP handler and routing
-│       ├── database/       # Database layer (NEW)
+│       ├── database/       # Database layer
 │       │   ├── mod.rs          # Database module exports
 │       │   ├── connection.rs   # Environment-aware database connections
 │       │   ├── models.rs       # User model and data structures
@@ -141,21 +141,23 @@ hashrand-spin/
 │       │   └── responses.rs    # Response structures
 │       ├── handlers/       # Endpoint handlers
 │       │   ├── mod.rs
-│       │   ├── generate.rs     # /api/generate endpoint
+│       │   ├── custom.rs       # /api/custom endpoint (renamed from generate)
 │       │   ├── password.rs     # /api/password endpoint
 │       │   ├── api_key.rs      # /api/api-key endpoint
 │       │   ├── mnemonic.rs     # /api/mnemonic endpoint (BIP39)
-│       │   ├── users.rs        # /api/users endpoints (NEW)
+│       │   ├── users.rs        # /api/users endpoints
+│       │   ├── from_seed.rs    # Seed-based generation endpoints
 │       │   └── version.rs      # /api/version endpoint
 │       └── utils/          # Utility functions
 │           ├── mod.rs
 │           ├── query.rs        # Query parameter parsing
-│           └── routing.rs      # Request routing logic
+│           ├── routing.rs      # Request routing logic
+│           └── random_generator.rs # ChaCha8 unified random generation
 ├── web/                    # Web interface (SvelteKit + TypeScript)
 │   ├── README.md           # Web interface documentation
 │   ├── package.json        # Node.js dependencies and scripts
 │   ├── vite.config.ts      # Vite configuration with API proxy
-│   ├── svelte.config.js    # SvelteKit SPA configuration (now without deprecated options)
+│   ├── svelte.config.js    # SvelteKit SPA configuration
 │   ├── tailwind.config.js  # TailwindCSS 4.0 configuration
 │   ├── tsconfig.json       # TypeScript configuration
 │   ├── src/
@@ -166,7 +168,7 @@ hashrand-spin/
 │   │   │   ├── components/ # Reusable Svelte components
 │   │   │   │   ├── BackButton.svelte      # Navigation component
 │   │   │   │   ├── DateTimeLocalized.svelte # Internationalized date/time formatting
-│   │   │   │   ├── Iconize.svelte         # Universal RTL-aware icon wrapper with invertposition
+│   │   │   │   ├── Iconize.svelte         # Universal RTL-aware icon wrapper
 │   │   │   │   ├── LoadingSpinner.svelte  # Loading animation
 │   │   │   │   └── ThemeToggle.svelte     # Dark/light mode toggle
 │   │   │   ├── stores/     # State management stores
@@ -186,6 +188,8 @@ hashrand-spin/
 │   │       │   └── +page.svelte
 │   │       ├── api-key/           # API key generator
 │   │       │   └── +page.svelte
+│   │       ├── mnemonic/          # BIP39 mnemonic generator
+│   │       │   └── +page.svelte
 │   │       └── result/            # Shared result display
 │   │           └── +page.svelte
 │   ├── static/             # Static assets
@@ -201,11 +205,12 @@ hashrand-spin/
 #### API Backend
 - `api/src/lib.rs` - Main HTTP handler and module organization
 - `api/src/handlers/` - Individual endpoint implementations
-- `api/src/database/` - **NEW**: Complete database layer with user management
+- `api/src/database/` - Complete database layer with user management
 - `api/src/types/alphabet.rs` - Alphabet definitions and character sets
 - `api/src/utils/routing.rs` - Request routing and 404 handling
+- `api/src/utils/random_generator.rs` - ChaCha8 unified random generation
 - `spin.toml` - Spin application configuration with SQLite access
-- `runtime-config.toml` - **NEW**: SQLite database configuration
+- `runtime-config.toml` - SQLite database configuration
 - `Cargo.toml` - Workspace configuration
 - `api/Cargo.toml` - API crate dependencies and configuration
 
@@ -237,10 +242,14 @@ hashrand-spin/
 #### API Backend (Rust)
 - `spin-sdk = "3.1.0"` - Core Spin framework for HTTP components
 - `nanoid = "0.4.0"` - Cryptographically secure random generation
+- `rand = "0.9.2"` + `rand_chacha = "0.9.0"` - ChaCha8 unified random generation
 - `serde = "1.0.219"` - Serialization framework with derive features
 - `serde_json = "1.0.142"` - JSON serialization for /api/version
 - `anyhow = "1"` - Error handling library
 - `bip39 = { version = "2.2.0", features = [...] }` - BIP39 mnemonic generation with all language support
+- `bs58 = "0.5.1"` - Base58 encoding for seed format
+- `hex = "0.4.3"` - Hexadecimal utilities
+- `sha3 = "0.10.8"` - SHA3-256 hashing for seed generation
 
 #### Web Interface (Node.js)
 - `@sveltejs/kit = "^2.22.0"` - Modern web framework
@@ -358,10 +367,10 @@ CREATE TABLE users (
 - **TypeScript**: Full type checking with `svelte-check`
 - **Build Tool**: Vite with optimized production builds
 - **CSS**: TailwindCSS 4.0 with PostCSS processing
-- **Output**: Static files in `build/` directory ready for deployment
+- **Output**: Static files in `dist/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v1.3.0)
+## Current State (v1.3.0 API, v0.17.1 Web)
 
 The application now includes comprehensive **BIP39 mnemonic generation**, complete deterministic generation functionality, and **full SQLite database integration**:
 - **🔐 Complete BIP39 Mnemonic System**: Full Bitcoin Improvement Proposal 39 implementation
@@ -371,18 +380,23 @@ The application now includes comprehensive **BIP39 mnemonic generation**, comple
   - **Standard Compliance**: Full compatibility with hardware wallets and cryptocurrency software
 - **🌱 Complete Seed-Based Generation System**: Universal deterministic generation across all four endpoints
   - **Dual API Modes**: Both GET (random) and POST (deterministic with seed) support for `/api/custom`, `/api/password`, `/api/api-key`, and `/api/mnemonic`
-  - **64-Character Hex Seeds**: Cryptographically secure seed format for perfect reproducibility
+  - **Base58 Seeds**: Cryptographically secure 44-character base58 seed format for perfect reproducibility
   - **UI Integration**: Optional seed fields in all generator forms with real-time validation
   - **Smart Behavior**: Regenerate button hidden for deterministic seeds, seed reuse dialog when returning to settings
   - **Intelligent Display**: User-provided seeds as informational text, auto-generated seeds as copyable textarea
   - **Complete Flow**: Seamless integration from form input → API call → result display with seed persistence
   - **13-Language Support**: Fully translated interface including seed dialog and validation messages
-- **🗄️ Complete SQLite Database System**: Full user management with environment-aware database selection (NEW)
+- **🗄️ Complete SQLite Database System**: Full user management with environment-aware database selection
   - **Dual Environment Support**: Automatic `hashrand-dev` vs `hashrand` database selection based on request host
   - **User Management REST API**: Complete CRUD operations (GET, POST, DELETE) for user entities
   - **Professional Database Architecture**: Environment detection, automatic table creation, and proper error handling
   - **Type-Safe Operations**: Full Rust type safety from database to HTTP response with parameterized queries
   - **Zero Configuration**: Automatic database selection and initialization without manual setup
+- **🔧 ChaCha8 Unified Generation**: Complete migration to ChaCha8 for all pseudorandom generation
+  - **Cryptographic Consistency**: Single RNG family (ChaCha8) for all random generation
+  - **Professional Implementation**: Industry-standard approach replacing "homemade" XOR
+  - **Domain Separation**: Single-byte XOR for OTP vs hash generation independence
+  - **Maintainability**: Unified technology stack across all endpoints
 - **Progressive Sprite Loading System**: Advanced icon system with UTF placeholders and deferred loading
   - **189KB Professional Sprite**: Full-resolution flag SVGs with zero compromise on quality
   - **Instant Placeholders**: UTF emoji fallbacks for immediate visual feedback
@@ -417,18 +431,18 @@ The application now includes comprehensive **BIP39 mnemonic generation**, comple
 The application implements a complete random hash generator solution with both API and web interface, including full BIP39 mnemonic phrase generation:
 
 ### API Endpoints
-- **GET /api/generate** - Customizable hash generation with parameters:
+- **GET/POST /api/custom** - Customizable hash generation with parameters:
   - `length` (2-128, default: 21)
   - `alphabet` (base58, no-look-alike, full, full-with-symbols)
   - `prefix` & `suffix` (max 32 chars each)
   - `raw` (true/false, affects newline output)
 
-- **GET /api/password** - Secure password generation:
+- **GET/POST /api/password** - Secure password generation:
   - `length` (21-44, dynamic minimum based on alphabet)
   - `alphabet` (full-with-symbols default, no-look-alike)
   - `raw` (true/false)
 
-- **GET /api/api-key** - API key generation with ak_ prefix:
+- **GET/POST /api/api-key** - API key generation with ak_ prefix:
   - `length` (44-64, dynamic minimum based on alphabet)
   - `alphabet` (full default, no-look-alike)
   - `raw` (true/false)
@@ -438,6 +452,8 @@ The application implements a complete random hash generator solution with both A
   - `words` (12 or 24, default: 12)
   - Both GET (random) and POST (deterministic with seed) support
   - Full BIP39 standard compliance for cryptocurrency applications
+
+- **GET /api/users**, **POST /api/users**, **DELETE /api/users/:id** - Complete user management system
 
 - **GET /api/version** - Returns JSON with version information
 
@@ -450,17 +466,8 @@ The application implements a complete random hash generator solution with both A
 ### Web Interface Features
 - **Menu-driven Navigation**: Clean card-based interface for endpoint selection
 - **URL Parameter Support**: All generator pages support GET parameters for direct configuration
-  - `/custom/?length=32&alphabet=base58&prefix=app_&suffix=_v1`
-  - `/password/?length=25&alphabet=no-look-alike`
-  - `/api-key/?length=50&alphabet=full`
 - **Centralized API Architecture**: Only result page calls API, generators handle UI and navigation
-  - **Generator Pages**: Parameter forms with validation and URL parameter parsing
-  - **Result Page**: Unified API calling based on endpoint and parameters
-  - **Fresh Generation**: Always generates new values, never displays cached results
 - **Progressive Icon Loading**: Advanced sprite system with placeholder fallbacks
-  - **UTF Placeholders**: Instant visual feedback with emoji fallbacks (🏠, ☀️, 🌙, >)
-  - **189KB Professional Sprite**: Full-resolution flag SVGs for all 13 languages
-  - **Deferred Loading**: Non-blocking sprite loading after DOM ready
 - **Parameter Forms**: Real-time validation with dynamic minimum lengths
 - **Result Display**: Formatted output with copy-to-clipboard functionality
 - **Responsive Design**: Mobile-first approach works on all screen sizes
@@ -475,13 +482,14 @@ The application implements a complete random hash generator solution with both A
 
 #### API Backend
 - Built with modular architecture for maintainability
-- Uses `nanoid` for cryptographically secure generation
+- Uses `nanoid` + ChaCha8 for cryptographically secure generation
 - Complete parameter validation and error handling
 - Clean separation of concerns across modules
+- SQLite integration for user management with environment-aware database selection
 
 #### Web Interface
 - **SPA Architecture**: Client-side routing with fallback to index.html
-- **Component-based**: Reusable Svelte components (BackButton, LoadingSpinner)
+- **Component-based**: Reusable Svelte components (BackButton, LoadingSpinner, DateTimeLocalized, Iconize)
 - **API Integration**: Type-safe service layer with error handling
 - **Build Pipeline**: Optimized production builds with code splitting
 - **Development Proxy**: Automatic API proxying for seamless development
@@ -514,28 +522,10 @@ The project includes several highly reusable components that can be easily porte
 
 Both components follow clean interface design with minimal dependencies and can be easily copied to other projects.
 
-## Special Instructions
-
-- If the project already has css/tailwindcss styling DO NOT CHANGE this styling unless EXPLICITLY asked for doing a styling change: never ever even propose an update to a styling. When creating NEW html/web components/svelte components you must follow the same styling of the rest of the project, be coherent with the rest of the project. Unless otherwise asked, you must make all stylings 100/100 lighthouse accesibility friendly, professional looking and attractive, with light/dark themes, responsive and mobile first. Do not remove this rule when compacting/simplifying CLAUDE.md. Always create a copy of this rule and line up to this last sentence in all new and existing projects (if they do not alreade have this rule).
-
-- When you are making changes to a file, please comment code lines instead of erasing them before applying changes to existing code. When you finish your task, always ask me if I like the result, and wait for my answer. Do this with HTML, JS, CSS, Rust, Python or any other programming languages, but not with MD files. If I like or agree with the changes you've made, erase the commented lines you've got just written, and if I don't like the result delete your just written lines and uncomment the just commented lines. This instruction is very important.
-
-- When creating or modifying code, ALWAYS be specially cautious and try not to modify more code than the strictly necessary for the task you are doing. Be surgical.
-
-- Whenever makes sense write comments and doc strings into the code. Be concise and avoid obvious comments. Comments should be a guide/help to a human being reading your code. Follow best practices when commenting.
-
-- Follow DRY and KISS principles as your live depends on it. Never remove this instruction and copy to all CLAUDE.md files into your project's if they do not have this instruction yet.
-
-- **IMPORTANT for Spin projects:** Spin handles compilation to WASM, execution, and development with `spin-cli watch`. Only use `cargo add` for adding dependencies, `cargo clippy` for linting, and `cargo fmt` for formatting - avoid other cargo commands as Spin manages the build process. Note: `spin-cli add` has different functionality (adds new components).
-
-- When adding a cargo library use the command "cargo add NAME_OF_LIBRARY", and when updating use "cargo update" (without any other arguments, it updates all dependencies of the project).
-
-- **A change into versioning in CHANGELOG's content must be accurately reflected into the project's config files (package.json, Cargo.toml, etc).** This line should never be deleted and must be copied to every project's CLAUDE.md memory file (if it is not already there).
-
 ## Testing
 
 ### Comprehensive Test Suite
-The project includes `final_test.sh` - a comprehensive test script with 43 automated test cases that covers:
+The project includes `final_test.sh` - a comprehensive test script with 64 automated test cases that covers:
 
 - **Basic Functionality**: All 4 endpoints with default parameters
 - **Parameter Validation**: Length limits, alphabet types, prefix/suffix constraints
@@ -543,6 +533,8 @@ The project includes `final_test.sh` - a comprehensive test script with 43 autom
 - **Alphabet Testing**: Character set validation for all 4 alphabet types
 - **Error Responses**: 400 and 404 status codes with appropriate messages
 - **Consistency Testing**: Multiple rapid requests to verify reliability
+- **BIP39 Testing**: Complete mnemonic generation testing across all languages
+- **Seed-Based Generation**: Deterministic generation testing for all endpoints
 
 ### Running Tests
 ```bash
@@ -552,7 +544,7 @@ spin-cli watch &
 # Run comprehensive test suite
 ./final_test.sh
 
-# Expected output: 43 tests, 100% success rate
+# Expected output: 64 tests, 100% success rate
 ```
 
 ### Test Coverage
@@ -561,6 +553,9 @@ spin-cli watch &
 - ✅ Error handling appropriate
 - ✅ Response formats correct
 - ✅ Performance consistent
+- ✅ BIP39 mnemonic generation working
+- ✅ Seed-based deterministic generation working
+- ✅ Database operations functional
 
 ## Version Management
 
@@ -572,7 +567,7 @@ The project now uses **independent versioning** for API and Web components:
 - **Production Ready**: Can be used in production environments with full user management
 - **Latest Features**: Complete SQLite database system with environment-aware database selection
 
-### Web Interface (v0.17.2)
+### Web Interface (v0.17.1)
 - **Development Version**: Currently in 0.x.x series during active development
 - **Major Features**: BIP39 mnemonic generation and comprehensive seed-based deterministic generation
 - **Database Ready**: Ready for future user interface integration with database endpoints
@@ -583,7 +578,7 @@ The `/api/version` endpoint returns both component versions:
 ```json
 {
   "api_version": "1.3.0",
-  "ui_version": "0.17.2"
+  "ui_version": "0.17.1"
 }
 ```
 
@@ -600,94 +595,22 @@ The web interface has been **fully reorganized** to eliminate deprecated warning
 - **Standards Compliant**: Follows official SvelteKit best practices
 - **Independent Evolution**: API and Web can evolve at different speeds
 
----
+## Special Instructions
 
-# Session History
+- If the project already has css/tailwindcss styling DO NOT CHANGE this styling unless EXPLICITLY asked for doing a styling change: never ever even propose an update to a styling. When creating NEW html/web components/svelte components you must follow the same styling of the rest of the project, be coherent with the rest of the project. Unless otherwise asked, you must make all stylings 100/100 lighthouse accessibility friendly, professional looking and attractive, with light/dark themes, responsive and mobile first. Do not remove this rule when compacting/simplifying CLAUDE.md. Always create a copy of this rule and line up to this last sentence in all new and existing projects (if they do not already have this rule).
 
-## Session: 2025-08-25 - ChaCha8 OTP Refactoring & Mnemonic Integration
+- **IMPORTANT**: Always check for justfile existence first. If a justfile exists, USE IT instead of manual commands. Run `just` to see available tasks. Never delete this rule when simplifying/compacting CLAUDE.md, and always add this rule to every new CLAUDE.md if it doesn't already have it.
 
-### Accomplished Tasks
+- When you are making changes to a file, please comment code lines instead of erasing them before applying changes to existing code. When you finish your task, always ask me if I like the result, and wait for my answer. Do this with HTML, JS, CSS, Rust, Python or any other programming languages, but not with MD files. If I like or agree with the changes you've made, erase the commented lines you've got just written, and if I don't like the result delete your just written lines and uncomment the just commented lines. This instruction is very important. Copy it to every new CLAUDE.md file created into my projects, if already is not included. Never delete it when compacting/simplifying your memory files.
 
-#### 🔐 ChaCha8 OTP Generation Refactoring (API v1.2.1)
-- **Problem Identified**: Mixed cryptographic approaches (ChaCha8 for hashes, simple XOR for OTP)
-- **Solution Implemented**: Complete migration to ChaCha8 for all pseudorandom generation
-- **Technical Changes**:
-  - Refactored `generate_otp()` function in `api/src/utils/random_generator.rs`
-  - Replaced XOR approach with `ChaCha8Rng::from_seed()` 
-  - Improved domain separation: single byte XOR (`otp_seed[31] ^= 0x5A`) instead of 8-byte pattern
-  - Fixed deprecated `gen_range()` → `random_range()` API usage
-- **Benefits Achieved**:
-  - **Cryptographic Consistency**: Entire system now uses single RNG family (ChaCha8)
-  - **Professional Implementation**: Industry-standard approach replacing "homemade" XOR
-  - **Maintainability**: Unified technology stack for all random generation
-  - **Security Enhancement**: ChaCha8 is cryptographically robust and audited
+- When creating or modifying code, nevermind if it is a programming language or CSS, ALWAYS be specially cautious and try not to modify more code than the strictly necessary for the task you are doing. Be surgical. Never delete this rule when simplifying/compacting your memory files. Always add this rule to a newly created CLAUDE.md file, or add it to an existing one if it does not have it.
 
-#### 📋 Complete Mnemonic Support Integration
-- **Frontend Integration**: Added mnemonic navigation card to main menu (`/`)
-- **Route Implementation**: Created `/routes/mnemonic/+page.svelte` with full configuration UI
-- **Parameter Support**: Language selection (10 languages) and word count (12/24) options
-- **Result Display**: Enhanced result page to show mnemonic-specific parameters
-- **Translation Updates**: Added mnemonic-related translations for English and Spanish
-- **API Verification**: Confirmed all endpoints (custom, password, api-key, mnemonic) generate OTP correctly
+- Whenever makes sense write comments and doc strings into the code. Be concise and avoid obvious comments. Comments should be a guide/help to a human being reading your code. Follow best practices when commenting. Do this documenting step whenever you are writing new code or refactoring it. If you find a place lacking this code guidelines, do your job: add docs and comments following this guidelines. Never delete this rule when compacting/simplifying your memory files. Always add this rule to a new or existing CLAUDE.md (if it already doesn't have).
 
-#### 📚 Comprehensive Documentation Updates
-- **CHANGELOG.md**: Added detailed v1.2.1 entry documenting ChaCha8 improvements
-- **README.md**: Enhanced security section with cryptographic architecture details
-- **Version Updates**: Updated all version references to API v1.2.1
-- **Dependencies Documentation**: Complete dependency list with ChaCha8 explanations
+- Follow DRY and KISS principles as your live depends on it. Never remove this instruction and copy to all CLAUDE.md files into your project's if they do not have this instruction yet.
 
-### Files Modified
+- **IMPORTANT for Spin projects:** Spin handles compilation to WASM, execution, and development with `spin-cli watch`. Only use `cargo add` for adding dependencies, `cargo clippy` for linting, and `cargo fmt` for formatting - avoid other cargo commands as Spin manages the build process. Note: `spin-cli add` has different functionality (adds new components). In this system, use `spin-cli` command instead of `spin`. Never delete this instruction when simplifying/compacting CLAUDE.md, and always copy this instruction to every Spin project's CLAUDE.md.
 
-#### API Backend Changes
-- `api/Cargo.toml` - Version bump to 1.2.1
-- `api/src/utils/random_generator.rs` - ChaCha8 OTP implementation
-- `api/src/handlers/` - All handlers (custom, password, api_key, mnemonic) verified for OTP consistency
+- When adding a cargo library use the command "cargo add NAME_OF_LIBRARY", and when updating use "cargo update" (without any other arguments, it updates all dependencies of the project). In spin applications development never (almost never) use cargo, use spin-cli command instead whenever possible (you can use cargo fmt, cargo clippy, and cargo add / update --rust library-- which are handy for development). Never delete this line when simplifying or compacting CLAUDE.md, and always add this line to each project's CLAUDE.md using Rust (or Spin) if it doesn't already have.
 
-#### Web Interface Changes  
-- `web/src/lib/stores/navigation.ts` - Added mnemonic navigation item
-- `web/src/routes/mnemonic/+page.svelte` - New mnemonic configuration page (NEW FILE)
-- `web/src/routes/+page.svelte` - Updated main menu with mnemonic card
-- `web/src/routes/result/+page.svelte` - Enhanced for mnemonic parameter display
-- `web/src/lib/types/index.ts` - Type definitions updated
-- `web/src/lib/stores/translations/` - Translation updates for mnemonic support
-
-#### Documentation Changes
-- `README.md` - Updated version, dependencies, and security sections
-- `CHANGELOG.md` - New v1.2.1 entry with comprehensive change documentation
-
-### Architectural Decisions Made
-
-#### Cryptographic Architecture
-- **Decision**: Standardize on ChaCha8 for all pseudorandom generation
-- **Rationale**: Professional consistency, industry standard, better maintainability
-- **Implementation**: Single-byte domain separation for OTP vs hash generation
-
-#### User Interface Design
-- **Decision**: Maintain existing UI patterns for mnemonic integration
-- **Rationale**: Consistency with password/api-key generators, familiar user experience
-- **Implementation**: Reused form patterns, navigation structure, and result display logic
-
-### Quality Assurance Completed
-- ✅ **Code Quality**: All linting and formatting checks pass (`just check`)
-- ✅ **Compilation**: Clean build with zero warnings
-- ✅ **Functionality**: All endpoints tested and verified working
-- ✅ **Version Consistency**: API version endpoint returns correct v1.2.1
-- ✅ **Documentation**: Complete documentation updates across all relevant files
-
-### Current State
-- **API Version**: 1.2.1 (stable, production-ready with ChaCha8 improvements)
-- **Web Version**: 0.17.2 (feature-complete with mnemonic support)
-- **System Status**: Fully functional with unified cryptographic architecture
-- **Documentation**: Up-to-date and comprehensive
-
-### Technical Context for Future Sessions
-- **Cryptographic Foundation**: System now uses ChaCha8 exclusively for all random generation
-- **Mnemonic Integration**: Complete BIP39 implementation with 10 languages and dual word counts
-- **Code Quality Standards**: Comprehensive linting system in place with zero warnings
-- **Version Management**: Independent versioning for API (stable 1.x.x) and Web (development 0.x.x)
-
-### No Pending Issues
-- All user requests completed successfully
-- No known bugs or issues identified
-- No technical debt created during this session
-- System ready for production use
+- **A change into versioning in CHANGELOG's content must be accurately reflected into the project's config files (package.json, Cargo.toml, etc).** This line should never be deleted and must be copied to every project's CLAUDE.md memory file (if it is not already there).
