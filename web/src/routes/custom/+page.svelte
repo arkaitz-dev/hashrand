@@ -8,6 +8,7 @@
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import TextInput from '$lib/components/TextInput.svelte';
+	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
@@ -77,9 +78,19 @@
 	$: suffixValid = !params.suffix || params.suffix.length <= 32;
 	$: formValid = lengthValid && prefixValid && suffixValid;
 
-	function handleGenerate(event: Event) {
+	// Reference to AuthGuard component
+	let authGuard: AuthGuard;
+
+	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) return;
+
+		// Check authentication before proceeding
+		const authenticated = await authGuard.requireAuth();
+		if (!authenticated) {
+			console.log('Authentication required for custom hash generation');
+			return;
+		}
 
 		// Create URL parameters for result page - result will handle API call
 		const urlParams = new URLSearchParams();
@@ -170,6 +181,9 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Auth Guard: wraps the form -->
+		<AuthGuard bind:this={authGuard} let:requireAuth>
 
 		<!-- Form -->
 		<div class="max-w-2xl mx-auto">
@@ -282,5 +296,6 @@
 
 		<!-- Footer with Version Information -->
 		<Footer />
+		</AuthGuard>
 	</div>
 </div>

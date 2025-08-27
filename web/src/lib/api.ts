@@ -8,7 +8,11 @@ import type {
 	SeedGenerateRequest,
 	SeedPasswordRequest,
 	SeedApiKeyRequest,
-	SeedMnemonicRequest
+	SeedMnemonicRequest,
+	LoginRequest,
+	LoginResponse,
+	MagicLinkResponse,
+	AuthError
 } from './types';
 
 const API_BASE = '/api';
@@ -177,6 +181,53 @@ export const api = {
 		}
 
 		return response.json() as Promise<CustomHashResponse>;
+	},
+
+	// Authentication endpoints
+	async requestMagicLink(loginRequest: LoginRequest): Promise<MagicLinkResponse> {
+		const response = await fetch(`${API_BASE}/login/`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(loginRequest)
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json() as AuthError;
+			throw new ApiError(errorData.error || `HTTP ${response.status}`, response.status);
+		}
+
+		return response.json() as Promise<MagicLinkResponse>;
+	},
+
+	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
+		const response = await fetch(`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}`);
+
+		if (!response.ok) {
+			const errorData = await response.json() as AuthError;
+			throw new ApiError(errorData.error || `HTTP ${response.status}`, response.status);
+		}
+
+		// The refresh token will be set as HttpOnly cookie by the server
+		return response.json() as Promise<LoginResponse>;
+	},
+
+	async checkAuthStatus(): Promise<boolean> {
+		// For now, we'll check if we have an access token in memory
+		// In a full implementation, this would validate the token with the server
+		const authStore = localStorage.getItem('auth_user');
+		if (!authStore) return false;
+
+		try {
+			const user = JSON.parse(authStore);
+			if (!user.expiresAt) return false;
+
+			const expiresAt = new Date(user.expiresAt);
+			return expiresAt > new Date();
+		} catch {
+			return false;
+		}
 	}
 };
 

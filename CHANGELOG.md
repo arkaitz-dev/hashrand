@@ -11,6 +11,141 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.0 / Web v0.18.0] - 2025-08-27
+
+### API Backend Changes (v1.4.0)
+#### Added
+- **🔐 Complete Authentication System**: Magic link authentication with JWT token management
+  - **Magic Link Authentication Flow**: Passwordless authentication via email magic links
+    - **POST /api/login/**: Generate magic link and send via email (logged in development mode)
+    - **GET /api/login/?magiclink=...**: Validate magic link and return JWT tokens
+    - **Base58 Token Format**: URL-safe magic tokens without confusing characters (0, O, I, l)
+    - **Secure Token Generation**: UUID v4 + base58 encoding for maximum security
+  - **JWT Dual Token System**: Professional authentication token architecture
+    - **Access Token**: 15-minute validity, Bearer token in JSON response
+    - **Refresh Token**: 1-week validity, HttpOnly, Secure, SameSite=Strict cookie
+    - **Token Rotation**: Complete token refresh capability for extended sessions
+    - **Expiration Handling**: Automatic token cleanup and validation
+  - **Database Session Management**: Complete session lifecycle with SQLite integration
+    - **auth_sessions Table**: New table for session tracking with Unix timestamps
+    - **Session States**: Magic link → Active → Expired lifecycle management
+    - **Automatic Cleanup**: Expired session removal for database hygiene
+    - **Performance Indexes**: Optimized queries with magic_token and refresh_token indexes
+  - **Security Architecture**: Industry-standard authentication patterns
+    - **JWT Signing**: HS256 algorithm with secure secret management
+    - **Token Claims**: Standard JWT claims with custom authentication metadata
+    - **Cookie Security**: HttpOnly, Secure, SameSite=Strict for refresh token storage
+    - **Base58 Encoding**: URL-safe tokens eliminating problematic characters
+
+#### Enhanced
+- **🏗️ JWT Utilities Module**: Complete JWT token management system
+  - **`utils/jwt.rs`**: New utilities module for JWT operations
+    - **Token Generation**: Access and refresh token creation with proper claims
+    - **Token Validation**: JWT verification with expiration and signature checking
+    - **Magic Link Creation**: URL-safe magic link generation for authentication flow
+    - **Host Detection**: Intelligent host URL detection from HTTP requests
+  - **Token Architecture**: Professional JWT implementation
+    - **Access Token Claims**: Subject (email), expiration, issued_at, token_type
+    - **Refresh Token Claims**: Subject, expiration, session_id for token rotation
+    - **Secret Management**: Environment-aware JWT secret handling
+    - **Error Handling**: Comprehensive JWT error handling with descriptive messages
+- **🗄️ Authentication Database Integration**: Extended database layer for authentication
+  - **AuthSession Model**: Complete session data structure with all authentication fields
+    - **Session Fields**: email, magic_token, access_token, refresh_token, timestamps
+    - **State Management**: is_used flag for magic link one-time usage
+    - **Unix Timestamps**: Consistent timestamp format for cross-platform compatibility
+  - **AuthOperations**: Complete CRUD operations for authentication sessions
+    - **Session Creation**: Magic link session creation with validation
+    - **Token Management**: Session activation with JWT tokens
+    - **Session Lookup**: Magic token and refresh token session retrieval
+    - **Session Cleanup**: Automatic expired session removal
+
+#### Technical Implementation
+- **Authentication Handler Architecture**: Professional request handling
+  - **Method-Based Routing**: POST for magic link generation, GET for validation
+  - **JSON Request Handling**: Proper JSON parsing for magic link requests
+  - **Parameter Validation**: Email format validation and security checks
+  - **Development Mode**: Console logging of magic links for development ease
+- **Database Schema Evolution**: Extended database with authentication tables
+  - **auth_sessions Table**: Complete authentication session storage
+  - **Performance Indexes**: Optimized database queries for authentication operations
+  - **Environment Integration**: Seamless integration with existing database environment detection
+- **Security Considerations**: Comprehensive security implementation
+  - **Magic Link Security**: Time-limited magic links with single-use validation
+  - **Session Security**: Proper session invalidation and token rotation
+  - **Cookie Security**: Industry-standard secure cookie implementation
+  - **CORS Handling**: Proper cross-origin handling for authentication flows
+
+#### Dependencies Added
+- **JWT Authentication Stack**: Complete authentication dependency set
+  ```toml
+  base64 = "0.22.1"           # Base64 encoding for JWT tokens
+  chrono = { version = "0.4.34", features = ["serde"] }  # Date/time handling
+  jsonwebtoken = "9.3.0"      # JWT token generation and validation
+  uuid = { version = "1.10.0", features = ["v4"] }  # UUID generation for tokens
+  ```
+
+### Web Interface Changes (v0.18.0)
+#### Added
+- **🛡️ AuthGuard Component**: Automatic route protection with authentication enforcement
+  - **Route Protection**: Protects custom/, password/, api-key/, and mnemonic/ routes
+  - **Authentication Detection**: Intelligent check for valid access tokens and refresh cookies
+  - **Magic Link Handling**: Automatic magic link parameter processing from URLs
+  - **Login Dialog Integration**: Seamless integration with login modal for unauthenticated users
+  - **Token Management**: Automatic localStorage management for access tokens
+- **🔐 LoginDialog Component**: Professional authentication modal interface
+  - **Modal Design**: Professional modal dialog matching result dialog styling
+  - **Email Input**: Clean email input with validation and error handling
+  - **Magic Link Generation**: Integration with POST /api/login/ endpoint
+  - **Development Mode**: Direct magic link usage for development workflow
+  - **Error Handling**: User-friendly error messages for authentication failures
+  - **Accessibility**: Full ARIA support and keyboard navigation
+- **📱 Authentication State Management**: Complete authentication state handling
+  - **auth.ts Store**: New Svelte store for authentication state management
+  - **Token Persistence**: Automatic access token storage and retrieval
+  - **Session Management**: Complete session lifecycle management
+  - **Magic Link Processing**: URL parameter processing for magic link authentication
+
+#### Enhanced
+- **🔄 Layout Integration**: Complete authentication flow integration
+  - **Magic Link Detection**: Automatic magic link parameter processing in +layout.svelte
+  - **Token Management**: Seamless token handling throughout application lifecycle
+  - **Route Protection**: Automatic redirection and authentication enforcement
+  - **Development Experience**: Enhanced development workflow with logged magic links
+- **🌍 Translation Integration**: Complete i18n support for authentication
+  - **Authentication Translations**: Full translation support for all authentication UI
+  - **Error Messages**: Localized error messages for authentication failures
+  - **13-Language Support**: Authentication interface available in all supported languages
+
+#### Technical Implementation
+- **Authentication Architecture**: Professional frontend authentication system
+  - **Component-Based Guards**: Reusable AuthGuard component for route protection
+  - **State-Driven UI**: Reactive UI updates based on authentication state
+  - **Token Lifecycle**: Complete access token and refresh token lifecycle management
+  - **URL Parameter Processing**: Intelligent magic link parameter handling
+- **Integration Patterns**: Seamless integration with existing application architecture
+  - **Store Integration**: Authentication state integrated with existing store system
+  - **Component Reuse**: Authentication components follow existing design patterns
+  - **Translation Integration**: Authentication text integrated with i18n system
+- **Development Experience**: Enhanced development workflow for authentication
+  - **Development Magic Links**: Console-logged magic links for easy development
+  - **State Debugging**: Clear authentication state management for debugging
+  - **Error Handling**: Comprehensive error handling with user feedback
+
+### Cross-Component Integration
+#### Enhanced
+- **🔄 Complete Authentication Flow**: End-to-end authentication system integration
+  - **Backend ↔ Frontend**: Seamless API integration for authentication endpoints
+  - **Database ↔ Sessions**: Complete session management with database persistence
+  - **Development ↔ Production**: Environment-aware authentication behavior
+- **🛡️ Security Implementation**: Professional security practices throughout
+  - **Token Security**: Industry-standard JWT implementation with secure defaults
+  - **Session Security**: Proper session management with automatic cleanup
+  - **Cookie Security**: Secure cookie implementation for refresh tokens
+  - **Development Security**: Secure development practices with console logging
+
+---
+
 ## [API v1.3.0] - 2025-08-27
 
 ### API Backend Changes (v1.3.0)
@@ -1247,6 +1382,7 @@ web/
 
 ## Version History Summary
 
+- **[API v1.4.0 / Web v0.18.0]** (2025-08-27) - **MAJOR**: Complete authentication system with magic link authentication, JWT tokens, and frontend AuthGuard integration
 - **[API v1.3.0]** (2025-08-27) - **MAJOR**: Complete SQLite database system with environment-aware database selection and full user management REST API
 - **[API v1.2.1]** (2025-08-25) - **ENHANCED**: ChaCha8 OTP generation refactoring for complete cryptographic consistency and deprecated API fixes
 - **[API v1.2.0 / Web v0.17.2]** (2025-08-24) - **MAJOR**: Complete BIP39 mnemonic generation system with 10 languages, dual word counts, and deterministic/random modes

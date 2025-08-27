@@ -15,7 +15,7 @@ build:
 
 # Start the application locally
 up:
-    spin-cli up
+    spin-cli up --runtime-config-file runtime-config.toml
 
 # Stop any running development servers (foreground and background)
 stop: tailscale-front-stop
@@ -188,7 +188,7 @@ dev: stop
     
     # Start spin-cli watch in background (first - API backend)
     echo "Starting spin-cli watch in background..."
-    nohup spin-cli watch > .spin-dev.log 2>&1 &
+    nohup spin-cli watch --runtime-config-file runtime-config.toml > .spin-dev.log 2>&1 &
     SPIN_PID=$!
     echo $SPIN_PID > .spin-dev.pid
     
@@ -315,7 +315,7 @@ rebuild: clean build
 
 # Deploy to Fermyon Cloud
 deploy:
-    spin-cli deploy
+    spin-cli deploy --runtime-config-file runtime-config.toml
 
 # Run development server in background and execute tests
 test-dev:
@@ -323,7 +323,7 @@ test-dev:
     # Stop any existing servers first
     just stop > /dev/null 2>&1
     echo "Starting development server in background..."
-    spin-cli watch > /dev/null 2>&1 &
+    spin-cli watch --runtime-config-file runtime-config.toml > /dev/null 2>&1 &
     SPIN_PID=$!
     sleep 3
     echo "Running tests..."

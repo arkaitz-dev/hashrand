@@ -7,6 +7,7 @@
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
+	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
@@ -51,9 +52,19 @@
 	$: lengthValid = params.length && params.length >= minLength && params.length <= 44;
 	$: formValid = lengthValid;
 
-	function handleGenerate(event: Event) {
+	// Reference to AuthGuard component
+	let authGuard: AuthGuard;
+
+	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) return;
+
+		// Check authentication before proceeding
+		const authenticated = await authGuard.requireAuth();
+		if (!authenticated) {
+			console.log('Authentication required for password generation');
+			return;
+		}
 
 		// Create URL parameters for result page - result will handle API call
 		const urlParams = new URLSearchParams();
@@ -140,6 +151,9 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Auth Guard: wraps the form -->
+		<AuthGuard bind:this={authGuard} let:requireAuth>
 
 		<!-- Form -->
 		<div class="max-w-2xl mx-auto">
@@ -251,5 +265,6 @@
 
 		<!-- Footer with Version Information -->
 		<Footer />
+		</AuthGuard>
 	</div>
 </div>

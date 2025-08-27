@@ -94,3 +94,29 @@ export interface ResultState {
 export interface I18nTexts {
 	[key: string]: string | I18nTexts;
 }
+
+// Authentication types
+export interface AuthUser {
+	email: string;
+	isAuthenticated: boolean;
+	expiresAt?: Date;
+}
+
+export interface LoginRequest {
+	email: string;
+}
+
+export interface LoginResponse {
+	access_token: string;
+	token_type: string;
+	expires_in: number; // seconds
+}
+
+export interface MagicLinkResponse {
+	message: string;
+	dev_magic_link?: string;
+}
+
+export interface AuthError {
+	error: string;
+}

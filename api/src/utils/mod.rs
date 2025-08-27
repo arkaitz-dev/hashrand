@@ -1,7 +1,9 @@
+pub mod jwt;
 pub mod query;
 pub mod random_generator;
 pub mod routing;
 
+pub use jwt::JwtUtils;
 pub use query::parse_query_params;
 pub use random_generator::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,

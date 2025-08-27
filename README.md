@@ -56,6 +56,13 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
   - **Informational Display**: Seeds shown as informational text without copy functionality
   - **Simplified Integration**: Clean seed handling without complex UI interactions
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages featuring enhanced naturalness
+- **🔐 Complete Authentication System**: Magic link authentication with JWT token management
+  - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation
+  - **AuthGuard Protection**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes  
+  - **JWT Dual Token System**: Access tokens (15 min) + HttpOnly refresh cookies (1 week)
+  - **Frontend Integration**: LoginDialog modal, automatic token management, and session persistence
+  - **Development Mode**: Console-logged magic links for easy development and testing
+  - **Database Sessions**: Complete session management with automatic cleanup of expired sessions
   - **Professional Translation Quality**: Comprehensive review and enhancement of all 13 language translations
     - **Linguistic Authenticity**: Native terminology preferred over anglicisms (Hindi "लंबाई" vs "लेंथ")
     - **Regional Variations**: European Portuguese "palavras-passe" vs Brazilian "senhas"
@@ -275,6 +282,59 @@ curl -X DELETE "http://localhost:3000/api/users/3"
 # Response: {"message": "User deleted successfully"}
 ```
 
+### Authentication System
+```
+POST /api/login/         # Generate magic link
+GET /api/login/?magiclink=...  # Validate magic link and authenticate
+```
+
+**Magic Link Generation (POST /api/login/):**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Magic link generated successfully. Check development logs for the link.",
+  "dev_magic_link": "http://localhost:5173/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
+}
+```
+
+**Magic Link Validation (GET /api/login/?magiclink=TOKEN):**
+
+**Response:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "Bearer",
+  "expires_in": 900
+}
+```
+
+**Authentication Features:**
+- **Magic Link Flow**: Email → Link → JWT tokens (no password required)
+- **JWT Dual Token System**: 
+  - **Access Token**: 15 minutes validity, included in JSON response
+  - **Refresh Token**: 1 week validity, set as HttpOnly, Secure, SameSite=Strict cookie
+- **Development Mode**: Magic links logged to console instead of sending emails
+- **Base58 Token Format**: URL-safe tokens without confusing characters
+- **Session Management**: Complete session lifecycle with automatic cleanup
+- **Database Integration**: Sessions stored with Unix timestamps for reliability
+
+**Examples:**
+```bash
+# Request magic link
+curl -X POST "http://localhost:3000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+
+# Validate magic link (from development log)
+curl "http://localhost:3000/api/login/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
+```
+
 ### Get Version Information
 ```
 GET /api/version
@@ -283,8 +343,8 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.3.0",
-  "ui_version": "0.17.2"
+  "api_version": "1.4.0",
+  "ui_version": "0.18.0"
 }
 ```
 
@@ -335,6 +395,8 @@ The application includes a **complete SQLite database system** for user manageme
 - **Table Auto-Creation**: Users table created automatically on first access
 
 ### Database Schema
+
+**Users Table:**
 ```sql
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -343,6 +405,26 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+```
+
+**Authentication Sessions Table:**
+```sql
+CREATE TABLE auth_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    magic_token TEXT NOT NULL UNIQUE,
+    access_token TEXT,
+    refresh_token TEXT,
+    created_at INTEGER DEFAULT (unixepoch()),
+    magic_expires_at INTEGER NOT NULL,
+    access_expires_at INTEGER,
+    refresh_expires_at INTEGER,
+    is_used BOOLEAN DEFAULT FALSE
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_magic_token ON auth_sessions(magic_token);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_refresh_token ON auth_sessions(refresh_token);
 ```
 
 ### Configuration Files
@@ -584,15 +666,19 @@ hashrand-spin/
 │       │   ├── alphabet.rs    # Alphabet type definitions
 │       │   └── responses.rs   # Response structures
 │       ├── handlers/      # Endpoint handlers
-│       │   ├── generate.rs    # Hash generation
+│       │   ├── custom.rs      # Hash generation (renamed from generate.rs)
 │       │   ├── password.rs    # Password generation
 │       │   ├── api_key.rs     # API key generation
 │       │   ├── mnemonic.rs    # BIP39 mnemonic generation
-│       │   ├── users.rs       # User management endpoints (NEW)
+│       │   ├── users.rs       # User management endpoints
+│       │   ├── login.rs       # Authentication endpoints (NEW)
+│       │   ├── from_seed.rs   # Seed-based generation endpoints
 │       │   └── version.rs     # Version information
 │       └── utils/         # Utility functions
 │           ├── query.rs       # Query parameter parsing
-│           └── routing.rs     # Request routing logic
+│           ├── routing.rs     # Request routing logic
+│           ├── random_generator.rs # ChaCha8 unified random generation
+│           └── jwt.rs         # JWT token utilities (NEW)
 ├── web/                   # Web interface (SvelteKit + TypeScript)
 │   ├── README.md          # Web interface documentation
 │   ├── package.json       # Node.js dependencies and scripts
@@ -606,15 +692,18 @@ hashrand-spin/
 │   │   ├── lib/
 │   │   │   ├── api.ts     # Type-safe API service layer
 │   │   │   ├── components/    # Reusable Svelte components
-│   │   │   │   ├── BackButton.svelte    # Navigation component
-│   │   │   │   ├── Icon.svelte          # SVG icon sprite component
-│   │   │   │   ├── Iconize.svelte       # Universal RTL-aware icon wrapper
-│   │   │   │   ├── LoadingSpinner.svelte # Loading animation
-│   │   │   │   └── ThemeToggle.svelte   # Dark/light mode toggle
+│   │   │   │   ├── BackButton.svelte         # Navigation component
+│   │   │   │   ├── AuthGuard.svelte          # Authentication guard (NEW)
+│   │   │   │   ├── LoginDialog.svelte        # Login modal dialog (NEW) 
+│   │   │   │   ├── Icon.svelte               # SVG icon sprite component
+│   │   │   │   ├── Iconize.svelte            # Universal RTL-aware icon wrapper
+│   │   │   │   ├── LoadingSpinner.svelte     # Loading animation
+│   │   │   │   └── ThemeToggle.svelte        # Dark/light mode toggle
 │   │   │   ├── stores/        # State management stores
 │   │   │   │   ├── navigation.ts # Route and navigation state
 │   │   │   │   ├── result.ts     # Generation results state
 │   │   │   │   ├── i18n.ts       # Internationalization
+│   │   │   │   ├── auth.ts       # Authentication state management (NEW)
 │   │   │   │   └── theme.ts      # Theme management store
 │   │   │   └── types/         # TypeScript type definitions
 │   │   └── routes/
@@ -703,6 +792,12 @@ bip39 = { version = "2.2.0", features = ["spanish", "french", "portuguese", "chi
 bs58 = "0.5.1"              # Base58 encoding for seed format
 hex = "0.4.3"               # Hexadecimal utilities
 sha3 = "0.10.8"             # SHA3-256 hashing for seed generation
+
+# Authentication dependencies
+base64 = "0.22.1"           # Base64 encoding for JWT tokens
+chrono = { version = "0.4.34", features = ["serde"] }  # Date/time handling for token expiration
+jsonwebtoken = "9.3.0"      # JWT token generation and validation
+uuid = { version = "1.10.0", features = ["v4"] }  # UUID generation for secure tokens
 ```
 
 #### Linting & Formatting Tools

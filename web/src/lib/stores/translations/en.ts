@@ -153,5 +153,22 @@ export const en: I18nTexts = {
 		full: 'Full Alphanumeric',
 		'full-with-symbols': 'Full with Symbols',
 		numeric: 'Numeric (0-9)'
+	},
+	auth: {
+		loginRequired: 'Authentication Required',
+		loginDescription: 'Enter your email to receive a magic link for access.',
+		emailAddress: 'Email Address',
+		emailPlaceholder: 'your@email.com',
+		emailRequired: 'Email is required',
+		emailInvalid: 'Please enter a valid email',
+		sendMagicLink: 'Send Magic Link',
+		requestFailed: 'Failed to request magic link',
+		magicLinkSent: 'Link Sent!',
+		magicLinkInstructions: 'Check your email and click the magic link to authenticate.',
+		developmentMode: 'Development Mode:',
+		testMagicLink: 'Click here to test magic link',
+		authenticationFailed: 'Authentication failed',
+		tokenExpired: 'Your session has expired. Please log in again.',
+		accessDenied: 'Access denied. Authentication required.'
 	}
 };

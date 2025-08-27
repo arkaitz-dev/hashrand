@@ -154,5 +154,22 @@ export const es: I18nTexts = {
 		full: 'Alfanumérico Completo',
 		'full-with-symbols': 'Completo con Símbolos',
 		numeric: 'Numérico (0-9)'
+	},
+	auth: {
+		loginRequired: 'Autenticación Requerida',
+		loginDescription: 'Introduce tu email para recibir un enlace mágico de acceso.',
+		emailAddress: 'Dirección de Email',
+		emailPlaceholder: 'tu@email.com',
+		emailRequired: 'El email es obligatorio',
+		emailInvalid: 'Por favor introduce un email válido',
+		sendMagicLink: 'Enviar Enlace Mágico',
+		requestFailed: 'Error al solicitar el enlace mágico',
+		magicLinkSent: '¡Enlace Enviado!',
+		magicLinkInstructions: 'Revisa tu email y haz clic en el enlace mágico para autenticarte.',
+		developmentMode: 'Modo Desarrollo:',
+		testMagicLink: 'Hacer clic aquí para probar el enlace mágico',
+		authenticationFailed: 'Error de autenticación',
+		tokenExpired: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+		accessDenied: 'Acceso denegado. Se requiere autenticación.'
 	}
 };

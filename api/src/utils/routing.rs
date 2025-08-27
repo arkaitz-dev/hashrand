@@ -1,6 +1,6 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::{
-    handle_api_key_request, handle_custom, handle_from_seed, handle_mnemonic_request,
+    handle_api_key_request, handle_custom, handle_from_seed, handle_login, handle_mnemonic_request,
     handle_password_request, handle_users, handle_version,
 };
 use spin_sdk::http::{Method, Request, Response};
@@ -50,6 +50,9 @@ pub fn route_request_with_req(
 
         // User management endpoints (support GET, POST, DELETE)
         path if path.starts_with("/api/users") => handle_users(req, path, query_params),
+
+        // Authentication endpoints (support GET and POST)
+        path if path.starts_with("/api/login") => handle_login(req, query_params),
 
         // Not found
         _ => handle_not_found(),
@@ -111,6 +114,8 @@ Available endpoints:
 - POST /api/api-key (JSON body with optional seed parameter)
 - GET /api/mnemonic?language=english&words=12 (BIP39 mnemonic phrases)
 - POST /api/mnemonic (JSON body with seed parameter)
+- POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
+- GET /api/login/?magiclink=TOKEN (Validate magic link and get JWT tokens)
 - GET /api/users?limit=10 (List users)
 - GET /api/users/:id (Get specific user)
 - POST /api/users (Create user - JSON: {"username": "user", "email": "user@example.com"})

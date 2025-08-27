@@ -8,9 +8,11 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 
 - **Modern SPA Architecture**: Built with SvelteKit as a Single Page Application with static adapter
 - **Multi-endpoint Support**: Complete interfaces for all API endpoints:
-  - **Custom Hash Generator** (`/api/generate`) - accessible via `/custom` route
+  - **Custom Hash Generator** (`/api/custom`) - accessible via `/custom` route
   - **Secure Password Generator** (`/api/password`) - with strength validation
   - **API Key Generator** (`/api/api-key`) - with `ak_` prefix handling
+  - **BIP39 Mnemonic Generator** (`/api/mnemonic`) - with 10 language support
+  - **Authentication System** (`/api/login/`) - magic link authentication with JWT tokens
   - **Version Information** (`/api/version`) - displays both API and UI versions
 - **Professional Design**: Clean, responsive UI with comprehensive design system
 
@@ -55,6 +57,13 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 
 ### ⚡ Interactive Features
 
+- **🔐 Authentication System**: Complete magic link authentication with route protection
+  - **AuthGuard Component**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes
+  - **LoginDialog Component**: Professional modal interface with email input and validation
+  - **Magic Link Flow**: Seamless passwordless authentication via email magic links
+  - **JWT Token Management**: Automatic access token storage and refresh cookie handling
+  - **Development Mode**: Console-logged magic links for easy development workflow
+  - **Session Management**: Complete session lifecycle with automatic cleanup
 - **Interactive Range Sliders**: Beautiful gradient sliders for length parameter selection
 - **Dynamic Help Text**: Context-aware informational notes based on alphabet selection
 - **Automatic Adjustments**: Smart minimum length calculation when changing alphabets
@@ -188,6 +197,8 @@ web/
 │   │   ├── api.ts              # Type-safe API service layer
 │   │   ├── components/         # Reusable UI components
 │   │   │   ├── BackButton.svelte         # Navigation component
+│   │   │   ├── AuthGuard.svelte          # Authentication route protection (NEW)
+│   │   │   ├── LoginDialog.svelte        # Authentication modal dialog (NEW)
 │   │   │   ├── DateTimeLocalized.svelte  # i18n date/time formatting
 │   │   │   ├── Footer.svelte             # App footer with version info
 │   │   │   ├── Icon.svelte               # SVG sprite icon component
@@ -200,6 +211,7 @@ web/
 │   │   │   ├── i18n.ts                   # Internationalization system
 │   │   │   ├── navigation.ts             # Route and navigation state
 │   │   │   ├── result.ts                 # Generation results state
+│   │   │   ├── auth.ts                   # Authentication state management (NEW)
 │   │   │   ├── rtl.ts                    # RTL/LTR text direction
 │   │   │   ├── theme.ts                  # Theme management
 │   │   │   └── translations/             # Language files (13 languages)

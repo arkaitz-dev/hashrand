@@ -5,6 +5,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
+	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { MnemonicParams } from '$lib/types';
@@ -110,9 +111,19 @@
 	$: wordsValid = params.words && isValidMnemonicWords(params.words);
 	$: formValid = languageValid && wordsValid;
 
-	function handleGenerate(event: Event) {
+	// Reference to AuthGuard component
+	let authGuard: AuthGuard;
+
+	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) return;
+
+		// Check authentication before proceeding
+		const authenticated = await authGuard.requireAuth();
+		if (!authenticated) {
+			console.log('Authentication required for mnemonic generation');
+			return;
+		}
 
 		// Create URL parameters for result page - result will handle API call
 		const urlParams = new URLSearchParams();
@@ -187,6 +198,9 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Auth Guard: wraps the form -->
+		<AuthGuard bind:this={authGuard} let:requireAuth>
 
 		<!-- Form -->
 		<div class="max-w-2xl mx-auto">
@@ -304,5 +318,6 @@
 
 		<!-- Footer with Version Information -->
 		<Footer />
+		</AuthGuard>
 	</div>
 </div>
