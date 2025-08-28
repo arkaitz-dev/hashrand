@@ -59,15 +59,25 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
 - **🔐 Frictionless Authentication System**: Enhanced UX with on-demand magic link authentication
   - **Explore First, Authenticate Later**: All generator pages accessible without login
   - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
-  - **Two-Step Email Confirmation**: Professional email validation with correction option
+  - **EmailInputDialog Component**: Reusable two-step authentication component
+    - Step 1: Email input with real-time validation and error handling
+    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
+    - Advanced state preservation using base58 encoding for form parameters
+    - Universal integration across all generator pages (custom/, password/, api-key/, mnemonic/)
+    - Professional design matching existing dialog components
+  - **State-Aware Form Handling**: Automatic parameter preservation through authentication flow
+    - JSON form parameters encoded as base58 URL-safe strings
+    - Temporary storage in localStorage with automatic cleanup
+    - Seamless form restoration after authentication completion
   - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale)
-  - **Clean User Flow**: Seamless redirection after authentication
+  - **Clean User Flow**: Seamless transition from form → authentication → result generation
   - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation
   - **AuthGuard Protection**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes  
   - **JWT Dual Token System**: Access tokens (15 min) + HttpOnly refresh cookies (1 week)
   - **Frontend Integration**: LoginDialog modal, automatic token management, and session persistence
   - **Development Mode**: Console-logged magic links for easy development and testing
   - **Database Sessions**: Complete session management with automatic cleanup of expired sessions
+  - **Mobile-Optimized**: Extended debug display (20 seconds) for tablet development without dev console
   - **Professional Translation Quality**: Comprehensive review and enhancement of all 13 language translations
     - **Linguistic Authenticity**: Native terminology preferred over anglicisms (Hindi "लंबाई" vs "लेंथ")
     - **Regional Variations**: European Portuguese "palavras-passe" vs Brazilian "senhas"

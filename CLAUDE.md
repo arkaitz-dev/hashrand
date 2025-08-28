@@ -370,7 +370,7 @@ CREATE TABLE users (
 - **Output**: Static files in `dist/` directory ready for deployment
 - **Dev Server**: Hot reload on port 5173 with API proxy to port 3000
 
-## Current State (v1.4.0 API, v0.18.0 Web)
+## Current State (v1.4.1 API, v0.19.1 Web)
 
 The application now includes comprehensive **BIP39 mnemonic generation**, complete deterministic generation functionality, **full SQLite database integration**, and **complete authentication system**:
 - **🔐 Complete BIP39 Mnemonic System**: Full Bitcoin Improvement Proposal 39 implementation
@@ -407,6 +407,13 @@ The application now includes comprehensive **BIP39 mnemonic generation**, comple
     - **Automatic Cleanup**: Expired session removal for database hygiene
   - **Frontend Integration**: Complete authentication UI with route protection
     - **AuthGuard Component**: Protects custom/, password/, api-key/, and mnemonic/ routes
+    - **EmailInputDialog Component**: Reusable two-step authentication component (LATEST)
+      - Professional email input and confirmation dialog with state preservation
+      - Advanced base58 encoding system for form parameter preservation during authentication  
+      - Universal integration across all generator pages (custom/, password/, api-key/, mnemonic/)
+      - Uses `@scure/base` library for URL-safe parameter encoding/decoding
+      - Development-optimized with 20-second debug display for tablet users
+      - Eliminates 80+ lines of duplicate code with reusable architecture
     - **LoginDialog Component**: Professional authentication modal interface
     - **Authentication State**: Svelte store for complete session management
     - **Magic Link Processing**: Automatic URL parameter processing for authentication
@@ -436,6 +443,21 @@ The application now includes comprehensive **BIP39 mnemonic generation**, comple
   - **Unified Pipeline**: Single `just check` command for complete quality verification
   - **Zero Warnings**: All 15+ code quality issues resolved across the codebase
 - **Complete Internationalization**: Full i18n system with 13 languages operational
+  - **EmailInputDialog Translation Coverage**: 9 of 13 languages completed (LATEST SESSION)
+    - **Completed**: English, Spanish, French, German, Portuguese, Russian, Chinese, Euskera
+    - **New Translation Keys**: Essential authentication dialog keys added to all completed languages
+      - Basic actions: `cancel`, `continue`, `correct`, `send`, `sending`
+      - Form validation: `formInvalid`, `connectionError`, `sendError`
+      - Email confirmation: `confirmEmail`, `confirmEmailDescription`
+    - **Enhanced Sections**: Added missing `mnemonic` and `auth` sections to incomplete language files
+    - **Remaining**: Arabic, Catalan, Galician, Hindi, Japanese (pending completion)
+  - **Translation Quality**: Professional linguistic review with authentic terminology and grammar
+    - French: Complete BIP39 mnemonic translations and authentication flow
+    - German: Enhanced with proper German linguistic structures
+    - Portuguese: European Portuguese standards with complete translations
+    - Russian: Natural Russian expressions and complete authentication system
+    - Chinese: Proper Chinese grammar patterns and complete translations
+    - Euskera: Authentic Basque language with proper ergative/absolutive cases
 - **DateTimeLocalized Component**: Portable internationalized date/time formatting with custom Euskera support
 - **Enhanced Iconize Component**: Advanced RTL-aware wrapper with `invertposition` parameter for flexible icon positioning
 - **Professional Icon System**: Play icons (▶) for generate buttons and home icons (🏠) for navigation
@@ -726,24 +748,26 @@ This session completed the implementation and integration of a comprehensive mag
 
 The project now uses **independent versioning** for API and Web components:
 
-### API Backend (v1.4.0)
-- **Stable Version**: API has reached mature 1.4.0 with complete authentication system
+### API Backend (v1.4.1)
+- **Stable Version**: API has reached mature 1.4.1 with enhanced magic link host detection
 - **Semantic Versioning**: Follows strict semver for backward compatibility
 - **Production Ready**: Can be used in production environments with full authentication and user management
 - **Latest Features**: Complete magic link authentication system with JWT token management and SQLite database integration
+- **Host Detection**: Enhanced magic link generation with dynamic UI host detection for Tailscale compatibility
 
-### Web Interface (v0.18.0)
+### Web Interface (v0.19.1)
 - **Development Version**: Currently in 0.x.x series during active development
-- **Major Features**: Complete authentication integration with AuthGuard route protection and professional LoginDialog
-- **Authentication Ready**: Full authentication UI with magic link processing and JWT token management
+- **Major Features**: EmailInputDialog component with advanced state preservation and complete authentication integration
+- **Authentication Ready**: Full authentication UI with magic link processing, JWT token management, and reusable component architecture
+- **Translation Coverage**: EmailInputDialog translations completed for 9 of 13 supported languages
 - **Modern Architecture**: Built with latest SvelteKit 2.x without deprecated warnings
 
 ### Version Endpoint
 The `/api/version` endpoint returns both component versions:
 ```json
 {
-  "api_version": "1.4.0",
-  "ui_version": "0.18.0"
+  "api_version": "1.4.1",
+  "ui_version": "0.19.1"
 }
 ```
 

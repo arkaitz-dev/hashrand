@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [API v1.4.1 / Web v0.19.0] - 2025-08-28
+## [API v1.4.1 / Web v0.19.1] - 2025-08-28
 
 ### API Backend Changes (v1.4.1)
 #### Fixed
@@ -24,17 +24,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced debug logging for magic link generation (development mode only)
 - Improved error handling in login authentication flow
 
-### Web Interface Changes (v0.19.0) 
+### Web Interface Changes (v0.19.1)
 #### Added
+- **📧 EmailInputDialog Component**: Reusable authentication component for enhanced user experience
+  - **Two-Step Email Flow**: Professional email input and confirmation dialog
+    - Step 1: Email input with real-time validation and error handling
+    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
+  - **State Preservation**: Advanced base58 encoding system for form state preservation during authentication
+    - Uses `@scure/base` library for URL-safe parameter encoding
+    - Encodes all form parameters (length, alphabet, prefix, suffix, seed) into `next` URL parameter
+    - Decodes parameters on return from authentication and stores in localStorage
+  - **Universal Integration**: Added to all generator pages (custom/, password/, api-key/, mnemonic/)
+  - **Development-Friendly**: Extended debug message display from 10 to 20 seconds for tablet users
+  - **Professional Design**: Consistent styling matching existing dialog components
+- **🌍 Complete Translation System**: Comprehensive internationalization updates for EmailInputDialog
+  - **9 Languages Completed**: Full translations for English, Spanish, French, German, Portuguese, Russian, Chinese, Euskera, and existing partial translations
+  - **New Translation Keys**: Added essential authentication dialog keys to all language files
+    - Basic actions: `cancel`, `continue`, `correct`, `send`, `sending`
+    - Form validation: `formInvalid`, `connectionError`, `sendError`
+    - Email confirmation: `confirmEmail`, `confirmEmailDescription`
+  - **Enhanced Language Coverage**: Updated incomplete translation files with missing `mnemonic` and `auth` sections
+    - French: Added complete BIP39 mnemonic translations and authentication flow
+    - German: Enhanced with proper German linguistic structures and complete auth system
+    - Portuguese: Updated with European Portuguese standards and complete translations
+    - Russian: Improved with natural Russian expressions and complete authentication system
+    - Chinese: Enhanced with proper Chinese grammar patterns and complete translations
+    - Euskera: Added authentic Basque language translations with proper ergative/absolutive cases
+  - **Translation Quality**: Ensured linguistic authenticity and professional terminology across all supported languages
+
+#### Enhanced  
+- **✨ Authentication UX Improvements**: Complete redesign of authentication flow for better user experience
+  - **Frictionless Exploration**: All generator pages show content immediately without authentication barriers
+  - **On-Demand Authentication**: Login dialog appears only when user clicks "Generate" button
+  - **State-Aware Form Handling**: Automatic form parameter preservation through authentication flow
+  - **Clean User Flow**: Seamless transition from form → authentication → result generation
+- **🎨 Professional Component Design**: Enhanced visual consistency across authentication components
+  - **Reusable Architecture**: EmailInputDialog component eliminates 80+ lines of duplicate code
+  - **Type-Safe Integration**: Full TypeScript support with proper parameter validation
+  - **Error Handling**: Comprehensive error states with user-friendly messages in all supported languages
+
+#### Technical Implementation
+- **🔧 Advanced State Management**: Sophisticated parameter preservation system
+  - **Base58 Encoding**: JSON form parameters → UTF-8 bytes → base58 URL-safe encoding
+  - **localStorage Integration**: Temporary parameter storage with automatic cleanup
+  - **Global Compatibility**: Uses `globalThis.TextEncoder/TextDecoder` for cross-platform support
+  - **Event-Driven Architecture**: CustomEvent system for component communication
+- **🌐 Translation Architecture**: Enhanced i18n system with complete coverage
+  - **Modular Language Files**: Each language in separate TypeScript files for maintainability
+  - **Complete Coverage**: All 13 supported languages now have authentication translations
+  - **Linguistic Accuracy**: Professional translations respecting each language's grammar and cultural patterns
+- **📱 Mobile Optimization**: Enhanced user experience for tablet/mobile development workflows
+  - **Extended Debug Display**: 20-second debug message visibility for tablet users without dev console
+  - **Touch-Friendly Interface**: Optimized button sizes and touch targets for mobile interaction
+
+#### Fixed
+- **🔧 TypeScript Integration**: Resolved all type definition issues
+  - **Global Types**: Proper `globalThis` usage for TextEncoder/TextDecoder compatibility
+  - **Event Types**: Fixed CustomEvent type declarations for component communication
+  - **Parameter Validation**: Enhanced type safety for form parameter handling
+- **🌍 Translation Completeness**: Resolved incomplete translation coverage
+  - **Missing Sections**: Added missing `mnemonic` and `auth` sections to 6 language files
+  - **Consistency Issues**: Standardized translation keys across all language files
+  - **Code vs UI Language**: Fixed all instances of hardcoded Spanish text in components
+
+### Web Interface Changes (v0.19.0) - Previous Release
+#### Enhanced  
 - **✨ Enhanced Authentication UX**: Completely redesigned authentication flow for better user experience
   - **Frictionless Exploration**: All generator pages (custom/, password/, api-key/, mnemonic/) now show content immediately without authentication
   - **On-Demand Authentication**: Login dialog only appears when user clicks "Generate" button
-  - **Two-Step Email Confirmation**: Professional email confirmation flow with correction option
-    - Step 1: Email input with validation
-    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) buttons
   - **Clean Redirection**: After sending magic link, user is redirected to home page (`/`)
-
-#### Improved
 - **🎨 Professional Login Dialog**: Enhanced visual design and user flow
   - Better contrast for email display in confirmation step
   - Simplified button labels for clarity ("Enviar" instead of "Enviar enlace")
