@@ -177,19 +177,30 @@ export const authStore = {
 			const unsubscribe = subscribe(state => {
 				unsubscribe();
 				
+				console.log('[DEBUG] AuthStore isAuthenticated check:', {
+					hasUser: !!state.user,
+					hasToken: !!state.accessToken,
+					userEmail: state.user?.email,
+					tokenExists: !!state.accessToken,
+					expiresAt: state.user?.expiresAt
+				});
+				
 				if (!state.user || !state.accessToken) {
+					console.log('[DEBUG] Not authenticated - missing user or token');
 					resolve(false);
 					return;
 				}
 
 				// Check token expiration
 				if (state.user.expiresAt && new Date(state.user.expiresAt) <= new Date()) {
+					console.log('[DEBUG] Token expired, logging out');
 					// Token expired, logout
 					authStore.logout();
 					resolve(false);
 					return;
 				}
 
+				console.log('[DEBUG] User is authenticated');
 				resolve(true);
 			});
 		});

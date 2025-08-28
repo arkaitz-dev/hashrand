@@ -56,7 +56,12 @@ A random hash generator built with Fermyon Spin and WebAssembly. Generate crypto
   - **Informational Display**: Seeds shown as informational text without copy functionality
   - **Simplified Integration**: Clean seed handling without complex UI interactions
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages featuring enhanced naturalness
-- **🔐 Complete Authentication System**: Magic link authentication with JWT token management
+- **🔐 Frictionless Authentication System**: Enhanced UX with on-demand magic link authentication
+  - **Explore First, Authenticate Later**: All generator pages accessible without login
+  - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
+  - **Two-Step Email Confirmation**: Professional email validation with correction option
+  - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale)
+  - **Clean User Flow**: Seamless redirection after authentication
   - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation
   - **AuthGuard Protection**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes  
   - **JWT Dual Token System**: Access tokens (15 min) + HttpOnly refresh cookies (1 week)

@@ -12,7 +12,7 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
   - **Secure Password Generator** (`/api/password`) - with strength validation
   - **API Key Generator** (`/api/api-key`) - with `ak_` prefix handling
   - **BIP39 Mnemonic Generator** (`/api/mnemonic`) - with 10 language support
-  - **Authentication System** (`/api/login/`) - magic link authentication with JWT tokens
+  - **Enhanced Authentication System** (`/api/login/`) - frictionless magic link authentication with improved UX
   - **Version Information** (`/api/version`) - displays both API and UI versions
 - **Professional Design**: Clean, responsive UI with comprehensive design system
 
@@ -57,12 +57,18 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 
 ### ⚡ Interactive Features
 
-- **🔐 Authentication System**: Complete magic link authentication with route protection
-  - **AuthGuard Component**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes
-  - **LoginDialog Component**: Professional modal interface with email input and validation
-  - **Magic Link Flow**: Seamless passwordless authentication via email magic links
+- **🔐 Enhanced Authentication System**: Frictionless magic link authentication with improved UX
+  - **Explore-First Design**: All generator pages accessible without authentication for content exploration
+  - **On-Demand Authentication**: Login dialog appears only when user clicks "Generate" button
+  - **Two-Step Email Confirmation**: Professional email validation flow with correction option
+    - Step 1: Email input with real-time validation
+    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
+  - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale) for seamless development
+  - **Clean User Flow**: Automatic redirection to home page after authentication
+  - **AuthGuard Component**: Smart content protection that shows content first, authenticates later
+  - **LoginDialog Component**: Professional modal with enhanced visual contrast and clean design
   - **JWT Token Management**: Automatic access token storage and refresh cookie handling
-  - **Development Mode**: Console-logged magic links for easy development workflow
+  - **Development Mode**: Console-logged magic links for easy testing workflow
   - **Session Management**: Complete session lifecycle with automatic cleanup
 - **Interactive Range Sliders**: Beautiful gradient sliders for length parameter selection
 - **Dynamic Help Text**: Context-aware informational notes based on alphabet selection

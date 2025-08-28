@@ -20,6 +20,8 @@ use crate::utils::JwtUtils;
 #[derive(Deserialize)]
 struct MagicLinkRequest {
     email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ui_host: Option<String>,
 }
 
 /// Response for magic link generation (development)
@@ -94,9 +96,15 @@ fn handle_magic_link_generation(
 ) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
-    let magic_request: MagicLinkRequest = match serde_json::from_slice(body_bytes) {
-        Ok(req) => req,
-        Err(_) => {
+    println!("DEBUG: Request body bytes: {:?}", std::str::from_utf8(body_bytes));
+    
+    let magic_request: MagicLinkRequest = match serde_json::from_slice::<MagicLinkRequest>(body_bytes) {
+        Ok(req) => {
+            println!("DEBUG: Parsed request - Email: {}, UI Host: {:?}", req.email, req.ui_host);
+            req
+        },
+        Err(e) => {
+            println!("DEBUG: JSON parse error: {}", e);
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
@@ -132,13 +140,26 @@ fn handle_magic_link_generation(
     // Save to database
     match AuthOperations::create_auth_session(env.clone(), &auth_session) {
         Ok(_) => {
-            // Get host URL for magic link
-            let host_url = JwtUtils::get_host_url_from_request(&req);
+            // Get host URL for magic link (prefer ui_host from request, fallback to request host)
+            println!("DEBUG: About to choose host URL");
+            println!("DEBUG: magic_request.ui_host = {:?}", magic_request.ui_host);
+            
+            let fallback_host = JwtUtils::get_host_url_from_request(&req);
+            println!("DEBUG: fallback_host from request = {}", fallback_host);
+            
+            let host_url = magic_request.ui_host
+                .as_deref()  // Más limpio que .as_ref().map(|s| s.as_str())
+                .unwrap_or(&fallback_host);
+            
+            println!("DEBUG: Final chosen host_url = {}", host_url);
             let magic_link = JwtUtils::create_magic_link_url(&host_url, &magic_token);
+            println!("DEBUG: Generated magic_link = {}", magic_link);
 
             // In development, log the magic link instead of sending email
             println!("=== MAGIC LINK AUTHENTICATION (DEVELOPMENT MODE) ===");
             println!("Email: {}", magic_request.email);
+            println!("UI Host: {:?}", magic_request.ui_host);
+            println!("Final Host URL: {}", host_url);
             println!("Magic Link: {}", magic_link);
             println!("Expires: {} UTC", magic_expires_at.format("%Y-%m-%d %H:%M:%S"));
             println!("====================================================");

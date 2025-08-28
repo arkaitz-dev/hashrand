@@ -11,6 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.1 / Web v0.19.0] - 2025-08-28
+
+### API Backend Changes (v1.4.1)
+#### Fixed
+- **🔗 Magic Link Host Detection**: Fixed magic links to correctly use the UI host from request instead of fallback host
+  - Magic links now properly point to `https://elite.faun-pirate.ts.net` when accessed via Tailscale
+  - Added `ui_host` parameter to `/api/login/` endpoint for dynamic host detection
+  - Improved host URL construction with proper fallback logic
+
+#### Technical
+- Enhanced debug logging for magic link generation (development mode only)
+- Improved error handling in login authentication flow
+
+### Web Interface Changes (v0.19.0) 
+#### Added
+- **✨ Enhanced Authentication UX**: Completely redesigned authentication flow for better user experience
+  - **Frictionless Exploration**: All generator pages (custom/, password/, api-key/, mnemonic/) now show content immediately without authentication
+  - **On-Demand Authentication**: Login dialog only appears when user clicks "Generate" button
+  - **Two-Step Email Confirmation**: Professional email confirmation flow with correction option
+    - Step 1: Email input with validation
+    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) buttons
+  - **Clean Redirection**: After sending magic link, user is redirected to home page (`/`)
+
+#### Improved
+- **🎨 Professional Login Dialog**: Enhanced visual design and user flow
+  - Better contrast for email display in confirmation step
+  - Simplified button labels for clarity ("Enviar" instead of "Enviar enlace")
+  - Clean interface without debug messages
+- **🔗 Dynamic Magic Links**: Magic links automatically adapt to current host (localhost/Tailscale)
+
+#### Removed
+- Debug messages and visual indicators from production interface
+- Authentication barriers that prevented content exploration
+
+---
+
 ## [API v1.4.0 / Web v0.18.0] - 2025-08-27
 
 ### API Backend Changes (v1.4.0)
