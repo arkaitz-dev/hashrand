@@ -29,11 +29,19 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
   - Theme icons (sun/moon), navigation arrows, action buttons, UI elements
 - **🌍 Complete Internationalization**: Full i18n system with 13 languages featuring professional translation quality
   - **Languages**: English, Spanish, Portuguese, French, German, Russian, Chinese, Arabic, Hindi, Japanese, Euskera, Català, Galego
+  - **Translation Coverage**: Complete EmailInputDialog authentication translations added to 9 of 13 languages
+    - **Completed Languages**: English, Spanish, French, German, Portuguese, Russian, Chinese, Euskera (with full mnemonic and auth sections)
+    - **Authentication Keys**: New translation keys for two-step email authentication flow
+      - Basic actions: `cancel`, `continue`, `correct`, `send`, `sending`
+      - Form validation: `formInvalid`, `connectionError`, `sendError`  
+      - Email confirmation: `confirmEmail`, `confirmEmailDescription`
+    - **Remaining Languages**: Arabic, Catalan, Galician, Hindi, Japanese (pending translation completion)
   - **Enhanced Naturalness**: Comprehensive linguistic review ensuring authentic, natural-sounding translations
     - **Native Terminology**: Preferred pure language terms over anglicisms (Hindi, Russian, German)
     - **Regional Accuracy**: European Portuguese vs Brazilian distinctions, authentic Basque cases
     - **Technical Consistency**: Unified "characters" terminology across Romance languages
     - **Cultural Adaptation**: Proper Arabic RTL terminology and Chinese natural expressions
+    - **Grammar Authenticity**: Proper ergative/absolutive cases in Basque, natural Russian expressions
   - **RTL Support**: Right-to-left text direction for Arabic with automatic behavior
   - **Language Selector**: Interactive dropdown with authentic flag representations
   - **Regional Flags**: Includes Catalonia, Basque Country (Ikurriña), Galicia flags
@@ -60,11 +68,22 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 - **🔐 Enhanced Authentication System**: Frictionless magic link authentication with improved UX
   - **Explore-First Design**: All generator pages accessible without authentication for content exploration
   - **On-Demand Authentication**: Login dialog appears only when user clicks "Generate" button
+  - **EmailInputDialog Component**: Reusable two-step authentication component (NEW)
+    - Professional email input and confirmation dialog with state preservation
+    - Advanced base58 encoding system for form parameter preservation during authentication
+    - Universal integration across all generator pages (custom/, password/, api-key/, mnemonic/)
+    - Uses `@scure/base` library for URL-safe parameter encoding/decoding
+    - Temporary localStorage storage with automatic cleanup after authentication
+    - Development-optimized with 20-second debug message display for tablet users
+  - **State-Aware Form Handling**: Automatic parameter preservation through authentication flow
+    - JSON form parameters → UTF-8 bytes → base58 URL-safe encoding in `next` parameter
+    - Seamless form restoration after authentication completion
+    - Smart parameter validation and error handling
   - **Two-Step Email Confirmation**: Professional email validation flow with correction option
     - Step 1: Email input with real-time validation
     - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
   - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale) for seamless development
-  - **Clean User Flow**: Automatic redirection to home page after authentication
+  - **Clean User Flow**: Seamless transition from form → authentication → result generation
   - **AuthGuard Component**: Smart content protection that shows content first, authenticates later
   - **LoginDialog Component**: Professional modal with enhanced visual contrast and clean design
   - **JWT Token Management**: Automatic access token storage and refresh cookie handling
@@ -203,8 +222,9 @@ web/
 │   │   ├── api.ts              # Type-safe API service layer
 │   │   ├── components/         # Reusable UI components
 │   │   │   ├── BackButton.svelte         # Navigation component
-│   │   │   ├── AuthGuard.svelte          # Authentication route protection (NEW)
-│   │   │   ├── LoginDialog.svelte        # Authentication modal dialog (NEW)
+│   │   │   ├── AuthGuard.svelte          # Authentication route protection 
+│   │   │   ├── EmailInputDialog.svelte   # Two-step email authentication component (NEW)
+│   │   │   ├── LoginDialog.svelte        # Authentication modal dialog
 │   │   │   ├── DateTimeLocalized.svelte  # i18n date/time formatting
 │   │   │   ├── Footer.svelte             # App footer with version info
 │   │   │   ├── Icon.svelte               # SVG sprite icon component

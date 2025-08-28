@@ -43,6 +43,16 @@ export const eu: I18nTexts = {
 		optionalSuffix: 'Aukerako atzizkia',
 		prefixCannotExceed: 'Aurrizkiak 32 hizki ezin ditu gainditu',
 		suffixCannotExceed: 'Atzizkiak 32 hizki ezin ditu gainditu',
+		yes: 'Bai',
+		no: 'Ez',
+		cancel: 'Ezeztatu',
+		continue: 'Jarraitu',
+		correct: 'Zuzendu',
+		send: 'Bidali',
+		sending: 'Bidaltzen...',
+		formInvalid: 'Formularioa baliogabea da',
+		connectionError: 'Konexio errorea. Saiatu berriro.',
+		sendError: 'Esteka bidaltzerakoan errorea. Saiatu berriro.',
 		seedUsed: 'Erabilitako Hazia',
 		copySeed: 'Hazia Kopiatu',
 		optionalSeed: 'Aukerako hazia (64 hex karaktere)',
@@ -113,10 +123,59 @@ export const eu: I18nTexts = {
 			'Alfabeto alfanumeriko osoak bateragarritasun maximoa eskaintzen du. Segurtasun sendorako gutxienez {0} hizki behar.',
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
+	mnemonic: {
+		title: 'BIP39 Esaldi Mnemonikoen Sortzailea',
+		description: 'Kriptodiru-diruzorroetarako BIP39 esaldi mnemonikoak sortu',
+		generateMnemonic: 'Esaldi Mnemonikoa Sortu',
+		language: 'Hizkuntza',
+		wordCount: 'Hitz Kopurua',
+		languageDescription: 'Aukeratu zure esaldi mnemonikoaren hizkuntza',
+		words12: '12 hitz (128-bit entropia)',
+		words12Description: '128-bit entropia - diruzorro gehienekin bateragarria',
+		words24: '24 hitz (256-bit entropia)',
+		words24Description: '256-bit entropia - segurtasun maximoa diru kopuru handietarako',
+		formatNotice:
+			'Sortutako esaldiek BIP39 estandarra jarraitzen dute eta kriptodiru-diruzorro gehienekin bateragarriak dira.',
+		securityNotice:
+			'Ez partekatu inoiz zure esaldi mnemonikoa inorekin. Zure esaldi mnemonikorako sarbidea duen edozein pertsonak zure fundsak kontrolatu ditzake. Gorde lineaz kanpo toki seguru batean.',
+		failedToGenerateMnemonic: 'Esaldi mnemonikoa sortzeak huts egin du',
+		languages: {
+			english: 'Ingelesa',
+			spanish: 'Gaztelania',
+			french: 'Frantsesa',
+			portuguese: 'Portugesa',
+			japanese: 'Japoniera',
+			chinese: 'Txinera (Sinplifikatua)',
+			chineseTraditional: 'Txinera (Tradizionala)',
+			italian: 'Italiera',
+			korean: 'Koreera',
+			czech: 'Txekiera'
+		}
+	},
 	alphabets: {
 		base58: 'Base58 (Bitcoin alfabetoa)',
 		'no-look-alike': 'Nahasgarririk gabe',
 		full: 'Alfabeto Alfanumeriko Osoa',
-		'full-with-symbols': 'Osoa Sinboloekin'
+		'full-with-symbols': 'Osoa Sinboloekin',
+		numeric: 'Numerikoa (0-9)'
+	},
+	auth: {
+		loginRequired: 'Autentifikazioa Beharrezkoa',
+		loginDescription: 'Sartu zure emaila sarbide esteka magiko bat jasotzeko.',
+		emailAddress: 'Email Helbidea',
+		emailPlaceholder: 'zure@emaila.com',
+		emailRequired: 'Emaila derrigorrezkoa da',
+		emailInvalid: 'Mesedez, sartu baliozko email bat',
+		sendMagicLink: 'Esteka Magikoa Bidali',
+		requestFailed: 'Esteka magikoa eskatzeak huts egin du',
+		confirmEmail: 'Emaila Berretsi',
+		confirmEmailDescription: 'Zuzena da?',
+		magicLinkSent: 'Esteka Bidalita!',
+		magicLinkInstructions: 'Egiaztatu zure emaila eta klikatu esteka magikoan autentifikatzeko.',
+		developmentMode: 'Garapen Modua:',
+		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
+		authenticationFailed: 'Autentifikazioak huts egin du',
+		tokenExpired: 'Zure saioa iraungi da. Mesedez, hasi saioa berriro.',
+		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.'
 	}
 };

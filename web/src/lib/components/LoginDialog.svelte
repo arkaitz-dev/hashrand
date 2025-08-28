@@ -8,7 +8,7 @@
 
 	import { createEventDispatcher } from 'svelte';
 	import { authStore } from '../stores/auth';
-	import { t } from '../stores/i18n';
+	import { _ } from '../stores/i18n';
 	import type { MagicLinkResponse } from '../types';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
@@ -32,12 +32,12 @@
 	 */
 	async function handleSubmit() {
 		if (!email.trim()) {
-			errorMessage = $t('auth.emailRequired');
+			errorMessage = $_('auth.emailRequired');
 			return;
 		}
 
 		if (!isValidEmail(email)) {
-			errorMessage = $t('auth.emailInvalid');
+			errorMessage = $_('auth.emailInvalid');
 			return;
 		}
 
@@ -57,7 +57,7 @@
 				magicLinkUrl = response.dev_magic_link;
 			}
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : $t('auth.requestFailed');
+			errorMessage = error instanceof Error ? error.message : $_('auth.requestFailed');
 		} finally {
 			isSubmitting = false;
 		}
@@ -140,23 +140,23 @@
 				<!-- Email input form -->
 				<div class="text-center mb-6">
 					<h2 id="login-title" class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-						{$t('auth.loginRequired')}
+						{$_('auth.loginRequired')}
 					</h2>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{$t('auth.loginDescription')}
+						{$_('auth.loginDescription')}
 					</p>
 				</div>
 
 				<form on:submit|preventDefault={handleSubmit} class="space-y-4">
 					<div>
 						<label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-							{$t('auth.emailAddress')}
+							{$_('auth.emailAddress')}
 						</label>
 						<input
 							id="email"
 							type="email"
 							bind:value={email}
-							placeholder={$t('auth.emailPlaceholder')}
+							placeholder={$_('auth.emailPlaceholder')}
 							required
 							disabled={isSubmitting}
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
@@ -181,7 +181,7 @@
 							       bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700
 							       rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							{$t('common.cancel')}
+							{$_('common.cancel')}
 						</button>
 						<button
 							type="submit"
@@ -194,7 +194,7 @@
 							{#if isSubmitting}
 								<LoadingSpinner size="sm" />
 							{/if}
-							{$t('auth.sendMagicLink')}
+							{$_('auth.sendMagicLink')}
 						</button>
 					</div>
 				</form>
@@ -210,11 +210,11 @@
 					</div>
 
 					<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-						{$t('auth.magicLinkSent')}
+						{$_('auth.magicLinkSent')}
 					</h2>
 					
 					<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-						{$t('auth.magicLinkInstructions')}
+						{$_('auth.magicLinkInstructions')}
 					</p>
 
 					<div class="text-xs text-gray-500 dark:text-gray-500 mb-4">
@@ -225,13 +225,13 @@
 						<!-- Development mode: show clickable magic link -->
 						<div class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-md p-3 mb-4">
 							<p class="text-xs text-yellow-800 dark:text-yellow-200 mb-2">
-								{$t('auth.developmentMode')}
+								{$_('auth.developmentMode')}
 							</p>
 							<button
 								on:click={testMagicLink}
 								class="text-xs text-blue-600 dark:text-blue-400 hover:underline break-all"
 							>
-								{$t('auth.testMagicLink')}
+								{$_('auth.testMagicLink')}
 							</button>
 						</div>
 					{/if}
@@ -242,7 +242,7 @@
 						       bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700
 						       rounded-md transition-colors"
 					>
-						{$t('common.close')}
+						{$_('common.close')}
 					</button>
 				</div>
 			{/if}

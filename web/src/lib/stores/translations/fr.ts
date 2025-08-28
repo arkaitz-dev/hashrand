@@ -46,6 +46,14 @@ export const fr: I18nTexts = {
 		suffixCannotExceed: 'Le suffixe ne peut pas dépasser 32 caractères',
 		yes: 'Oui',
 		no: 'Non',
+		cancel: 'Annuler',
+		continue: 'Continuer',
+		correct: 'Corriger',
+		send: 'Envoyer',
+		sending: 'Envoi en cours...',
+		formInvalid: 'Formulaire invalide',
+		connectionError: 'Erreur de connexion. Réessayez.',
+		sendError: 'Erreur lors de l\'envoi du lien. Réessayez.',
 		seedUsed: 'Graine Utilisée',
 		copySeed: 'Copier Graine',
 		optionalSeed: 'Graine optionnelle (64 caractères hex)',
@@ -116,10 +124,59 @@ export const fr: I18nTexts = {
 			"L'alphabet alphanumérique complet offre une compatibilité maximale. Minimum {0} caractères pour une sécurité forte.",
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
+	mnemonic: {
+		title: 'Générateur de Phrases Mnémotechniques BIP39',
+		description: 'Générez des phrases mnémotechniques BIP39 pour les portefeuilles de cryptomonnaies',
+		generateMnemonic: 'Générer Phrase Mnémotechnique',
+		language: 'Langue',
+		wordCount: 'Nombre de Mots',
+		languageDescription: 'Sélectionnez la langue pour votre phrase mnémotechnique',
+		words12: '12 mots (entropie 128-bit)',
+		words12Description: 'Entropie 128-bit - compatible avec la plupart des portefeuilles',
+		words24: '24 mots (entropie 256-bit)',
+		words24Description: 'Entropie 256-bit - sécurité maximale pour les grosses sommes',
+		formatNotice:
+			'Les phrases générées suivent le standard BIP39 et sont compatibles avec la plupart des portefeuilles de cryptomonnaies.',
+		securityNotice:
+			'Ne partagez jamais votre phrase mnémotechnique avec quiconque. Toute personne ayant accès à votre phrase mnémotechnique peut contrôler vos fonds. Gardez-la hors ligne dans un endroit sécurisé.',
+		failedToGenerateMnemonic: 'Échec de la génération de la phrase mnémotechnique',
+		languages: {
+			english: 'Anglais',
+			spanish: 'Espagnol',
+			french: 'Français',
+			portuguese: 'Portugais',
+			japanese: 'Japonais',
+			chinese: 'Chinois (Simplifié)',
+			chineseTraditional: 'Chinois (Traditionnel)',
+			italian: 'Italien',
+			korean: 'Coréen',
+			czech: 'Tchèque'
+		}
+	},
 	alphabets: {
 		base58: 'Base58 (alphabet Bitcoin)',
 		'no-look-alike': 'Sans Ambiguïté',
 		full: 'Alphanumérique Complet',
-		'full-with-symbols': 'Complet avec Symboles'
+		'full-with-symbols': 'Complet avec Symboles',
+		numeric: 'Numérique (0-9)'
+	},
+	auth: {
+		loginRequired: 'Authentification Requise',
+		loginDescription: 'Entrez votre email pour recevoir un lien magique d\'accès.',
+		emailAddress: 'Adresse Email',
+		emailPlaceholder: 'votre@email.com',
+		emailRequired: 'L\'email est requis',
+		emailInvalid: 'Veuillez entrer un email valide',
+		sendMagicLink: 'Envoyer Lien Magique',
+		requestFailed: 'Échec de la demande de lien magique',
+		confirmEmail: 'Confirmer Email',
+		confirmEmailDescription: 'Est-ce correct?',
+		magicLinkSent: 'Lien Envoyé!',
+		magicLinkInstructions: 'Vérifiez votre email et cliquez sur le lien magique pour vous authentifier.',
+		developmentMode: 'Mode Développement:',
+		testMagicLink: 'Cliquer ici pour tester le lien magique',
+		authenticationFailed: 'Échec de l\'authentification',
+		tokenExpired: 'Votre session a expiré. Veuillez vous connecter à nouveau.',
+		accessDenied: 'Accès refusé. Authentification requise.'
 	}
 };

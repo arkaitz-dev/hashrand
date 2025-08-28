@@ -45,6 +45,14 @@ export const pt: I18nTexts = {
 		suffixCannotExceed: 'O sufixo não pode exceder 32 caracteres',
 		yes: 'Sim',
 		no: 'Não',
+		cancel: 'Cancelar',
+		continue: 'Continuar',
+		correct: 'Corrigir',
+		send: 'Enviar',
+		sending: 'Enviando...',
+		formInvalid: 'Formulário inválido',
+		connectionError: 'Erro de conexão. Tente novamente.',
+		sendError: 'Erro ao enviar link. Tente novamente.',
 		seedUsed: 'Semente Utilizada',
 		copySeed: 'Copiar Semente',
 		optionalSeed: 'Semente opcional (64 caracteres hex)',
@@ -117,11 +125,59 @@ export const pt: I18nTexts = {
 			'O alfabeto alfanumérico completo oferece máxima compatibilidade. Mínimo de {0} caracteres para segurança forte.',
 		failedToGenerateApiKey: 'Falha ao gerar chave API'
 	},
+	mnemonic: {
+		title: 'Gerador de Frases Mnemônicas BIP39',
+		description: 'Gere frases mnemônicas BIP39 para carteiras de criptomoedas',
+		generateMnemonic: 'Gerar Frase Mnemônica',
+		language: 'Idioma',
+		wordCount: 'Quantidade de Palavras',
+		languageDescription: 'Selecione o idioma para sua frase mnemônica',
+		words12: '12 palavras (entropia 128-bit)',
+		words12Description: 'Entropia 128-bit - compatível com a maioria das carteiras',
+		words24: '24 palavras (entropia 256-bit)',
+		words24Description: 'Entropia 256-bit - segurança máxima para grandes quantidades',
+		formatNotice:
+			'Frases geradas seguem o padrão BIP39 e são compatíveis com a maioria das carteiras de criptomoedas.',
+		securityNotice:
+			'Nunca compartilhe sua frase mnemônica com ninguém. Qualquer pessoa com acesso à sua frase mnemônica pode controlar seus fundos. Guarde-a offline em local seguro.',
+		failedToGenerateMnemonic: 'Falha ao gerar frase mnemônica',
+		languages: {
+			english: 'Inglês',
+			spanish: 'Espanhol',
+			french: 'Francês',
+			portuguese: 'Português',
+			japanese: 'Japonês',
+			chinese: 'Chinês (Simplificado)',
+			chineseTraditional: 'Chinês (Tradicional)',
+			italian: 'Italiano',
+			korean: 'Coreano',
+			czech: 'Tcheco'
+		}
+	},
 	alphabets: {
 		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sem Confusão',
 		full: 'Alfanumérico Completo',
 		'full-with-symbols': 'Completo com Símbolos',
 		numeric: 'Numérico (0-9)'
+	},
+	auth: {
+		loginRequired: 'Autenticação Necessária',
+		loginDescription: 'Digite seu email para receber um link mágico de acesso.',
+		emailAddress: 'Endereço de Email',
+		emailPlaceholder: 'seu@email.com',
+		emailRequired: 'Email é obrigatório',
+		emailInvalid: 'Por favor, digite um email válido',
+		sendMagicLink: 'Enviar Link Mágico',
+		requestFailed: 'Falha ao solicitar link mágico',
+		confirmEmail: 'Confirmar Email',
+		confirmEmailDescription: 'Está correto?',
+		magicLinkSent: 'Link Enviado!',
+		magicLinkInstructions: 'Verifique seu email e clique no link mágico para se autenticar.',
+		developmentMode: 'Modo Desenvolvimento:',
+		testMagicLink: 'Clique aqui para testar o link mágico',
+		authenticationFailed: 'Falha na autenticação',
+		tokenExpired: 'Sua sessão expirou. Por favor, faça login novamente.',
+		accessDenied: 'Acesso negado. Autenticação necessária.'
 	}
 };

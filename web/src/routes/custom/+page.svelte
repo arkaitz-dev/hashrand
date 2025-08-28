@@ -9,6 +9,7 @@
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import TextInput from '$lib/components/TextInput.svelte';
 	import AuthGuard from '$lib/components/AuthGuard.svelte';
+	import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
@@ -31,10 +32,7 @@
 	// Eliminados los debug messages
 
 	// Login dialog state
-	let showLoginDialog = false;
-	let loginEmail = '';
-	let isSubmittingLogin = false;
-	let showEmailConfirmation = false; // Para mostrar la pantalla de confirmación
+	let showEmailDialog = false;
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
@@ -93,7 +91,7 @@
 		event.preventDefault();
 		
 		if (!formValid) {
-			debugMessage = 'Formulario no válido';
+			console.log($_('common.formInvalid'));
 			return;
 		}
 
@@ -102,8 +100,8 @@
 		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
 		
 		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de login
-			showLoginDialog = true;
+			// No autenticado - mostrar diálogo de email
+			showEmailDialog = true;
 			return;
 		}
 
@@ -130,30 +128,37 @@
 		goto(`/result?${urlParams.toString()}`);
 	}
 
-	// Login functions
-	function handleInitialSubmit() {
-		if (!loginEmail || !loginEmail.includes('@')) {
-			return;
-		}
+	// Email dialog handlers
+	let emailDialogRef: EmailInputDialog;
+	
+	// Create next parameter object with current form state
+	$: nextObject = {
+		endpoint: 'custom',
+		length: params.length,
+		alphabet: params.alphabet,
+		prefix: params.prefix || undefined,
+		suffix: params.suffix || undefined,
+		...(urlProvidedSeed && { seed: urlProvidedSeed })
+	};
 
-		// Mostrar pantalla de confirmación
-		showEmailConfirmation = true;
+	function handleEmailDialogClose() {
+		showEmailDialog = false;
 	}
 
-	function handleCorrectEmail() {
-		// Volver al input de email (mantiene el email para editarlo)
-		showEmailConfirmation = false;
+	function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
+		// Email entered and moving to confirmation step
+		console.log('Email entered:', event.detail.email);
 	}
 
-	async function handleConfirmAndSend() {
-		isSubmittingLogin = true;
-
+	async function handleEmailConfirmed(event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>) {
+		const { email, redirectUrl } = event.detail;
+		
 		try {
 			// Obtener el host actual donde se ejecuta la UI
 			const currentHost = window.location.origin;
 			
 			const requestBody = { 
-				email: loginEmail,
+				email: email,
 				ui_host: currentHost
 			};
 			
@@ -166,16 +171,16 @@
 			});
 
 			if (response.ok) {
-				// Magic link enviado correctamente, redirigir a la página principal
-				goto('/');
+				// Magic link enviado correctamente, redirigir con el parámetro next
+				emailDialogRef?.resetSubmitting();
+				goto(redirectUrl);
 			} else {
-				// En caso de error, mantener el diálogo abierto
-				console.error('Error sending magic link:', response.status);
+				// En caso de error, mostrar mensaje de error
+				emailDialogRef?.setError($_('common.sendError'));
 			}
 		} catch (error) {
 			console.error('Error sending magic link:', error);
-		} finally {
-			isSubmittingLogin = false;
+			emailDialogRef?.setError($_('common.connectionError'));
 		}
 	}
 
@@ -252,7 +257,7 @@
 		</div>
 
 		<!-- Auth Guard: wraps the form -->
-		<AuthGuard bind:this={authGuard} let:requireAuth>
+		<AuthGuard bind:this={authGuard}>
 
 		<!-- Form -->
 		<div class="max-w-2xl mx-auto">
@@ -370,87 +375,22 @@
 	</div>
 </div>
 
-<!-- Login Dialog -->
-{#if showLoginDialog}
-	<div
-		class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
-		style="background-color: rgba(0, 0, 0, 0.5);"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="login-dialog-title"
-	>
-		<div
-			class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 m-4 max-w-md w-full"
-			role="document"
-			onclick={(e) => e.stopPropagation()}
-		>
-			{#if !showEmailConfirmation}
-				<!-- Paso 1: Input de Email -->
-				<h3
-					id="login-dialog-title"
-					class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center"
-				>
-					Iniciar sesión / Crear cuenta
-				</h3>
-				<p class="text-gray-600 dark:text-gray-300 mb-4">
-					Introduce tu email para recibir un enlace de acceso:
-				</p>
-				<input
-					type="email"
-					placeholder="tu@email.com"
-					bind:value={loginEmail}
-					disabled={isSubmittingLogin}
-					class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white mb-4"
-				/>
-				<div class="flex justify-between gap-3">
-					<button
-						onclick={() => { showLoginDialog = false; showEmailConfirmation = false; }}
-						disabled={isSubmittingLogin}
-						class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50"
-					>
-						Cancelar
-					</button>
-					<button
-						onclick={handleInitialSubmit}
-						disabled={isSubmittingLogin || !loginEmail.includes('@')}
-						class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						Continuar
-					</button>
-				</div>
-			{:else}
-				<!-- Paso 2: Confirmación de Email -->
-				<h3
-					id="login-dialog-title"
-					class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center"
-				>
-					Confirmar email
-				</h3>
-				<p class="text-gray-600 dark:text-gray-300 mb-2">
-					¿Es correcto?
-				</p>
-				<div class="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 mb-4">
-					<p class="text-gray-900 dark:text-gray-100 font-medium text-center">
-						{loginEmail}
-					</p>
-				</div>
-				<div class="flex justify-between gap-3">
-					<button
-						onclick={handleCorrectEmail}
-						disabled={isSubmittingLogin}
-						class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50"
-					>
-						Corregir
-					</button>
-					<button
-						onclick={handleConfirmAndSend}
-						disabled={isSubmittingLogin}
-						class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{isSubmittingLogin ? 'Enviando...' : 'Enviar'}
-					</button>
-				</div>
-			{/if}
-		</div>
-	</div>
-{/if}
+<!-- Email Input Dialog -->
+<EmailInputDialog
+	bind:this={emailDialogRef}
+	bind:show={showEmailDialog}
+	next={nextObject}
+	title={$_('auth.loginRequired')}
+	description={$_('auth.loginDescription')}
+	emailPlaceholder={$_('auth.emailPlaceholder')}
+	confirmTitle={$_('auth.confirmEmail')}
+	confirmDescription={$_('auth.confirmEmailDescription')}
+	cancelText={$_('common.cancel')}
+	continueText={$_('common.continue')}
+	correctText={$_('common.correct')}
+	sendText={$_('common.send')}
+	sendingText={$_('common.sending')}
+	on:close={handleEmailDialogClose}
+	on:emailSubmitted={handleEmailSubmitted}
+	on:emailConfirmed={handleEmailConfirmed}
+/>

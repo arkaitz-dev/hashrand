@@ -43,6 +43,16 @@ export const zh: I18nTexts = {
 		optionalSuffix: '可选后缀',
 		prefixCannotExceed: '前缀不能超过32个字符',
 		suffixCannotExceed: '后缀不能超过32个字符',
+		yes: '是',
+		no: '否',
+		cancel: '取消',
+		continue: '继续',
+		correct: '更正',
+		send: '发送',
+		sending: '发送中...',
+		formInvalid: '表单无效',
+		connectionError: '连接错误。请重试。',
+		sendError: '发送链接错误。请重试。',
 		seedUsed: '使用的种子',
 		copySeed: '复制种子',
 		optionalSeed: '可选种子（64个十六进制字符）',
@@ -108,10 +118,58 @@ export const zh: I18nTexts = {
 		fullAlphanumericNote: '完整字母数字字母表提供最大兼容性。强安全性至少需要{0}个字符。',
 		failedToGenerateApiKey: '生成API密钥失败'
 	},
+	mnemonic: {
+		title: 'BIP39助记词生成器',
+		description: '为加密货币钱包生成BIP39助记词',
+		generateMnemonic: '生成助记词',
+		language: '语言',
+		wordCount: '词数',
+		languageDescription: '为您的助记词选择语言',
+		words12: '12个词（128位熵）',
+		words12Description: '128位熵 - 与大多数钱包兼容',
+		words24: '24个词（256位熵）',
+		words24Description: '256位熵 - 大额资金的最大安全性',
+		formatNotice: '生成的短语遵循BIP39标准，与大多数加密货币钱包兼容。',
+		securityNotice:
+			'切勿与任何人分享您的助记词。任何拥有您助记词的人都可以控制您的资金。请将其离线存储在安全的地方。',
+		failedToGenerateMnemonic: '生成助记词失败',
+		languages: {
+			english: '英语',
+			spanish: '西班牙语',
+			french: '法语',
+			portuguese: '葡萄牙语',
+			japanese: '日语',
+			chinese: '中文（简体）',
+			chineseTraditional: '中文（繁体）',
+			italian: '意大利语',
+			korean: '韩语',
+			czech: '捷克语'
+		}
+	},
 	alphabets: {
 		base58: 'Base58（Bitcoin字母表）',
 		'no-look-alike': '无混淆',
 		full: '完整字母数字',
-		'full-with-symbols': '包含符号'
+		'full-with-symbols': '包含符号',
+		numeric: '数字（0-9）'
+	},
+	auth: {
+		loginRequired: '需要身份验证',
+		loginDescription: '输入您的邮箱以接收访问魔法链接。',
+		emailAddress: '邮箱地址',
+		emailPlaceholder: '您的@邮箱.com',
+		emailRequired: '邮箱必填',
+		emailInvalid: '请输入有效的邮箱',
+		sendMagicLink: '发送魔法链接',
+		requestFailed: '请求魔法链接失败',
+		confirmEmail: '确认邮箱',
+		confirmEmailDescription: '这是正确的吗？',
+		magicLinkSent: '链接已发送！',
+		magicLinkInstructions: '检查您的邮箱并点击魔法链接进行身份验证。',
+		developmentMode: '开发模式：',
+		testMagicLink: '点击这里测试魔法链接',
+		authenticationFailed: '身份验证失败',
+		tokenExpired: '您的会话已过期。请重新登录。',
+		accessDenied: '访问被拒绝。需要身份验证。'
 	}
 };
