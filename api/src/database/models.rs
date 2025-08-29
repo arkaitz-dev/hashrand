@@ -57,10 +57,14 @@ pub struct AuthSession {
     /// Unique session identifier (auto-increment primary key)
     pub id: Option<i64>,
 
-    /// User email address for authentication
-    pub email: String,
+    /// User ID derived from email (Base58 encoded, 32-byte hash)
+    pub user_id: String,
 
-    /// Magic token for email-based authentication
+    /// User email address for magic link sending (not stored in DB)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+
+    /// Magic token for email-based authentication (includes user_id + timestamp + HMAC)
     pub magic_token: String,
 
     /// JWT access token (15 minutes validity)
@@ -89,8 +93,8 @@ impl AuthSession {
     /// Create a new auth session for magic link generation
     ///
     /// # Arguments
-    /// * `email` - User email address
-    /// * `magic_token` - Unique magic token
+    /// * `email` - User email address (used to derive user_id, not stored)
+    /// * `magic_token` - Secure magic token with integrity protection
     /// * `magic_expires_at` - Magic token expiration time
     ///
     /// # Returns
@@ -100,9 +104,14 @@ impl AuthSession {
         magic_token: String,
         magic_expires_at: DateTime<Utc>,
     ) -> Self {
+        // Import JwtUtils here to avoid circular dependencies
+        use crate::utils::JwtUtils;
+        let user_id = JwtUtils::email_to_username(&email);
+        
         Self {
             id: None,
-            email,
+            user_id,
+            email: Some(email), // Keep for magic link generation, won't be stored in DB
             magic_token,
             access_token: None,
             refresh_token: None,

@@ -1,8 +1,10 @@
+pub mod auth;
 pub mod jwt;
 pub mod query;
 pub mod random_generator;
 pub mod routing;
 
+// Auth functions imported directly in routing.rs
 pub use jwt::JwtUtils;
 pub use query::parse_query_params;
 pub use random_generator::{

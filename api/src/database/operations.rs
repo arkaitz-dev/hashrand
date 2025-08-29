@@ -210,79 +210,144 @@ impl UserOperations {
 pub struct AuthOperations;
 
 impl AuthOperations {
-    /// Create a new auth session for magic link authentication
+    /// Create a new auth session with generated JWT tokens
     ///
     /// # Arguments
     /// * `env` - Database environment to use
     /// * `session` - Auth session data to insert
     ///
     /// # Returns
-    /// * `Result<i64, SqliteError>` - Created session ID or database error
+    /// * `Result<(), SqliteError>` - Success or database error
     pub fn create_auth_session(
         env: DatabaseEnvironment,
         session: &AuthSession,
-    ) -> Result<i64, SqliteError> {
+    ) -> Result<(), SqliteError> {
         let connection = get_database_connection(env)?;
         println!(
             "Database: Creating session with magic token: '{}'",
             session.magic_token
         );
 
+        // Extract user_id bytes from Base58 username
+        let user_id_bytes = bs58::decode(&session.user_id)
+            .into_vec()
+            .map_err(|_| SqliteError::Io("Invalid user_id format".to_string()))?;
+
+        // Generate JWT tokens using a dummy email (we need to refactor this)
+        let dummy_email = "temp@example.com"; // TODO: Remove this dependency
+        let (access_token, _) = crate::utils::JwtUtils::create_access_token(dummy_email)
+            .map_err(|e| SqliteError::Io(format!("Failed to create access token: {}", e)))?;
+        let (refresh_token, _) = crate::utils::JwtUtils::create_refresh_token(dummy_email, 1)
+            .map_err(|e| SqliteError::Io(format!("Failed to create refresh token: {}", e)))?;
+
         let _insert_result = connection.execute(
-            "INSERT INTO auth_sessions (email, magic_token, access_token, refresh_token, magic_expires_at, access_expires_at, refresh_expires_at, is_used) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO auth_sessions (user_id, expires, access_token, refresh_token) VALUES (?, ?, ?, ?)",
             &[
-                Value::Text(session.email.clone()),
-                Value::Text(session.magic_token.clone()),
-                Value::Null, // access_token
-                Value::Null, // refresh_token
+                Value::Blob(user_id_bytes),
                 Value::Integer(session.magic_expires_at as i64),
-                Value::Null, // access_expires_at
-                Value::Null, // refresh_expires_at
-                Value::Integer(if session.is_used { 1 } else { 0 }),
+                Value::Text(access_token),
+                Value::Text(refresh_token),
             ],
         )?;
 
-        // Get the last inserted row ID using the same connection
-        let result = connection.execute("SELECT last_insert_rowid()", &[])?;
-        if let Some(row) = result.rows.first()
-            && let Some(Value::Integer(id)) = row.values.first()
-        {
-            println!("Database: Session created with ID: {}", id);
-            return Ok(*id);
-        }
-
-        Err(SqliteError::Io(
-            "Failed to get inserted auth session ID".to_string(),
-        ))
+        println!("Database: Session created successfully");
+        Ok(())
     }
 
-    /// Get auth session by magic token
+    /// Get auth session tokens by user_id and timestamp
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `magic_token` - Magic token to search for
+    /// * `user_id` - User ID bytes (32 bytes)
+    /// * `timestamp` - Expiration timestamp
     ///
     /// # Returns
-    /// * `Result<Option<AuthSession>, SqliteError>` - Session if found, None if not found, or database error
-    pub fn get_session_by_magic_token(
+    /// * `Result<Option<(String, String)>, SqliteError>` - (access_token, refresh_token) or None
+    pub fn get_session_by_user_id_and_timestamp(
         env: DatabaseEnvironment,
-        magic_token: &str,
-    ) -> Result<Option<AuthSession>, SqliteError> {
+        user_id: &[u8; 32],
+        timestamp: u64,
+    ) -> Result<Option<(String, String)>, SqliteError> {
         let connection = get_database_connection(env)?;
-        println!("Database: Searching for magic token: '{}'", magic_token);
+        println!("Database: Searching for session: user_id bytes len={}, timestamp={}", user_id.len(), timestamp);
 
         let result = connection.execute(
-            "SELECT id, email, magic_token, access_token, refresh_token, created_at, magic_expires_at, access_expires_at, refresh_expires_at, is_used FROM auth_sessions WHERE magic_token = ? AND is_used = 0",
-            &[Value::Text(magic_token.to_string())],
+            "SELECT access_token, refresh_token FROM auth_sessions WHERE user_id = ? AND expires = ?",
+            &[Value::Blob(user_id.to_vec()), Value::Integer(timestamp as i64)],
         )?;
 
         println!("Database: Query returned {} rows", result.rows.len());
 
         if let Some(row) = result.rows.first() {
-            Ok(Some(Self::row_to_auth_session(&row.values)?))
+            let access_token = match &row.values[0] {
+                Value::Text(s) => s.clone(),
+                _ => return Err(SqliteError::Io("Invalid access_token type".to_string())),
+            };
+
+            let refresh_token = match &row.values[1] {
+                Value::Text(s) => s.clone(),
+                _ => return Err(SqliteError::Io("Invalid refresh_token type".to_string())),
+            };
+
+            Ok(Some((access_token, refresh_token)))
         } else {
             Ok(None)
         }
+    }
+
+    /// Ensure user exists in users table by user_id (insert if not exists)
+    ///
+    /// # Arguments
+    /// * `env` - Database environment to use
+    /// * `user_id` - User ID bytes (32 bytes)
+    ///
+    /// # Returns
+    /// * `Result<(), SqliteError>` - Success or error
+    pub fn ensure_user_exists(
+        env: DatabaseEnvironment,
+        user_id: &[u8; 32],
+    ) -> Result<(), SqliteError> {
+        let connection = get_database_connection(env)?;
+
+        // Insert user if it doesn't exist (ignore if already exists)
+        match connection.execute(
+            "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
+            &[Value::Blob(user_id.to_vec())],
+        ) {
+            Ok(_) => {
+                println!("Database: Ensured user exists: {}", bs58::encode(user_id).into_string());
+                Ok(())
+            }
+            Err(e) => {
+                println!("Database: Error ensuring user exists: {}", e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Delete auth session by user_id and timestamp
+    ///
+    /// # Arguments
+    /// * `env` - Database environment to use
+    /// * `user_id` - User ID bytes (32 bytes)
+    /// * `timestamp` - Expiration timestamp
+    ///
+    /// # Returns
+    /// * `Result<bool, SqliteError>` - True if deleted, false if not found
+    pub fn delete_session_by_user_id_and_timestamp(
+        env: DatabaseEnvironment,
+        user_id: &[u8; 32],
+        timestamp: u64,
+    ) -> Result<bool, SqliteError> {
+        let connection = get_database_connection(env)?;
+
+        let _result = connection.execute(
+            "DELETE FROM auth_sessions WHERE user_id = ? AND expires = ?",
+            &[Value::Blob(user_id.to_vec()), Value::Integer(timestamp as i64)],
+        )?;
+
+        println!("Database: Deleted auth session rows");
+        Ok(true) // Assume success if no error
     }
 
     /// Get active auth session by refresh token
@@ -314,44 +379,6 @@ impl AuthOperations {
         } else {
             Ok(None)
         }
-    }
-
-    /// Update auth session with JWT tokens after magic link validation
-    ///
-    /// # Arguments
-    /// * `env` - Database environment to use
-    /// * `session_id` - Session ID to update
-    /// * `access_token` - JWT access token
-    /// * `refresh_token` - JWT refresh token
-    /// * `access_expires_at` - Access token expiration timestamp
-    /// * `refresh_expires_at` - Refresh token expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<bool, SqliteError>` - True if updated successfully, false if session not found
-    pub fn activate_session_tokens(
-        env: DatabaseEnvironment,
-        session_id: i64,
-        access_token: &str,
-        refresh_token: &str,
-        access_expires_at: u64,
-        refresh_expires_at: u64,
-    ) -> Result<bool, SqliteError> {
-        let connection = get_database_connection(env)?;
-
-        let _result = connection.execute(
-            "UPDATE auth_sessions SET access_token = ?, refresh_token = ?, access_expires_at = ?, refresh_expires_at = ?, is_used = 1 WHERE id = ?",
-            &[
-                Value::Text(access_token.to_string()),
-                Value::Text(refresh_token.to_string()),
-                Value::Integer(access_expires_at as i64),
-                Value::Integer(refresh_expires_at as i64),
-                Value::Integer(session_id),
-            ],
-        )?;
-
-        // SQLite doesn't provide rows_affected in Spin SDK
-        // We'll assume success if no error occurred
-        Ok(true)
     }
 
     /// Update session with new access token (refresh token flow)
@@ -431,9 +458,9 @@ impl AuthOperations {
             _ => return Err(SqliteError::Io("Invalid ID type".to_string())),
         };
 
-        let email = match &row[1] {
+        let user_id = match &row[1] {
             Value::Text(s) => s.clone(),
-            _ => return Err(SqliteError::Io("Invalid email type".to_string())),
+            _ => return Err(SqliteError::Io("Invalid user_id type".to_string())),
         };
 
         let magic_token = match &row[2] {
@@ -491,7 +518,8 @@ impl AuthOperations {
 
         Ok(AuthSession {
             id,
-            email,
+            user_id,
+            email: None, // Email not stored in DB anymore
             magic_token,
             access_token,
             refresh_token,

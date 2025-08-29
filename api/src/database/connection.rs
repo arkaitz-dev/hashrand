@@ -62,52 +62,27 @@ pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> 
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            email TEXT NOT NULL UNIQUE,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            user_id BLOB PRIMARY KEY,
+            created_at INTEGER DEFAULT (unixepoch())
         )
         "#,
         &[],
     )?;
 
-    // Create auth_sessions table if it doesn't exist
+    // Create auth_sessions table optimized for magic link validation
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS auth_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
-            magic_token TEXT NOT NULL UNIQUE,
-            access_token TEXT,
-            refresh_token TEXT,
-            created_at INTEGER DEFAULT (unixepoch()),
-            magic_expires_at INTEGER NOT NULL,
-            access_expires_at INTEGER,
-            refresh_expires_at INTEGER,
-            is_used BOOLEAN DEFAULT FALSE
+            user_id BLOB NOT NULL,
+            expires INTEGER NOT NULL,
+            access_token TEXT NOT NULL,
+            refresh_token TEXT NOT NULL,
+            PRIMARY KEY (user_id, expires)
         )
         "#,
         &[],
     )?;
 
-    // Create index for magic token lookups
-    connection.execute(
-        r#"
-        CREATE INDEX IF NOT EXISTS idx_auth_sessions_magic_token 
-        ON auth_sessions(magic_token)
-        "#,
-        &[],
-    )?;
-
-    // Create index for refresh token lookups
-    connection.execute(
-        r#"
-        CREATE INDEX IF NOT EXISTS idx_auth_sessions_refresh_token 
-        ON auth_sessions(refresh_token)
-        "#,
-        &[],
-    )?;
 
     Ok(())
 }

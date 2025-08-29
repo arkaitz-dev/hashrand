@@ -3,6 +3,7 @@ use crate::handlers::{
     handle_api_key_request, handle_custom, handle_from_seed, handle_login, handle_mnemonic_request,
     handle_password_request, handle_users, handle_version,
 };
+use crate::utils::auth::{requires_authentication, validate_bearer_token};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
@@ -20,6 +21,14 @@ pub fn route_request_with_req(
     path: &str,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
+    // Check if endpoint requires authentication
+    if requires_authentication(path) {
+        // Validate Bearer token first
+        if let Err(auth_error) = validate_bearer_token(&req) {
+            return Ok(auth_error);
+        }
+    }
+
     let method = req.method();
     let body = req.body();
 

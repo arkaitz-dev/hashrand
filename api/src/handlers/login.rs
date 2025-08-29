@@ -32,13 +32,6 @@ struct MagicLinkResponse {
     dev_magic_link: Option<String>,
 }
 
-/// Response for successful authentication
-#[derive(Serialize)]
-struct AuthResponse {
-    access_token: String,
-    token_type: String,
-    expires_in: i64, // seconds
-}
 
 /// Error response structure
 #[derive(Serialize)]
@@ -133,9 +126,9 @@ fn handle_magic_link_generation(
             .build());
     }
 
-    // Generate magic token and expiration (15 minutes)
-    let magic_token = JwtUtils::generate_magic_token();
+    // Generate magic token with integrity protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
+    let magic_token = JwtUtils::generate_magic_token(&magic_request.email, magic_expires_at);
 
     // Create auth session
     let auth_session = AuthSession::new_magic_link(
@@ -225,109 +218,71 @@ fn handle_magic_link_validation(
 
     println!("Magic token received: '{}'", magic_token);
 
-    // Find auth session by magic token
-    println!("Searching for magic token in database: '{}'", magic_token);
-    match AuthOperations::get_session_by_magic_token(env.clone(), magic_token) {
-        Ok(Some(session)) => {
-            // Check if magic token has expired
-            let now = Utc::now().timestamp() as u64;
+    // Validate magic token integrity and extract user_id + expiration
+    let (user_id_bytes, magic_expires_at) = match JwtUtils::validate_magic_token(magic_token) {
+        Ok((user_id, expires)) => (user_id, expires),
+        Err(error) => {
+            println!("Magic token validation failed: {}", error);
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Invalid or expired magic link".to_string(),
+                })?)
+                .build());
+        }
+    };
 
-            if now > session.magic_expires_at {
-                return Ok(Response::builder()
-                    .status(400)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Magic link has expired".to_string(),
-                    })?)
-                    .build());
-            }
+    // Check if magic token has expired
+    let now = Utc::now();
+    if now > magic_expires_at {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Magic link has expired".to_string(),
+            })?)
+            .build());
+    }
 
-            // Generate JWT tokens
-            let (access_token, access_expires_at) =
-                match JwtUtils::create_access_token(&session.email) {
-                    Ok(tokens) => tokens,
-                    Err(e) => {
-                        println!("Failed to create access token: {}", e);
-                        return Ok(Response::builder()
-                            .status(500)
-                            .header("content-type", "application/json")
-                            .body(serde_json::to_string(&ErrorResponse {
-                                error: "Token generation failed".to_string(),
-                            })?)
-                            .build());
-                    }
-                };
+    // Convert user_id to Base58 username
+    let username = JwtUtils::user_id_to_username(&user_id_bytes);
+    
+    // Search for auth session by user_id and timestamp
+    let timestamp = magic_expires_at.timestamp() as u64;
+    println!("Searching for session: user_id={}, timestamp={}", username, timestamp);
+    
+    match AuthOperations::get_session_by_user_id_and_timestamp(env.clone(), &user_id_bytes, timestamp) {
+        Ok(Some((access_token, refresh_token))) => {
+            println!("User {} authenticated successfully", username);
 
-            let session_id = session.id.unwrap_or(0);
-            let (refresh_token, refresh_expires_at) =
-                match JwtUtils::create_refresh_token(&session.email, session_id) {
-                    Ok(tokens) => tokens,
-                    Err(e) => {
-                        println!("Failed to create refresh token: {}", e);
-                        return Ok(Response::builder()
-                            .status(500)
-                            .header("content-type", "application/json")
-                            .body(serde_json::to_string(&ErrorResponse {
-                                error: "Token generation failed".to_string(),
-                            })?)
-                            .build());
-                    }
-                };
+            // Ensure user exists in users table
+            let _ = AuthOperations::ensure_user_exists(env.clone(), &user_id_bytes);
 
-            // Update session with tokens using timestamps
-            let access_expires_timestamp = access_expires_at.timestamp() as u64;
-            let refresh_expires_timestamp = refresh_expires_at.timestamp() as u64;
+            // Create response with access token, username, and secure refresh token cookie
+            let auth_response = serde_json::json!({
+                "access_token": access_token,
+                "token_type": "Bearer",
+                "expires_in": 20, // 20 seconds for testing
+                "username": username
+            });
 
-            match AuthOperations::activate_session_tokens(
-                env,
-                session_id,
-                &access_token,
-                &refresh_token,
-                access_expires_timestamp,
-                refresh_expires_timestamp,
-            ) {
-                Ok(true) => {
-                    println!("User {} authenticated successfully", session.email);
+            // Set refresh token as HttpOnly, Secure, SameSite cookie
+            let cookie_value = format!(
+                "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
+                refresh_token,
+                2 * 60 // 2 minutes in seconds
+            );
 
-                    // Create response with access token and secure refresh token cookie
-                    let auth_response = AuthResponse {
-                        access_token,
-                        token_type: "Bearer".to_string(),
-                        expires_in: 15 * 60, // 15 minutes in seconds
-                    };
+            // Delete used auth session
+            let _ = AuthOperations::delete_session_by_user_id_and_timestamp(env, &user_id_bytes, timestamp);
 
-                    // Set refresh token as HttpOnly, Secure, SameSite cookie
-                    let cookie_value = format!(
-                        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-                        refresh_token,
-                        7 * 24 * 60 * 60 // 1 week in seconds
-                    );
-
-                    Ok(Response::builder()
-                        .status(200)
-                        .header("content-type", "application/json")
-                        .header("set-cookie", cookie_value)
-                        .body(serde_json::to_string(&auth_response)?)
-                        .build())
-                }
-                Ok(false) => Ok(Response::builder()
-                    .status(404)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Session not found".to_string(),
-                    })?)
-                    .build()),
-                Err(e) => {
-                    println!("Failed to activate session tokens: {}", e);
-                    Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Authentication failed".to_string(),
-                        })?)
-                        .build())
-                }
-            }
+            Ok(Response::builder()
+                .status(200)
+                .header("content-type", "application/json")
+                .header("set-cookie", cookie_value)
+                .body(auth_response.to_string())
+                .build())
         }
         Ok(None) => Ok(Response::builder()
             .status(400)

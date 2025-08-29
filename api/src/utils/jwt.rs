@@ -6,12 +6,14 @@
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sha3::{Sha3_256, Digest};
+use pbkdf2::pbkdf2;
+use hmac::{Hmac, Mac};
 
 /// JWT Claims structure for access tokens
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccessTokenClaims {
-    /// Subject (user email)
+    /// Subject (user_id derived from email)
     pub sub: String,
     /// Expiration time (unix timestamp)
     pub exp: i64,
@@ -24,7 +26,7 @@ pub struct AccessTokenClaims {
 /// JWT Claims structure for refresh tokens
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RefreshTokenClaims {
-    /// Subject (user email)
+    /// Subject (user_id derived from email)
     pub sub: String,
     /// Expiration time (unix timestamp)
     pub exp: i64,
@@ -40,6 +42,63 @@ pub struct RefreshTokenClaims {
 pub struct JwtUtils;
 
 impl JwtUtils {
+    /// PBKDF2 iteration count for current security standards (2024)
+    /// Based on OWASP recommendations for password-equivalent security
+    const PBKDF2_ITERATIONS: u32 = 600_000;
+    
+    /// Salt for PBKDF2 derivation (should be from environment in production)
+    const PBKDF2_SALT: &'static [u8] = b"hashrand-user-derivation-salt-v1";
+    
+    /// HMAC key for magic link integrity (should be from environment in production)
+    const MAGIC_LINK_HMAC_KEY: &'static [u8] = b"hashrand-magic-link-hmac-key-v1";
+
+    /// Derive secure user ID from email using SHA3-256 + PBKDF2-SHA3-256
+    ///
+    /// Process:
+    /// 1. SHA3-256(email) → 32 bytes
+    /// 2. PBKDF2-SHA3-256(hash, salt, 600k iterations) → 32 bytes user_id
+    ///
+    /// # Arguments
+    /// * `email` - User email address
+    ///
+    /// # Returns
+    /// * `[u8; 32]` - 256-bit deterministic user ID
+    pub fn derive_user_id(email: &str) -> [u8; 32] {
+        // Step 1: SHA3-256 hash of email
+        let mut hasher = Sha3_256::new();
+        hasher.update(email.to_lowercase().trim().as_bytes());
+        let email_hash = hasher.finalize();
+        
+        // Step 2: PBKDF2-SHA3-256 with high iteration count
+        let mut user_id = [0u8; 32];
+        pbkdf2::<Hmac<Sha3_256>>(&email_hash, Self::PBKDF2_SALT, Self::PBKDF2_ITERATIONS, &mut user_id)
+            .expect("PBKDF2 derivation should not fail");
+        
+        user_id
+    }
+
+    /// Convert user ID to Base58 username for display/API
+    ///
+    /// # Arguments
+    /// * `user_id` - 32-byte user ID
+    ///
+    /// # Returns
+    /// * `String` - Base58 encoded username (~44 characters)
+    pub fn user_id_to_username(user_id: &[u8; 32]) -> String {
+        bs58::encode(user_id).into_string()
+    }
+
+    /// Derive username directly from email (convenience method)
+    ///
+    /// # Arguments
+    /// * `email` - User email address
+    ///
+    /// # Returns
+    /// * `String` - Base58 encoded username
+    pub fn email_to_username(email: &str) -> String {
+        let user_id = Self::derive_user_id(email);
+        Self::user_id_to_username(&user_id)
+    }
     /// Get JWT secret key (in production this should be from environment variable)
     /// For development, we generate a consistent secret
     fn get_jwt_secret() -> String {
@@ -48,19 +107,22 @@ impl JwtUtils {
         "hashrand-jwt-secret-key-development-only-change-in-production".to_string()
     }
 
-    /// Create access token with 15 minutes expiration
+    /// Create access token with 20 seconds expiration (for testing)
     ///
     /// # Arguments
-    /// * `email` - User email address
+    /// * `email` - User email address (will be converted to user_id)
     ///
     /// # Returns
     /// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
     pub fn create_access_token(email: &str) -> Result<(String, DateTime<Utc>), String> {
         let now = Utc::now();
-        let expires_at = now + Duration::minutes(15);
+        let expires_at = now + Duration::seconds(20);
 
+        // Derive user_id from email for JWT subject
+        let username = Self::email_to_username(email);
+        
         let claims = AccessTokenClaims {
-            sub: email.to_string(),
+            sub: username,
             exp: expires_at.timestamp(),
             iat: now.timestamp(),
             token_type: "access".to_string(),
@@ -75,10 +137,10 @@ impl JwtUtils {
         }
     }
 
-    /// Create refresh token with 1 week expiration
+    /// Create refresh token with 2 minutes expiration (for testing)
     ///
     /// # Arguments
-    /// * `email` - User email address
+    /// * `email` - User email address (will be converted to user_id)
     /// * `session_id` - Database session ID for token revocation
     ///
     /// # Returns
@@ -88,10 +150,13 @@ impl JwtUtils {
         session_id: i64,
     ) -> Result<(String, DateTime<Utc>), String> {
         let now = Utc::now();
-        let expires_at = now + Duration::days(7);
+        let expires_at = now + Duration::minutes(2);
+
+        // Derive user_id from email for JWT subject
+        let username = Self::email_to_username(email);
 
         let claims = RefreshTokenClaims {
-            sub: email.to_string(),
+            sub: username,
             exp: expires_at.timestamp(),
             iat: now.timestamp(),
             token_type: "refresh".to_string(),
@@ -153,13 +218,93 @@ impl JwtUtils {
         }
     }
 
-    /// Generate secure magic token for email authentication
+    /// Generate secure magic token with integrity protection
+    /// 
+    /// Format: user_id (32 bytes) + timestamp (8 bytes) + HMAC-SHA3-256 (32 bytes) = 72 bytes
+    /// Encoded in Base58 for email transmission (~98 characters)
+    ///
+    /// # Arguments
+    /// * `email` - User email to derive user_id
+    /// * `expires_at` - Magic link expiration timestamp
     ///
     /// # Returns
-    /// * `String` - Base58 encoded magic token (URL safe)
-    pub fn generate_magic_token() -> String {
-        let uuid = Uuid::new_v4();
-        bs58::encode(uuid.as_bytes()).into_string()
+    /// * `String` - Base58 encoded magic token with integrity protection
+    pub fn generate_magic_token(email: &str, expires_at: DateTime<Utc>) -> String {
+        // Derive deterministic user_id from email
+        let user_id = Self::derive_user_id(email);
+        
+        // Timestamp as 8 bytes (big-endian u64)
+        let timestamp = expires_at.timestamp() as u64;
+        let timestamp_bytes = timestamp.to_be_bytes();
+        
+        // Prepare data for HMAC: user_id + timestamp
+        let mut data = Vec::with_capacity(40);
+        data.extend_from_slice(&user_id);
+        data.extend_from_slice(&timestamp_bytes);
+        
+        // Generate HMAC-SHA3-256 for integrity
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
+            .expect("HMAC key should be valid");
+        mac.update(&data);
+        let hmac_result = mac.finalize().into_bytes();
+        
+        // Final token: user_id + timestamp + hmac (32 + 8 + 32 = 72 bytes)
+        let mut token = Vec::with_capacity(72);
+        token.extend_from_slice(&user_id);
+        token.extend_from_slice(&timestamp_bytes);
+        token.extend_from_slice(&hmac_result);
+        
+        bs58::encode(&token).into_string()
+    }
+
+    /// Validate magic token and extract user_id and expiration timestamp
+    ///
+    /// # Arguments
+    /// * `magic_token` - Base58 encoded magic token
+    ///
+    /// # Returns
+    /// * `Result<([u8; 32], DateTime<Utc>), String>` - (user_id, expiration) or validation error
+    pub fn validate_magic_token(magic_token: &str) -> Result<([u8; 32], DateTime<Utc>), String> {
+        // Decode Base58 token
+        let token_bytes = bs58::decode(magic_token)
+            .into_vec()
+            .map_err(|_| "Invalid Base58 encoding")?;
+            
+        // Verify token length (32 + 8 + 32 = 72 bytes)
+        if token_bytes.len() != 72 {
+            return Err("Invalid token length".to_string());
+        }
+        
+        // Extract components
+        let user_id_bytes = &token_bytes[0..32];
+        let timestamp_bytes = &token_bytes[32..40];
+        let provided_hmac = &token_bytes[40..72];
+        
+        // Verify HMAC integrity
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
+            .expect("HMAC key should be valid");
+        mac.update(user_id_bytes);
+        mac.update(timestamp_bytes);
+        
+        match mac.verify_slice(provided_hmac) {
+            Ok(_) => {
+                // Extract timestamp
+                let timestamp = u64::from_be_bytes(
+                    timestamp_bytes.try_into()
+                        .map_err(|_| "Invalid timestamp format")?
+                );
+                
+                let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
+                    .ok_or_else(|| "Invalid timestamp value".to_string())?;
+                
+                // Convert user_id bytes to array
+                let mut user_id = [0u8; 32];
+                user_id.copy_from_slice(user_id_bytes);
+                
+                Ok((user_id, expires_at))
+            },
+            Err(_) => Err("Token integrity verification failed".to_string()),
+        }
     }
 
     /// Create magic link URL for development logging
@@ -169,7 +314,7 @@ impl JwtUtils {
     /// * `magic_token` - Magic token to include in URL
     ///
     /// # Returns
-    /// * `String` - Complete magic link URL
+    /// * `String` - Complete magic link URL 
     pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
         format!(
             "{}/?magiclink={}",
