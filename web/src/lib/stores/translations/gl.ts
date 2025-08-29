@@ -43,6 +43,16 @@ export const gl: I18nTexts = {
 		optionalSuffix: 'Sufixo opcional',
 		prefixCannotExceed: 'O prefixo non pode superar 32 caracteres',
 		suffixCannotExceed: 'O sufixo non pode superar 32 caracteres',
+		yes: 'Si',
+		no: 'Non',
+		cancel: 'Cancelar',
+		continue: 'Continuar',
+		correct: 'Corrixir',
+		send: 'Enviar',
+		sending: 'Enviando...',
+		formInvalid: 'Formulario non válido',
+		connectionError: 'Erro de conexión. Téntao de novo.',
+		sendError: 'Erro enviando a ligazón. Téntao de novo.',
 		seedUsed: 'Semente Utilizada',
 		copySeed: 'Copiar Semente',
 		optionalSeed: 'Semente opcional (64 caracteres hex)',
@@ -52,7 +62,8 @@ export const gl: I18nTexts = {
 			'Queres reutilizar a mesma semente para xerar o mesmo resultado, ou prefires xerar unha nova semente aleatoria?',
 		keepSameSeed: 'Manter a mesma semente',
 		generateNewSeed: 'Xerar nova semente',
-		seed: 'Semente'
+		seed: 'Semente',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Xerador de Hash',
@@ -74,6 +85,7 @@ export const gl: I18nTexts = {
 		maxReadabilityDescription: 'Máxima lexibilidade, 49 caracteres',
 		completeAlphanumericDescription: 'Conxunto alfanumérico completo',
 		maxEntropyDescription: 'Máxima entropía con símbolos',
+		numericDescription: 'Só díxitos 0-9, require lonxitude maior',
 		failedToGenerateHash: 'Fallou xerar o hash'
 	},
 	password: {
@@ -109,6 +121,8 @@ export const gl: I18nTexts = {
 		randomCharacters: 'letras aleatorias con',
 		noLookAlikeAlphabet: 'alfabeto sen confusión (fácil de escribir)',
 		fullAlphanumericAlphabet: 'alfabeto alfanumérico completo',
+		noLookAlikeNote:
+			'O alfabeto sen confusión exclúe caracteres confusos. Mínimo {0} caracteres para seguridade equivalente.',
 		fullAlphanumericNote:
 			'O alfabeto alfanumérico completo proporciona máxima compatibilidade. Mínimo {0} caracteres para seguridade forte.',
 		failedToGenerateApiKey: 'Fallou xerar a chave API'
@@ -117,6 +131,55 @@ export const gl: I18nTexts = {
 		base58: 'Base58 (alfabeto Bitcoin)',
 		'no-look-alike': 'Sen confusión',
 		full: 'Alfanumérico completo',
-		'full-with-symbols': 'Completo con símbolos'
+		'full-with-symbols': 'Completo con símbolos',
+		numeric: 'Numérico (0-9)'
+	},
+	mnemonic: {
+		title: 'Xerador de frases mnemónicas BIP39',
+		description: 'Xera frases mnemónicas BIP39 para carteiras de criptomoedas',
+		generateMnemonic: 'Xerar frase mnemónica',
+		language: 'Idioma',
+		wordCount: 'Número de palabras',
+		languageDescription: 'Selecciona o idioma para a túa frase mnemónica',
+		words12: '12 palabras (entropía de 128-bit)',
+		words12Description: 'Entropía de 128-bit - compatible coa maioría das carteiras',
+		words24: '24 palabras (entropía de 256-bit)',
+		words24Description: 'Entropía de 256-bit - seguridade máxima para grandes cantidades',
+		formatNotice:
+			'As frases xeradas seguen o estándar BIP39 e son compatibles coa maioría das carteiras de criptomoedas.',
+		securityNotice:
+			'Nunca compartas a túa frase mnemónica con ninguén. Calquera persoa con acceso á túa frase mnemónica pode controlar os teus fondos. Gárdaa sen conexión nun lugar seguro.',
+		failedToGenerateMnemonic: 'Fallou xerar a frase mnemónica',
+		languages: {
+			english: 'Inglés',
+			spanish: 'Español',
+			french: 'Francés',
+			portuguese: 'Portugués',
+			japanese: 'Xaponés',
+			chinese: 'Chinés (Simplificado)',
+			chineseTraditional: 'Chinés (Tradicional)',
+			italian: 'Italiano',
+			korean: 'Coreano',
+			czech: 'Checo'
+		}
+	},
+	auth: {
+		loginRequired: 'Autenticación requirida',
+		loginDescription: 'Introduce o teu email para recibir unha ligazón máxica de acceso.',
+		emailAddress: 'Enderezo de email',
+		emailPlaceholder: 'o-teu@email.com',
+		emailRequired: 'O email é obrigatorio',
+		emailInvalid: 'Por favor introduce un email válido',
+		sendMagicLink: 'Enviar ligazón máxica',
+		requestFailed: 'Fallou solicitar a ligazón máxica',
+		confirmEmail: 'Confirmar email',
+		confirmEmailDescription: 'É correcto?',
+		magicLinkSent: 'Ligazón enviada!',
+		magicLinkInstructions: 'Revisa o teu email e fai clic na ligazón máxica para autenticarte.',
+		developmentMode: 'Modo desenvolvemento:',
+		testMagicLink: 'Fai clic aquí para probar a ligazón máxica',
+		authenticationFailed: 'Fallou a autenticación',
+		tokenExpired: 'A túa sesión expirou. Por favor, inicia sesión de novo.',
+		accessDenied: 'Acceso denegado. Requírese autenticación.'
 	}
 };

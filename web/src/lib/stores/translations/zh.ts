@@ -61,7 +61,8 @@ export const zh: I18nTexts = {
 		reuseSeedMessage: '您想重用相同的种子来生成相同的结果，还是更愿意生成新的随机种子？',
 		keepSameSeed: '保持相同的种子',
 		generateNewSeed: '生成新种子',
-		seed: '种子'
+		seed: '种子',
+		otp: 'OTP'
 	},
 	menu: {
 		title: '哈希生成器',
@@ -83,7 +84,8 @@ export const zh: I18nTexts = {
 		maxReadabilityDescription: '最大可读性，49个字符',
 		completeAlphanumericDescription: '完整字母数字集合',
 		maxEntropyDescription: '包含符号的最大熵',
-		failedToGenerateHash: '生成哈希失败'
+		failedToGenerateHash: '生成哈希失败',
+		numericDescription: '仅数字0-9，需要更长的长度'
 	},
 	password: {
 		title: '安全密码生成器',
@@ -116,7 +118,8 @@ export const zh: I18nTexts = {
 		noLookAlikeAlphabet: '无混淆字母表（易输入）',
 		fullAlphanumericAlphabet: '完整字母数字字母表',
 		fullAlphanumericNote: '完整字母数字字母表提供最大兼容性。强安全性至少需要{0}个字符。',
-		failedToGenerateApiKey: '生成API密钥失败'
+		failedToGenerateApiKey: '生成API密钥失败',
+		noLookAlikeNote: '无混淆字母表排除易混淆字符。等效安全性至少需要{0}个字符。'
 	},
 	mnemonic: {
 		title: 'BIP39助记词生成器',

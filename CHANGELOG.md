@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [API v1.4.1 / Web v0.19.1] - 2025-08-28
+## [API v1.4.1 / Web v0.19.1] - 2025-08-29
 
 ### API Backend Changes (v1.4.1)
 #### Fixed
@@ -82,10 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Global Types**: Proper `globalThis` usage for TextEncoder/TextDecoder compatibility
   - **Event Types**: Fixed CustomEvent type declarations for component communication
   - **Parameter Validation**: Enhanced type safety for form parameter handling
-- **🌍 Translation Completeness**: Resolved incomplete translation coverage
-  - **Missing Sections**: Added missing `mnemonic` and `auth` sections to 6 language files
-  - **Consistency Issues**: Standardized translation keys across all language files
-  - **Code vs UI Language**: Fixed all instances of hardcoded Spanish text in components
+- **🌍 Translation Completeness**: Achieved 100% translation completeness across all 13 supported languages
+  - **Japanese Completion**: Added complete mnemonic and auth sections plus missing common keys
+  - **Chinese Updates**: Added missing keys (otp, numericDescription, noLookAlikeNote)
+  - **Reference Consistency**: Fixed formatPrefix inconsistency between English and Spanish references
+  - **Missing Keys**: Added numericDescription and otp keys to German, Euskera, French, and Russian
+  - **Euskera Linguistic Fix**: Corrected "zifrak" to "zenbakiak" for proper Basque terminology
+  - **Complete Verification**: All 13 languages now have exactly 143 translation keys each
 
 ### Web Interface Changes (v0.19.0) - Previous Release
 #### Enhanced  

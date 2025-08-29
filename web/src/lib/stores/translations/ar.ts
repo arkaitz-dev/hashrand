@@ -45,6 +45,14 @@ export const ar: I18nTexts = {
 		suffixCannotExceed: 'اللاحقة لا يمكن أن تتجاوز 32 حرفاً',
 		yes: 'نعم',
 		no: 'لا',
+		cancel: 'إلغاء',
+		continue: 'متابعة',
+		correct: 'تصحيح',
+		send: 'إرسال',
+		sending: 'جاري الإرسال...',
+		formInvalid: 'النموذج غير صحيح',
+		connectionError: 'خطأ في الاتصال. حاول مرة أخرى.',
+		sendError: 'خطأ في إرسال الرابط. حاول مرة أخرى.',
 		seedUsed: 'البذرة المستخدمة',
 		copySeed: 'نسخ البذرة',
 		optionalSeed: 'بذرة اختيارية (64 حرف سادس عشري)',
@@ -54,7 +62,8 @@ export const ar: I18nTexts = {
 			'هل تريد إعادة استخدام نفس البذرة لتوليد نفس النتيجة، أم تفضل توليد بذرة عشوائية جديدة؟',
 		keepSameSeed: 'الاحتفاظ بنفس البذرة',
 		generateNewSeed: 'توليد بذرة جديدة',
-		seed: 'بذرة'
+		seed: 'بذرة',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'مولد الهاش',
@@ -76,6 +85,7 @@ export const ar: I18nTexts = {
 		maxReadabilityDescription: 'أقصى قابلية قراءة، 49 حرف',
 		completeAlphanumericDescription: 'مجموعة أبجدية رقمية كاملة',
 		maxEntropyDescription: 'أقصى عشوائية مع الرموز',
+		numericDescription: 'الأرقام 0-9 فقط، تتطلب طول أكبر',
 		failedToGenerateHash: 'فشل في توليد الهاش'
 	},
 	password: {
@@ -111,6 +121,8 @@ export const ar: I18nTexts = {
 		randomCharacters: 'حرف عشوائي مع',
 		noLookAlikeAlphabet: 'أبجدية واضحة (سهلة الكتابة)',
 		fullAlphanumericAlphabet: 'أبجدية رقمية كاملة',
+		noLookAlikeNote:
+			'الأبجدية الواضحة تستبعد الأحرف المربكة. الحد الأدنى {0} حرفاً للأمان المكافئ.',
 		fullAlphanumericNote:
 			'توفر الأبجدية الرقمية الكاملة أقصى توافق. الحد الأدنى {0} حرفاً للأمان القوي.',
 		failedToGenerateApiKey: 'فشل في توليد مفتاح API'
@@ -119,6 +131,54 @@ export const ar: I18nTexts = {
 		base58: 'Base58 (أبجدية Bitcoin)',
 		'no-look-alike': 'واضحة',
 		full: 'أبجدية رقمية كاملة',
-		'full-with-symbols': 'كاملة مع الرموز'
+		'full-with-symbols': 'كاملة مع الرموز',
+		numeric: 'رقمية (0-9)'
+	},
+	mnemonic: {
+		title: 'مولد العبارات التذكيرية BIP39',
+		description: 'ولّد عبارات تذكيرية BIP39 لمحافظ العملات المشفرة',
+		generateMnemonic: 'توليد عبارة تذكيرية',
+		language: 'اللغة',
+		wordCount: 'عدد الكلمات',
+		languageDescription: 'اختر اللغة للعبارة التذكيرية',
+		words12: '12 كلمة (عشوائية 128-بت)',
+		words12Description: 'عشوائية 128-بت - متوافق مع معظم المحافظ',
+		words24: '24 كلمة (عشوائية 256-بت)',
+		words24Description: 'عشوائية 256-بت - أقصى أمان للمبالغ الكبيرة',
+		formatNotice: 'العبارات المولدة تتبع معيار BIP39 ومتوافقة مع معظم محافظ العملات المشفرة.',
+		securityNotice:
+			'لا تشارك عبارتك التذكيرية مع أي شخص أبداً. أي شخص لديه وصول لعبارتك التذكيرية يمكنه التحكم في أموالك. احتفظ بها دون اتصال في مكان آمن.',
+		failedToGenerateMnemonic: 'فشل في توليد العبارة التذكيرية',
+		languages: {
+			english: 'الإنجليزية',
+			spanish: 'الإسبانية',
+			french: 'الفرنسية',
+			portuguese: 'البرتغالية',
+			japanese: 'اليابانية',
+			chinese: 'الصينية (المبسطة)',
+			chineseTraditional: 'الصينية (التقليدية)',
+			italian: 'الإيطالية',
+			korean: 'الكورية',
+			czech: 'التشيكية'
+		}
+	},
+	auth: {
+		loginRequired: 'مطلوب مصادقة',
+		loginDescription: 'أدخل بريدك الإلكتروني لتلقي رابط سحري للوصول.',
+		emailAddress: 'عنوان البريد الإلكتروني',
+		emailPlaceholder: 'email@example.com',
+		emailRequired: 'البريد الإلكتروني مطلوب',
+		emailInvalid: 'يرجى إدخال بريد إلكتروني صحيح',
+		sendMagicLink: 'إرسال الرابط السحري',
+		requestFailed: 'فشل في طلب الرابط السحري',
+		confirmEmail: 'تأكيد البريد الإلكتروني',
+		confirmEmailDescription: 'هل هذا صحيح؟',
+		magicLinkSent: 'تم إرسال الرابط!',
+		magicLinkInstructions: 'تحقق من بريدك الإلكتروني وانقر على الرابط السحري للمصادقة.',
+		developmentMode: 'وضع التطوير:',
+		testMagicLink: 'انقر هنا لاختبار الرابط السحري',
+		authenticationFailed: 'فشل في المصادقة',
+		tokenExpired: 'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.',
+		accessDenied: 'تم رفض الوصول. مطلوب مصادقة.'
 	}
 };

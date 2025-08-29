@@ -63,7 +63,8 @@ export const ru: I18nTexts = {
 			'Хотите переиспользовать то же зерно для получения того же результата, или предпочитаете сгенерировать новое случайное зерно?',
 		keepSameSeed: 'Оставить то же зерно',
 		generateNewSeed: 'Сгенерировать новое зерно',
-		seed: 'Зерно'
+		seed: 'Зерно',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Генератор хешей',
@@ -85,6 +86,7 @@ export const ru: I18nTexts = {
 		maxReadabilityDescription: 'Максимальная читаемость, 49 символов',
 		completeAlphanumericDescription: 'Полный буквенно-цифровой набор',
 		maxEntropyDescription: 'Максимальная энтропия с символами',
+		numericDescription: 'Только цифры 0-9, требует большей длины',
 		failedToGenerateHash: 'Не удалось сгенерировать хеш'
 	},
 	password: {

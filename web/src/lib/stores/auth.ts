@@ -1,6 +1,6 @@
 /**
  * Authentication store for managing user login state
- * 
+ *
  * Provides reactive authentication state management with JWT token handling,
  * magic link authentication flow, and automatic token refresh capabilities.
  */
@@ -38,10 +38,10 @@ function loadAuthFromStorage(): void {
 
 		if (storedAuth && storedToken) {
 			const user = JSON.parse(storedAuth);
-			
+
 			// Check if token is still valid
 			if (user.expiresAt && new Date(user.expiresAt) > new Date()) {
-				update(state => ({
+				update((state) => ({
 					...state,
 					user,
 					accessToken: storedToken
@@ -86,7 +86,7 @@ function clearAuthFromStorage(): void {
  */
 export const authStore = {
 	subscribe,
-	
+
 	/**
 	 * Initialize the auth store by loading from localStorage
 	 */
@@ -96,24 +96,24 @@ export const authStore = {
 
 	/**
 	 * Request magic link for email authentication
-	 * 
+	 *
 	 * @param email - User email address
 	 * @returns Promise<MagicLinkResponse>
 	 */
 	async requestMagicLink(email: string): Promise<MagicLinkResponse> {
-		update(state => ({ ...state, isLoading: true, error: null }));
+		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
 			const response = await api.requestMagicLink({ email });
-			
-			update(state => ({ ...state, isLoading: false }));
+
+			update((state) => ({ ...state, isLoading: false }));
 			return response;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Failed to request magic link';
-			update(state => ({ 
-				...state, 
-				isLoading: false, 
-				error: errorMessage 
+			update((state) => ({
+				...state,
+				isLoading: false,
+				error: errorMessage
 			}));
 			throw error;
 		}
@@ -121,17 +121,17 @@ export const authStore = {
 
 	/**
 	 * Validate magic link and complete authentication
-	 * 
+	 *
 	 * @param magicToken - Magic link token from URL parameter
 	 * @param email - User email address (for user state)
 	 * @returns Promise<LoginResponse>
 	 */
 	async validateMagicLink(magicToken: string, email: string): Promise<LoginResponse> {
-		update(state => ({ ...state, isLoading: true, error: null }));
+		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
 			const loginResponse = await api.validateMagicLink(magicToken);
-			
+
 			// Calculate token expiration (15 minutes from now)
 			const expiresAt = new Date();
 			expiresAt.setSeconds(expiresAt.getSeconds() + loginResponse.expires_in);
@@ -143,7 +143,7 @@ export const authStore = {
 			};
 
 			// Update store state
-			update(state => ({
+			update((state) => ({
 				...state,
 				user,
 				accessToken: loginResponse.access_token,
@@ -157,10 +157,10 @@ export const authStore = {
 			return loginResponse;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
-			update(state => ({ 
-				...state, 
-				isLoading: false, 
-				error: errorMessage 
+			update((state) => ({
+				...state,
+				isLoading: false,
+				error: errorMessage
 			}));
 			throw error;
 		}
@@ -168,15 +168,15 @@ export const authStore = {
 
 	/**
 	 * Check if user is currently authenticated
-	 * 
+	 *
 	 * @returns boolean
 	 */
 	isAuthenticated(): Promise<boolean> {
 		return new Promise((resolve) => {
 			// Subscribe once to get current state
-			const unsubscribe = subscribe(state => {
+			const unsubscribe = subscribe((state) => {
 				unsubscribe();
-				
+
 				console.log('[DEBUG] AuthStore isAuthenticated check:', {
 					hasUser: !!state.user,
 					hasToken: !!state.accessToken,
@@ -184,7 +184,7 @@ export const authStore = {
 					tokenExists: !!state.accessToken,
 					expiresAt: state.user?.expiresAt
 				});
-				
+
 				if (!state.user || !state.accessToken) {
 					console.log('[DEBUG] Not authenticated - missing user or token');
 					resolve(false);
@@ -208,12 +208,12 @@ export const authStore = {
 
 	/**
 	 * Get current access token
-	 * 
+	 *
 	 * @returns string | null
 	 */
 	getAccessToken(): Promise<string | null> {
 		return new Promise((resolve) => {
-			const unsubscribe = subscribe(state => {
+			const unsubscribe = subscribe((state) => {
 				unsubscribe();
 				resolve(state.accessToken);
 			});
@@ -232,7 +232,7 @@ export const authStore = {
 	 * Clear any error state
 	 */
 	clearError(): void {
-		update(state => ({ ...state, error: null }));
+		update((state) => ({ ...state, error: null }));
 	}
 };
 

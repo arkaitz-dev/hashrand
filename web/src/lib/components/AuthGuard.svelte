@@ -1,12 +1,12 @@
 <script lang="ts">
 	/**
 	 * Auth Guard Component
-	 * 
+	 *
 	 * Wraps content that requires authentication. Shows LoginDialog
 	 * if user is not authenticated, otherwise renders the slot content.
 	 */
 
-	import { authStore } from '../stores/auth';
+	// import { authStore } from '../stores/auth';
 	import LoginDialog from './LoginDialog.svelte';
 
 	// Component state
@@ -20,7 +20,7 @@
 		return new Promise((resolve) => {
 			// VERSIÓN ULTRA SIMPLE: siempre mostrar LoginDialog
 			// Asumimos que el usuario no está autenticado por ahora
-			
+
 			showLoginDialog = true;
 
 			// Wait for authentication
@@ -28,7 +28,7 @@
 				// Verificación simple usando localStorage
 				const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
 				const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
-				
+
 				if (hasToken && hasUser) {
 					globalThis.clearInterval(checkInterval);
 					showLoginDialog = false;
@@ -65,8 +65,8 @@
 <slot {requireAuth} />
 
 <!-- Login Dialog -->
-<LoginDialog 
-	bind:show={showLoginDialog} 
+<LoginDialog
+	bind:show={showLoginDialog}
 	on:close={handleLoginClose}
 	on:authenticated={handleAuthenticated}
 />

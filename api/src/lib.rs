@@ -34,13 +34,14 @@ fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
     let url_parts: Vec<&str> = full_url.split('?').collect();
     let full_path = url_parts.first().unwrap_or(&"");
     let query_string = url_parts.get(1).unwrap_or(&"");
-    
+
     // Extract just the path part from the full URL
     let path = if let Some(path_start) = full_path.find("/api") {
         &full_path[path_start..]
     } else {
         full_path
-    }.to_string();
+    }
+    .to_string();
 
     // Parse query parameters
     let query_params = parse_query_params(query_string);

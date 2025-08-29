@@ -19,17 +19,17 @@
 		try {
 			// Decode base58 to bytes
 			const bytes = base58.decode(nextBase58);
-			
+
 			// Convert bytes to string
 			const decoder = new globalThis.TextDecoder();
 			const jsonString = decoder.decode(bytes);
-			
+
 			// Parse JSON
 			const nextObject = JSON.parse(jsonString);
-			
+
 			// Save to localStorage
 			localStorage.setItem('pending_next_params', JSON.stringify(nextObject));
-			
+
 			// Show debug message
 			debugMessage = `✅ Parámetro 'next' decodificado correctamente:
 			
@@ -40,12 +40,11 @@ ${JSON.stringify(nextObject, null, 2)}
 
 Guardado en localStorage como 'pending_next_params'`;
 			showDebug = true;
-			
+
 			// Auto-hide debug after 20 seconds
 			setTimeout(() => {
 				showDebug = false;
 			}, 20000);
-			
 		} catch (error) {
 			console.error('Error decoding next parameter:', error);
 			debugMessage = `❌ Error decodificando parámetro 'next':
@@ -53,7 +52,7 @@ Guardado en localStorage como 'pending_next_params'`;
 Base58: ${nextBase58}
 Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
 			showDebug = true;
-			
+
 			// Auto-hide debug after 20 seconds
 			setTimeout(() => {
 				showDebug = false;
@@ -64,7 +63,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
-		
+
 		// Check for next parameter in URL
 		const nextParam = $page.url.searchParams.get('next');
 		if (nextParam) {
@@ -128,7 +127,9 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
 		<!-- Debug Message -->
 		{#if showDebug}
 			<div class="max-w-4xl mx-auto mb-8">
-				<div class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 shadow-md">
+				<div
+					class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 shadow-md"
+				>
 					<div class="flex items-start">
 						<div class="flex-shrink-0">
 							<span class="text-2xl">🔍</span>
@@ -137,11 +138,13 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
 							<h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
 								Debug - Procesamiento parámetro 'next'
 							</h3>
-							<div class="text-sm text-yellow-700 dark:text-yellow-300 whitespace-pre-wrap font-mono">
+							<div
+								class="text-sm text-yellow-700 dark:text-yellow-300 whitespace-pre-wrap font-mono"
+							>
 								{debugMessage}
 							</div>
 							<button
-								on:click={() => showDebug = false}
+								on:click={() => (showDebug = false)}
 								class="mt-3 px-3 py-1 text-xs bg-yellow-200 dark:bg-yellow-800 hover:bg-yellow-300 dark:hover:bg-yellow-700 text-yellow-800 dark:text-yellow-200 rounded transition-colors"
 							>
 								Cerrar

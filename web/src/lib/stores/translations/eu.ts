@@ -62,7 +62,8 @@ export const eu: I18nTexts = {
 			'Emaitza bera sortzeko hazi bera berrerabili nahi duzu, ala ausazko hazi berria sortu nahi duzu?',
 		keepSameSeed: 'Hazi bera mantendu',
 		generateNewSeed: 'Hazi berria sortu',
-		seed: 'Hazia'
+		seed: 'Hazia',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',
@@ -84,6 +85,7 @@ export const eu: I18nTexts = {
 		maxReadabilityDescription: 'Irakurgarritasun handiena, 49 hizki',
 		completeAlphanumericDescription: 'Alfabeto alfanumeriko osoa',
 		maxEntropyDescription: 'Entropia handiena sinboloekin',
+		numericDescription: '0-9 zenbakiak soilik, luzeera handiagoa behar du',
 		failedToGenerateHash: 'Hash-a sortzeak huts egin du'
 	},
 	password: {

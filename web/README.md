@@ -33,7 +33,7 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
     - **Completed Languages**: English, Spanish, French, German, Portuguese, Russian, Chinese, Euskera (with full mnemonic and auth sections)
     - **Authentication Keys**: New translation keys for two-step email authentication flow
       - Basic actions: `cancel`, `continue`, `correct`, `send`, `sending`
-      - Form validation: `formInvalid`, `connectionError`, `sendError`  
+      - Form validation: `formInvalid`, `connectionError`, `sendError`
       - Email confirmation: `confirmEmail`, `confirmEmailDescription`
     - **Remaining Languages**: Arabic, Catalan, Galician, Hindi, Japanese (pending translation completion)
   - **Enhanced Naturalness**: Comprehensive linguistic review ensuring authentic, natural-sounding translations
@@ -222,7 +222,7 @@ web/
 │   │   ├── api.ts              # Type-safe API service layer
 │   │   ├── components/         # Reusable UI components
 │   │   │   ├── BackButton.svelte         # Navigation component
-│   │   │   ├── AuthGuard.svelte          # Authentication route protection 
+│   │   │   ├── AuthGuard.svelte          # Authentication route protection
 │   │   │   ├── EmailInputDialog.svelte   # Two-step email authentication component (NEW)
 │   │   │   ├── LoginDialog.svelte        # Authentication modal dialog
 │   │   │   ├── DateTimeLocalized.svelte  # i18n date/time formatting

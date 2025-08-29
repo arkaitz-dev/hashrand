@@ -63,7 +63,8 @@ export const de: I18nTexts = {
 			'Möchten Sie denselben Seed wiederverwenden, um das gleiche Ergebnis zu erhalten, oder bevorzugen Sie es, einen neuen zufälligen Seed zu generieren?',
 		keepSameSeed: 'Denselben Seed behalten',
 		generateNewSeed: 'Neuen Seed generieren',
-		seed: 'Seed'
+		seed: 'Seed',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Hash-Generator',
@@ -85,6 +86,7 @@ export const de: I18nTexts = {
 		maxReadabilityDescription: 'Maximale Lesbarkeit, 49 Zeichen',
 		completeAlphanumericDescription: 'Vollständiger alphanumerischer Satz',
 		maxEntropyDescription: 'Maximale Entropie mit Symbolen',
+		numericDescription: 'Nur Ziffern 0-9, erfordert größere Länge',
 		failedToGenerateHash: 'Hash-Generierung fehlgeschlagen'
 	},
 	password: {
@@ -162,7 +164,8 @@ export const de: I18nTexts = {
 	},
 	auth: {
 		loginRequired: 'Authentifizierung Erforderlich',
-		loginDescription: 'Geben Sie Ihre E-Mail ein, um einen magischen Link für den Zugang zu erhalten.',
+		loginDescription:
+			'Geben Sie Ihre E-Mail ein, um einen magischen Link für den Zugang zu erhalten.',
 		emailAddress: 'E-Mail-Adresse',
 		emailPlaceholder: 'ihre@email.com',
 		emailRequired: 'E-Mail ist erforderlich',
@@ -172,7 +175,8 @@ export const de: I18nTexts = {
 		confirmEmail: 'E-Mail Bestätigen',
 		confirmEmailDescription: 'Ist das korrekt?',
 		magicLinkSent: 'Link Gesendet!',
-		magicLinkInstructions: 'Überprüfen Sie Ihre E-Mail und klicken Sie auf den magischen Link zur Authentifizierung.',
+		magicLinkInstructions:
+			'Überprüfen Sie Ihre E-Mail und klicken Sie auf den magischen Link zur Authentifizierung.',
 		developmentMode: 'Entwicklungsmodus:',
 		testMagicLink: 'Hier klicken, um den magischen Link zu testen',
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',

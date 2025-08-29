@@ -117,6 +117,7 @@ export const en: I18nTexts = {
 			'All API keys are generated with the "ak_" prefix for easy identification. The specified length refers only to the random letters generated (prefix not counted).',
 		securityNotice:
 			'Store API keys securely and never expose them in client-side code or version control. Treat them with the same care as passwords.',
+		formatPrefix: 'ak_ prefix +',
 		randomCharacters: 'random characters using',
 		noLookAlikeAlphabet: '(easy to type)',
 		fullAlphanumericAlphabet: '(maximum compatibility)',

@@ -43,6 +43,16 @@ export const hi: I18nTexts = {
 		optionalSuffix: 'वैकल्पिक सफिक्स',
 		prefixCannotExceed: 'प्रीफिक्स 32 अक्षरों से अधिक नहीं हो सकता',
 		suffixCannotExceed: 'सफिक्स 32 अक्षरों से अधिक नहीं हो सकता',
+		yes: 'हाँ',
+		no: 'नहीं',
+		cancel: 'रद्द करें',
+		continue: 'जारी रखें',
+		correct: 'ठीक करें',
+		send: 'भेजें',
+		sending: 'भेज रहे हैं...',
+		formInvalid: 'फॉर्म अवैध है',
+		connectionError: 'कनेक्शन एरर। फिर से कोशिश करें।',
+		sendError: 'लिंक भेजने में एरर। फिर से कोशिश करें।',
 		seedUsed: 'इस्तेमाल किया गया सीड',
 		copySeed: 'सीड कॉपी करें',
 		optionalSeed: 'वैकल्पिक सीड (64 हेक्स अक्षर)',
@@ -52,7 +62,8 @@ export const hi: I18nTexts = {
 			'क्या आप वही परिणाम पाने के लिए वही सीड दोबारा इस्तेमाल करना चाहते हैं, या आप नया रैंडम सीड जनरेट करना पसंद करेंगे?',
 		keepSameSeed: 'वही सीड रखें',
 		generateNewSeed: 'नया सीड जनरेट करें',
-		seed: 'सीड'
+		seed: 'सीड',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'हैश जनरेटर',
@@ -74,6 +85,7 @@ export const hi: I18nTexts = {
 		maxReadabilityDescription: 'अधिकतम पठनीयता, 49 अक्षर',
 		completeAlphanumericDescription: 'पूर्ण अल्फान्यूमेरिक सेट',
 		maxEntropyDescription: 'प्रतीकों के साथ अधिकतम एंट्रॉपी',
+		numericDescription: 'केवल 0-9 अंक, अधिक लंबाई आवश्यक',
 		failedToGenerateHash: 'हैश जनरेट नहीं हुआ'
 	},
 	password: {
@@ -109,6 +121,8 @@ export const hi: I18nTexts = {
 		randomCharacters: 'रैंडम अक्षर के साथ',
 		noLookAlikeAlphabet: 'नो लुक-अलाइक अल्फाबेट (टाइप करने में आसान)',
 		fullAlphanumericAlphabet: 'पूर्ण अल्फान्यूमेरिक अल्फाबेट',
+		noLookAlikeNote:
+			'नो लुक-अलाइक अल्फाबेट भ्रामक अक्षरों को छोड़ता है। समकक्ष सुरक्षा के लिए न्यूनतम {0} अक्षर।',
 		fullAlphanumericNote:
 			'पूर्ण अल्फान्यूमेरिक अल्फाबेट अधिकतम संगतता प्रदान करता है। मजबूत सुरक्षा के लिए न्यूनतम {0} वर्ण आवश्यक।',
 		failedToGenerateApiKey: 'API की जनरेट नहीं हुई'
@@ -117,6 +131,55 @@ export const hi: I18nTexts = {
 		base58: 'Base58 (बिटकॉइन अल्फाबेट)',
 		'no-look-alike': 'नो लुक-अलाइक',
 		full: 'पूर्ण अल्फान्यूमेरिक',
-		'full-with-symbols': 'प्रतीकों के साथ पूर्ण'
+		'full-with-symbols': 'प्रतीकों के साथ पूर्ण',
+		numeric: 'न्यूमेरिक (0-9)'
+	},
+	mnemonic: {
+		title: 'BIP39 मेमोनिक जनरेटर',
+		description: 'क्रिप्टोकरेंसी वॉलेट के लिए BIP39 मेमोनिक फ्रेज जनरेट करें',
+		generateMnemonic: 'मेमोनिक जनरेट करें',
+		language: 'भाषा',
+		wordCount: 'शब्दों की संख्या',
+		languageDescription: 'अपने मेमोनिक फ्रेज के लिए भाषा चुनें',
+		words12: '12 शब्द (128-bit एंट्रॉपी)',
+		words12Description: '128-bit एंट्रॉपी - अधिकतर वॉलेट के साथ कम्पैटिबल',
+		words24: '24 शब्द (256-bit एंट्रॉपी)',
+		words24Description: '256-bit एंट्रॉपी - बड़ी मात्रा के लिए अधिकतम सुरक्षा',
+		formatNotice:
+			'जनरेट किए गए फ्रेज BIP39 स्टैंडर्ड का पालन करते हैं और अधिकतर क्रिप्टोकरेंसी वॉलेट के साथ कम्पैटिबल हैं।',
+		securityNotice:
+			'अपना मेमोनिक फ्रेज कभी किसी के साथ शेयर न करें। आपके मेमोनिक फ्रेज तक पहुंच रखने वाला कोई भी व्यक्ति आपके फंड को कंट्रोल कर सकता है। इसे ऑफलाइन सुरक्षित जगह पर रखें।',
+		failedToGenerateMnemonic: 'मेमोनिक जनरेट नहीं हुआ',
+		languages: {
+			english: 'अंग्रेजी',
+			spanish: 'स्पेनिश',
+			french: 'फ्रेंच',
+			portuguese: 'पुर्तगाली',
+			japanese: 'जापानी',
+			chinese: 'चीनी (सरलीकृत)',
+			chineseTraditional: 'चीनी (पारंपरिक)',
+			italian: 'इतालवी',
+			korean: 'कोरियाई',
+			czech: 'चेक'
+		}
+	},
+	auth: {
+		loginRequired: 'प्रमाणीकरण आवश्यक',
+		loginDescription: 'एक्सेस के लिए मैजिक लिंक प्राप्त करने हेतु अपना ईमेल दर्ज करें।',
+		emailAddress: 'ईमेल पता',
+		emailPlaceholder: 'आपका@email.com',
+		emailRequired: 'ईमेल आवश्यक है',
+		emailInvalid: 'कृपया वैध ईमेल दर्ज करें',
+		sendMagicLink: 'मैजिक लिंक भेजें',
+		requestFailed: 'मैजिक लिंक रिक्वेस्ट फेल हो गई',
+		confirmEmail: 'ईमेल कन्फर्म करें',
+		confirmEmailDescription: 'क्या यह सही है?',
+		magicLinkSent: 'लिंक भेज दिया गया!',
+		magicLinkInstructions: 'अपना ईमेल चेक करें और प्रमाणीकरण के लिए मैजिक लिंक पर क्लिक करें।',
+		developmentMode: 'डेवलपमेंट मोड:',
+		testMagicLink: 'मैजिक लिंक टेस्ट करने के लिए यहां क्लिक करें',
+		authenticationFailed: 'प्रमाणीकरण फेल हो गया',
+		tokenExpired: 'आपका सेशन समाप्त हो गया है। कृपया दोबारा लॉग इन करें।',
+		accessDenied: 'एक्सेस अस्वीकृत। प्रमाणीकरण आवश्यक।'
 	}
 };

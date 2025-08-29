@@ -194,7 +194,7 @@ export const api = {
 		});
 
 		if (!response.ok) {
-			const errorData = await response.json() as AuthError;
+			const errorData = (await response.json()) as AuthError;
 			throw new ApiError(errorData.error || `HTTP ${response.status}`, response.status);
 		}
 
@@ -205,7 +205,7 @@ export const api = {
 		const response = await fetch(`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}`);
 
 		if (!response.ok) {
-			const errorData = await response.json() as AuthError;
+			const errorData = (await response.json()) as AuthError;
 			throw new ApiError(errorData.error || `HTTP ${response.status}`, response.status);
 		}
 

@@ -18,7 +18,7 @@
 	onMount(() => {
 		const unsubscribe = page.subscribe(($page) => {
 			currentRoute.set($page.url.pathname);
-			
+
 			// Check for magic link parameter
 			const magicToken = $page.url.searchParams.get('magiclink');
 			if (magicToken) {
@@ -35,11 +35,14 @@
 	/**
 	 * Handle magic link validation when present in URL
 	 */
-	async function handleMagicLinkValidation(magicToken: string, currentPage: { url: globalThis.URL }) {
+	async function handleMagicLinkValidation(
+		magicToken: string,
+		currentPage: { url: globalThis.URL }
+	) {
 		try {
 			// Extract email from URL fragment or localStorage if available
 			const email = extractEmailFromContext();
-			
+
 			if (!email) {
 				console.warn('No email context found for magic link validation');
 				// Redirect to home and show login dialog
@@ -48,30 +51,29 @@
 			}
 
 			console.log('Validating magic link for:', email);
-			
+
 			// Validate the magic link
 			await authStore.validateMagicLink(magicToken, email);
-			
+
 			console.log('Authentication successful!');
-			
+
 			// Remove magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
-			
+
 			// Update URL without page reload
 			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
-			
+
 			// Show success message or redirect to original page
 			// Could add a toast notification here
-			
 		} catch (error) {
 			console.error('Magic link validation failed:', error);
-			
+
 			// Remove failed magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
 			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
-			
+
 			// Redirect to home page
 			goto('/');
 		}

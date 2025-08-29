@@ -1,11 +1,11 @@
 <script lang="ts">
 	/**
 	 * Email Input Dialog Component
-	 * 
+	 *
 	 * Reusable modal dialog for email input with two-step flow:
 	 * 1. Email input step
 	 * 2. Email confirmation step
-	 * 
+	 *
 	 * Follows the same styling patterns as LoginDialog for consistency.
 	 */
 
@@ -16,7 +16,7 @@
 
 	// Component props
 	export let show = false;
-	export let next: any = null; // JSON object with parameters to preserve after login
+	export let next: Record<string, unknown> | null = null; // JSON object with parameters to preserve after login
 	export let title = '';
 	export let description = '';
 	export let emailPlaceholder = '';
@@ -65,20 +65,20 @@
 	/**
 	 * Convert JSON object to base58 encoded string
 	 */
-	function encodeNextToBase58(nextObj: any): string | null {
+	function encodeNextToBase58(nextObj: Record<string, unknown> | null): string | null {
 		if (!nextObj) return null;
-		
+
 		try {
 			// Convert JSON object to string
 			const jsonString = JSON.stringify(nextObj);
-			
+
 			// Convert string to bytes (Uint8Array)
 			const encoder = new globalThis.TextEncoder();
 			const bytes = encoder.encode(jsonString);
-			
+
 			// Encode bytes to base58
 			const base58String = base58.encode(bytes);
-			
+
 			return base58String;
 		} catch (error) {
 			console.error('Error encoding next parameter to base58:', error);
@@ -91,14 +91,14 @@
 	 */
 	function handleConfirmAndSend() {
 		isSubmitting = true;
-		
+
 		// Build the redirect URL with next parameter if provided
 		let redirectUrl = '/';
 		const nextBase58 = encodeNextToBase58(next);
 		if (nextBase58) {
 			redirectUrl += `?next=${nextBase58}`;
 		}
-		
+
 		dispatch('emailConfirmed', { email, redirectUrl });
 	}
 
@@ -162,7 +162,7 @@
 <!-- Dialog backdrop -->
 {#if show}
 	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-	<div 
+	<div
 		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
 		on:click={handleBackdropClick}
 	>
@@ -176,7 +176,10 @@
 			{#if !showEmailConfirmation}
 				<!-- Step 1: Email Input -->
 				<div class="text-center mb-6">
-					<h2 id="email-dialog-title" class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+					<h2
+						id="email-dialog-title"
+						class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2"
+					>
 						{title || $_('auth.loginRequired')}
 					</h2>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
@@ -186,7 +189,10 @@
 
 				<form on:submit|preventDefault={handleInitialSubmit} class="space-y-4">
 					<div>
-						<label for="email-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+						<label
+							for="email-input"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+						>
 							{$_('auth.emailAddress')}
 						</label>
 						<input
@@ -196,7 +202,7 @@
 							placeholder={emailPlaceholder || $_('auth.emailPlaceholder')}
 							required
 							disabled={isSubmitting}
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
 							       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
 							       focus:ring-2 focus:ring-blue-500 focus:border-transparent
 							       disabled:opacity-50 disabled:cursor-not-allowed"
@@ -244,8 +250,10 @@
 					<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
 						{confirmDescription || $_('auth.confirmEmailDescription')}
 					</p>
-					
-					<div class="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 mb-4">
+
+					<div
+						class="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 mb-4"
+					>
 						<p class="text-gray-900 dark:text-gray-100 font-medium">
 							{email}
 						</p>
@@ -281,7 +289,7 @@
 						{#if isSubmitting}
 							<LoadingSpinner size="sm" />
 						{/if}
-						{isSubmitting ? (sendingText || $_('common.sending')) : (sendText || $_('common.send'))}
+						{isSubmitting ? sendingText || $_('common.sending') : sendText || $_('common.send')}
 					</button>
 				</div>
 			{/if}

@@ -1,13 +1,13 @@
-/// Authentication login handler
-/// 
-/// Handles magic link authentication flow:
-/// 1. POST /api/login/ - Generate magic link and send via email (logged in development)
-/// 2. GET /api/login/?magiclink=... - Validate magic link and return JWT tokens
+//! Authentication login handler
+//!
+//! Handles magic link authentication flow:
+//! 1. POST /api/login/ - Generate magic link and send via email (logged in development)
+//! 2. GET /api/login/?magiclink=... - Validate magic link and return JWT tokens
 
-use spin_sdk::http::{Method, Request, Response};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use chrono::{Duration, Utc};
+use serde::{Deserialize, Serialize};
+use spin_sdk::http::{Method, Request, Response};
+use std::collections::HashMap;
 
 use crate::database::{
     connection::{DatabaseEnvironment, initialize_database},
@@ -47,21 +47,21 @@ struct ErrorResponse {
 }
 
 /// Handle login authentication requests
-/// 
+///
 /// # Arguments
 /// * `req` - HTTP request
 /// * `query_params` - Query parameters from URL
-/// 
+///
 /// # Returns
 /// * `Result<impl IntoResponse, anyhow::Error>` - HTTP response
 pub fn handle_login(
     req: Request,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
-    // Determine database environment  
+    // Determine database environment
     // For now use Development since we don't have access to IncomingRequest
     let env = DatabaseEnvironment::Development;
-    
+
     // Initialize database to ensure auth_sessions table exists
     println!("Initializing database...");
     if let Err(e) = initialize_database(env.clone()) {
@@ -96,24 +96,31 @@ fn handle_magic_link_generation(
 ) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
-    println!("DEBUG: Request body bytes: {:?}", std::str::from_utf8(body_bytes));
-    
-    let magic_request: MagicLinkRequest = match serde_json::from_slice::<MagicLinkRequest>(body_bytes) {
-        Ok(req) => {
-            println!("DEBUG: Parsed request - Email: {}, UI Host: {:?}", req.email, req.ui_host);
-            req
-        },
-        Err(e) => {
-            println!("DEBUG: JSON parse error: {}", e);
-            return Ok(Response::builder()
-                .status(400)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: "Invalid JSON body".to_string(),
-                })?)
-                .build());
-        }
-    };
+    println!(
+        "DEBUG: Request body bytes: {:?}",
+        std::str::from_utf8(body_bytes)
+    );
+
+    let magic_request: MagicLinkRequest =
+        match serde_json::from_slice::<MagicLinkRequest>(body_bytes) {
+            Ok(req) => {
+                println!(
+                    "DEBUG: Parsed request - Email: {}, UI Host: {:?}",
+                    req.email, req.ui_host
+                );
+                req
+            }
+            Err(e) => {
+                println!("DEBUG: JSON parse error: {}", e);
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid JSON body".to_string(),
+                    })?)
+                    .build());
+            }
+        };
 
     // Validate email format (basic validation)
     if magic_request.email.is_empty() || !magic_request.email.contains('@') {
@@ -143,16 +150,17 @@ fn handle_magic_link_generation(
             // Get host URL for magic link (prefer ui_host from request, fallback to request host)
             println!("DEBUG: About to choose host URL");
             println!("DEBUG: magic_request.ui_host = {:?}", magic_request.ui_host);
-            
+
             let fallback_host = JwtUtils::get_host_url_from_request(&req);
             println!("DEBUG: fallback_host from request = {}", fallback_host);
-            
-            let host_url = magic_request.ui_host
-                .as_deref()  // Más limpio que .as_ref().map(|s| s.as_str())
+
+            let host_url = magic_request
+                .ui_host
+                .as_deref() // Más limpio que .as_ref().map(|s| s.as_str())
                 .unwrap_or(&fallback_host);
-            
+
             println!("DEBUG: Final chosen host_url = {}", host_url);
-            let magic_link = JwtUtils::create_magic_link_url(&host_url, &magic_token);
+            let magic_link = JwtUtils::create_magic_link_url(host_url, &magic_token);
             println!("DEBUG: Generated magic_link = {}", magic_link);
 
             // In development, log the magic link instead of sending email
@@ -161,14 +169,18 @@ fn handle_magic_link_generation(
             println!("UI Host: {:?}", magic_request.ui_host);
             println!("Final Host URL: {}", host_url);
             println!("Magic Link: {}", magic_link);
-            println!("Expires: {} UTC", magic_expires_at.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "Expires: {} UTC",
+                magic_expires_at.format("%Y-%m-%d %H:%M:%S")
+            );
             println!("====================================================");
 
             // Clean up expired sessions
             let _ = AuthOperations::cleanup_expired_sessions(env);
 
             let response = MagicLinkResponse {
-                message: "Magic link generated successfully. Check development logs for the link.".to_string(),
+                message: "Magic link generated successfully. Check development logs for the link."
+                    .to_string(),
                 dev_magic_link: Some(magic_link),
             };
 
@@ -210,7 +222,7 @@ fn handle_magic_link_validation(
                 .build());
         }
     };
-    
+
     println!("Magic token received: '{}'", magic_token);
 
     // Find auth session by magic token
@@ -219,7 +231,7 @@ fn handle_magic_link_validation(
         Ok(Some(session)) => {
             // Check if magic token has expired
             let now = Utc::now().timestamp() as u64;
-            
+
             if now > session.magic_expires_at {
                 return Ok(Response::builder()
                     .status(400)
@@ -231,39 +243,41 @@ fn handle_magic_link_validation(
             }
 
             // Generate JWT tokens
-            let (access_token, access_expires_at) = match JwtUtils::create_access_token(&session.email) {
-                Ok(tokens) => tokens,
-                Err(e) => {
-                    println!("Failed to create access token: {}", e);
-                    return Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Token generation failed".to_string(),
-                        })?)
-                        .build());
-                }
-            };
+            let (access_token, access_expires_at) =
+                match JwtUtils::create_access_token(&session.email) {
+                    Ok(tokens) => tokens,
+                    Err(e) => {
+                        println!("Failed to create access token: {}", e);
+                        return Ok(Response::builder()
+                            .status(500)
+                            .header("content-type", "application/json")
+                            .body(serde_json::to_string(&ErrorResponse {
+                                error: "Token generation failed".to_string(),
+                            })?)
+                            .build());
+                    }
+                };
 
             let session_id = session.id.unwrap_or(0);
-            let (refresh_token, refresh_expires_at) = match JwtUtils::create_refresh_token(&session.email, session_id) {
-                Ok(tokens) => tokens,
-                Err(e) => {
-                    println!("Failed to create refresh token: {}", e);
-                    return Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Token generation failed".to_string(),
-                        })?)
-                        .build());
-                }
-            };
+            let (refresh_token, refresh_expires_at) =
+                match JwtUtils::create_refresh_token(&session.email, session_id) {
+                    Ok(tokens) => tokens,
+                    Err(e) => {
+                        println!("Failed to create refresh token: {}", e);
+                        return Ok(Response::builder()
+                            .status(500)
+                            .header("content-type", "application/json")
+                            .body(serde_json::to_string(&ErrorResponse {
+                                error: "Token generation failed".to_string(),
+                            })?)
+                            .build());
+                    }
+                };
 
             // Update session with tokens using timestamps
             let access_expires_timestamp = access_expires_at.timestamp() as u64;
             let refresh_expires_timestamp = refresh_expires_at.timestamp() as u64;
-            
+
             match AuthOperations::activate_session_tokens(
                 env,
                 session_id,

@@ -54,7 +54,16 @@ export const ja: I18nTexts = {
 			'同じ結果を得るために同じシードを再利用しますか、それとも新しいランダムシードを生成することを好みますか？',
 		keepSameSeed: '同じシードを保持',
 		generateNewSeed: '新しいシードを生成',
-		seed: 'シード'
+		seed: 'シード',
+		cancel: 'キャンセル',
+		continue: '続行',
+		correct: '修正',
+		send: '送信',
+		sending: '送信中...',
+		formInvalid: 'フォームが無効です',
+		connectionError: '接続エラーです。再試行してください。',
+		sendError: 'リンクの送信エラーです。再試行してください。',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -76,7 +85,8 @@ export const ja: I18nTexts = {
 		maxReadabilityDescription: '最大の可読性、49文字',
 		completeAlphanumericDescription: '完全な英数字セット',
 		maxEntropyDescription: '記号を含む最大エントロピー',
-		failedToGenerateHash: 'ハッシュの生成に失敗しました'
+		failedToGenerateHash: 'ハッシュの生成に失敗しました',
+		numericDescription: '0-9の数字のみ、より長い長さが必要'
 	},
 	password: {
 		title: '安全なパスワード生成器',
@@ -113,12 +123,64 @@ export const ja: I18nTexts = {
 		fullAlphanumericAlphabet: '完全英数字アルファベット',
 		fullAlphanumericNote:
 			'完全英数字アルファベットは最大の互換性を提供します。強力なセキュリティには最低{0}文字が必要です。',
-		failedToGenerateApiKey: 'APIキーの生成に失敗しました'
+		failedToGenerateApiKey: 'APIキーの生成に失敗しました',
+		noLookAlikeNote:
+			'紛らわしくないアルファベットは混同しやすい文字を除外します。同等のセキュリティには最低{0}文字が必要です。'
 	},
 	alphabets: {
 		base58: 'Base58（ビットコインアルファベット）',
 		'no-look-alike': '紛らわしくない',
 		full: '完全英数字',
-		'full-with-symbols': '記号を含む完全'
+		'full-with-symbols': '記号を含む完全',
+		numeric: '数字（0-9）'
+	},
+	mnemonic: {
+		title: 'BIP39ニーモニック生成器',
+		description: '暗号通貨ウォレット用のBIP39ニーモニックフレーズを生成',
+		generateMnemonic: 'ニーモニックを生成',
+		language: '言語',
+		wordCount: '単語数',
+		languageDescription: 'ニーモニックフレーズの言語を選択してください',
+		words12: '12単語（128ビットエントロピー）',
+		words12Description: '128ビットエントロピー - ほとんどのウォレットと互換性あり',
+		words24: '24単語（256ビットエントロピー）',
+		words24Description: '256ビットエントロピー - 大量保管用の最大セキュリティ',
+		formatNotice:
+			'生成されたフレーズはBIP39標準に従っており、ほとんどの暗号通貨ウォレットと互換性があります。',
+		securityNotice:
+			'ニーモニックフレーズを他人と共有しないでください。ニーモニックフレーズにアクセスできる人は誰でもあなたの資金をコントロールできます。オフラインの安全な場所に保管してください。',
+		failedToGenerateMnemonic: 'ニーモニックの生成に失敗しました',
+		languages: {
+			english: '英語',
+			spanish: 'スペイン語',
+			french: 'フランス語',
+			portuguese: 'ポルトガル語',
+			japanese: '日本語',
+			chinese: '中国語（簡体字）',
+			chineseTraditional: '中国語（繁体字）',
+			italian: 'イタリア語',
+			korean: '韓国語',
+			czech: 'チェコ語'
+		}
+	},
+	auth: {
+		loginRequired: '認証が必要です',
+		loginDescription:
+			'アクセス用のマジックリンクを受け取るためにメールアドレスを入力してください。',
+		emailAddress: 'メールアドレス',
+		emailPlaceholder: 'your@email.com',
+		emailRequired: 'メールアドレスが必要です',
+		emailInvalid: '有効なメールアドレスを入力してください',
+		sendMagicLink: 'マジックリンクを送信',
+		requestFailed: 'マジックリンクのリクエストに失敗しました',
+		confirmEmail: 'メールアドレスを確認',
+		confirmEmailDescription: 'これで正しいですか？',
+		magicLinkSent: 'リンクを送信しました！',
+		magicLinkInstructions: 'メールをチェックして、認証用のマジックリンクをクリックしてください。',
+		developmentMode: '開発モード：',
+		testMagicLink: 'マジックリンクをテストするにはここをクリック',
+		authenticationFailed: '認証に失敗しました',
+		tokenExpired: 'セッションが期限切れです。再度ログインしてください。',
+		accessDenied: 'アクセスが拒否されました。認証が必要です。'
 	}
 };

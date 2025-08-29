@@ -44,6 +44,16 @@ export const ca: I18nTexts = {
 		optionalSuffix: 'Sufix opcional',
 		prefixCannotExceed: 'El prefix no pot superar 32 caràcters',
 		suffixCannotExceed: 'El sufix no pot superar 32 caràcters',
+		yes: 'Sí',
+		no: 'No',
+		cancel: 'Cancel·lar',
+		continue: 'Continuar',
+		correct: 'Corregir',
+		send: 'Enviar',
+		sending: 'Enviant...',
+		formInvalid: 'El formulari no és vàlid',
+		connectionError: 'Error de connexió. Torneu-ho a provar.',
+		sendError: "Error enviant l'enllaç. Torneu-ho a provar.",
 		seedUsed: 'Llavor Utilitzada',
 		copySeed: 'Copiar Llavor',
 		optionalSeed: 'Llavor opcional (64 caràcters hex)',
@@ -53,7 +63,8 @@ export const ca: I18nTexts = {
 			'Voleu reutilitzar la mateixa llavor per generar el mateix resultat, o preferiu generar una nova llavor aleatòria?',
 		keepSameSeed: 'Mantenir la mateixa llavor',
 		generateNewSeed: 'Generar nova llavor',
-		seed: 'Llavor'
+		seed: 'Llavor',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -75,6 +86,7 @@ export const ca: I18nTexts = {
 		maxReadabilityDescription: 'Màxima llegibilitat, 49 caràcters',
 		completeAlphanumericDescription: 'Conjunt alfanumèric complet',
 		maxEntropyDescription: 'Màxima entropia amb símbols',
+		numericDescription: 'Només dígits 0-9, requereix longitud més gran',
 		failedToGenerateHash: 'Ha fallat generar el hash'
 	},
 	password: {
@@ -110,6 +122,8 @@ export const ca: I18nTexts = {
 		randomCharacters: 'caràcters aleatoris amb',
 		noLookAlikeAlphabet: "alfabet sense confusió (fàcil d'escriure)",
 		fullAlphanumericAlphabet: 'alfabet alfanumèric complet',
+		noLookAlikeNote:
+			"L'alfabet sense confusió exclou caràcters confusos. Mínim {0} caràcters per seguretat equivalent.",
 		fullAlphanumericNote:
 			"L'alfabet alfanumèric complet proporciona màxima compatibilitat. Mínim {0} caràcters per a seguretat forta.",
 		failedToGenerateApiKey: 'Ha fallat generar la clau API'
@@ -118,6 +132,56 @@ export const ca: I18nTexts = {
 		base58: 'Base58 (alfabet Bitcoin)',
 		'no-look-alike': 'Sense confusió',
 		full: 'Alfanumèric complet',
-		'full-with-symbols': 'Complet amb símbols'
+		'full-with-symbols': 'Complet amb símbols',
+		numeric: 'Numèric (0-9)'
+	},
+	mnemonic: {
+		title: 'Generador de frases mnemòniques BIP39',
+		description: 'Genereu frases mnemòniques BIP39 per a monederes de criptomonedes',
+		generateMnemonic: 'Generar frase mnemònica',
+		language: 'Idioma',
+		wordCount: 'Nombre de paraules',
+		languageDescription: 'Seleccioneu idioma per a la vostra frase mnemònica',
+		words12: '12 paraules (entropia de 128-bit)',
+		words12Description: 'Entropia de 128-bit - compatible amb la majoria de monederes',
+		words24: '24 paraules (entropia de 256-bit)',
+		words24Description: 'Entropia de 256-bit - seguretat màxima per quantitats grans',
+		formatNotice:
+			'Les frases generades segueixen el estàndard BIP39 i són compatibles amb la majoria de monederes de criptomonedes.',
+		securityNotice:
+			'Mai compartiu la vostra frase mnemònica amb ningú. Qualsevol persona amb accés a la vostra frase mnemònica pot controlar els vostres fons. Guardeu-la fora de línia en un lloc segur.',
+		failedToGenerateMnemonic: 'Ha fallat generar la frase mnemònica',
+		languages: {
+			english: 'Anglès',
+			spanish: 'Espanyol',
+			french: 'Francès',
+			portuguese: 'Portuguès',
+			japanese: 'Japonès',
+			chinese: 'Xinès (simplificat)',
+			chineseTraditional: 'Xinès (tradicional)',
+			italian: 'Italià',
+			korean: 'Coreà',
+			czech: 'Txec'
+		}
+	},
+	auth: {
+		loginRequired: 'Autenticació requerida',
+		loginDescription: "Introduïu el vostre correu electrònic per rebre un enllaç màgic d'accés.",
+		emailAddress: 'Adreça de correu electrònic',
+		emailPlaceholder: 'el-vostre@email.com',
+		emailRequired: 'El correu electrònic és obligatori',
+		emailInvalid: 'Si us plau, introduïu un correu electrònic vàlid',
+		sendMagicLink: 'Enviar enllaç màgic',
+		requestFailed: "Ha fallat sol·licitar l'enllaç màgic",
+		confirmEmail: 'Confirmar correu electrònic',
+		confirmEmailDescription: 'És correcte?',
+		magicLinkSent: 'Enllaç enviat!',
+		magicLinkInstructions:
+			"Reviseu el vostre correu electrònic i feu clic a l'enllaç màgic per autenticar-vos.",
+		developmentMode: 'Mode desenvolupament:',
+		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",
+		authenticationFailed: "Ha fallat l'autenticació",
+		tokenExpired: 'La vostra sessió ha expirat. Si us plau, inicieu sessió de nou.',
+		accessDenied: 'Accés denegat. Cal autenticació.'
 	}
 };

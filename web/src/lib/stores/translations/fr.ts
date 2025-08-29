@@ -53,7 +53,7 @@ export const fr: I18nTexts = {
 		sending: 'Envoi en cours...',
 		formInvalid: 'Formulaire invalide',
 		connectionError: 'Erreur de connexion. Réessayez.',
-		sendError: 'Erreur lors de l\'envoi du lien. Réessayez.',
+		sendError: "Erreur lors de l'envoi du lien. Réessayez.",
 		seedUsed: 'Graine Utilisée',
 		copySeed: 'Copier Graine',
 		optionalSeed: 'Graine optionnelle (64 caractères hex)',
@@ -63,7 +63,8 @@ export const fr: I18nTexts = {
 			'Voulez-vous réutiliser la même graine pour générer le même résultat, ou préférez-vous générer une nouvelle graine aléatoire?',
 		keepSameSeed: 'Garder la même graine',
 		generateNewSeed: 'Générer une nouvelle graine',
-		seed: 'Graine'
+		seed: 'Graine',
+		otp: 'OTP'
 	},
 	menu: {
 		title: 'Générateur de Hash',
@@ -85,6 +86,7 @@ export const fr: I18nTexts = {
 		maxReadabilityDescription: 'Lisibilité maximale, 49 lettres',
 		completeAlphanumericDescription: 'Ensemble alphanumérique complet',
 		maxEntropyDescription: 'Entropie maximale avec symboles',
+		numericDescription: 'Chiffres 0-9 uniquement, nécessite une longueur plus importante',
 		failedToGenerateHash: 'Échec de la génération du hash'
 	},
 	password: {
@@ -126,7 +128,8 @@ export const fr: I18nTexts = {
 	},
 	mnemonic: {
 		title: 'Générateur de Phrases Mnémotechniques BIP39',
-		description: 'Générez des phrases mnémotechniques BIP39 pour les portefeuilles de cryptomonnaies',
+		description:
+			'Générez des phrases mnémotechniques BIP39 pour les portefeuilles de cryptomonnaies',
 		generateMnemonic: 'Générer Phrase Mnémotechnique',
 		language: 'Langue',
 		wordCount: 'Nombre de Mots',
@@ -162,20 +165,21 @@ export const fr: I18nTexts = {
 	},
 	auth: {
 		loginRequired: 'Authentification Requise',
-		loginDescription: 'Entrez votre email pour recevoir un lien magique d\'accès.',
+		loginDescription: "Entrez votre email pour recevoir un lien magique d'accès.",
 		emailAddress: 'Adresse Email',
 		emailPlaceholder: 'votre@email.com',
-		emailRequired: 'L\'email est requis',
+		emailRequired: "L'email est requis",
 		emailInvalid: 'Veuillez entrer un email valide',
 		sendMagicLink: 'Envoyer Lien Magique',
 		requestFailed: 'Échec de la demande de lien magique',
 		confirmEmail: 'Confirmer Email',
 		confirmEmailDescription: 'Est-ce correct?',
 		magicLinkSent: 'Lien Envoyé!',
-		magicLinkInstructions: 'Vérifiez votre email et cliquez sur le lien magique pour vous authentifier.',
+		magicLinkInstructions:
+			'Vérifiez votre email et cliquez sur le lien magique pour vous authentifier.',
 		developmentMode: 'Mode Développement:',
 		testMagicLink: 'Cliquer ici pour tester le lien magique',
-		authenticationFailed: 'Échec de l\'authentification',
+		authenticationFailed: "Échec de l'authentification",
 		tokenExpired: 'Votre session a expiré. Veuillez vous connecter à nouveau.',
 		accessDenied: 'Accès refusé. Authentification requise.'
 	}
