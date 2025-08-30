@@ -4,11 +4,11 @@
 //! with proper expiration times and security claims.
 
 use chrono::{DateTime, Duration, Utc};
-use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
-use serde::{Deserialize, Serialize};
-use sha3::{Sha3_256, Digest};
-use pbkdf2::pbkdf2;
 use hmac::{Hmac, Mac};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use pbkdf2::pbkdf2;
+use serde::{Deserialize, Serialize};
+use sha3::{Digest, Sha3_256};
 
 /// JWT Claims structure for access tokens
 #[derive(Debug, Serialize, Deserialize)]
@@ -45,10 +45,10 @@ impl JwtUtils {
     /// PBKDF2 iteration count for current security standards (2024)
     /// Based on OWASP recommendations for password-equivalent security
     const PBKDF2_ITERATIONS: u32 = 600_000;
-    
+
     /// Salt for PBKDF2 derivation (should be from environment in production)
     const PBKDF2_SALT: &'static [u8] = b"hashrand-user-derivation-salt-v1";
-    
+
     /// HMAC key for magic link integrity (should be from environment in production)
     const MAGIC_LINK_HMAC_KEY: &'static [u8] = b"hashrand-magic-link-hmac-key-v1";
 
@@ -68,12 +68,17 @@ impl JwtUtils {
         let mut hasher = Sha3_256::new();
         hasher.update(email.to_lowercase().trim().as_bytes());
         let email_hash = hasher.finalize();
-        
+
         // Step 2: PBKDF2-SHA3-256 with high iteration count
         let mut user_id = [0u8; 32];
-        pbkdf2::<Hmac<Sha3_256>>(&email_hash, Self::PBKDF2_SALT, Self::PBKDF2_ITERATIONS, &mut user_id)
-            .expect("PBKDF2 derivation should not fail");
-        
+        pbkdf2::<Hmac<Sha3_256>>(
+            &email_hash,
+            Self::PBKDF2_SALT,
+            Self::PBKDF2_ITERATIONS,
+            &mut user_id,
+        )
+        .expect("PBKDF2 derivation should not fail");
+
         user_id
     }
 
@@ -116,11 +121,11 @@ impl JwtUtils {
     /// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
     pub fn create_access_token(email: &str) -> Result<(String, DateTime<Utc>), String> {
         let now = Utc::now();
-        let expires_at = now + Duration::seconds(20);
+        let expires_at = now + Duration::minutes(3); // 3 minutes
 
         // Derive user_id from email for JWT subject
         let username = Self::email_to_username(email);
-        
+
         let claims = AccessTokenClaims {
             sub: username,
             exp: expires_at.timestamp(),
@@ -150,7 +155,7 @@ impl JwtUtils {
         session_id: i64,
     ) -> Result<(String, DateTime<Utc>), String> {
         let now = Utc::now();
-        let expires_at = now + Duration::minutes(2);
+        let expires_at = now + Duration::minutes(15); // 15 minutes
 
         // Derive user_id from email for JWT subject
         let username = Self::email_to_username(email);
@@ -219,7 +224,7 @@ impl JwtUtils {
     }
 
     /// Generate secure magic token with integrity protection
-    /// 
+    ///
     /// Format: user_id (32 bytes) + timestamp (8 bytes) + HMAC-SHA3-256 (32 bytes) = 72 bytes
     /// Encoded in Base58 for email transmission (~98 characters)
     ///
@@ -232,28 +237,28 @@ impl JwtUtils {
     pub fn generate_magic_token(email: &str, expires_at: DateTime<Utc>) -> String {
         // Derive deterministic user_id from email
         let user_id = Self::derive_user_id(email);
-        
+
         // Timestamp as 8 bytes (big-endian u64)
         let timestamp = expires_at.timestamp() as u64;
         let timestamp_bytes = timestamp.to_be_bytes();
-        
+
         // Prepare data for HMAC: user_id + timestamp
         let mut data = Vec::with_capacity(40);
         data.extend_from_slice(&user_id);
         data.extend_from_slice(&timestamp_bytes);
-        
+
         // Generate HMAC-SHA3-256 for integrity
         let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
             .expect("HMAC key should be valid");
         mac.update(&data);
         let hmac_result = mac.finalize().into_bytes();
-        
+
         // Final token: user_id + timestamp + hmac (32 + 8 + 32 = 72 bytes)
         let mut token = Vec::with_capacity(72);
         token.extend_from_slice(&user_id);
         token.extend_from_slice(&timestamp_bytes);
         token.extend_from_slice(&hmac_result);
-        
+
         bs58::encode(&token).into_string()
     }
 
@@ -269,40 +274,41 @@ impl JwtUtils {
         let token_bytes = bs58::decode(magic_token)
             .into_vec()
             .map_err(|_| "Invalid Base58 encoding")?;
-            
+
         // Verify token length (32 + 8 + 32 = 72 bytes)
         if token_bytes.len() != 72 {
             return Err("Invalid token length".to_string());
         }
-        
+
         // Extract components
         let user_id_bytes = &token_bytes[0..32];
         let timestamp_bytes = &token_bytes[32..40];
         let provided_hmac = &token_bytes[40..72];
-        
+
         // Verify HMAC integrity
         let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
             .expect("HMAC key should be valid");
         mac.update(user_id_bytes);
         mac.update(timestamp_bytes);
-        
+
         match mac.verify_slice(provided_hmac) {
             Ok(_) => {
                 // Extract timestamp
                 let timestamp = u64::from_be_bytes(
-                    timestamp_bytes.try_into()
-                        .map_err(|_| "Invalid timestamp format")?
+                    timestamp_bytes
+                        .try_into()
+                        .map_err(|_| "Invalid timestamp format")?,
                 );
-                
+
                 let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
                     .ok_or_else(|| "Invalid timestamp value".to_string())?;
-                
+
                 // Convert user_id bytes to array
                 let mut user_id = [0u8; 32];
                 user_id.copy_from_slice(user_id_bytes);
-                
+
                 Ok((user_id, expires_at))
-            },
+            }
             Err(_) => Err("Token integrity verification failed".to_string()),
         }
     }
@@ -312,15 +318,19 @@ impl JwtUtils {
     /// # Arguments
     /// * `host_url` - Base URL from request (e.g., "http://localhost:5173")
     /// * `magic_token` - Magic token to include in URL
+    /// * `next` - Optional Base58-encoded parameters for post-auth redirect
     ///
     /// # Returns
-    /// * `String` - Complete magic link URL 
-    pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
-        format!(
-            "{}/?magiclink={}",
-            host_url.trim_end_matches('/'),
-            magic_token
-        )
+    /// * `String` - Complete magic link URL
+    pub fn create_magic_link_url(host_url: &str, magic_token: &str, next: Option<&str>) -> String {
+        let base_url = host_url.trim_end_matches('/');
+        match next {
+            Some(next_param) => format!(
+                "{}/?magiclink={}&next={}",
+                base_url, magic_token, next_param
+            ),
+            None => format!("{}/?magiclink={}", base_url, magic_token),
+        }
     }
 
     /// Extract host URL from request for magic link generation

@@ -18,6 +18,8 @@
 	} from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
+	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import { flashMessagesStore } from '$lib/stores/flashMessages';
 
 	let copySuccess = false;
 	let copyTimeout: ReturnType<typeof setTimeout>;
@@ -44,6 +46,7 @@
 	onMount(async () => {
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
 		if (searchParams.size > 0) {
+			flashMessagesStore.addMessage('📄 Página /result cargada con parámetros URL, generando...');
 			await generateFromParams();
 			return;
 		}
@@ -59,6 +62,14 @@
 	async function generateFromParams() {
 		const endpoint = searchParams.get('endpoint');
 		if (!endpoint) {
+			goto('/');
+			return;
+		}
+
+		// Verify auth is available (should be guaranteed by +layout.svelte)
+		const authData = localStorage.getItem('auth_user');
+		if (!authData) {
+			flashMessagesStore.addMessage('❌ Error: no hay autenticación disponible');
 			goto('/');
 			return;
 		}
@@ -166,6 +177,8 @@
 			const otp = response.otp;
 			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
+			flashMessagesStore.addMessage(`✅ Generación exitosa: endpoint=${endpoint}`);
+			
 			// Set the result state
 			setResult({
 				value,
@@ -176,7 +189,9 @@
 				timestamp: responseTimestamp
 			});
 		} catch (error) {
-			setError(error instanceof Error ? error.message : $_('common.failedToGenerate'));
+			const errorMsg = error instanceof Error ? error.message : $_('common.failedToGenerate');
+			flashMessagesStore.addMessage(`❌ Error en generación: ${errorMsg}`);
+			setError(errorMsg);
 		} finally {
 			setLoading(false);
 		}
@@ -534,6 +549,9 @@
 					</h1>
 				</div>
 			</div>
+
+			<!-- Flash Messages -->
+			<FlashMessages />
 
 			<!-- Result Display -->
 			<div class="max-w-4xl mx-auto">

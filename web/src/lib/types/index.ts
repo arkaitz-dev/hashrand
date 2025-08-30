@@ -97,13 +97,16 @@ export interface I18nTexts {
 
 // Authentication types
 export interface AuthUser {
-	email: string;
+	email: string; // For backward compatibility if needed
+	username: string; // Base58 user_id
 	isAuthenticated: boolean;
 	expiresAt?: Date;
 }
 
 export interface LoginRequest {
 	email: string;
+	ui_host?: string; // Frontend URL for magic link generation
+	next?: string; // Base58-encoded parameters to include in magic link URL
 }
 
 export interface LoginResponse {

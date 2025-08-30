@@ -3,9 +3,9 @@
 //! Provides middleware functions to validate Bearer tokens and protect
 //! endpoints that require authentication.
 
-use spin_sdk::http::{Request, Response};
-use serde::Serialize;
 use crate::utils::JwtUtils;
+use serde::Serialize;
+use spin_sdk::http::{Request, Response};
 
 /// Error response structure for authentication failures
 #[derive(Serialize)]
@@ -60,25 +60,21 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
 
     // Validate JWT token
     match JwtUtils::validate_access_token(token) {
-        Ok(claims) => {
-            Ok(AuthContext {
-                username: claims.sub,
-                expires_at: claims.exp,
-            })
-        }
+        Ok(claims) => Ok(AuthContext {
+            username: claims.sub,
+            expires_at: claims.exp,
+        }),
         Err(error_msg) => {
             // Check if token is expired for specific error message
-            let (error, expires_hint) = if error_msg.contains("expired") || error_msg.contains("exp") {
-                (
-                    "Access token has expired. Use refresh token to obtain a new access token",
-                    Some("20 seconds from issuance".to_string())
-                )
-            } else {
-                (
-                    "Invalid access token. Please authenticate again",
-                    None
-                )
-            };
+            let (error, expires_hint) =
+                if error_msg.contains("expired") || error_msg.contains("exp") {
+                    (
+                        "Access token has expired. Use refresh token to obtain a new access token",
+                        Some("20 seconds from issuance".to_string()),
+                    )
+                } else {
+                    ("Invalid access token. Please authenticate again", None)
+                };
 
             Err(create_auth_error_response(error, expires_hint))
         }
@@ -86,10 +82,7 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
 }
 
 /// Create standardized authentication error response
-fn create_auth_error_response(
-    error: &str,
-    expires_in: Option<String>,
-) -> Response {
+fn create_auth_error_response(error: &str, expires_in: Option<String>) -> Response {
     let response = AuthErrorResponse {
         error: error.to_string(),
         expires_in,
@@ -101,7 +94,7 @@ fn create_auth_error_response(
         .header("www-authenticate", "Bearer")
         .body(
             serde_json::to_string(&response)
-                .unwrap_or_else(|_| r#"{"error":"Authentication required"}"#.to_string())
+                .unwrap_or_else(|_| r#"{"error":"Authentication required"}"#.to_string()),
         )
         .build()
 }
@@ -118,7 +111,7 @@ pub fn requires_authentication(path: &str) -> bool {
         // Public endpoints (no authentication required)
         p if p.ends_with("/api/version") => false,
         p if p.starts_with("/api/login") => false,
-        
+
         // Protected endpoints (authentication required)
         p if p.ends_with("/api/custom") => true,
         p if p.ends_with("/api/generate") => true,
@@ -127,7 +120,7 @@ pub fn requires_authentication(path: &str) -> bool {
         p if p.ends_with("/api/mnemonic") => true,
         p if p.ends_with("/api/from-seed") => true,
         p if p.starts_with("/api/users") => true,
-        
+
         // Default: require authentication for unknown endpoints
         _ => true,
     }

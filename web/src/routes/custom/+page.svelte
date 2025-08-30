@@ -13,6 +13,7 @@
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
+	import { handleEmailConfirmation } from '$lib/utils/auth';
 
 	// Default values
 	function getDefaultParams(): GenerateParams {
@@ -153,37 +154,21 @@
 	async function handleEmailConfirmed(
 		event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
 	) {
-		const { email, redirectUrl } = event.detail;
+		const { email } = event.detail;
 
-		try {
-			// Obtener el host actual donde se ejecuta la UI
-			const currentHost = window.location.origin;
-
-			const requestBody = {
-				email: email,
-				ui_host: currentHost
-			};
-
-			const response = await fetch('/api/login/', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(requestBody)
-			});
-
-			if (response.ok) {
-				// Magic link enviado correctamente, redirigir con el parámetro next
+		await handleEmailConfirmation(
+			email,
+			nextObject,
+			() => {
+				// Success callback
 				emailDialogRef?.resetSubmitting();
-				goto(redirectUrl);
-			} else {
-				// En caso de error, mostrar mensaje de error
-				emailDialogRef?.setError($_('common.sendError'));
+				showEmailDialog = false;
+			},
+			(errorKey: string) => {
+				// Error callback
+				emailDialogRef?.setError($_(errorKey));
 			}
-		} catch (error) {
-			console.error('Error sending magic link:', error);
-			emailDialogRef?.setError($_('common.connectionError'));
-		}
+		);
 	}
 
 	// Initialize params based on navigation source

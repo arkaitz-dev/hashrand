@@ -11,6 +11,8 @@
 	import { initializeSpriteLoader } from '$lib/stores/spriteLoader';
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
+	import { base58 } from '@scure/base';
+	import { flashMessagesStore } from '$lib/stores/flashMessages';
 
 	let { children } = $props();
 
@@ -22,7 +24,8 @@
 			// Check for magic link parameter
 			const magicToken = $page.url.searchParams.get('magiclink');
 			if (magicToken) {
-				handleMagicLinkValidation(magicToken, $page);
+				const nextParam = $page.url.searchParams.get('next');
+				handleMagicLinkValidation(magicToken, nextParam, $page);
 			}
 		});
 
@@ -37,41 +40,42 @@
 	 */
 	async function handleMagicLinkValidation(
 		magicToken: string,
+		nextParam: string | null,
 		currentPage: { url: globalThis.URL }
 	) {
 		try {
-			// Extract email from URL fragment or localStorage if available
-			const email = extractEmailFromContext();
+			// Show step 1: Magic link detected
+			flashMessagesStore.addMessage('🔗 Magic link detectado, validando...');
+			
+			// Validate the magic link (it's self-contained, no email needed)
+			const loginResponse = await authStore.validateMagicLink(magicToken);
+			
+			// Show step 2: Authentication successful
+			flashMessagesStore.addMessage(`✅ Autenticado: token recibido (expires: ${loginResponse.expires_in}s)`);
+			flashMessagesStore.addMessage(`👤 Usuario: ${loginResponse.username}`);
 
-			if (!email) {
-				console.warn('No email context found for magic link validation');
-				// Redirect to home and show login dialog
-				goto('/');
-				return;
-			}
-
-			console.log('Validating magic link for:', email);
-
-			// Validate the magic link
-			await authStore.validateMagicLink(magicToken, email);
-
-			console.log('Authentication successful!');
 
 			// Remove magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
+			newUrl.searchParams.delete('next');
 
 			// Update URL without page reload
 			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
 
-			// Show success message or redirect to original page
-			// Could add a toast notification here
+			// Handle next parameter if present  
+			if (nextParam) {
+				flashMessagesStore.addMessage('🔄 Parámetro next detectado, redirigiendo...');
+				await handlePostAuthRedirect(nextParam);
+			} else {
+				flashMessagesStore.addMessage('✅ Autenticación completada');
+			}
 		} catch (error) {
-			console.error('Magic link validation failed:', error);
 
 			// Remove failed magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
+			newUrl.searchParams.delete('next');
 			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
 
 			// Redirect to home page
@@ -80,21 +84,52 @@
 	}
 
 	/**
-	 * Extract email from available context (localStorage, etc.)
+	 * Handle post-authentication redirect with next parameter
 	 */
-	function extractEmailFromContext(): string | null {
-		// Try to get email from localStorage (might be stored during login request)
-		const storedEmail = localStorage.getItem('pending_auth_email');
-		if (storedEmail) {
-			// Clean up after use
-			localStorage.removeItem('pending_auth_email');
-			return storedEmail;
-		}
+	async function handlePostAuthRedirect(nextBase58: string): Promise<void> {
+		try {
+			// Decode Base58 next parameter
+			flashMessagesStore.addMessage('📦 Decodificando parámetros next (Base58)...');
+			const bytes = base58.decode(nextBase58);
+			const decoder = new globalThis.TextDecoder();
+			const jsonString = decoder.decode(bytes);
+			const nextObject = JSON.parse(jsonString);
+			
+			flashMessagesStore.addMessage(`🎯 Endpoint: ${nextObject.endpoint}, params: ${Object.keys(nextObject).length} items`);
 
-		// Could also try to extract from URL fragment or other sources
-		// For now, return null if no email context is available
-		return null;
+			// Build result URL with parameters from nextObject
+			const resultUrl = new globalThis.URL('/result', window.location.origin);
+
+			// Add parameters to result URL
+			if (nextObject.endpoint) resultUrl.searchParams.set('endpoint', nextObject.endpoint);
+			if (nextObject.length) resultUrl.searchParams.set('length', nextObject.length.toString());
+			if (nextObject.alphabet) resultUrl.searchParams.set('alphabet', nextObject.alphabet);
+			if (nextObject.prefix) resultUrl.searchParams.set('prefix', nextObject.prefix);
+			if (nextObject.suffix) resultUrl.searchParams.set('suffix', nextObject.suffix);
+			if (nextObject.seed) resultUrl.searchParams.set('seed', nextObject.seed);
+			if (nextObject.raw !== undefined)
+				resultUrl.searchParams.set('raw', nextObject.raw.toString());
+
+			const finalUrl = `/result?${resultUrl.searchParams.toString()}`;
+			flashMessagesStore.addMessage(`🚀 Redirigiendo a: ${finalUrl}`);
+			
+			// Verify auth is saved in localStorage before redirecting
+			const authData = localStorage.getItem('auth_user');
+			if (!authData) {
+				flashMessagesStore.addMessage('❌ Error: autenticación no guardada en localStorage');
+				await goto('/');
+				return;
+			}
+			
+			// Navigate to result page with parameters
+			await goto(finalUrl);
+		} catch (error) {
+			flashMessagesStore.addMessage(`❌ Error decodificando next: ${error}`);
+			// Fallback to home page on error
+			await goto('/');
+		}
 	}
+
 
 	// Apply RTL direction to document
 	$effect(() => {

@@ -83,6 +83,5 @@ pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> 
         &[],
     )?;
 
-
     Ok(())
 }

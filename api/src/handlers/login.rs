@@ -22,6 +22,8 @@ struct MagicLinkRequest {
     email: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     ui_host: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    next: Option<String>, // Base58-encoded parameters for post-auth redirect
 }
 
 /// Response for magic link generation (development)
@@ -31,7 +33,6 @@ struct MagicLinkResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     dev_magic_link: Option<String>,
 }
-
 
 /// Error response structure
 #[derive(Serialize)]
@@ -153,7 +154,11 @@ fn handle_magic_link_generation(
                 .unwrap_or(&fallback_host);
 
             println!("DEBUG: Final chosen host_url = {}", host_url);
-            let magic_link = JwtUtils::create_magic_link_url(host_url, &magic_token);
+            let magic_link = JwtUtils::create_magic_link_url(
+                host_url,
+                &magic_token,
+                magic_request.next.as_deref(),
+            );
             println!("DEBUG: Generated magic_link = {}", magic_link);
 
             // In development, log the magic link instead of sending email
@@ -247,12 +252,19 @@ fn handle_magic_link_validation(
 
     // Convert user_id to Base58 username
     let username = JwtUtils::user_id_to_username(&user_id_bytes);
-    
+
     // Search for auth session by user_id and timestamp
     let timestamp = magic_expires_at.timestamp() as u64;
-    println!("Searching for session: user_id={}, timestamp={}", username, timestamp);
-    
-    match AuthOperations::get_session_by_user_id_and_timestamp(env.clone(), &user_id_bytes, timestamp) {
+    println!(
+        "Searching for session: user_id={}, timestamp={}",
+        username, timestamp
+    );
+
+    match AuthOperations::get_session_by_user_id_and_timestamp(
+        env.clone(),
+        &user_id_bytes,
+        timestamp,
+    ) {
         Ok(Some((access_token, refresh_token))) => {
             println!("User {} authenticated successfully", username);
 
@@ -263,7 +275,7 @@ fn handle_magic_link_validation(
             let auth_response = serde_json::json!({
                 "access_token": access_token,
                 "token_type": "Bearer",
-                "expires_in": 20, // 20 seconds for testing
+                "expires_in": 180, // 3 minutes
                 "username": username
             });
 
@@ -271,11 +283,15 @@ fn handle_magic_link_validation(
             let cookie_value = format!(
                 "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
                 refresh_token,
-                2 * 60 // 2 minutes in seconds
+                15 * 60 // 15 minutes in seconds
             );
 
             // Delete used auth session
-            let _ = AuthOperations::delete_session_by_user_id_and_timestamp(env, &user_id_bytes, timestamp);
+            let _ = AuthOperations::delete_session_by_user_id_and_timestamp(
+                env,
+                &user_id_bytes,
+                timestamp,
+            );
 
             Ok(Response::builder()
                 .status(200)

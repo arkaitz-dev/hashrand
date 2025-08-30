@@ -98,13 +98,21 @@ export const authStore = {
 	 * Request magic link for email authentication
 	 *
 	 * @param email - User email address
+	 * @param next - Optional Base58-encoded parameters to include in magic link URL
 	 * @returns Promise<MagicLinkResponse>
 	 */
-	async requestMagicLink(email: string): Promise<MagicLinkResponse> {
+	async requestMagicLink(email: string, next?: string): Promise<MagicLinkResponse> {
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
-			const response = await api.requestMagicLink({ email });
+			// Capture current UI host for magic link generation
+			const ui_host = typeof window !== 'undefined' ? window.location.origin : undefined;
+
+			const response = await api.requestMagicLink({
+				email,
+				ui_host,
+				next
+			});
 
 			update((state) => ({ ...state, isLoading: false }));
 			return response;
@@ -123,10 +131,9 @@ export const authStore = {
 	 * Validate magic link and complete authentication
 	 *
 	 * @param magicToken - Magic link token from URL parameter
-	 * @param email - User email address (for user state)
 	 * @returns Promise<LoginResponse>
 	 */
-	async validateMagicLink(magicToken: string, email: string): Promise<LoginResponse> {
+	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
@@ -137,7 +144,8 @@ export const authStore = {
 			expiresAt.setSeconds(expiresAt.getSeconds() + loginResponse.expires_in);
 
 			const user: AuthUser = {
-				email,
+				email: '', // Not needed for Zero Knowledge auth
+				username: loginResponse.username, // Base58 user_id
 				isAuthenticated: true,
 				expiresAt
 			};

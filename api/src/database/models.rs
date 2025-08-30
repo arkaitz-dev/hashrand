@@ -107,7 +107,7 @@ impl AuthSession {
         // Import JwtUtils here to avoid circular dependencies
         use crate::utils::JwtUtils;
         let user_id = JwtUtils::email_to_username(&email);
-        
+
         Self {
             id: None,
             user_id,

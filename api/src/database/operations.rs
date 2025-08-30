@@ -269,7 +269,11 @@ impl AuthOperations {
         timestamp: u64,
     ) -> Result<Option<(String, String)>, SqliteError> {
         let connection = get_database_connection(env)?;
-        println!("Database: Searching for session: user_id bytes len={}, timestamp={}", user_id.len(), timestamp);
+        println!(
+            "Database: Searching for session: user_id bytes len={}, timestamp={}",
+            user_id.len(),
+            timestamp
+        );
 
         let result = connection.execute(
             "SELECT access_token, refresh_token FROM auth_sessions WHERE user_id = ? AND expires = ?",
@@ -315,7 +319,10 @@ impl AuthOperations {
             &[Value::Blob(user_id.to_vec())],
         ) {
             Ok(_) => {
-                println!("Database: Ensured user exists: {}", bs58::encode(user_id).into_string());
+                println!(
+                    "Database: Ensured user exists: {}",
+                    bs58::encode(user_id).into_string()
+                );
                 Ok(())
             }
             Err(e) => {
@@ -343,7 +350,10 @@ impl AuthOperations {
 
         let _result = connection.execute(
             "DELETE FROM auth_sessions WHERE user_id = ? AND expires = ?",
-            &[Value::Blob(user_id.to_vec()), Value::Integer(timestamp as i64)],
+            &[
+                Value::Blob(user_id.to_vec()),
+                Value::Integer(timestamp as i64),
+            ],
         )?;
 
         println!("Database: Deleted auth session rows");

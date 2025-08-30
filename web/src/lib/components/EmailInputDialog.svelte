@@ -92,12 +92,8 @@
 	function handleConfirmAndSend() {
 		isSubmitting = true;
 
-		// Build the redirect URL with next parameter if provided
-		let redirectUrl = '/';
-		const nextBase58 = encodeNextToBase58(next);
-		if (nextBase58) {
-			redirectUrl += `?next=${nextBase58}`;
-		}
+		// No longer including next in redirectUrl since it will be sent via POST
+		const redirectUrl = '/';
 
 		dispatch('emailConfirmed', { email, redirectUrl });
 	}
