@@ -63,7 +63,9 @@ export const en: I18nTexts = {
 		keepSameSeed: 'Keep the same seed',
 		generateNewSeed: 'Generate new seed',
 		seed: 'Seed',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Your session has expired.',
+		close: 'Close'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -176,10 +178,34 @@ export const en: I18nTexts = {
 		confirmEmailDescription: 'Is this correct?',
 		magicLinkSent: 'Link Sent!',
 		magicLinkInstructions: 'Check your email and click the magic link to authenticate.',
+		magicLinkSentFlash: 'Magic link sent. Check your email and click the link to continue.',
 		developmentMode: 'Development Mode:',
 		testMagicLink: 'Click here to test magic link',
 		authenticationFailed: 'Authentication failed',
 		tokenExpired: 'Your session has expired. Please log in again.',
-		accessDenied: 'Access denied. Authentication required.'
+		accessDenied: 'Access denied. Authentication required.',
+		userMenu: 'User menu',
+		login: 'Log in',
+		authenticatedAs: 'Authenticated as:',
+		logout: 'Log out',
+		logoutConfirmTitle: 'Log Out',
+		logoutConfirmMessage: 'Are you sure you want to log out? You will need to authenticate again to access protected features.',
+		loggedOut: 'Logged out successfully'
+	},
+	logout: {
+		title: 'Log Out',
+		description: 'Are you sure you want to log out?',
+		confirm: 'Log Out',
+		cancel: 'Cancel',
+		info: 'You will lose access to authenticated features until you log in again.',
+		tokenExpired: 'Your session has expired. Please log in again.',
+		accessDenied: 'Access denied. Authentication required.',
+		userMenu: 'User menu',
+		login: 'Log in',
+		authenticatedAs: 'Authenticated as:',
+		logout: 'Log out',
+		confirmLogout: 'Log out?',
+		logoutDescription:
+			'Are you sure you want to log out? You will need to authenticate again to access protected features.'
 	}
 };

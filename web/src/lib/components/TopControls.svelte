@@ -1,12 +1,54 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
+	import AuthStatusButton from './AuthStatusButton.svelte';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import { languages, findLanguageByCode } from '$lib/languageConfig';
+	import { authStore } from '$lib/stores/auth';
 
 	let showDropdown = $state(false);
 	let isTransitioning = $state(false);
+	let hasActiveSession = $state(false);
+
+	// Check if user has an active session (user_id + access_token)
+	function checkActiveSession() {
+		if (typeof window === 'undefined') return false;
+		
+		const authUser = localStorage.getItem('auth_user');
+		const accessToken = localStorage.getItem('access_token');
+		
+		// Both must exist
+		if (!authUser || !accessToken) return false;
+		
+		try {
+			// Validate auth_user structure
+			const user = JSON.parse(authUser);
+			if (!user.user_id) return false;
+			
+			// Check if token is not expired
+			if (user.expiresAt) {
+				const expiresAt = new Date(user.expiresAt);
+				if (expiresAt <= new Date()) return false;
+			}
+			
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	// Update session status reactively
+	$effect(() => {
+		hasActiveSession = checkActiveSession();
+		
+		// Set up periodic check for session expiry
+		const interval = setInterval(() => {
+			hasActiveSession = checkActiveSession();
+		}, 5000); // Check every 5 seconds
+		
+		return () => clearInterval(interval);
+	});
 
 	// Initialize selected language based on current language store
 	let selectedLanguage = $state(findLanguageByCode($currentLanguage));
@@ -113,4 +155,9 @@
 			{/if}
 		</div>
 	</button>
+
+	<!-- Auth Status Button (only when authenticated) -->
+	{#if hasActiveSession}
+		<AuthStatusButton />
+	{/if}
 </div>

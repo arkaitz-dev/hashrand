@@ -98,7 +98,7 @@ export interface I18nTexts {
 // Authentication types
 export interface AuthUser {
 	email: string; // For backward compatibility if needed
-	username: string; // Base58 user_id
+	user_id: string; // Base58 user_id
 	isAuthenticated: boolean;
 	expiresAt?: Date;
 }
@@ -113,11 +113,11 @@ export interface LoginResponse {
 	access_token: string;
 	token_type: string;
 	expires_in: number; // seconds
+	user_id: string; // Base58 user_id
 }
 
 export interface MagicLinkResponse {
-	message: string;
-	dev_magic_link?: string;
+	status: string;
 }
 
 export interface AuthError {

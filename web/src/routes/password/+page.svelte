@@ -8,7 +8,9 @@
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import AuthGuard from '$lib/components/AuthGuard.svelte';
-	import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
+	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
+	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import { base58 } from '@scure/base';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
@@ -56,17 +58,17 @@
 	// Reference to AuthGuard component
 	let authGuard: AuthGuard;
 
-	// Email dialog state
-	let showEmailDialog = false;
-	let emailDialogRef: EmailInputDialog;
+	// // Email dialog state
+	// let showEmailDialog = false;
+	// let emailDialogRef: EmailInputDialog;
 
-	// Create next parameter object with current form state
-	$: nextObject = {
-		endpoint: 'password',
-		length: params.length,
-		alphabet: params.alphabet,
-		...(urlProvidedSeed && { seed: urlProvidedSeed })
-	};
+	// // Create next parameter object with current form state
+	// $: nextObject = {
+	// 	endpoint: 'password',
+	// 	length: params.length,
+	// 	alphabet: params.alphabet,
+	// 	...(urlProvidedSeed && { seed: urlProvidedSeed })
+	// };
 
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -80,8 +82,17 @@
 		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
 
 		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de email
-			showEmailDialog = true;
+			// No autenticado - redirigir a página de login
+			const urlParams = new URLSearchParams();
+			urlParams.set('endpoint', 'password');
+			urlParams.set('length', (params.length ?? 21).toString());
+			urlParams.set('alphabet', params.alphabet ?? 'full-with-symbols');
+			if (urlProvidedSeed) urlParams.set('seed', urlProvidedSeed);
+			
+			const jsonString = JSON.stringify(Object.fromEntries(urlParams));
+			const bytes = new TextEncoder().encode(jsonString);
+			const nextParam = base58.encode(bytes);
+			goto(`/login?next=${encodeURIComponent(nextParam)}`);
 			return;
 		}
 
@@ -106,51 +117,51 @@
 		goto(`/result?${urlParams.toString()}`);
 	}
 
-	// Email dialog handlers
-	function handleEmailDialogClose() {
-		showEmailDialog = false;
-	}
+	// // Email dialog handlers
+	// function handleEmailDialogClose() {
+	// 	showEmailDialog = false;
+	// }
 
-	function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
-		// Email entered and moving to confirmation step
-		console.log('Email entered:', event.detail.email);
-	}
+	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
+	// 	// Email entered and moving to confirmation step
+	// 	console.log('Email entered:', event.detail.email);
+	// }
 
-	async function handleEmailConfirmed(
-		event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
-	) {
-		const { email, redirectUrl } = event.detail;
+	// async function handleEmailConfirmed(
+	// 	event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
+	// ) {
+	// 	const { email, redirectUrl } = event.detail;
 
-		try {
-			// Obtener el host actual donde se ejecuta la UI
-			const currentHost = window.location.origin;
+	// 	try {
+	// 		// Obtener el host actual donde se ejecuta la UI
+	// 		const currentHost = window.location.origin;
 
-			const requestBody = {
-				email: email,
-				ui_host: currentHost
-			};
+	// 		const requestBody = {
+	// 			email: email,
+	// 			ui_host: currentHost
+	// 		};
 
-			const response = await fetch('/api/login/', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(requestBody)
-			});
+	// 		const response = await fetch('/api/login/', {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/json'
+	// 			},
+	// 			body: JSON.stringify(requestBody)
+	// 		});
 
-			if (response.ok) {
-				// Magic link enviado correctamente, redirigir con el parámetro next
-				emailDialogRef?.resetSubmitting();
-				goto(redirectUrl);
-			} else {
-				// En caso de error, mostrar mensaje de error
-				emailDialogRef?.setError($_('common.sendError'));
-			}
-		} catch (error) {
-			console.error('Error sending magic link:', error);
-			emailDialogRef?.setError($_('common.connectionError'));
-		}
-	}
+	// 		if (response.ok) {
+	// 			// Magic link enviado correctamente, redirigir con el parámetro next
+	// 			emailDialogRef?.resetSubmitting();
+	// 			goto(redirectUrl);
+	// 		} else {
+	// 			// En caso de error, mostrar mensaje de error
+	// 			emailDialogRef?.setError($_('common.sendError'));
+	// 		}
+	// 	} catch (error) {
+	// 		console.error('Error sending magic link:', error);
+	// 		emailDialogRef?.setError($_('common.connectionError'));
+	// 	}
+	// }
 
 	// Update length when alphabet changes with smooth adjustment
 	function handleAlphabetChange() {
@@ -221,6 +232,9 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Flash Messages -->
+		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
 		<AuthGuard bind:this={authGuard}>
@@ -338,8 +352,8 @@
 	</div>
 </div>
 
-<!-- Email Input Dialog -->
-<EmailInputDialog
+<!-- Email Input Dialog - Removed, now redirecting to /login page -->
+<!-- <EmailInputDialog
 	bind:this={emailDialogRef}
 	bind:show={showEmailDialog}
 	next={nextObject}
@@ -356,4 +370,4 @@
 	on:close={handleEmailDialogClose}
 	on:emailSubmitted={handleEmailSubmitted}
 	on:emailConfirmed={handleEmailConfirmed}
-/>
+/> -->

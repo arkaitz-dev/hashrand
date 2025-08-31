@@ -161,31 +161,42 @@ fn handle_magic_link_generation(
             );
             println!("DEBUG: Generated magic_link = {}", magic_link);
 
-            // In development, log the magic link instead of sending email
-            println!("=== MAGIC LINK AUTHENTICATION (DEVELOPMENT MODE) ===");
-            println!("Email: {}", magic_request.email);
-            println!("UI Host: {:?}", magic_request.ui_host);
-            println!("Final Host URL: {}", host_url);
-            println!("Magic Link: {}", magic_link);
-            println!(
-                "Expires: {} UTC",
-                magic_expires_at.format("%Y-%m-%d %H:%M:%S")
-            );
-            println!("====================================================");
+            // In development, simulate email content instead of sending actual email
+            println!("\n🔗 === SIMULATED EMAIL (DEVELOPMENT MODE) ===");
+            println!("📧 TO: {}", magic_request.email);
+            println!("📬 FROM: HashRand Spin <noreply@hashrand.example>");
+            println!("📝 SUBJECT: Your Magic Link for HashRand Spin");
+            println!("📄 EMAIL BODY:");
+            println!("──────────────────────────────────────────────────");
+            println!("Hi there!");
+            println!();
+            println!("You requested access to HashRand Spin. Click the link below to sign in:");
+            println!();
+            println!("🔗 {}", magic_link);
+            println!();
+            println!("This link will expire at: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
+            println!();
+            println!("If you didn't request this, you can safely ignore this email.");
+            println!();
+            println!("Best regards,");
+            println!("The HashRand Spin Team");
+            println!("──────────────────────────────────────────────────");
+            println!("🔧 DEVELOPMENT INFO:");
+            println!("   • UI Host: {:?}", magic_request.ui_host);
+            println!("   • Final Host URL: {}", host_url);
+            println!("   • Token expires: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
+            println!("═══════════════════════════════════════════════════\n");
 
             // Clean up expired sessions
             let _ = AuthOperations::cleanup_expired_sessions(env);
 
-            let response = MagicLinkResponse {
-                message: "Magic link generated successfully. Check development logs for the link."
-                    .to_string(),
-                dev_magic_link: Some(magic_link),
-            };
-
             Ok(Response::builder()
                 .status(200)
                 .header("content-type", "application/json")
-                .body(serde_json::to_string(&response)?)
+                .header("access-control-allow-origin", "*")
+                .header("access-control-allow-methods", "POST, GET, OPTIONS")
+                .header("access-control-allow-headers", "Content-Type")
+                .body("{\"status\":\"OK\"}")
                 .build())
         }
         Err(e) => {
@@ -271,12 +282,12 @@ fn handle_magic_link_validation(
             // Ensure user exists in users table
             let _ = AuthOperations::ensure_user_exists(env.clone(), &user_id_bytes);
 
-            // Create response with access token, username, and secure refresh token cookie
+            // Create response with access token, user_id, and secure refresh token cookie
             let auth_response = serde_json::json!({
                 "access_token": access_token,
                 "token_type": "Bearer",
                 "expires_in": 180, // 3 minutes
-                "username": username
+                "user_id": username
             });
 
             // Set refresh token as HttpOnly, Secure, SameSite cookie

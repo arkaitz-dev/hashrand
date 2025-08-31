@@ -20,26 +20,28 @@ const API_BASE = '/api';
 // Helper function to get authentication headers
 async function getAuthHeaders(): Promise<Record<string, string>> {
 	const authStore = localStorage.getItem('auth_user');
-	if (!authStore) {
+	const accessToken = localStorage.getItem('access_token');
+
+	if (!authStore || !accessToken) {
 		return {};
 	}
 
 	try {
 		const user = JSON.parse(authStore);
-		if (!user.accessToken) {
-			return {};
-		}
 
 		// Check if token is expired
-		const expiresAt = new Date(user.expiresAt);
-		if (expiresAt <= new Date()) {
-			// Token expired, clear storage and return empty headers
-			localStorage.removeItem('auth_user');
-			return {};
+		if (user.expiresAt) {
+			const expiresAt = new Date(user.expiresAt);
+			if (expiresAt <= new Date()) {
+				// Token expired, clear storage and return empty headers
+				localStorage.removeItem('auth_user');
+				localStorage.removeItem('access_token');
+				return {};
+			}
 		}
 
 		return {
-			Authorization: `Bearer ${user.accessToken}`
+			Authorization: `Bearer ${accessToken}`
 		};
 	} catch {
 		return {};
@@ -242,6 +244,8 @@ export const api = {
 
 	// Authentication endpoints
 	async requestMagicLink(loginRequest: LoginRequest): Promise<MagicLinkResponse> {
+		console.log('[DEBUG] API: requestMagicLink called with:', loginRequest);
+		console.log('[DEBUG] API: About to fetch:', `${API_BASE}/login/`);
 		const response = await fetch(`${API_BASE}/login/`, {
 			method: 'POST',
 			headers: {
@@ -249,6 +253,7 @@ export const api = {
 			},
 			body: JSON.stringify(loginRequest)
 		});
+		console.log('[DEBUG] API: Got response:', response.status, response.statusText);
 
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;
@@ -271,10 +276,11 @@ export const api = {
 	},
 
 	async checkAuthStatus(): Promise<boolean> {
-		// For now, we'll check if we have an access token in memory
-		// In a full implementation, this would validate the token with the server
+		// Check if we have both user info and access token in localStorage
 		const authStore = localStorage.getItem('auth_user');
-		if (!authStore) return false;
+		const accessToken = localStorage.getItem('access_token');
+
+		if (!authStore || !accessToken) return false;
 
 		try {
 			const user = JSON.parse(authStore);
@@ -285,6 +291,12 @@ export const api = {
 		} catch {
 			return false;
 		}
+	},
+
+	async logout(): Promise<void> {
+		// No need to clear HttpOnly refresh token cookie from client-side
+		// It will expire automatically (15 minutes Max-Age) and cannot be accessed from JavaScript
+		// The main cleanup is done in authStore.logout() (localStorage clearing)
 	}
 };
 

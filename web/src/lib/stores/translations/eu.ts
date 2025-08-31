@@ -63,7 +63,9 @@ export const eu: I18nTexts = {
 		keepSameSeed: 'Hazi bera mantendu',
 		generateNewSeed: 'Hazi berria sortu',
 		seed: 'Hazia',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Zure saioa bukatu da.',
+		close: 'Itxi'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',
@@ -178,6 +180,17 @@ export const eu: I18nTexts = {
 		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
 		authenticationFailed: 'Autentifikazioak huts egin du',
 		tokenExpired: 'Zure saioa iraungi da. Mesedez, hasi saioa berriro.',
-		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.'
+		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.',
+		userMenu: 'Erabiltzaile menua',
+		login: 'Hasi saioa',
+		authenticatedAs: 'Autentifikatuta honela:',
+		logout: 'Amaitu saioa'
+	},
+	logout: {
+		title: 'Amaitu Saioa',
+		description: 'Ziur zaude saioa amaitu nahi duzula?',
+		confirm: 'Amaitu Saioa',
+		cancel: 'Utzi',
+		info: 'Autentifikatutako funtzioetarako sarbidea galduko duzu saioa berriro hasi arte.'
 	}
 };

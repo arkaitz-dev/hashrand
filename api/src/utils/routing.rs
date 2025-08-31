@@ -127,7 +127,7 @@ Available endpoints:
 - GET /api/login/?magiclink=TOKEN (Validate magic link and get JWT tokens)
 - GET /api/users?limit=10 (List users)
 - GET /api/users/:id (Get specific user)
-- POST /api/users (Create user - JSON: {"username": "user", "email": "user@example.com"})
+- POST /api/users (Create user - JSON: {"user_id": "user", "email": "user@example.com"})
 - DELETE /api/users/:id (Delete user)
 - GET /api/version
 - POST /api/from-seed (JSON body required)

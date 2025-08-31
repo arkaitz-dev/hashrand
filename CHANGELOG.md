@@ -11,6 +11,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.2 / Web v0.19.3] - 2025-08-31
+
+### Web Interface Changes (v0.19.3)
+#### Added
+- **🔒 Logout Confirmation Dialog**: Professional confirmation dialog for secure logout process
+  - **Modal Confirmation Dialog**: Elegant modal interface preventing accidental logouts
+    - **Professional Design**: Consistent with existing dialog system (auth, seed dialogs)
+    - **Visual Confirmation**: Clear title "Log Out" with explanatory message
+    - **Dual Action Buttons**: Cancel (gray) and Log Out (red) buttons with proper color coding
+    - **Full Accessibility**: Escape key support, click-outside-to-close, and ARIA labels
+    - **RTL Support**: Properly aligned for right-to-left languages with automatic button ordering
+  - **Complete Authentication Cleanup**: Comprehensive logout process ensuring security
+    - **localStorage Cleanup**: Removes access tokens and user data completely
+    - **Cookie Management**: HttpOnly refresh token cookie expires naturally (15-minute Max-Age)
+    - **No Server Endpoint Needed**: Stateless JWT system requires no server-side logout calls
+    - **Flash Message Notification**: User receives "Logged out successfully" confirmation
+    - **Navigation Redirect**: Automatic redirect to home page (`/`) after logout
+  - **Enhanced User Experience**: Professional logout workflow with proper feedback
+    - **Confirmation Required**: Prevents accidental logout from dropdown menu
+    - **Visual Feedback**: Clear button states and loading indicators during logout
+    - **State Management**: Proper dialog state management with smooth transitions
+
+#### Enhanced
+- **🎭 Dialog System Evolution**: Extended dialog system to support logout confirmation type
+  - **Unified Dialog Container**: `DialogContainer.svelte` now supports `logout` dialog type
+  - **Component Integration**: `LogoutDialogContent.svelte` seamlessly integrated with existing dialog architecture
+  - **Type Safety**: Full TypeScript support for logout dialog props and callbacks
+  - **Consistent API**: Same usage pattern as auth and seed dialogs (`dialogStore.show('logout')`)
+- **🔐 AuthStatusButton Integration**: Improved authentication status dropdown with logout confirmation
+  - **Smart Menu Behavior**: Dropdown closes before showing logout confirmation dialog
+  - **Professional UX Flow**: Logout button → confirmation dialog → cleanup → redirect
+  - **State Synchronization**: Proper state management between dropdown and dialog systems
+
+#### Technical Implementation
+- **Dialog System Architecture**: Professional modal system expansion
+  - **`LogoutDialogContent.svelte`**: New component handling logout confirmation UI
+  - **Dialog Store Integration**: Seamless integration with existing `dialogStore` management
+  - **Async Logout Handling**: Proper async/await patterns for logout operations
+  - **Error Resilience**: Graceful handling of logout errors with guaranteed cleanup
+- **Authentication Architecture**: Simplified and secure logout implementation
+  - **Stateless Design**: No backend logout endpoint needed (JWT system is stateless)
+  - **Client-Side Cleanup**: Complete local storage and state cleanup
+  - **Cookie Expiration**: Leverages HttpOnly cookie natural expiration (15 minutes)
+  - **Flash Message System**: Integrated with existing flash message architecture
+- **Internationalization**: Complete translation support for logout dialog
+  - **Spanish + English**: Full translations for logout confirmation interface
+    - `auth.logoutConfirmTitle`: "Cerrar Sesión" / "Log Out"
+    - `auth.logoutConfirmMessage`: Detailed confirmation message
+    - `auth.loggedOut`: Success message for flash notification
+  - **Consistent Terminology**: Unified logout terminology across all UI elements
+
+#### User Experience Benefits
+- **🛡️ Accidental Logout Prevention**: Users must explicitly confirm logout action
+- **🎯 Clear Intent**: Visual confirmation dialog makes logout intention explicit
+- **📱 Mobile Friendly**: Touch-friendly buttons and responsive dialog design
+- **♿ Accessibility**: Full screen reader support and keyboard navigation
+- **🌍 Multilingual**: Proper translations maintaining dialog professional tone
+
+---
+
 ## [API v1.4.2 / Web v0.19.2] - 2025-08-29
 
 ### Zero Knowledge (ZK) Authentication System Implementation

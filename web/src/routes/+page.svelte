@@ -10,21 +10,19 @@
 	import { authStore } from '$lib/stores/auth';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 
-
-
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
 	});
 
-	// Effect to watch for username changes (only on this page)
+	// Effect to watch for user_id changes (only on this page)
 	$effect(() => {
-		const username = $authStore.user?.username;
+		const userId = $authStore.user?.user_id;
 		const currentPath = $page.url.pathname;
-		
-		if (username && currentPath === '/') {
-			// Username is set and we're on home page, show message
-			flashMessagesStore.addMessage(`username = ${username}`);
+
+		if (userId && currentPath === '/') {
+			// User ID is set and we're on home page, show message
+			flashMessagesStore.addMessage(`user_id = ${userId}`);
 		}
 	});
 

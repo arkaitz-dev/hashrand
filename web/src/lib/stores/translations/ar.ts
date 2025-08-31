@@ -63,7 +63,9 @@ export const ar: I18nTexts = {
 		keepSameSeed: 'الاحتفاظ بنفس البذرة',
 		generateNewSeed: 'توليد بذرة جديدة',
 		seed: 'بذرة',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'انتهت صلاحية الجلسة.',
+		close: 'إغلاق'
 	},
 	menu: {
 		title: 'مولد الهاش',
@@ -179,6 +181,17 @@ export const ar: I18nTexts = {
 		testMagicLink: 'انقر هنا لاختبار الرابط السحري',
 		authenticationFailed: 'فشل في المصادقة',
 		tokenExpired: 'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.',
-		accessDenied: 'تم رفض الوصول. مطلوب مصادقة.'
+		accessDenied: 'تم رفض الوصول. مطلوب مصادقة.',
+		userMenu: 'قائمة المستخدم',
+		login: 'تسجيل الدخول',
+		authenticatedAs: 'مصادق عليه كـ:',
+		logout: 'تسجيل الخروج'
+	},
+	logout: {
+		title: 'تسجيل الخروج',
+		description: 'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
+		confirm: 'تسجيل الخروج',
+		cancel: 'إلغاء',
+		info: 'ستفقد الوصول إلى الوظائف المصادق عليها حتى تسجل الدخول مرة أخرى.'
 	}
 };

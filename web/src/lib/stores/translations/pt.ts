@@ -63,7 +63,9 @@ export const pt: I18nTexts = {
 		keepSameSeed: 'Manter a mesma semente',
 		generateNewSeed: 'Gerar nova semente',
 		seed: 'Semente',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Sua sessão expirou.',
+		close: 'Fechar'
 	},
 	menu: {
 		title: 'Gerador de Hash',
@@ -178,6 +180,17 @@ export const pt: I18nTexts = {
 		testMagicLink: 'Clique aqui para testar o link mágico',
 		authenticationFailed: 'Falha na autenticação',
 		tokenExpired: 'Sua sessão expirou. Por favor, faça login novamente.',
-		accessDenied: 'Acesso negado. Autenticação necessária.'
+		accessDenied: 'Acesso negado. Autenticação necessária.',
+		userMenu: 'Menu do usuário',
+		login: 'Entrar',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Sair'
+	},
+	logout: {
+		title: 'Sair',
+		description: 'Tem certeza de que deseja sair?',
+		confirm: 'Sair',
+		cancel: 'Cancelar',
+		info: 'Você perderá o acesso às funcionalidades autenticadas até fazer login novamente.'
 	}
 };

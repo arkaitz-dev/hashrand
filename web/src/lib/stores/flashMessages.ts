@@ -11,27 +11,27 @@ function createFlashMessagesStore() {
 
 	return {
 		subscribe,
-		
+
 		// Add a single message
 		addMessage: (content: string) => {
 			const message: FlashMessage = {
-				id: crypto.randomUUID(),
+				id: globalThis.crypto?.randomUUID() || Math.random().toString(36).substring(2, 15),
 				content,
 				timestamp: Date.now()
 			};
-			
-			update(messages => [...messages, message]);
+
+			update((messages) => [...messages, message]);
 		},
 
 		// Add multiple messages
 		addMessages: (contents: string[]) => {
-			const newMessages: FlashMessage[] = contents.map(content => ({
-				id: crypto.randomUUID(),
+			const newMessages: FlashMessage[] = contents.map((content) => ({
+				id: globalThis.crypto?.randomUUID() || Math.random().toString(36).substring(2, 15),
 				content,
 				timestamp: Date.now()
 			}));
-			
-			update(messages => [...messages, ...newMessages]);
+
+			update((messages) => [...messages, ...newMessages]);
 		},
 
 		// Clear all messages
@@ -41,12 +41,12 @@ function createFlashMessagesStore() {
 
 		// Set messages (replace all)
 		set: (contents: string[]) => {
-			const newMessages: FlashMessage[] = contents.map(content => ({
-				id: crypto.randomUUID(),
+			const newMessages: FlashMessage[] = contents.map((content) => ({
+				id: globalThis.crypto?.randomUUID() || Math.random().toString(36).substring(2, 15),
 				content,
 				timestamp: Date.now()
 			}));
-			
+
 			set(newMessages);
 		}
 	};

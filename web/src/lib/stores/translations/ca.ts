@@ -64,7 +64,9 @@ export const ca: I18nTexts = {
 		keepSameSeed: 'Mantenir la mateixa llavor',
 		generateNewSeed: 'Generar nova llavor',
 		seed: 'Llavor',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'La vostra sessió ha caducat.',
+		close: 'Tancar'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -182,6 +184,17 @@ export const ca: I18nTexts = {
 		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",
 		authenticationFailed: "Ha fallat l'autenticació",
 		tokenExpired: 'La vostra sessió ha expirat. Si us plau, inicieu sessió de nou.',
-		accessDenied: 'Accés denegat. Cal autenticació.'
+		accessDenied: 'Accés denegat. Cal autenticació.',
+		userMenu: "Menú d'usuari",
+		login: 'Iniciar sessió',
+		authenticatedAs: 'Autenticat com a:',
+		logout: 'Tancar sessió'
+	},
+	logout: {
+		title: 'Tancar Sessió',
+		description: 'Esteu segur que voleu tancar la sessió?',
+		confirm: 'Tancar Sessió',
+		cancel: 'Cancel·lar',
+		info: 'Perdreu accés a les funcionalitats autenticades fins que torneu a iniciar sessió.'
 	}
 };

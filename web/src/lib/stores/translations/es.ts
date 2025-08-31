@@ -63,7 +63,9 @@ export const es: I18nTexts = {
 		keepSameSeed: 'Mantener la misma semilla',
 		generateNewSeed: 'Generar nueva semilla',
 		seed: 'Semilla',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Tu sesión ha caducado.',
+		close: 'Cerrar'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -176,10 +178,34 @@ export const es: I18nTexts = {
 		confirmEmailDescription: '¿Es correcto?',
 		magicLinkSent: '¡Enlace Enviado!',
 		magicLinkInstructions: 'Revisa tu email y haz clic en el enlace mágico para autenticarte.',
+		magicLinkSentFlash: 'Enlace mágico enviado. Revisa tu email y haz clic en el enlace para continuar.',
 		developmentMode: 'Modo Desarrollo:',
 		testMagicLink: 'Hacer clic aquí para probar el enlace mágico',
 		authenticationFailed: 'Error de autenticación',
 		tokenExpired: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
-		accessDenied: 'Acceso denegado. Se requiere autenticación.'
+		accessDenied: 'Acceso denegado. Se requiere autenticación.',
+		userMenu: 'Menú de usuario',
+		login: 'Iniciar sesión',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Cerrar sesión',
+		logoutConfirmTitle: 'Cerrar Sesión',
+		logoutConfirmMessage: '¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
+		loggedOut: 'Sesión cerrada correctamente'
+	},
+	logout: {
+		title: 'Cerrar Sesión',
+		description: '¿Estás seguro de que quieres cerrar tu sesión?',
+		confirm: 'Cerrar Sesión',
+		cancel: 'Cancelar',
+		info: 'Perderás el acceso a las funciones autenticadas hasta que vuelvas a iniciar sesión.',
+		tokenExpired: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+		accessDenied: 'Acceso denegado. Se requiere autenticación.',
+		userMenu: 'Menú de usuario',
+		login: 'Iniciar sesión',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Cerrar sesión',
+		confirmLogout: '¿Cerrar sesión?',
+		logoutDescription:
+			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.'
 	}
 };

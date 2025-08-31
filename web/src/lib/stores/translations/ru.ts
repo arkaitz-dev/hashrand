@@ -64,7 +64,9 @@ export const ru: I18nTexts = {
 		keepSameSeed: 'Оставить то же зерно',
 		generateNewSeed: 'Сгенерировать новое зерно',
 		seed: 'Зерно',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Ваша сессия истекла.',
+		close: 'Закрыть'
 	},
 	menu: {
 		title: 'Генератор хешей',
@@ -179,6 +181,17 @@ export const ru: I18nTexts = {
 		testMagicLink: 'Нажмите здесь для тестирования магической ссылки',
 		authenticationFailed: 'Аутентификация не удалась',
 		tokenExpired: 'Ваша сессия истекла. Пожалуйста, войдите снова.',
-		accessDenied: 'Доступ запрещён. Требуется аутентификация.'
+		accessDenied: 'Доступ запрещён. Требуется аутентификация.',
+		userMenu: 'Меню пользователя',
+		login: 'Войти',
+		authenticatedAs: 'Аутентифицирован как:',
+		logout: 'Выйти'
+	},
+	logout: {
+		title: 'Выйти',
+		description: 'Вы уверены, что хотите выйти?',
+		confirm: 'Выйти',
+		cancel: 'Отмена',
+		info: 'Вы потеряете доступ к аутентифицированным функциям, пока не войдете снова.'
 	}
 };

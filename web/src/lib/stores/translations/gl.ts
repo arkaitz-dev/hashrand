@@ -63,7 +63,9 @@ export const gl: I18nTexts = {
 		keepSameSeed: 'Manter a mesma semente',
 		generateNewSeed: 'Xerar nova semente',
 		seed: 'Semente',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'A túa sesión caducou.',
+		close: 'Pechar'
 	},
 	menu: {
 		title: 'Xerador de Hash',
@@ -180,6 +182,17 @@ export const gl: I18nTexts = {
 		testMagicLink: 'Fai clic aquí para probar a ligazón máxica',
 		authenticationFailed: 'Fallou a autenticación',
 		tokenExpired: 'A túa sesión expirou. Por favor, inicia sesión de novo.',
-		accessDenied: 'Acceso denegado. Requírese autenticación.'
+		accessDenied: 'Acceso denegado. Requírese autenticación.',
+		userMenu: 'Menú do usuario',
+		login: 'Iniciar sesión',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Pechar sesión'
+	},
+	logout: {
+		title: 'Pechar Sesión',
+		description: 'Estás seguro de que queres pechar a sesión?',
+		confirm: 'Pechar Sesión',
+		cancel: 'Cancelar',
+		info: 'Perderás acceso ás funcionalidades autenticadas ata que volvas iniciar sesión.'
 	}
 };

@@ -5,7 +5,7 @@
  * magic link authentication flow, and automatic token refresh capabilities.
  */
 
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import type { AuthUser, LoginResponse, MagicLinkResponse } from '../types';
 import { api } from '../api';
 
@@ -102,17 +102,20 @@ export const authStore = {
 	 * @returns Promise<MagicLinkResponse>
 	 */
 	async requestMagicLink(email: string, next?: string): Promise<MagicLinkResponse> {
+		console.log('[DEBUG] AuthStore: requestMagicLink called with:', { email, next });
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
 			// Capture current UI host for magic link generation
 			const ui_host = typeof window !== 'undefined' ? window.location.origin : undefined;
+			console.log('[DEBUG] AuthStore: About to call api.requestMagicLink with:', { email, ui_host, next });
 
 			const response = await api.requestMagicLink({
 				email,
 				ui_host,
 				next
 			});
+			console.log(new Date().toISOString() + ': AuthStore received response:', JSON.stringify(response));
 
 			update((state) => ({ ...state, isLoading: false }));
 			return response;
@@ -145,7 +148,7 @@ export const authStore = {
 
 			const user: AuthUser = {
 				email: '', // Not needed for Zero Knowledge auth
-				username: loginResponse.username, // Base58 user_id
+				user_id: loginResponse.user_id, // Base58 user_id
 				isAuthenticated: true,
 				expiresAt
 			};
@@ -179,39 +182,33 @@ export const authStore = {
 	 *
 	 * @returns boolean
 	 */
-	isAuthenticated(): Promise<boolean> {
-		return new Promise((resolve) => {
-			// Subscribe once to get current state
-			const unsubscribe = subscribe((state) => {
-				unsubscribe();
+	async isAuthenticated(): Promise<boolean> {
+		// Get current state directly without subscription
+		const state = get(authStore);
 
-				console.log('[DEBUG] AuthStore isAuthenticated check:', {
-					hasUser: !!state.user,
-					hasToken: !!state.accessToken,
-					userEmail: state.user?.email,
-					tokenExists: !!state.accessToken,
-					expiresAt: state.user?.expiresAt
-				});
-
-				if (!state.user || !state.accessToken) {
-					console.log('[DEBUG] Not authenticated - missing user or token');
-					resolve(false);
-					return;
-				}
-
-				// Check token expiration
-				if (state.user.expiresAt && new Date(state.user.expiresAt) <= new Date()) {
-					console.log('[DEBUG] Token expired, logging out');
-					// Token expired, logout
-					authStore.logout();
-					resolve(false);
-					return;
-				}
-
-				console.log('[DEBUG] User is authenticated');
-				resolve(true);
-			});
+		console.log('[DEBUG] AuthStore isAuthenticated check:', {
+			hasUser: !!state.user,
+			hasToken: !!state.accessToken,
+			userEmail: state.user?.email,
+			tokenExists: !!state.accessToken,
+			expiresAt: state.user?.expiresAt
 		});
+
+		if (!state.user || !state.accessToken) {
+			console.log('[DEBUG] Not authenticated - missing user or token');
+			return false;
+		}
+
+		// Check token expiration
+		if (state.user.expiresAt && new Date(state.user.expiresAt) <= new Date()) {
+			console.log('[DEBUG] Token expired, logging out');
+			// Token expired, logout
+			this.logout();
+			return false;
+		}
+
+		console.log('[DEBUG] User is authenticated');
+		return true;
 	},
 
 	/**
@@ -219,19 +216,19 @@ export const authStore = {
 	 *
 	 * @returns string | null
 	 */
-	getAccessToken(): Promise<string | null> {
-		return new Promise((resolve) => {
-			const unsubscribe = subscribe((state) => {
-				unsubscribe();
-				resolve(state.accessToken);
-			});
-		});
+	getAccessToken(): string | null {
+		const state = get(authStore);
+		return state.accessToken;
 	},
 
 	/**
 	 * Logout user and clear all authentication data
 	 */
-	logout(): void {
+	async logout(): Promise<void> {
+		// Call API logout to clear server-side session and refresh token cookie
+		await api.logout();
+		
+		// Clear local state and storage
 		set(initialState);
 		clearAuthFromStorage();
 	},

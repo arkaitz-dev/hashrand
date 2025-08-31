@@ -64,7 +64,9 @@ export const fr: I18nTexts = {
 		keepSameSeed: 'Garder la même graine',
 		generateNewSeed: 'Générer une nouvelle graine',
 		seed: 'Graine',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Votre session a expiré.',
+		close: 'Fermer'
 	},
 	menu: {
 		title: 'Générateur de Hash',
@@ -180,7 +182,18 @@ export const fr: I18nTexts = {
 		developmentMode: 'Mode Développement:',
 		testMagicLink: 'Cliquer ici pour tester le lien magique',
 		authenticationFailed: "Échec de l'authentification",
-		tokenExpired: 'Votre session a expiré. Veuillez vous connecter à nouveau.',
-		accessDenied: 'Accès refusé. Authentification requise.'
+		tokenExpired: 'Votre session a expiré. Veuillez vous reconnecter.',
+		accessDenied: 'Accès refusé. Authentification requise.',
+		userMenu: 'Menu utilisateur',
+		login: 'Se connecter',
+		authenticatedAs: 'Connecté en tant que :',
+		logout: 'Se déconnecter'
+	},
+	logout: {
+		title: 'Se Déconnecter',
+		description: 'Êtes-vous sûr de vouloir vous déconnecter?',
+		confirm: 'Se Déconnecter',
+		cancel: 'Annuler',
+		info: "Vous perdrez l'accès aux fonctionnalités authentifiées jusqu'à ce que vous vous reconnectiez."
 	}
 };

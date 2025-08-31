@@ -20,12 +20,13 @@
 	import { isRTL } from '$lib/stores/rtl';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
+	import { dialogStore } from '$lib/stores/dialog';
 
 	let copySuccess = false;
 	let copyTimeout: ReturnType<typeof setTimeout>;
 	let showGenerationDetails = false; // Collapsed by default on mobile
 	let showParametersUsed = false; // Collapsed by default on mobile
-	let showSeedDialog = false; // Custom dialog for seed reuse
+	// showSeedDialog removed - now using DialogContainer system
 
 	function toggleGenerationDetails() {
 		showGenerationDetails = !showGenerationDetails;
@@ -178,7 +179,7 @@
 			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
 			flashMessagesStore.addMessage(`✅ Generación exitosa: endpoint=${endpoint}`);
-			
+
 			// Set the result state
 			setResult({
 				value,
@@ -189,6 +190,14 @@
 				timestamp: responseTimestamp
 			});
 		} catch (error) {
+			// Check if it's a session expiration (401 Unauthorized)
+			if (error instanceof Error && error.message.includes('401')) {
+				// Session expired - redirect to home with flash message
+				flashMessagesStore.addMessage($_('common.sessionExpired'));
+				await goto('/');
+				return;
+			}
+			
 			const errorMsg = error instanceof Error ? error.message : $_('common.failedToGenerate');
 			flashMessagesStore.addMessage(`❌ Error en generación: ${errorMsg}`);
 			setError(errorMsg);
@@ -332,30 +341,18 @@
 			return;
 		}
 
-		// Show custom dialog asking about seed reuse
-		showSeedDialog = true;
+		// Show seed dialog using new dialog system
+		dialogStore.show('seed', { onSeedChoice: handleSeedChoice });
 	}
 
-	function handleSeedDialogYes() {
-		showSeedDialog = false;
-		// Include seed in the URL parameters
-		goto(getPreviousPathWithSeed());
-	}
-
-	function handleSeedDialogNo() {
-		showSeedDialog = false;
-		// Don't include seed in URL parameters
-		goto(getPreviousPath());
-	}
-
-	function closeSeedDialog() {
-		showSeedDialog = false;
-	}
-
-	// Handle keyboard events for dialog
-	function handleKeydown(event: globalThis.KeyboardEvent) {
-		if (showSeedDialog && event.key === 'Escape') {
-			closeSeedDialog();
+	function handleSeedChoice(reuseExistingSeed: boolean) {
+		dialogStore.close();
+		if (reuseExistingSeed) {
+			// Include seed in the URL parameters
+			goto(getPreviousPathWithSeed());
+		} else {
+			// Don't include seed in URL parameters
+			goto(getPreviousPath());
 		}
 	}
 
@@ -517,6 +514,14 @@
 			// Reset copy success state
 			copySuccess = false;
 		} catch (error) {
+			// Check if it's a session expiration (401 Unauthorized)
+			if (error instanceof Error && error.message.includes('401')) {
+				// Session expired - redirect to home with flash message
+				flashMessagesStore.addMessage($_('common.sessionExpired'));
+				await goto('/');
+				return;
+			}
+			
 			setError(error instanceof Error ? error.message : $_('common.failedToRegenerate'));
 		} finally {
 			setLoading(false);
@@ -763,50 +768,7 @@
 		</div>
 	</div>
 
-	<!-- Seed Reuse Dialog -->
-	{#if showSeedDialog}
-		<div
-			class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
-			style="background-color: rgba(0, 0, 0, 0.15);"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="seed-dialog-title"
-			tabindex="-1"
-			onclick={closeSeedDialog}
-			onkeydown={(e) => e.key === 'Escape' && closeSeedDialog()}
-		>
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
-			<div
-				class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 m-4 max-w-md w-full"
-				role="document"
-				onclick={(e) => e.stopPropagation()}
-			>
-				<h3
-					id="seed-dialog-title"
-					class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center"
-				>
-					{$_('common.reuseSeedTitle')}
-				</h3>
-				<p class="text-gray-600 dark:text-gray-300 mb-6">
-					{$_('common.reuseSeedMessage')}
-				</p>
-				<div class="flex justify-between gap-3">
-					<button
-						onclick={handleSeedDialogNo}
-						class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
-					>
-						{$_('common.generateNewSeed')}
-					</button>
-					<button
-						onclick={handleSeedDialogYes}
-						class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-					>
-						{$_('common.keepSameSeed')}
-					</button>
-				</div>
-			</div>
-		</div>
-	{/if}
+	<!-- Seed dialog removed - using new dialog system now -->
 {:else if $error}
 	<div
 		class="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800"

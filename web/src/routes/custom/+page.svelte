@@ -9,11 +9,12 @@
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import TextInput from '$lib/components/TextInput.svelte';
 	import AuthGuard from '$lib/components/AuthGuard.svelte';
-	import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
+	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
+	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
-	import { handleEmailConfirmation } from '$lib/utils/auth';
 
 	// Default values
 	function getDefaultParams(): GenerateParams {
@@ -32,8 +33,8 @@
 
 	// Eliminados los debug messages
 
-	// Login dialog state
-	let showEmailDialog = false;
+	// // Login dialog state
+	// let showEmailDialog = false;
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
@@ -87,6 +88,7 @@
 
 	// Reference to AuthGuard component
 	let authGuard: AuthGuard;
+	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -96,17 +98,32 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado (verificación simple)
+		// Verificar si el usuario está autenticado
 		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
 		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
 
 		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de email
-			showEmailDialog = true;
+			// No autenticado - mostrar diálogo de autenticación
+			pendingGenerationParams = {
+				endpoint: 'custom',
+				length: params.length ?? 21,
+				alphabet: params.alphabet ?? 'base58',
+				...(params.prefix && { prefix: params.prefix }),
+				...(params.suffix && { suffix: params.suffix }),
+				...(urlProvidedSeed && { seed: urlProvidedSeed })
+			};
+			dialogStore.show('auth', pendingGenerationParams);
 			return;
 		}
 
 		// Usuario autenticado - proceder con la generación
+		await performGeneration();
+	}
+
+	/**
+	 * Perform the actual generation (separated for reuse after auth)
+	 */
+	async function performGeneration() {
 		proceedWithGeneration();
 	}
 
@@ -129,47 +146,76 @@
 		goto(`/result?${urlParams.toString()}`);
 	}
 
-	// Email dialog handlers
-	let emailDialogRef: EmailInputDialog;
-
-	// Create next parameter object with current form state
-	$: nextObject = {
-		endpoint: 'custom',
-		length: params.length,
-		alphabet: params.alphabet,
-		prefix: params.prefix || undefined,
-		suffix: params.suffix || undefined,
-		...(urlProvidedSeed && { seed: urlProvidedSeed })
-	};
-
-	function handleEmailDialogClose() {
-		showEmailDialog = false;
+	/**
+	 * Handle successful authentication
+	 */
+	// Listen for authentication success event from DialogContainer
+	function handleAuthenticated(event: globalThis.CustomEvent) {
+		const authData = event.detail;
+		console.log('🎉 Authentication successful!', authData);
+		
+		// Perform the generation with the pending parameters
+		if (pendingGenerationParams) {
+			// Update params with pending values if they exist
+			if (pendingGenerationParams.length) params.length = Number(pendingGenerationParams.length);
+			if (pendingGenerationParams.alphabet) params.alphabet = String(pendingGenerationParams.alphabet) as AlphabetType;
+			if (pendingGenerationParams.prefix) params.prefix = String(pendingGenerationParams.prefix);
+			if (pendingGenerationParams.suffix) params.suffix = String(pendingGenerationParams.suffix);
+			if (pendingGenerationParams.seed) urlProvidedSeed = String(pendingGenerationParams.seed);
+			
+			pendingGenerationParams = null;
+			
+			// Perform generation
+			performGeneration();
+		}
 	}
 
-	function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
-		// Email entered and moving to confirmation step
-		console.log('Email entered:', event.detail.email);
+	// Add event listener for authentication
+	if (typeof globalThis.window !== 'undefined') {
+		globalThis.window.addEventListener('authenticated', handleAuthenticated);
 	}
 
-	async function handleEmailConfirmed(
-		event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
-	) {
-		const { email } = event.detail;
+	// // Email dialog handlers
+	// let emailDialogRef: EmailInputDialog;
 
-		await handleEmailConfirmation(
-			email,
-			nextObject,
-			() => {
-				// Success callback
-				emailDialogRef?.resetSubmitting();
-				showEmailDialog = false;
-			},
-			(errorKey: string) => {
-				// Error callback
-				emailDialogRef?.setError($_(errorKey));
-			}
-		);
-	}
+	// // Create next parameter object with current form state
+	// $: nextObject = {
+	// 	endpoint: 'custom',
+	// 	length: params.length,
+	// 	alphabet: params.alphabet,
+	// 	prefix: params.prefix || undefined,
+	// 	suffix: params.suffix || undefined,
+	// 	...(urlProvidedSeed && { seed: urlProvidedSeed })
+	// };
+
+	// function handleEmailDialogClose() {
+	// 	showEmailDialog = false;
+	// }
+
+	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
+	// 	// Email entered and moving to confirmation step
+	// 	console.log('Email entered:', event.detail.email);
+	// }
+
+	// async function handleEmailConfirmed(
+	// 	event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
+	// ) {
+	// 	const { email } = event.detail;
+
+	// 	await handleEmailConfirmation(
+	// 		email,
+	// 		nextObject,
+	// 		() => {
+	// 			// Success callback
+	// 			emailDialogRef?.resetSubmitting();
+	// 			showEmailDialog = false;
+	// 		},
+	// 		(errorKey: string) => {
+	// 			// Error callback
+	// 			emailDialogRef?.setError($_(errorKey));
+	// 		}
+	// 	);
+	// }
 
 	// Initialize params based on navigation source
 	onMount(() => {
@@ -242,6 +288,9 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Flash Messages -->
+		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
 		<AuthGuard bind:this={authGuard}>
@@ -360,22 +409,4 @@
 	</div>
 </div>
 
-<!-- Email Input Dialog -->
-<EmailInputDialog
-	bind:this={emailDialogRef}
-	bind:show={showEmailDialog}
-	next={nextObject}
-	title={$_('auth.loginRequired')}
-	description={$_('auth.loginDescription')}
-	emailPlaceholder={$_('auth.emailPlaceholder')}
-	confirmTitle={$_('auth.confirmEmail')}
-	confirmDescription={$_('auth.confirmEmailDescription')}
-	cancelText={$_('common.cancel')}
-	continueText={$_('common.continue')}
-	correctText={$_('common.correct')}
-	sendText={$_('common.send')}
-	sendingText={$_('common.sending')}
-	on:close={handleEmailDialogClose}
-	on:emailSubmitted={handleEmailSubmitted}
-	on:emailConfirmed={handleEmailConfirmed}
-/>
+<!-- Authentication handled by global DialogContainer -->

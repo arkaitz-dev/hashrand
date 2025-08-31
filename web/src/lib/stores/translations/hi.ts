@@ -63,7 +63,9 @@ export const hi: I18nTexts = {
 		keepSameSeed: 'वही सीड रखें',
 		generateNewSeed: 'नया सीड जनरेट करें',
 		seed: 'सीड',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'आपका सत्र समाप्त हो गया है।',
+		close: 'बंद करें'
 	},
 	menu: {
 		title: 'हैश जनरेटर',
@@ -180,6 +182,17 @@ export const hi: I18nTexts = {
 		testMagicLink: 'मैजिक लिंक टेस्ट करने के लिए यहां क्लिक करें',
 		authenticationFailed: 'प्रमाणीकरण फेल हो गया',
 		tokenExpired: 'आपका सेशन समाप्त हो गया है। कृपया दोबारा लॉग इन करें।',
-		accessDenied: 'एक्सेस अस्वीकृत। प्रमाणीकरण आवश्यक।'
+		accessDenied: 'एक्सेस अस्वीकृत। प्रमाणीकरण आवश्यक।',
+		userMenu: 'यूजर मेन्यू',
+		login: 'लॉग इन करें',
+		authenticatedAs: 'प्रमाणित के रूप में:',
+		logout: 'लॉग आउट करें'
+	},
+	logout: {
+		title: 'लॉग आउट करें',
+		description: 'क्या आप वाकई लॉग आउट करना चाहते हैं?',
+		confirm: 'लॉग आउट करें',
+		cancel: 'रद्द करें',
+		info: 'आप तब तक प्रमाणित फीचर्स तक पहुंच खो देंगे जब तक आप दोबारा लॉग इन नहीं करते।'
 	}
 };

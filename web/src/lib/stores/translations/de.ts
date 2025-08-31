@@ -64,7 +64,9 @@ export const de: I18nTexts = {
 		keepSameSeed: 'Denselben Seed behalten',
 		generateNewSeed: 'Neuen Seed generieren',
 		seed: 'Seed',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'Ihre Sitzung ist abgelaufen.',
+		close: 'Schließen'
 	},
 	menu: {
 		title: 'Hash-Generator',
@@ -181,6 +183,17 @@ export const de: I18nTexts = {
 		testMagicLink: 'Hier klicken, um den magischen Link zu testen',
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',
 		tokenExpired: 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.',
-		accessDenied: 'Zugang verweigert. Authentifizierung erforderlich.'
+		accessDenied: 'Zugang verweigert. Authentifizierung erforderlich.',
+		userMenu: 'Benutzermenü',
+		login: 'Anmelden',
+		authenticatedAs: 'Authentifiziert als:',
+		logout: 'Abmelden'
+	},
+	logout: {
+		title: 'Abmelden',
+		description: 'Sind Sie sicher, dass Sie sich abmelden möchten?',
+		confirm: 'Abmelden',
+		cancel: 'Abbrechen',
+		info: 'Sie verlieren den Zugang zu authentifizierten Funktionen, bis Sie sich erneut anmelden.'
 	}
 };

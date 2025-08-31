@@ -2,71 +2,48 @@
 	/**
 	 * Auth Guard Component
 	 *
-	 * Wraps content that requires authentication. Shows LoginDialog
+	 * Wraps content that requires authentication. Redirects to /login
 	 * if user is not authenticated, otherwise renders the slot content.
 	 */
 
-	// import { authStore } from '../stores/auth';
-	import LoginDialog from './LoginDialog.svelte';
-
-	// Component state
-	let showLoginDialog = false;
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { base58 } from '@scure/base';
+	import { authStore } from '../stores/auth';
 
 	/**
 	 * Handle authentication requirement
 	 * Called when protected action is triggered
 	 */
-	export function requireAuth(): Promise<boolean> {
-		return new Promise((resolve) => {
-			// VERSIÓN ULTRA SIMPLE: siempre mostrar LoginDialog
-			// Asumimos que el usuario no está autenticado por ahora
+	export async function requireAuth(formParams?: Record<string, unknown>): Promise<boolean> {
+		// Check if already authenticated
+		const isAuth = await authStore.isAuthenticated();
+		if (isAuth) {
+			return true;
+		}
 
-			showLoginDialog = true;
+		// Not authenticated, redirect to login with next parameter
+		const currentPath = $page.url.pathname;
 
-			// Wait for authentication
-			const checkInterval = globalThis.setInterval(() => {
-				// Verificación simple usando localStorage
-				const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
-				const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
+		if (formParams && Object.keys(formParams).length > 0) {
+			// Encode form parameters as Base58 for next parameter
+			const encoder = new globalThis.TextEncoder();
+			const jsonString = JSON.stringify({
+				endpoint: currentPath.replace('/', ''),
+				...formParams
+			});
+			const bytes = encoder.encode(jsonString);
+			const nextParam = base58.encode(bytes);
 
-				if (hasToken && hasUser) {
-					globalThis.clearInterval(checkInterval);
-					showLoginDialog = false;
-					resolve(true);
-				}
-			}, 500);
+			await goto(`/login?next=${encodeURIComponent(nextParam)}`);
+		} else {
+			// Simple redirect without encoded parameters
+			await goto(`/login?next=${encodeURIComponent(currentPath)}`);
+		}
 
-			// Timeout after 2 minutos (más corto para testing)
-			globalThis.setTimeout(() => {
-				globalThis.clearInterval(checkInterval);
-				showLoginDialog = false;
-				resolve(false);
-			}, 120000);
-		});
-	}
-
-	/**
-	 * Handle login dialog close
-	 */
-	function handleLoginClose() {
-		showLoginDialog = false;
-	}
-
-	/**
-	 * Handle successful authentication
-	 */
-	function handleAuthenticated(event: globalThis.CustomEvent<{ email: string }>) {
-		showLoginDialog = false;
-		console.log('User authenticated:', event.detail.email);
+		return false;
 	}
 </script>
 
 <!-- Always render slot content, regardless of authentication status -->
 <slot {requireAuth} />
-
-<!-- Login Dialog -->
-<LoginDialog
-	bind:show={showLoginDialog}
-	on:close={handleLoginClose}
-	on:authenticated={handleAuthenticated}
-/>

@@ -62,7 +62,9 @@ export const zh: I18nTexts = {
 		keepSameSeed: '保持相同的种子',
 		generateNewSeed: '生成新种子',
 		seed: '种子',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: '您的会话已过期。',
+		close: '关闭'
 	},
 	menu: {
 		title: '哈希生成器',
@@ -173,6 +175,17 @@ export const zh: I18nTexts = {
 		testMagicLink: '点击这里测试魔法链接',
 		authenticationFailed: '身份验证失败',
 		tokenExpired: '您的会话已过期。请重新登录。',
-		accessDenied: '访问被拒绝。需要身份验证。'
+		accessDenied: '访问被拒绝。需要身份验证。',
+		userMenu: '用户菜单',
+		login: '登录',
+		authenticatedAs: '已验证身份：',
+		logout: '退出登录'
+	},
+	logout: {
+		title: '退出登录',
+		description: '您确定要退出登录吗？',
+		confirm: '退出登录',
+		cancel: '取消',
+		info: '您将失去对需要身份验证功能的访问权限，直到再次登录。'
 	}
 };

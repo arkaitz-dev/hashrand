@@ -63,7 +63,9 @@ export const ja: I18nTexts = {
 		formInvalid: 'フォームが無効です',
 		connectionError: '接続エラーです。再試行してください。',
 		sendError: 'リンクの送信エラーです。再試行してください。',
-		otp: 'OTP'
+		otp: 'OTP',
+		sessionExpired: 'セッションが期限切れになりました。',
+		close: '閉じる'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -181,6 +183,17 @@ export const ja: I18nTexts = {
 		testMagicLink: 'マジックリンクをテストするにはここをクリック',
 		authenticationFailed: '認証に失敗しました',
 		tokenExpired: 'セッションが期限切れです。再度ログインしてください。',
-		accessDenied: 'アクセスが拒否されました。認証が必要です。'
+		accessDenied: 'アクセスが拒否されました。認証が必要です。',
+		userMenu: 'ユーザーメニュー',
+		login: 'ログイン',
+		authenticatedAs: '認証済みユーザー:',
+		logout: 'ログアウト'
+	},
+	logout: {
+		title: 'ログアウト',
+		description: 'ログアウトしてもよろしいですか？',
+		confirm: 'ログアウト',
+		cancel: 'キャンセル',
+		info: '再度ログインするまで、認証が必要な機能にアクセスできなくなります。'
 	}
 };
