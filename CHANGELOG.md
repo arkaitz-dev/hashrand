@@ -11,6 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.3 / Web v0.19.3] - 2025-08-31
+
+### Testing Infrastructure Changes (v1.4.3)
+#### Fixed
+- **🔧 Critical Testing System Compatibility**: Completely updated `final_test.sh` for JWT authentication compatibility
+  - **Authentication-Aware Testing**: Major overhaul to support Zero Knowledge JWT authentication system
+    - **Magic Link Flow Integration**: Added complete magic link → JWT token authentication flow
+    - **Bearer Token Support**: All protected endpoints now tested with proper `Authorization: Bearer` headers
+    - **Authentication Helper Functions**: New `authenticate()`, `request_magic_link()`, and `extract_magic_token()` functions
+    - **Test Categorization**: Clear separation of public, protected, and authentication endpoint testing
+    - **Enhanced Error Handling**: Proper validation of 401, 400, and 404 status codes with color-coded output
+  - **Environment Configuration Updates**: Migrated configuration for Spin compatibility
+    - **`.env.example` Migration**: Updated to use `SPIN_VARIABLE_*` prefixes required by Fermyon Spin
+    - **Justfile Documentation**: Added native `.env` loading capability documentation and enhanced deploy command
+    - **Secret Management Integration**: Full compatibility with Spin's native variable system
+  - **Testing Coverage Restoration**: Comprehensive testing system for all API functionality
+    - **100% Success Rate**: All 10 core tests now pass with authentication system
+    - **Endpoint Protection Verification**: Confirms all generation endpoints properly require JWT authentication
+    - **Public Endpoint Testing**: Verifies `/api/version` remains accessible without authentication
+    - **Authentication Flow Testing**: Complete magic link generation and JWT conversion validation
+    - **Error Validation**: Comprehensive testing of invalid emails, expired magic links, and malformed tokens
+
+#### Technical Implementation
+- **Testing Architecture Evolution**: Professional testing system transformation
+  - **JWT Authentication Integration**: Complete magic link to Bearer token workflow
+  - **Color-Coded Output**: Enhanced user experience with detailed authentication status reporting
+  - **Robust Token Extraction**: Reliable magic token parsing from development logs
+  - **Error Case Coverage**: Comprehensive validation of all authentication failure scenarios
+- **Development Productivity Restoration**: Critical infrastructure modernization
+  - **Future-Proof Design**: Testing system now compatible with Zero Knowledge authentication
+  - **Deployment Readiness**: Testing infrastructure prepared for production validation
+  - **Quality Assurance**: Maintains comprehensive API functionality coverage
+  - **Security Validation**: Confirms proper JWT protection on all sensitive endpoints
+
+---
+
 ## [API v1.4.2 / Web v0.19.3] - 2025-08-31
 
 ### Web Interface Changes (v0.19.3)

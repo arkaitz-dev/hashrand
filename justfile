@@ -1,10 +1,10 @@
 # HashRand Spin - Development Tasks
 # Run `just` to see available commands
-
-# Environment variables for secure secrets (loaded from .env)
-export SPIN_VARIABLE_JWT_SECRET := env_var_or_default("JWT_SECRET", "")
-export SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY := env_var_or_default("MAGIC_LINK_HMAC_KEY", "")
-export SPIN_VARIABLE_PBKDF2_SALT := env_var_or_default("PBKDF2_SALT", "")
+#
+# IMPORTANT: just has native .env file loading capability
+# - Automatically loads .env from current directory (can be disabled with --no-dotenv)
+# - Variables from .env are available to all recipes without explicit sourcing
+# - Spin reads SPIN_VARIABLE_* variables directly from the loaded environment
 
 # Show available commands
 default:
@@ -318,9 +318,15 @@ clean-build: clean build
 # Rebuild everything from scratch
 rebuild: clean build
 
-# Deploy to Fermyon Cloud
+# Deploy to Fermyon Cloud with secrets
 deploy:
-    spin-cli deploy --runtime-config-file runtime-config.toml
+    #!/usr/bin/env bash
+    # Read secrets from .env file and deploy to Fermyon Cloud
+    source .env
+    spin-cli deploy --runtime-config-file runtime-config.toml \
+        --variable jwt_secret="${JWT_SECRET:-${SPIN_VARIABLE_JWT_SECRET}}" \
+        --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
+        --variable pbkdf2_salt="${PBKDF2_SALT:-${SPIN_VARIABLE_PBKDF2_SALT}}"
 
 # Run development server in background and execute tests
 test-dev:
