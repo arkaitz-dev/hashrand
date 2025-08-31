@@ -6,6 +6,12 @@ version = "0.1.0"
 authors = ["Arkaitz Dev <me@arkaitz.dev>"]
 description = "A random hash generator API built with Fermyon Spin"
 
+# Application variables for secure secrets management
+[variables]
+jwt_secret = { required = true, secret = true }
+magic_link_hmac_key = { required = true, secret = true }
+pbkdf2_salt = { required = true, secret = true }
+
 [[trigger.http]]
 route = "/api/..."
 component = "hashrand-spin"
@@ -14,6 +20,11 @@ component = "hashrand-spin"
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 allowed_outbound_hosts = []
 sqlite_databases = ["hashrand-dev", "hashrand"]
+# Reference application variables in component variables
+[component.hashrand-spin.variables]
+jwt_secret = "{{ jwt_secret }}"
+magic_link_hmac_key = "{{ magic_link_hmac_key }}"
+pbkdf2_salt = "{{ pbkdf2_salt }}"
 [component.hashrand-spin.build]
 command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]

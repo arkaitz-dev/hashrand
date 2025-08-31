@@ -46,11 +46,11 @@ impl JwtUtils {
     /// Based on OWASP recommendations for password-equivalent security
     const PBKDF2_ITERATIONS: u32 = 600_000;
 
-    /// Salt for PBKDF2 derivation (should be from environment in production)
-    const PBKDF2_SALT: &'static [u8] = b"hashrand-user-derivation-salt-v1";
+    // /// Salt for PBKDF2 derivation (should be from environment in production)
+    // const PBKDF2_SALT: &'static [u8] = b"hashrand-user-derivation-salt-v1";
 
-    /// HMAC key for magic link integrity (should be from environment in production)
-    const MAGIC_LINK_HMAC_KEY: &'static [u8] = b"hashrand-magic-link-hmac-key-v1";
+    // /// HMAC key for magic link integrity (should be from environment in production)
+    // const MAGIC_LINK_HMAC_KEY: &'static [u8] = b"hashrand-magic-link-hmac-key-v1";
 
     /// Derive secure user ID from email using SHA3-256 + PBKDF2-SHA3-256
     ///
@@ -62,8 +62,8 @@ impl JwtUtils {
     /// * `email` - User email address
     ///
     /// # Returns
-    /// * `[u8; 32]` - 256-bit deterministic user ID
-    pub fn derive_user_id(email: &str) -> [u8; 32] {
+    /// * `Result<[u8; 32], String>` - 256-bit deterministic user ID or error
+    pub fn derive_user_id(email: &str) -> Result<[u8; 32], String> {
         // Step 1: SHA3-256 hash of email
         let mut hasher = Sha3_256::new();
         hasher.update(email.to_lowercase().trim().as_bytes());
@@ -71,15 +71,17 @@ impl JwtUtils {
 
         // Step 2: PBKDF2-SHA3-256 with high iteration count
         let mut user_id = [0u8; 32];
+        let salt = Self::get_pbkdf2_salt()?;
+        
         pbkdf2::<Hmac<Sha3_256>>(
             &email_hash,
-            Self::PBKDF2_SALT,
+            &salt,
             Self::PBKDF2_ITERATIONS,
             &mut user_id,
         )
-        .expect("PBKDF2 derivation should not fail");
+        .map_err(|_| "PBKDF2 derivation failed".to_string())?;
 
-        user_id
+        Ok(user_id)
     }
 
     /// Convert user ID to Base58 username for display/API
@@ -99,17 +101,50 @@ impl JwtUtils {
     /// * `email` - User email address
     ///
     /// # Returns
-    /// * `String` - Base58 encoded username
-    pub fn email_to_username(email: &str) -> String {
-        let user_id = Self::derive_user_id(email);
-        Self::user_id_to_username(&user_id)
+    /// * `Result<String, String>` - Base58 encoded username or error
+    pub fn email_to_username(email: &str) -> Result<String, String> {
+        let user_id = Self::derive_user_id(email)?;
+        Ok(Self::user_id_to_username(&user_id))
     }
     /// Get JWT secret key (in production this should be from environment variable)
     /// For development, we generate a consistent secret
-    fn get_jwt_secret() -> String {
-        // In production, this should come from environment variable
-        // For development, we use a consistent secret
-        "hashrand-jwt-secret-key-development-only-change-in-production".to_string()
+    // fn get_jwt_secret() -> String {
+    //     // In production, this should come from environment variable
+    //     // For development, we use a consistent secret
+    //     "hashrand-jwt-secret-key-development-only-change-in-production".to_string()
+    // }
+
+    /// Get JWT secret from Spin variables
+    /// 
+    /// # Returns
+    /// * `Result<String, String>` - JWT secret or error message
+    fn get_jwt_secret() -> Result<String, String> {
+        spin_sdk::variables::get("jwt_secret")
+            .map_err(|e| format!("Failed to get jwt_secret variable: {}", e))
+    }
+
+    /// Get PBKDF2 salt from Spin variables as bytes
+    /// 
+    /// # Returns  
+    /// * `Result<Vec<u8>, String>` - Salt bytes or error message
+    fn get_pbkdf2_salt() -> Result<Vec<u8>, String> {
+        let salt_hex = spin_sdk::variables::get("pbkdf2_salt")
+            .map_err(|e| format!("Failed to get pbkdf2_salt variable: {}", e))?;
+        
+        hex::decode(&salt_hex)
+            .map_err(|_| "PBKDF2_SALT must be a valid hex string".to_string())
+    }
+
+    /// Get magic link HMAC key from Spin variables as bytes
+    /// 
+    /// # Returns
+    /// * `Result<Vec<u8>, String>` - HMAC key bytes or error message  
+    fn get_magic_link_hmac_key() -> Result<Vec<u8>, String> {
+        let key_hex = spin_sdk::variables::get("magic_link_hmac_key")
+            .map_err(|e| format!("Failed to get magic_link_hmac_key variable: {}", e))?;
+        
+        hex::decode(&key_hex)
+            .map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())
     }
 
     /// Create access token with 20 seconds expiration (for testing)
@@ -124,7 +159,7 @@ impl JwtUtils {
         let expires_at = now + Duration::minutes(3); // 3 minutes
 
         // Derive user_id from email for JWT subject
-        let username = Self::email_to_username(email);
+        let username = Self::email_to_username(email)?;
 
         let claims = AccessTokenClaims {
             sub: username,
@@ -134,7 +169,8 @@ impl JwtUtils {
         };
 
         let header = Header::new(Algorithm::HS256);
-        let encoding_key = EncodingKey::from_secret(Self::get_jwt_secret().as_ref());
+        let jwt_secret = Self::get_jwt_secret()?;
+        let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
 
         match encode(&header, &claims, &encoding_key) {
             Ok(token) => Ok((token, expires_at)),
@@ -158,7 +194,7 @@ impl JwtUtils {
         let expires_at = now + Duration::minutes(15); // 15 minutes
 
         // Derive user_id from email for JWT subject
-        let username = Self::email_to_username(email);
+        let username = Self::email_to_username(email)?;
 
         let claims = RefreshTokenClaims {
             sub: username,
@@ -169,7 +205,8 @@ impl JwtUtils {
         };
 
         let header = Header::new(Algorithm::HS256);
-        let encoding_key = EncodingKey::from_secret(Self::get_jwt_secret().as_ref());
+        let jwt_secret = Self::get_jwt_secret()?;
+        let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
 
         match encode(&header, &claims, &encoding_key) {
             Ok(token) => Ok((token, expires_at)),
@@ -186,7 +223,9 @@ impl JwtUtils {
     /// * `Result<AccessTokenClaims, String>` - Decoded claims or validation error
     #[allow(dead_code)]
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
-        let decoding_key = DecodingKey::from_secret(Self::get_jwt_secret().as_ref());
+        let jwt_secret = Self::get_jwt_secret()
+            .map_err(|e| format!("JWT secret error: {}", e))?;
+        let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
         let validation = Validation::new(Algorithm::HS256);
 
         match decode::<AccessTokenClaims>(token, &decoding_key, &validation) {
@@ -209,7 +248,9 @@ impl JwtUtils {
     /// * `Result<RefreshTokenClaims, String>` - Decoded claims or validation error
     #[allow(dead_code)]
     pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String> {
-        let decoding_key = DecodingKey::from_secret(Self::get_jwt_secret().as_ref());
+        let jwt_secret = Self::get_jwt_secret()
+            .map_err(|e| format!("JWT secret error: {}", e))?;
+        let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
         let validation = Validation::new(Algorithm::HS256);
 
         match decode::<RefreshTokenClaims>(token, &decoding_key, &validation) {
@@ -233,10 +274,10 @@ impl JwtUtils {
     /// * `expires_at` - Magic link expiration timestamp
     ///
     /// # Returns
-    /// * `String` - Base58 encoded magic token with integrity protection
-    pub fn generate_magic_token(email: &str, expires_at: DateTime<Utc>) -> String {
+    /// * `Result<String, String>` - Base58 encoded magic token with integrity protection or error
+    pub fn generate_magic_token(email: &str, expires_at: DateTime<Utc>) -> Result<String, String> {
         // Derive deterministic user_id from email
-        let user_id = Self::derive_user_id(email);
+        let user_id = Self::derive_user_id(email)?;
 
         // Timestamp as 8 bytes (big-endian u64)
         let timestamp = expires_at.timestamp() as u64;
@@ -248,8 +289,10 @@ impl JwtUtils {
         data.extend_from_slice(&timestamp_bytes);
 
         // Generate HMAC-SHA3-256 for integrity
-        let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
-            .expect("HMAC key should be valid");
+        let hmac_key = Self::get_magic_link_hmac_key()
+            .map_err(|e| format!("HMAC key error: {}", e))?;
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
+            .map_err(|_| "Invalid HMAC key format".to_string())?;
         mac.update(&data);
         let hmac_result = mac.finalize().into_bytes();
 
@@ -259,7 +302,7 @@ impl JwtUtils {
         token.extend_from_slice(&timestamp_bytes);
         token.extend_from_slice(&hmac_result);
 
-        bs58::encode(&token).into_string()
+        Ok(bs58::encode(&token).into_string())
     }
 
     /// Validate magic token and extract user_id and expiration timestamp
@@ -286,8 +329,10 @@ impl JwtUtils {
         let provided_hmac = &token_bytes[40..72];
 
         // Verify HMAC integrity
-        let mut mac = Hmac::<Sha3_256>::new_from_slice(Self::MAGIC_LINK_HMAC_KEY)
-            .expect("HMAC key should be valid");
+        let hmac_key = Self::get_magic_link_hmac_key()
+            .map_err(|e| format!("HMAC key error: {}", e))?;
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
+            .map_err(|_| "Invalid HMAC key format".to_string())?;
         mac.update(user_id_bytes);
         mac.update(timestamp_bytes);
 

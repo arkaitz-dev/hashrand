@@ -1,6 +1,11 @@
 # HashRand Spin - Development Tasks
 # Run `just` to see available commands
 
+# Environment variables for secure secrets (loaded from .env)
+export SPIN_VARIABLE_JWT_SECRET := env_var_or_default("JWT_SECRET", "")
+export SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY := env_var_or_default("MAGIC_LINK_HMAC_KEY", "")
+export SPIN_VARIABLE_PBKDF2_SALT := env_var_or_default("PBKDF2_SALT", "")
+
 # Show available commands
 default:
     @just --list

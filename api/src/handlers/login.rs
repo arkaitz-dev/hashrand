@@ -129,14 +129,36 @@ fn handle_magic_link_generation(
 
     // Generate magic token with integrity protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
-    let magic_token = JwtUtils::generate_magic_token(&magic_request.email, magic_expires_at);
+    let magic_token = match JwtUtils::generate_magic_token(&magic_request.email, magic_expires_at) {
+        Ok(token) => token,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(500)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Failed to generate magic token: {}", e),
+                }).unwrap_or_default())
+                .build());
+        }
+    };
 
     // Create auth session
-    let auth_session = AuthSession::new_magic_link(
+    let auth_session = match AuthSession::new_magic_link(
         magic_request.email.clone(),
         magic_token.clone(),
         magic_expires_at,
-    );
+    ) {
+        Ok(session) => session,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(500)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Failed to create auth session: {}", e),
+                }).unwrap_or_default())
+                .build());
+        }
+    };
 
     // Save to database
     match AuthOperations::create_auth_session(env.clone(), &auth_session) {

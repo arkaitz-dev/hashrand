@@ -526,17 +526,34 @@ http://localhost:5173/result/?endpoint=custom&length=16&alphabet=full&prefix=tes
 
 ### Complete Development Setup
 
-The easiest way to start development is with a single command:
-
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd hashrand-spin
 
-# See all available development tasks
+# 1. Generate secure secrets for development
+python3 -c "
+import secrets
+print('# HashRand Spin - Environment Variables for Backend API')
+print('# These are cryptographically secure secrets - NEVER commit to git')
+print()
+print('# JWT Secret for token signing (64 hex chars = 32 bytes)')
+print('JWT_SECRET=' + secrets.token_hex(32))
+print()
+print('# HMAC Key for magic link integrity (64 hex chars = 32 bytes)')
+print('MAGIC_LINK_HMAC_KEY=' + secrets.token_hex(32))
+print()
+print('# Salt for PBKDF2 user ID derivation (64 hex chars = 32 bytes)')
+print('PBKDF2_SALT=' + secrets.token_hex(32))
+print()
+print('# Development/Production mode')
+print('NODE_ENV=development')
+" > .env
+
+# 2. See all available development tasks
 just
 
-# Start complete development environment (recommended)
+# 3. Start complete development environment (recommended)
 just dev
 ```
 
@@ -855,15 +872,81 @@ uuid = { version = "1.10.0", features = ["v4"] }  # UUID generation for secure t
 
 ## Configuration
 
-### Environment Variables
-No environment variables are required. All configuration is done through query parameters.
+### Environment Variables & Security Configuration
+
+#### Required Secrets for Production
+
+HashRand Spin requires three cryptographically secure secrets for production deployment:
+
+```bash
+# JWT Secret for token signing (64 hex chars = 32 bytes)
+JWT_SECRET=your-64-character-hex-secret-here
+
+# HMAC Key for magic link integrity (64 hex chars = 32 bytes) 
+MAGIC_LINK_HMAC_KEY=your-64-character-hex-secret-here
+
+# Salt for PBKDF2 user ID derivation (64 hex chars = 32 bytes)
+PBKDF2_SALT=your-64-character-hex-secret-here
+```
+
+#### Secret Generation
+
+Generate cryptographically secure secrets using Python:
+```python
+import secrets
+print("JWT_SECRET=" + secrets.token_hex(32))
+print("MAGIC_LINK_HMAC_KEY=" + secrets.token_hex(32))
+print("PBKDF2_SALT=" + secrets.token_hex(32))
+```
+
+#### Development Setup
+
+1. **Create `.env` file** (automatically loaded by `just dev`):
+```bash
+# Copy the generated secrets to .env
+JWT_SECRET=e6024c8eada7b42bee415ef56eb597c62c170681f1946a8cb899fc5c102e2c11
+MAGIC_LINK_HMAC_KEY=464c57289ac9f1a0a93c98ebe1ced0c31ac777798b9ce55cd67a358db5931b26
+PBKDF2_SALT=637de2cf5c738c757fb4e663685721bf3dca002da5168626dbe07f1b9907e1e3
+NODE_ENV=development
+```
+
+2. **Start development environment**:
+```bash
+# Automatically loads secrets from .env
+just dev
+```
+
+#### Production Deployment
+
+For production, pass secrets as Spin variables:
+```bash
+# Deploy with secrets
+SPIN_VARIABLE_JWT_SECRET="your-secret" \
+SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-secret" \
+SPIN_VARIABLE_PBKDF2_SALT="your-secret" \
+spin-cli deploy --runtime-config-file runtime-config.toml
+```
+
+#### Security Architecture
+
+- **🛡️ Spin Variables**: Uses Fermyon Spin's native variable system (`spin_sdk::variables::get`)
+- **🔒 Secret Marking**: Variables marked as `secret = true` in `spin.toml`
+- **🚫 No Hardcoding**: All secrets externalized and never committed to repository
+- **🔐 32-Byte Minimum**: All secrets use 256-bit cryptographic strength
+- **📝 .env Support**: Development environment loads automatically from `.env` file
 
 ### Deployment
 
 #### API Deployment
 ```bash
-# Deploy to Fermyon Cloud (requires account)
-spin-cli deploy
+# Deploy to Fermyon Cloud (requires account with secrets)
+SPIN_VARIABLE_JWT_SECRET="your-production-secret" \
+SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-production-secret" \
+SPIN_VARIABLE_PBKDF2_SALT="your-production-secret" \
+spin-cli deploy --runtime-config-file runtime-config.toml
+
+# Or using justfile (loads from .env automatically)
+just deploy
 ```
 
 #### Web Interface Deployment
