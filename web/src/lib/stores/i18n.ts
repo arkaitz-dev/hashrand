@@ -72,10 +72,6 @@ currentLanguage.subscribe((language) => {
 	if (typeof window !== 'undefined') {
 		localStorage.setItem('preferred-language', language);
 
-		// Debug information in development
-		if (import.meta.env.DEV) {
-			console.log(`[i18n] Language changed to: ${language}`);
-		}
 	}
 });
 
@@ -116,17 +112,12 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 			return null;
 		},
 		testRTL: () => {
-			console.log('[i18n] Testing RTL - switching to Arabic');
 			currentLanguage.set('ar');
 		},
 		testLTR: () => {
-			console.log('[i18n] Testing LTR - switching to English');
 			currentLanguage.set('en');
 		}
 	};
-
-	console.log('[i18n] Debug functions available at window.debugI18n');
-	console.log('[i18n] Try: debugI18n.getBrowserLanguages(), debugI18n.getCurrentLanguage(), etc.');
 }
 
 // Comprehensive translation texts with proper grammar for all languages

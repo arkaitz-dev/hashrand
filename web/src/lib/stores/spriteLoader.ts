@@ -44,9 +44,6 @@ export function initializeSpriteLoader(): void {
 	window.addEventListener('sprite-loaded', () => {
 		spriteState.set(window.__SPRITE_STATE__);
 
-		if (import.meta.env.DEV) {
-			console.log('[SpriteLoader] Sprite loaded via defer script');
-		}
 	});
 
 	// Listen for sprite error event

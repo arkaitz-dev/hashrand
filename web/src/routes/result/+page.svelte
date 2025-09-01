@@ -47,7 +47,6 @@
 	onMount(async () => {
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
 		if (searchParams.size > 0) {
-			flashMessagesStore.addMessage('📄 Página /result cargada con parámetros URL, generando...');
 			await generateFromParams();
 			return;
 		}
@@ -70,7 +69,6 @@
 		// Verify auth is available (should be guaranteed by +layout.svelte)
 		const authData = localStorage.getItem('auth_user');
 		if (!authData) {
-			flashMessagesStore.addMessage('❌ Error: no hay autenticación disponible');
 			goto('/');
 			return;
 		}
@@ -178,7 +176,6 @@
 			const otp = response.otp;
 			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
-			flashMessagesStore.addMessage(`✅ Generación exitosa: endpoint=${endpoint}`);
 
 			// Set the result state
 			setResult({

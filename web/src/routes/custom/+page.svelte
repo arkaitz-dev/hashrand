@@ -94,7 +94,6 @@
 		event.preventDefault();
 
 		if (!formValid) {
-			console.log($_('common.formInvalid'));
 			return;
 		}
 
@@ -152,7 +151,6 @@
 	// Listen for authentication success event from DialogContainer
 	function handleAuthenticated(event: globalThis.CustomEvent) {
 		const authData = event.detail;
-		console.log('🎉 Authentication successful!', authData);
 		
 		// Perform the generation with the pending parameters
 		if (pendingGenerationParams) {
@@ -194,7 +192,6 @@
 
 	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
 	// 	// Email entered and moving to confirmation step
-	// 	console.log('Email entered:', event.detail.email);
 	// }
 
 	// async function handleEmailConfirmed(

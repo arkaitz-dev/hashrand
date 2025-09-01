@@ -45,17 +45,8 @@
 		currentPage: { url: globalThis.URL }
 	) {
 		try {
-			// Show step 1: Magic link detected
-			flashMessagesStore.addMessage('🔗 Magic link detectado, validando...');
-
 			// Validate the magic link (it's self-contained, no email needed)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
-
-			// Show step 2: Authentication successful
-			flashMessagesStore.addMessage(
-				`✅ Autenticado: token recibido (expires: ${loginResponse.expires_in}s)`
-			);
-			flashMessagesStore.addMessage(`👤 Usuario: ${loginResponse.user_id}`);
 
 			// Remove magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
@@ -67,10 +58,7 @@
 
 			// Handle next parameter if present
 			if (nextParam) {
-				flashMessagesStore.addMessage('🔄 Parámetro next detectado, redirigiendo...');
 				await handlePostAuthRedirect(nextParam);
-			} else {
-				flashMessagesStore.addMessage('✅ Autenticación completada');
 			}
 		} catch (error) {
 			// Remove failed magiclink parameter from URL
@@ -92,21 +80,15 @@
 			// Check if next parameter is a simple URL or Base58 encoded data
 			if (nextParam.startsWith('/') || nextParam.startsWith('http')) {
 				// Simple URL redirect
-				flashMessagesStore.addMessage(`🚀 Redirigiendo a: ${nextParam}`);
 				await goto(nextParam);
 				return;
 			}
 
 			// Try to decode as Base58 (for complex form data)
-			flashMessagesStore.addMessage('📦 Decodificando parámetros next (Base58)...');
 			const bytes = base58.decode(nextParam);
 			const decoder = new globalThis.TextDecoder();
 			const jsonString = decoder.decode(bytes);
 			const nextObject = JSON.parse(jsonString);
-
-			flashMessagesStore.addMessage(
-				`🎯 Endpoint: ${nextObject.endpoint}, params: ${Object.keys(nextObject).length} items`
-			);
 
 			// Build result URL with parameters from nextObject
 			const resultUrl = new globalThis.URL('/result', window.location.origin);
@@ -122,12 +104,10 @@
 				resultUrl.searchParams.set('raw', nextObject.raw.toString());
 
 			const finalUrl = `/result?${resultUrl.searchParams.toString()}`;
-			flashMessagesStore.addMessage(`🚀 Redirigiendo a: ${finalUrl}`);
 
 			// Verify auth is saved in localStorage before redirecting
 			const authData = localStorage.getItem('auth_user');
 			if (!authData) {
-				flashMessagesStore.addMessage('❌ Error: autenticación no guardada en localStorage');
 				await goto('/');
 				return;
 			}
@@ -137,10 +117,8 @@
 		} catch (error) {
 			// If Base58 decode fails, try as simple URL
 			try {
-				flashMessagesStore.addMessage(`🚀 Tratando como URL simple: ${nextParam}`);
 				await goto(nextParam);
 			} catch {
-				flashMessagesStore.addMessage(`❌ Error procesando next: ${error}`);
 				await goto('/');
 			}
 		}

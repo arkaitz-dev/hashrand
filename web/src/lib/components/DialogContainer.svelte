@@ -7,14 +7,6 @@
 	import SeedDialogContent from './SeedDialogContent.svelte';
 	import LogoutDialogContent from './LogoutDialogContent.svelte';
 	
-	console.log('[DEBUG] DialogContainer: Component loaded and initialized!');
-	console.log('[DEBUG] DialogContainer: Initial dialogStore value:', $dialogStore);
-	
-	// Reactive logging
-	$: {
-		console.log('[DEBUG] DialogContainer: dialogStore changed:', $dialogStore);
-		console.log('[DEBUG] DialogContainer: showDialog:', $dialogStore !== null);
-	}
 	
 	// Close dialog
 	function closeDialog() {

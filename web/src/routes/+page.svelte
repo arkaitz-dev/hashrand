@@ -21,8 +21,7 @@
 		const currentPath = $page.url.pathname;
 
 		if (userId && currentPath === '/') {
-			// User ID is set and we're on home page, show message
-			flashMessagesStore.addMessage(`user_id = ${userId}`);
+			// User ID is set and we're on home page
 		}
 	});
 

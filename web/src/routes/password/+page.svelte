@@ -73,7 +73,6 @@
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) {
-			console.log($_('common.formInvalid'));
 			return;
 		}
 
@@ -124,7 +123,6 @@
 
 	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
 	// 	// Email entered and moving to confirmation step
-	// 	console.log('Email entered:', event.detail.email);
 	// }
 
 	// async function handleEmailConfirmed(

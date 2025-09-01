@@ -244,8 +244,6 @@ export const api = {
 
 	// Authentication endpoints
 	async requestMagicLink(loginRequest: LoginRequest): Promise<MagicLinkResponse> {
-		console.log('[DEBUG] API: requestMagicLink called with:', loginRequest);
-		console.log('[DEBUG] API: About to fetch:', `${API_BASE}/login/`);
 		const response = await fetch(`${API_BASE}/login/`, {
 			method: 'POST',
 			headers: {
@@ -253,7 +251,6 @@ export const api = {
 			},
 			body: JSON.stringify(loginRequest)
 		});
-		console.log('[DEBUG] API: Got response:', response.status, response.statusText);
 
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;

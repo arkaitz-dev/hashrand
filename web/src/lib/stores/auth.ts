@@ -102,20 +102,17 @@ export const authStore = {
 	 * @returns Promise<MagicLinkResponse>
 	 */
 	async requestMagicLink(email: string, next?: string): Promise<MagicLinkResponse> {
-		console.log('[DEBUG] AuthStore: requestMagicLink called with:', { email, next });
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
 			// Capture current UI host for magic link generation
 			const ui_host = typeof window !== 'undefined' ? window.location.origin : undefined;
-			console.log('[DEBUG] AuthStore: About to call api.requestMagicLink with:', { email, ui_host, next });
 
 			const response = await api.requestMagicLink({
 				email,
 				ui_host,
 				next
 			});
-			console.log(new Date().toISOString() + ': AuthStore received response:', JSON.stringify(response));
 
 			update((state) => ({ ...state, isLoading: false }));
 			return response;
@@ -186,28 +183,16 @@ export const authStore = {
 		// Get current state directly without subscription
 		const state = get(authStore);
 
-		console.log('[DEBUG] AuthStore isAuthenticated check:', {
-			hasUser: !!state.user,
-			hasToken: !!state.accessToken,
-			userEmail: state.user?.email,
-			tokenExists: !!state.accessToken,
-			expiresAt: state.user?.expiresAt
-		});
-
 		if (!state.user || !state.accessToken) {
-			console.log('[DEBUG] Not authenticated - missing user or token');
 			return false;
 		}
 
 		// Check token expiration
 		if (state.user.expiresAt && new Date(state.user.expiresAt) <= new Date()) {
-			console.log('[DEBUG] Token expired, logging out');
 			// Token expired, logout
 			this.logout();
 			return false;
 		}
-
-		console.log('[DEBUG] User is authenticated');
 		return true;
 	},
 

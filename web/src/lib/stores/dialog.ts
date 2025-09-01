@@ -14,22 +14,17 @@ function createDialogStore() {
 
 		// Show a dialog
 		show: (type: DialogData['type'], props?: Record<string, unknown>) => {
-			console.log('[DEBUG] DialogStore: show() called with:', { type, props });
 			const dialog: DialogData = {
 				type,
 				props: props || {},
 				id: globalThis.crypto?.randomUUID() || Math.random().toString(36).substring(2, 15)
 			};
-			console.log('[DEBUG] DialogStore: setting dialog to:', dialog);
 			set(dialog);
-			console.log('[DEBUG] DialogStore: dialog set completed');
 		},
 
 		// Close/clear dialog
 		close: () => {
-			console.log(new Date().toISOString() + ': dialogStore.close() called');
 			set(null);
-			console.log(new Date().toISOString() + ': dialogStore.close() set(null) completed');
 		},
 
 		// Update dialog props
