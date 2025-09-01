@@ -71,7 +71,6 @@ export const currentLanguage = writable<string>(initializeLanguage());
 currentLanguage.subscribe((language) => {
 	if (typeof window !== 'undefined') {
 		localStorage.setItem('preferred-language', language);
-
 	}
 });
 

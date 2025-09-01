@@ -87,7 +87,7 @@
 			urlParams.set('length', (params.length ?? 21).toString());
 			urlParams.set('alphabet', params.alphabet ?? 'full-with-symbols');
 			if (urlProvidedSeed) urlParams.set('seed', urlProvidedSeed);
-			
+
 			const jsonString = JSON.stringify(Object.fromEntries(urlParams));
 			const bytes = new TextEncoder().encode(jsonString);
 			const nextParam = base58.encode(bytes);

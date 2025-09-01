@@ -1,24 +1,24 @@
 <script lang="ts">
 	/**
 	 * Auth Dialog Content - SIMPLIFIED VERSION
-	 * 
+	 *
 	 * Input email -> Send immediately -> Close dialog -> Show result
 	 */
-	
+
 	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
 	import LoadingSpinner from './LoadingSpinner.svelte';
-	
+
 	// Props
 	export let onClose: () => void;
 	export let onMagicLinkSent: () => void;
 	export let next: Record<string, unknown> | null = null;
-	
+
 	// Component state
 	let email = '';
 	let isSubmitting = false;
 	let debugMessage = next ? `📝 Props: ${JSON.stringify(next)}` : '📝 No next props received';
-	
+
 	/**
 	 * Handle form submission - send immediately
 	 */
@@ -35,18 +35,18 @@
 
 		debugMessage = '🔄 Sending...';
 		isSubmitting = true;
-		
+
 		// Close dialog immediately
 		onMagicLinkSent();
-		
+
 		// Send API call in background
 		setTimeout(async () => {
 			try {
 				debugMessage = '🔄 Calling API...';
-				
+
 				// Debug next parameters
 				debugMessage = `🔍 next=${JSON.stringify(next)}, keys=${next ? Object.keys(next).length : 0}`;
-				
+
 				// Encode next parameters as Base58 if they exist
 				let nextParam: string | undefined = undefined;
 				if (next && Object.keys(next).length > 0) {
@@ -60,7 +60,7 @@
 				} else {
 					debugMessage = `🔄 No next params to send`;
 				}
-				
+
 				const response = await fetch('/api/login/', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -90,7 +90,11 @@
 
 <!-- Header -->
 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-	<h2 class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL ? 'text-right' : 'text-left'}">
+	<h2
+		class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL
+			? 'text-right'
+			: 'text-left'}"
+	>
 		{$_('auth.loginRequired')}
 	</h2>
 	<button
@@ -99,7 +103,8 @@
 		aria-label={$_('common.close')}
 	>
 		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
+			></path>
 		</svg>
 	</button>
 </div>
@@ -110,7 +115,7 @@
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			{$_('auth.loginDescription')}
 		</p>
-		
+
 		<div>
 			<label
 				for="auth-email"
@@ -130,7 +135,7 @@
 				       disabled:opacity-50 disabled:cursor-not-allowed"
 				onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
 			/>
-			
+
 			{#if debugMessage}
 				<p class="text-blue-600 dark:text-blue-400 text-sm mt-1">
 					{debugMessage}
@@ -141,7 +146,11 @@
 </div>
 
 <!-- Footer Actions -->
-<div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL ? 'flex-row-reverse' : ''}">
+<div
+	class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+		? 'flex-row-reverse'
+		: ''}"
+>
 	<button
 		onclick={onClose}
 		disabled={isSubmitting}

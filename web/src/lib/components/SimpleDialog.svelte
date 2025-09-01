@@ -1,11 +1,11 @@
 <script lang="ts">
 	/**
 	 * Simple Dialog Component (Svelte 5 Compatible)
-	 * 
+	 *
 	 * Simplified version of UniversalDialog with backdrop blur
 	 * that works correctly with Svelte 5 runes
 	 */
-	
+
 	import { createEventDispatcher } from 'svelte';
 	import { isRTL, textDirection } from '$lib/stores/rtl';
 	import { _ } from '$lib/stores/i18n';
@@ -77,14 +77,22 @@
 	>
 		<!-- Dialog Content -->
 		<div
-			class="relative w-full {sizeClasses[size]} transform rounded-xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300"
+			class="relative w-full {sizeClasses[
+				size
+			]} transform rounded-xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<!-- Header -->
 			{#if title || closable}
-				<div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+				<div
+					class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
+				>
 					{#if title}
-						<h2 class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL ? 'text-right' : 'text-left'}">
+						<h2
+							class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL
+								? 'text-right'
+								: 'text-left'}"
+						>
 							{title}
 						</h2>
 					{:else}
@@ -98,7 +106,12 @@
 							aria-label={$_('common.close')}
 						>
 							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M6 18L18 6M6 6l12 12"
+								></path>
 							</svg>
 						</button>
 					{/if}
@@ -112,7 +125,11 @@
 
 			<!-- Footer Actions -->
 			{#if actions}
-				<div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL ? 'flex-row-reverse' : ''}">
+				<div
+					class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+						? 'flex-row-reverse'
+						: ''}"
+				>
 					{@render actions()}
 				</div>
 			{/if}

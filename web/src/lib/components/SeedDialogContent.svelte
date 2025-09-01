@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
-	
+
 	// Props
 	export let onClose: () => void;
 	export let onSeedChoice: (keepSeed: boolean) => void;
@@ -9,7 +9,11 @@
 
 <!-- Header -->
 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-	<h2 class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL ? 'text-right' : 'text-left'}">
+	<h2
+		class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL
+			? 'text-right'
+			: 'text-left'}"
+	>
 		{$_('common.reuseSeedTitle')}
 	</h2>
 	<button
@@ -18,7 +22,8 @@
 		aria-label={$_('common.close')}
 	>
 		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
+			></path>
 		</svg>
 	</button>
 </div>
@@ -31,7 +36,11 @@
 </div>
 
 <!-- Footer Actions -->
-<div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL ? 'flex-row-reverse' : ''}">
+<div
+	class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+		? 'flex-row-reverse'
+		: ''}"
+>
 	<button
 		onclick={() => onSeedChoice(false)}
 		class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"

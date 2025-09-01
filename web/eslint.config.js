@@ -29,12 +29,16 @@ export default [
 				localStorage: 'readonly',
 				setTimeout: 'readonly',
 				clearTimeout: 'readonly',
+				setInterval: 'readonly',
+				clearInterval: 'readonly',
 				Event: 'readonly',
 				MouseEvent: 'readonly',
 				Element: 'readonly',
 				HTMLTextAreaElement: 'readonly',
 				HTMLSelectElement: 'readonly',
-				HTMLInputElement: 'readonly'
+				HTMLInputElement: 'readonly',
+				TextEncoder: 'readonly',
+				TextDecoder: 'readonly'
 			}
 		},
 		plugins: {
@@ -68,12 +72,16 @@ export default [
 				localStorage: 'readonly',
 				setTimeout: 'readonly',
 				clearTimeout: 'readonly',
+				setInterval: 'readonly',
+				clearInterval: 'readonly',
 				Event: 'readonly',
 				MouseEvent: 'readonly',
 				Element: 'readonly',
 				HTMLTextAreaElement: 'readonly',
 				HTMLSelectElement: 'readonly',
-				HTMLInputElement: 'readonly'
+				HTMLInputElement: 'readonly',
+				TextEncoder: 'readonly',
+				TextDecoder: 'readonly'
 			}
 		},
 		plugins: {

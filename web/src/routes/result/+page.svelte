@@ -176,7 +176,6 @@
 			const otp = response.otp;
 			const responseTimestamp = new Date(response.timestamp * 1000); // Convert from seconds to ms
 
-
 			// Set the result state
 			setResult({
 				value,
@@ -194,7 +193,7 @@
 				await goto('/');
 				return;
 			}
-			
+
 			const errorMsg = error instanceof Error ? error.message : $_('common.failedToGenerate');
 			flashMessagesStore.addMessage(`❌ Error en generación: ${errorMsg}`);
 			setError(errorMsg);
@@ -518,7 +517,7 @@
 				await goto('/');
 				return;
 			}
-			
+
 			setError(error instanceof Error ? error.message : $_('common.failedToRegenerate'));
 		} finally {
 			setLoading(false);
@@ -530,7 +529,7 @@
 	<title>{$_('common.result')}</title>
 </svelte:head>
 
-<svelte:window on:keydown={handleKeydown} />
+<!-- <svelte:window on:keydown={handleKeydown} /> -->
 
 {#if $resultState}
 	{@const color = getEndpointColor($resultState.endpoint)}

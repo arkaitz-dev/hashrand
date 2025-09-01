@@ -178,7 +178,8 @@ export const es: I18nTexts = {
 		confirmEmailDescription: '¿Es correcto?',
 		magicLinkSent: '¡Enlace Enviado!',
 		magicLinkInstructions: 'Revisa tu email y haz clic en el enlace mágico para autenticarte.',
-		magicLinkSentFlash: 'Enlace mágico enviado. Revisa tu email y haz clic en el enlace para continuar.',
+		magicLinkSentFlash:
+			'Enlace mágico enviado. Revisa tu email y haz clic en el enlace para continuar.',
 		developmentMode: 'Modo Desarrollo:',
 		testMagicLink: 'Hacer clic aquí para probar el enlace mágico',
 		authenticationFailed: 'Error de autenticación',
@@ -189,7 +190,8 @@ export const es: I18nTexts = {
 		authenticatedAs: 'Autenticado como:',
 		logout: 'Cerrar sesión',
 		logoutConfirmTitle: 'Cerrar Sesión',
-		logoutConfirmMessage: '¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
+		logoutConfirmMessage:
+			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
 		loggedOut: 'Sesión cerrada correctamente'
 	},
 	logout: {

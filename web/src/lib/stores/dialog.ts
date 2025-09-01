@@ -29,9 +29,7 @@ function createDialogStore() {
 
 		// Update dialog props
 		update: (props: Record<string, unknown>) => {
-			update(current => 
-				current ? { ...current, props: { ...current.props, ...props } } : null
-			);
+			update((current) => (current ? { ...current, props: { ...current.props, ...props } } : null));
 		}
 	};
 }

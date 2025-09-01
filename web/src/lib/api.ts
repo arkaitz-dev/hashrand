@@ -48,6 +48,58 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 	}
 }
 
+/**
+ * Authenticated fetch wrapper with automatic token refresh
+ * @param url - Request URL
+ * @param options - Fetch options
+ * @returns Promise<Response>
+ */
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+	// Get initial auth headers
+	const authHeaders = await getAuthHeaders();
+
+	// Make initial request
+	let response = await fetch(url, {
+		...options,
+		headers: {
+			...options.headers,
+			...authHeaders
+		}
+	});
+
+	// If 401 Unauthorized, try to refresh token
+	if (response.status === 401) {
+		console.log('🔄 Access token expired, attempting refresh...');
+
+		const refreshSuccess = await api.refreshToken();
+
+		if (refreshSuccess) {
+			console.log('✅ Token refresh successful, retrying request...');
+
+			// Get updated auth headers and retry request
+			const newAuthHeaders = await getAuthHeaders();
+			response = await fetch(url, {
+				...options,
+				headers: {
+					...options.headers,
+					...newAuthHeaders
+				}
+			});
+		} else {
+			console.log('❌ Token refresh failed, forcing logout...');
+
+			// Refresh failed, force logout and show login dialog
+			const { authStore } = await import('./stores/auth');
+			const { dialogStore } = await import('./stores/dialog');
+
+			await authStore.logout();
+			dialogStore.show('auth');
+		}
+	}
+
+	return response;
+}
+
 class ApiError extends Error {
 	constructor(
 		message: string,
@@ -80,12 +132,7 @@ export const api = {
 		if (params.suffix) searchParams.set('suffix', params.suffix);
 		if (params.raw) searchParams.set('raw', 'true');
 
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/custom?${searchParams}`, {
-			headers: {
-				...authHeaders
-			}
-		});
+		const response = await authenticatedFetch(`${API_BASE}/custom?${searchParams}`);
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -102,12 +149,7 @@ export const api = {
 		if (params.alphabet) searchParams.set('alphabet', params.alphabet);
 		if (params.raw) searchParams.set('raw', 'true');
 
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/password?${searchParams}`, {
-			headers: {
-				...authHeaders
-			}
-		});
+		const response = await authenticatedFetch(`${API_BASE}/password?${searchParams}`);
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -124,12 +166,7 @@ export const api = {
 		if (params.alphabet) searchParams.set('alphabet', params.alphabet);
 		if (params.raw) searchParams.set('raw', 'true');
 
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/api-key?${searchParams}`, {
-			headers: {
-				...authHeaders
-			}
-		});
+		const response = await authenticatedFetch(`${API_BASE}/api-key?${searchParams}`);
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -145,12 +182,10 @@ export const api = {
 	},
 
 	async generateWithSeed(seedRequest: SeedGenerateRequest): Promise<CustomHashResponse> {
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/custom`, {
+		const response = await authenticatedFetch(`${API_BASE}/custom`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
-				...authHeaders
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
@@ -164,12 +199,10 @@ export const api = {
 	},
 
 	async generatePasswordWithSeed(seedRequest: SeedPasswordRequest): Promise<CustomHashResponse> {
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/password`, {
+		const response = await authenticatedFetch(`${API_BASE}/password`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
-				...authHeaders
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
@@ -183,12 +216,10 @@ export const api = {
 	},
 
 	async generateApiKeyWithSeed(seedRequest: SeedApiKeyRequest): Promise<CustomHashResponse> {
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/api-key`, {
+		const response = await authenticatedFetch(`${API_BASE}/api-key`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
-				...authHeaders
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
@@ -207,13 +238,8 @@ export const api = {
 		if (params.words) urlParams.set('words', params.words.toString());
 		if (params.raw !== undefined) urlParams.set('raw', params.raw.toString());
 
-		const authHeaders = await getAuthHeaders();
 		const url = `${API_BASE}/mnemonic${urlParams.toString() ? `?${urlParams}` : ''}`;
-		const response = await fetch(url, {
-			headers: {
-				...authHeaders
-			}
-		});
+		const response = await authenticatedFetch(url);
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -224,12 +250,10 @@ export const api = {
 	},
 
 	async generateMnemonicWithSeed(seedRequest: SeedMnemonicRequest): Promise<CustomHashResponse> {
-		const authHeaders = await getAuthHeaders();
-		const response = await fetch(`${API_BASE}/mnemonic`, {
+		const response = await authenticatedFetch(`${API_BASE}/mnemonic`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
-				...authHeaders
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(seedRequest)
 		});
@@ -291,9 +315,52 @@ export const api = {
 	},
 
 	async logout(): Promise<void> {
-		// No need to clear HttpOnly refresh token cookie from client-side
-		// It will expire automatically (15 minutes Max-Age) and cannot be accessed from JavaScript
-		// The main cleanup is done in authStore.logout() (localStorage clearing)
+		// Call backend to clear HttpOnly refresh token cookie
+		try {
+			await fetch(`${API_BASE}/login`, {
+				method: 'DELETE'
+			});
+		} catch (error) {
+			console.warn('Failed to clear refresh token cookie:', error);
+			// Continue with logout even if cookie clearing fails
+		}
+	},
+
+	/**
+	 * Try to refresh the access token using the HttpOnly refresh token cookie
+	 * @returns Promise<boolean> - true if refresh was successful
+	 */
+	async refreshToken(): Promise<boolean> {
+		try {
+			const response = await fetch(`${API_BASE}/refresh`, {
+				method: 'POST',
+				credentials: 'include' // Include HttpOnly cookies
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+
+				// Update auth store with new token
+				const { authStore } = await import('./stores/auth');
+				const expiresAt = new Date();
+				expiresAt.setSeconds(expiresAt.getSeconds() + data.expires_in);
+
+				const user = {
+					email: '', // Not needed for Zero Knowledge auth
+					user_id: data.user_id,
+					isAuthenticated: true,
+					expiresAt
+				};
+
+				// Update store and localStorage
+				authStore.updateTokens(user, data.access_token);
+				return true;
+			}
+			return false;
+		} catch (error) {
+			console.warn('Token refresh failed:', error);
+			return false;
+		}
 	}
 };
 

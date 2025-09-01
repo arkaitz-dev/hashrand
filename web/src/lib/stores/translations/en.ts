@@ -189,7 +189,8 @@ export const en: I18nTexts = {
 		authenticatedAs: 'Authenticated as:',
 		logout: 'Log out',
 		logoutConfirmTitle: 'Log Out',
-		logoutConfirmMessage: 'Are you sure you want to log out? You will need to authenticate again to access protected features.',
+		logoutConfirmMessage:
+			'Are you sure you want to log out? You will need to authenticate again to access protected features.',
 		loggedOut: 'Logged out successfully'
 	},
 	logout: {

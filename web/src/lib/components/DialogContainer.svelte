@@ -6,25 +6,24 @@
 	import AuthDialogContent from './AuthDialogContent.svelte';
 	import SeedDialogContent from './SeedDialogContent.svelte';
 	import LogoutDialogContent from './LogoutDialogContent.svelte';
-	
-	
+
 	// Close dialog
 	function closeDialog() {
 		dialogStore.close();
 	}
-	
+
 	// Handle magic link sent successfully
 	function handleMagicLinkSent() {
 		// Close dialog
 		dialogStore.close();
-		
+
 		// Add flash message
 		flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
-		
+
 		// Navigate to home
 		goto('/');
 	}
-	
+
 	// Handle escape key
 	function handleKeydown(event: globalThis.KeyboardEvent) {
 		if (event.key === 'Escape' && $dialogStore) {
@@ -49,20 +48,18 @@
 		>
 			<!-- Render different dialog types -->
 			{#if $dialogStore.type === 'auth'}
-				<AuthDialogContent 
+				<AuthDialogContent
 					next={$dialogStore.props}
 					onClose={closeDialog}
 					onMagicLinkSent={handleMagicLinkSent}
 				/>
 			{:else if $dialogStore.type === 'seed'}
-				<SeedDialogContent 
+				<SeedDialogContent
 					onClose={closeDialog}
 					onSeedChoice={$dialogStore.props?.onSeedChoice || (() => {})}
 				/>
 			{:else if $dialogStore.type === 'logout'}
-				<LogoutDialogContent 
-					onClose={closeDialog}
-				/>
+				<LogoutDialogContent onClose={closeDialog} />
 			{:else}
 				<!-- Fallback for unknown dialog types -->
 				<div class="p-6">

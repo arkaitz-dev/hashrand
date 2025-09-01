@@ -151,18 +151,19 @@
 	// Listen for authentication success event from DialogContainer
 	function handleAuthenticated(event: globalThis.CustomEvent) {
 		const authData = event.detail;
-		
+
 		// Perform the generation with the pending parameters
 		if (pendingGenerationParams) {
 			// Update params with pending values if they exist
 			if (pendingGenerationParams.length) params.length = Number(pendingGenerationParams.length);
-			if (pendingGenerationParams.alphabet) params.alphabet = String(pendingGenerationParams.alphabet) as AlphabetType;
+			if (pendingGenerationParams.alphabet)
+				params.alphabet = String(pendingGenerationParams.alphabet) as AlphabetType;
 			if (pendingGenerationParams.prefix) params.prefix = String(pendingGenerationParams.prefix);
 			if (pendingGenerationParams.suffix) params.suffix = String(pendingGenerationParams.suffix);
 			if (pendingGenerationParams.seed) urlProvidedSeed = String(pendingGenerationParams.seed);
-			
+
 			pendingGenerationParams = null;
-			
+
 			// Perform generation
 			performGeneration();
 		}

@@ -146,7 +146,7 @@
 			urlParams.set('language', params.language ?? 'english');
 			urlParams.set('words', (params.words ?? 12).toString());
 			if (urlProvidedSeed) urlParams.set('seed', urlProvidedSeed);
-			
+
 			const jsonString = JSON.stringify(Object.fromEntries(urlParams));
 			const bytes = new TextEncoder().encode(jsonString);
 			const nextParam = base58.encode(bytes);

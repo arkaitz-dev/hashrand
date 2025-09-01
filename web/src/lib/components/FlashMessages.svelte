@@ -43,7 +43,7 @@
 			</button>
 
 			<!-- Messages content -->
-			<div class="{$isRTL ? 'ml-8 text-right' : 'mr-8 text-left'}">
+			<div class={$isRTL ? 'ml-8 text-right' : 'mr-8 text-left'}>
 				{#each $flashMessagesStore as message, index}
 					<div class="text-sm text-blue-700 dark:text-blue-300 {index > 0 ? 'mt-2' : ''}">
 						{message.content}

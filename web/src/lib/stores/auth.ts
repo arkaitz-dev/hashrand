@@ -212,7 +212,7 @@ export const authStore = {
 	async logout(): Promise<void> {
 		// Call API logout to clear server-side session and refresh token cookie
 		await api.logout();
-		
+
 		// Clear local state and storage
 		set(initialState);
 		clearAuthFromStorage();
@@ -223,6 +223,20 @@ export const authStore = {
 	 */
 	clearError(): void {
 		update((state) => ({ ...state, error: null }));
+	},
+
+	/**
+	 * Update tokens after refresh (internal method)
+	 */
+	updateTokens(user: AuthUser, accessToken: string): void {
+		update((state) => ({
+			...state,
+			user,
+			accessToken,
+			error: null
+		}));
+
+		saveAuthToStorage(user, accessToken);
 	}
 };
 

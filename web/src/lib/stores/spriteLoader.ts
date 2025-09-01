@@ -43,7 +43,6 @@ export function initializeSpriteLoader(): void {
 	// Listen for sprite loaded event
 	window.addEventListener('sprite-loaded', () => {
 		spriteState.set(window.__SPRITE_STATE__);
-
 	});
 
 	// Listen for sprite error event
