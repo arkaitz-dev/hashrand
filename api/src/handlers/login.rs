@@ -14,7 +14,7 @@ use crate::database::{
     models::AuthSession,
     operations::AuthOperations,
 };
-use crate::utils::JwtUtils;
+use crate::utils::{JwtUtils, send_magic_link_email};
 
 /// Request body for magic link generation
 #[derive(Deserialize)]
@@ -24,6 +24,8 @@ struct MagicLinkRequest {
     ui_host: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     next: Option<String>, // Base58-encoded parameters for post-auth redirect
+    #[serde(skip_serializing_if = "Option::is_none")]
+    email_lang: Option<String>, // Language code for email template (e.g., "es", "en")
 }
 
 /// Response for magic link generation (development)
@@ -48,7 +50,7 @@ struct ErrorResponse {
 ///
 /// # Returns
 /// * `Result<impl IntoResponse, anyhow::Error>` - HTTP response
-pub fn handle_login(
+pub async fn handle_login(
     req: Request,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
@@ -71,7 +73,7 @@ pub fn handle_login(
     println!("Database initialized successfully");
 
     match *req.method() {
-        Method::Post => handle_magic_link_generation(req, env),
+        Method::Post => handle_magic_link_generation(req, env).await,
         Method::Get => handle_magic_link_validation(req, query_params, env),
         _ => Ok(Response::builder()
             .status(405)
@@ -84,7 +86,7 @@ pub fn handle_login(
 }
 
 /// Handle POST /api/login/ - Generate magic link
-fn handle_magic_link_generation(
+async fn handle_magic_link_generation(
     req: Request,
     env: DatabaseEnvironment,
 ) -> anyhow::Result<Response> {
@@ -99,8 +101,8 @@ fn handle_magic_link_generation(
         match serde_json::from_slice::<MagicLinkRequest>(body_bytes) {
             Ok(req) => {
                 println!(
-                    "DEBUG: Parsed request - Email: {}, UI Host: {:?}",
-                    req.email, req.ui_host
+                    "DEBUG: Parsed request - Email: {}, UI Host: {:?}, Email Lang: {:?}",
+                    req.email, req.ui_host, req.email_lang
                 );
                 req
             }
@@ -183,31 +185,42 @@ fn handle_magic_link_generation(
             );
             println!("DEBUG: Generated magic_link = {}", magic_link);
 
-            // In development, simulate email content instead of sending actual email
-            println!("\n🔗 === SIMULATED EMAIL (DEVELOPMENT MODE) ===");
-            println!("📧 TO: {}", magic_request.email);
-            println!("📬 FROM: HashRand Spin <noreply@hashrand.example>");
-            println!("📝 SUBJECT: Your Magic Link for HashRand Spin");
-            println!("📄 EMAIL BODY:");
-            println!("──────────────────────────────────────────────────");
-            println!("Hi there!");
-            println!();
-            println!("You requested access to HashRand Spin. Click the link below to sign in:");
-            println!();
-            println!("🔗 {}", magic_link);
-            println!();
-            println!("This link will expire at: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
-            println!();
-            println!("If you didn't request this, you can safely ignore this email.");
-            println!();
-            println!("Best regards,");
-            println!("The HashRand Spin Team");
-            println!("──────────────────────────────────────────────────");
-            println!("🔧 DEVELOPMENT INFO:");
-            println!("   • UI Host: {:?}", magic_request.ui_host);
-            println!("   • Final Host URL: {}", host_url);
-            println!("   • Token expires: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
-            println!("═══════════════════════════════════════════════════\n");
+            // Try to send email via Mailtrap, fallback to console logging
+            match send_magic_link_email(&magic_request.email, &magic_link, magic_request.email_lang.as_deref()).await {
+                Ok(()) => {
+                    println!("✅ Email sent successfully to: {}", magic_request.email);
+                }
+                Err(e) => {
+                    println!("⚠️ Email sending failed, falling back to console logging: {}", e);
+                    
+                    // Fallback: simulate email content in console (development mode)
+                    println!("\n🔗 === EMAIL FALLBACK (DEVELOPMENT MODE) ===");
+                    println!("📧 TO: {}", magic_request.email);
+                    println!("📬 FROM: HashRand Spin <noreply@hashrand.dev>");
+                    println!("📝 SUBJECT: Your Magic Link for HashRand Spin");
+                    println!("📄 EMAIL BODY:");
+                    println!("──────────────────────────────────────────────────");
+                    println!("Hi there!");
+                    println!();
+                    println!("You requested access to HashRand Spin. Click the link below to sign in:");
+                    println!();
+                    println!("🔗 {}", magic_link);
+                    println!();
+                    println!("This link will expire at: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
+                    println!();
+                    println!("If you didn't request this, you can safely ignore this email.");
+                    println!();
+                    println!("Best regards,");
+                    println!("The HashRand Spin Team");
+                    println!("──────────────────────────────────────────────────");
+                    println!("🔧 DEVELOPMENT INFO:");
+                    println!("   • UI Host: {:?}", magic_request.ui_host);
+                    println!("   • Final Host URL: {}", host_url);
+                    println!("   • Token expires: {}", magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC"));
+                    println!("   • Email send error: {}", e);
+                    println!("═══════════════════════════════════════════════════\n");
+                }
+            }
 
             // Clean up expired sessions
             let _ = AuthOperations::cleanup_expired_sessions(env);

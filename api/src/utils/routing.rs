@@ -16,7 +16,7 @@ use std::collections::HashMap;
 ///
 /// # Returns
 /// Appropriate response for the endpoint or 404/405 if not found/method not allowed
-pub fn route_request_with_req(
+pub async fn route_request_with_req(
     req: Request,
     path: &str,
     query_params: HashMap<String, String>,
@@ -61,7 +61,7 @@ pub fn route_request_with_req(
         path if path.starts_with("/api/users") => handle_users(req, path, query_params),
 
         // Authentication endpoints (support GET and POST)
-        path if path.starts_with("/api/login") => handle_login(req, query_params),
+        path if path.starts_with("/api/login") => handle_login(req, query_params).await,
 
         // Not found
         _ => handle_not_found(),

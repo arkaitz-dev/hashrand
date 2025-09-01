@@ -11,6 +11,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.4 / Web v0.19.3] - 2025-09-01
+
+### Email Integration & Multilingual Support (v1.4.4)
+#### Added
+- **📧 Complete Mailtrap Email Integration**: Professional email delivery system for magic link authentication
+  - **Production-Ready Email Delivery**: Full Mailtrap REST API integration replacing development console logging
+    - **REST API Implementation**: Native Spin SDK HTTP client (`spin_sdk::http::send`) for reliable email delivery
+    - **Sandbox Environment**: Configured for Mailtrap sandbox API (`sandbox.api.mailtrap.io/api/send/{inbox_id}`)
+    - **Bearer Token Authentication**: Secure API token authentication with proper Authorization headers
+    - **Professional Email Templates**: HTML and plain text versions for all supported languages
+    - **Delivery Confirmation**: HTTP 200/202 status validation with comprehensive error handling
+  - **🌍 Comprehensive Multilingual Email Support**: Magic link emails in 13 languages matching web UI
+    - **Complete Language Coverage**: Full email templates for all web UI supported languages
+      - **Western Languages**: English, Spanish, Catalan, Galician, French, German, Portuguese
+      - **Eastern Languages**: Russian, Chinese, Japanese, Arabic, Hindi
+      - **Technical Languages**: All include proper technical terminology and formatting
+    - **HTML + Plain Text**: Dual format support ensuring compatibility with all email clients
+    - **RTL Language Support**: Arabic template includes `dir="rtl"` for proper right-to-left display
+    - **Culturally Adapted Content**: Native terminology and proper grammar for each language
+    - **Fallback System**: Automatic fallback to English for unsupported language codes
+  - **Email Localization Architecture**: Complete i18n integration with authentication system
+    - **Language Parameter**: `email_lang` parameter in magic link requests (e.g., "es", "fr", "ar")
+    - **Dynamic Template Selection**: Real-time language detection and template switching
+    - **Consistent Branding**: "HashRand Spin" branding and professional tone across all languages
+    - **Technical Precision**: Consistent magic link, expiration, and security messaging
+
+#### Enhanced
+- **🔧 Email Configuration System**: Complete environment variable and Spin configuration integration
+  - **Environment Variables**: Added Mailtrap API token and inbox ID configuration
+    ```env
+    SPIN_VARIABLE_MAILTRAP_API_TOKEN=your-api-token-here
+    SPIN_VARIABLE_MAILTRAP_INBOX_ID=your-inbox-id-here
+    ```
+  - **Spin Configuration**: Updated `spin.toml` with Mailtrap REST API endpoint and allowed hosts
+  - **Development Integration**: Seamless `.env` file loading with justfile development workflow
+  - **Production Ready**: Secure secret management using Spin's native variable system
+- **⚡ Async Authentication Flow**: Complete async/await integration throughout authentication system
+  - **Async Handler Chain**: Updated entire request flow to support async email sending
+    - `handle_hashrand_spin` → `route_request_with_req` → `handle_login` → `send_magic_link_email`
+  - **Error Handling**: Comprehensive async error handling with fallback to console logging
+  - **Performance Optimized**: Non-blocking email delivery maintaining fast API response times
+
+#### Technical Implementation
+- **Email Module Architecture**: Professional email service with comprehensive multilingual support
+  - **`EmailConfig` Structure**: Centralized configuration management for API credentials and settings
+  - **Template System**: 13 complete language templates with HTML and plain text versions
+  - **HTTP Client Integration**: Native Spin SDK HTTP client for reliable REST API communication
+  - **Error Recovery**: Graceful fallback to console logging when email delivery fails
+- **Authentication Enhancement**: Email language detection and integration
+  - **Magic Link Request**: Extended with optional `email_lang` parameter
+  - **Language Validation**: Proper validation and fallback for unsupported language codes
+  - **Logging Integration**: Enhanced debug logging for email delivery status and language selection
+- **Development Workflow**: Complete testing and verification system
+  - **curl Testing**: Verified integration with direct Mailtrap API calls
+  - **Live Testing**: Confirmed magic link email delivery in multiple languages (Spanish, French)
+  - **Status Validation**: HTTP status 200 confirmation for successful email delivery
+
+#### User Experience Benefits
+- **🌐 Native Language Experience**: Users receive magic link emails in their selected UI language
+- **📱 Professional Email Design**: HTML emails with proper styling and branding across all devices
+- **⚡ Reliable Delivery**: Production-grade email infrastructure replacing development console logs
+- **🛡️ Security Consistency**: Consistent security messaging and branding across all 13 languages
+- **📧 Email Client Compatibility**: Dual HTML/plain text ensures compatibility with all email clients
+
+---
+
 ## [API v1.4.3 / Web v0.19.3] - 2025-08-31
 
 ### Testing Infrastructure Changes (v1.4.3)

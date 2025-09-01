@@ -11,6 +11,11 @@ description = "A random hash generator API built with Fermyon Spin"
 jwt_secret = { required = true, secret = true }
 magic_link_hmac_key = { required = true, secret = true }
 pbkdf2_salt = { required = true, secret = true }
+# Email configuration for Mailtrap REST API
+mailtrap_api_url = { default = "https://sandbox.api.mailtrap.io/api/send" }
+mailtrap_api_token = { required = true, secret = true }
+mailtrap_inbox_id = { required = true }
+from_email = { default = "noreply@hashrand.dev" }
 
 [[trigger.http]]
 route = "/api/..."
@@ -18,13 +23,17 @@ component = "hashrand-spin"
 
 [component.hashrand-spin]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["https://sandbox.api.mailtrap.io"]
 sqlite_databases = ["hashrand-dev", "hashrand"]
 # Reference application variables in component variables
 [component.hashrand-spin.variables]
 jwt_secret = "{{ jwt_secret }}"
 magic_link_hmac_key = "{{ magic_link_hmac_key }}"
 pbkdf2_salt = "{{ pbkdf2_salt }}"
+mailtrap_api_url = "{{ mailtrap_api_url }}"
+mailtrap_api_token = "{{ mailtrap_api_token }}"
+mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
+from_email = "{{ from_email }}"
 [component.hashrand-spin.build]
 command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]

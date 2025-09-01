@@ -81,11 +81,12 @@ A **Zero Knowledge (ZK) random hash generator** built with Fermyon Spin and WebA
     - Seamless form restoration after authentication completion
   - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale)
   - **Clean User Flow**: Seamless transition from form → authentication → result generation
-  - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation
+  - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation and multilingual email delivery
   - **AuthGuard Protection**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes  
   - **JWT Dual Token System**: Access tokens (15 min) + HttpOnly refresh cookies (1 week)
   - **Frontend Integration**: LoginDialog modal, automatic token management, and session persistence
-  - **Development Mode**: Console-logged magic links for easy development and testing
+  - **Production Email System**: Complete Mailtrap integration with multilingual email templates for 13 languages
+- **Development Mode**: Console-logged magic links for easy development and testing with email fallback
   - **Database Sessions**: Complete session management with automatic cleanup of expired sessions
   - **Mobile-Optimized**: Extended debug display (20 seconds) for tablet development without dev console
   - **Professional Translation Quality**: Comprehensive review and enhancement of all 13 language translations
@@ -328,9 +329,16 @@ GET /api/login/?magiclink=...  # Validate magic link and get JWT tokens
 **Magic Link Generation (POST /api/login/):**
 ```json
 {
-  "email": "user@example.com"
+  "email": "user@example.com",
+  "ui_host": "http://localhost:5173",
+  "email_lang": "es"
 }
 ```
+
+**Request Parameters:**
+- `email` (required) - User email address for magic link delivery
+- `ui_host` (optional) - Frontend URL for magic link generation
+- `email_lang` (optional) - Language code for email template (e.g., "es", "fr", "ar")
 
 **Response:**
 ```json
@@ -372,6 +380,74 @@ curl -X POST "http://localhost:3000/api/login/" \
 curl "http://localhost:3000/api/login/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
 ```
 
+### Email Integration & Multilingual Support
+
+#### Production Email Delivery
+The magic link authentication system includes **complete Mailtrap email integration** for production-grade email delivery:
+
+```bash
+# Email delivery via Mailtrap REST API
+- **Endpoint**: https://sandbox.api.mailtrap.io/api/send/{inbox_id}
+- **Authentication**: Bearer token authentication
+- **Format**: HTML + plain text dual format for all email clients
+- **Confirmation**: HTTP 200/202 status validation with error handling
+- **Fallback**: Console logging when email delivery fails (development mode)
+```
+
+#### Comprehensive Multilingual Email Templates
+Magic link emails are delivered in **13 languages** matching the web UI language selector:
+
+**Supported Languages:**
+- **🇪🇸 Spanish** (`es`) - Español con terminología nativa profesional
+- **🇺🇸 English** (`en`) - Professional technical terminology (default)
+- **🇫🇷 French** (`fr`) - Français avec terminologie technique précise
+- **🇩🇪 German** (`de`) - Deutsch mit professioneller technischer Sprache
+- **🇵🇹 Portuguese** (`pt`) - Português europeu com terminologia técnica
+- **🇷🇺 Russian** (`ru`) - Русский с технической терминологией
+- **🇨🇳 Chinese** (`zh`) - 中文（简体）技术术语
+- **🇯🇵 Japanese** (`ja`) - 日本語の技術用語
+- **🇸🇦 Arabic** (`ar`) - العربية مع اتجاه النص من اليمين إلى اليسار
+- **🇮🇳 Hindi** (`hi`) - हिन्दी तकनीकी शब्दावली के साथ
+- **🏴󠁥󠁳󠁣󠁴󠁿 Catalan** (`ca`) - Català amb terminologia tècnica precisa
+- **🏴󠁥󠁳󠁧󠁡󠁿 Galician** (`gl`) - Galego con terminoloxía técnica
+- **🏴󠁥󠁳󠁰󠁶󠁿 Basque** (`eu`) - Euskera termino tekniko egokiekin
+
+#### Email Template Features
+- **HTML + Plain Text**: Dual format ensures compatibility with all email clients
+- **RTL Support**: Arabic template includes `dir="rtl"` for proper right-to-left display
+- **Professional Branding**: Consistent "HashRand Spin" branding across all languages
+- **Security Messaging**: Clear magic link expiration and security information in each language
+- **Cultural Adaptation**: Native terminology and proper grammar for each language
+- **Fallback System**: Automatic fallback to English for unsupported language codes
+
+#### Email Configuration
+```env
+# Required environment variables for email integration
+SPIN_VARIABLE_MAILTRAP_API_TOKEN=your-mailtrap-api-token
+SPIN_VARIABLE_MAILTRAP_INBOX_ID=your-inbox-id
+
+# Optional email settings
+SPIN_VARIABLE_FROM_EMAIL=noreply@hashrand.dev  # Default sender
+```
+
+#### Usage Examples
+```bash
+# Request magic link in Spanish
+curl -X POST "http://localhost:3000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "usuario@ejemplo.com", "email_lang": "es"}'
+
+# Request magic link in Arabic (RTL support)
+curl -X POST "http://localhost:3000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "email_lang": "ar"}'
+
+# Request magic link with fallback to English
+curl -X POST "http://localhost:3000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "email_lang": "unsupported"}'
+```
+
 ### Get Version Information
 ```
 GET /api/version
@@ -380,8 +456,8 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.4.2",
-  "ui_version": "0.19.2"
+  "api_version": "1.4.4",
+  "ui_version": "0.19.3"
 }
 ```
 
@@ -887,6 +963,10 @@ MAGIC_LINK_HMAC_KEY=your-64-character-hex-secret-here
 
 # Salt for PBKDF2 user ID derivation (64 hex chars = 32 bytes)
 PBKDF2_SALT=your-64-character-hex-secret-here
+
+# Mailtrap API integration for email delivery
+MAILTRAP_API_TOKEN=your-mailtrap-api-token
+MAILTRAP_INBOX_ID=your-inbox-id
 ```
 
 #### Secret Generation

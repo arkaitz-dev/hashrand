@@ -20,7 +20,7 @@ use utils::{parse_query_params, route_request_with_req};
 /// - GET /api/version - Version information
 /// - POST /api/from-seed - Seed-based hash generation
 #[http_component]
-fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
+async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
     // Get the full URL from the spin-full-url header
     let full_url = req
         .header("spin-full-url")
@@ -47,5 +47,5 @@ fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
     let query_params = parse_query_params(query_string);
 
     // Route according to path and method using the modular system
-    route_request_with_req(req, &path, query_params)
+    route_request_with_req(req, &path, query_params).await
 }
