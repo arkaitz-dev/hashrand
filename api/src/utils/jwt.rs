@@ -8,7 +8,7 @@ use hmac::{Hmac, Mac};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use pbkdf2::pbkdf2;
 use serde::{Deserialize, Serialize};
-use sha3::{Digest, Sha3_256};
+use sha3::{Digest, Sha3_256, Shake256, digest::{ExtendableOutput, Update}};
 
 /// JWT Claims structure for access tokens
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,29 +52,44 @@ impl JwtUtils {
     // /// HMAC key for magic link integrity (should be from environment in production)
     // const MAGIC_LINK_HMAC_KEY: &'static [u8] = b"hashrand-magic-link-hmac-key-v1";
 
-    /// Derive secure user ID from email using SHA3-256 + PBKDF2-SHA3-256
+    /// Derive secure user ID from email using SHA3-256 + HMAC + PBKDF2 + SHAKE3
     ///
-    /// Process:
+    /// Enhanced security process:
     /// 1. SHA3-256(email) → 32 bytes
-    /// 2. PBKDF2-SHA3-256(hash, salt, 600k iterations) → 32 bytes user_id
+    /// 2. HMAC-SHA3-256(sha3_result, hmac_key) → 32 bytes
+    /// 3. Derive unique per-user salt: HMAC-SHA3-256(email, global_salt) → 32 bytes
+    /// 4. PBKDF2-SHA3-256(hmac_result, user_salt, 600k iterations) → 32 bytes
+    /// 5. SHAKE256(pbkdf2_result) → 16 bytes user_id
     ///
     /// # Arguments
     /// * `email` - User email address
     ///
     /// # Returns
-    /// * `Result<[u8; 32], String>` - 256-bit deterministic user ID or error
-    pub fn derive_user_id(email: &str) -> Result<[u8; 32], String> {
+    /// * `Result<[u8; 16], String>` - 128-bit deterministic user ID or error
+    pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
         // Step 1: SHA3-256 hash of email
         let mut hasher = Sha3_256::new();
-        hasher.update(email.to_lowercase().trim().as_bytes());
+        Digest::update(&mut hasher, email.to_lowercase().trim().as_bytes());
         let email_hash = hasher.finalize();
 
-        // Step 2: PBKDF2-SHA3-256 with high iteration count
-        let mut user_id = [0u8; 32];
-        let salt = Self::get_pbkdf2_salt()?;
+        // Step 2: HMAC-SHA3-256 of the email hash
+        let hmac_key = Self::get_user_id_hmac_key()?;
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
+            .map_err(|_| "Invalid USER_ID_HMAC_KEY format".to_string())?;
+        Mac::update(&mut mac, &email_hash);
+        let hmac_result = mac.finalize().into_bytes();
 
-        pbkdf2::<Hmac<Sha3_256>>(&email_hash, &salt, Self::PBKDF2_ITERATIONS, &mut user_id)
+        // Step 3: PBKDF2-SHA3-256 with unique per-user salt and high iteration count
+        let mut pbkdf2_output = [0u8; 32];
+        let user_salt = Self::derive_user_salt(&email_hash)?;
+        pbkdf2::<Hmac<Sha3_256>>(&hmac_result, &user_salt, Self::PBKDF2_ITERATIONS, &mut pbkdf2_output)
             .map_err(|_| "PBKDF2 derivation failed".to_string())?;
+
+        // Step 4: SHAKE256 to compress to 16 bytes with better entropy distribution
+        let mut shake = Shake256::default();
+        Update::update(&mut shake, &pbkdf2_output);
+        let mut user_id = [0u8; 16];
+        shake.finalize_xof_into(&mut user_id);
 
         Ok(user_id)
     }
@@ -82,11 +97,11 @@ impl JwtUtils {
     /// Convert user ID to Base58 username for display/API
     ///
     /// # Arguments
-    /// * `user_id` - 32-byte user ID
+    /// * `user_id` - 16-byte user ID
     ///
     /// # Returns
-    /// * `String` - Base58 encoded username (~44 characters)
-    pub fn user_id_to_username(user_id: &[u8; 32]) -> String {
+    /// * `String` - Base58 encoded username (~22 characters)
+    pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
         bs58::encode(user_id).into_string()
     }
 
@@ -129,6 +144,25 @@ impl JwtUtils {
         hex::decode(&salt_hex).map_err(|_| "PBKDF2_SALT must be a valid hex string".to_string())
     }
 
+    /// Generate unique salt per user using HMAC-SHA3-256(email_hash, global_salt)
+    ///
+    /// # Arguments
+    /// * `email_hash` - SHA3-256 hash of user email address
+    ///
+    /// # Returns
+    /// * `Result<[u8; 32], String>` - 32-byte unique salt for this user
+    fn derive_user_salt(email_hash: &[u8]) -> Result<[u8; 32], String> {
+        let global_salt = Self::get_pbkdf2_salt()?;
+        let mut mac = Hmac::<Sha3_256>::new_from_slice(&global_salt)
+            .map_err(|_| "Invalid PBKDF2_SALT format for HMAC".to_string())?;
+        Mac::update(&mut mac, email_hash);
+        let hmac_result = mac.finalize().into_bytes();
+
+        let mut user_salt = [0u8; 32];
+        user_salt.copy_from_slice(&hmac_result[..32]);
+        Ok(user_salt)
+    }
+
     /// Get magic link HMAC key from Spin variables as bytes
     ///
     /// # Returns
@@ -139,6 +173,18 @@ impl JwtUtils {
 
         hex::decode(&key_hex)
             .map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())
+    }
+
+    /// Get user ID HMAC key from Spin variables as bytes
+    ///
+    /// # Returns
+    /// * `Result<Vec<u8>, String>` - HMAC key bytes or error message
+    fn get_user_id_hmac_key() -> Result<Vec<u8>, String> {
+        let key_hex = spin_sdk::variables::get("user_id_hmac_key")
+            .map_err(|e| format!("Failed to get user_id_hmac_key variable: {}", e))?;
+
+        hex::decode(&key_hex)
+            .map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())
     }
 
     /// Create access token with 20 seconds expiration (for testing)
@@ -288,8 +334,8 @@ impl JwtUtils {
 
     /// Generate secure magic token with integrity protection
     ///
-    /// Format: user_id (32 bytes) + timestamp (8 bytes) + HMAC-SHA3-256 (32 bytes) = 72 bytes
-    /// Encoded in Base58 for email transmission (~98 characters)
+    /// Format: user_id (16 bytes) + timestamp (8 bytes) + SHAKE256(HMAC-SHA3-256) (8 bytes) = 32 bytes
+    /// Encoded in Base58 for email transmission (~44 characters)
     ///
     /// # Arguments
     /// * `email` - User email to derive user_id
@@ -306,7 +352,7 @@ impl JwtUtils {
         let timestamp_bytes = timestamp.to_be_bytes();
 
         // Prepare data for HMAC: user_id + timestamp
-        let mut data = Vec::with_capacity(40);
+        let mut data = Vec::with_capacity(24);
         data.extend_from_slice(&user_id);
         data.extend_from_slice(&timestamp_bytes);
 
@@ -315,14 +361,20 @@ impl JwtUtils {
             Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
         let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
-        mac.update(&data);
+        Mac::update(&mut mac, &data);
         let hmac_result = mac.finalize().into_bytes();
 
-        // Final token: user_id + timestamp + hmac (32 + 8 + 32 = 72 bytes)
-        let mut token = Vec::with_capacity(72);
+        // Compress HMAC to 8 bytes using SHAKE256
+        let mut shake = Shake256::default();
+        Update::update(&mut shake, &hmac_result);
+        let mut compressed_hmac = [0u8; 8];
+        shake.finalize_xof_into(&mut compressed_hmac);
+
+        // Final token: user_id + timestamp + compressed_hmac (16 + 8 + 8 = 32 bytes)
+        let mut token = Vec::with_capacity(32);
         token.extend_from_slice(&user_id);
         token.extend_from_slice(&timestamp_bytes);
-        token.extend_from_slice(&hmac_result);
+        token.extend_from_slice(&compressed_hmac);
 
         Ok(bs58::encode(&token).into_string())
     }
@@ -333,50 +385,57 @@ impl JwtUtils {
     /// * `magic_token` - Base58 encoded magic token
     ///
     /// # Returns
-    /// * `Result<([u8; 32], DateTime<Utc>), String>` - (user_id, expiration) or validation error
-    pub fn validate_magic_token(magic_token: &str) -> Result<([u8; 32], DateTime<Utc>), String> {
+    /// * `Result<([u8; 16], DateTime<Utc>), String>` - (user_id, expiration) or validation error
+    pub fn validate_magic_token(magic_token: &str) -> Result<([u8; 16], DateTime<Utc>), String> {
         // Decode Base58 token
         let token_bytes = bs58::decode(magic_token)
             .into_vec()
             .map_err(|_| "Invalid Base58 encoding")?;
 
-        // Verify token length (32 + 8 + 32 = 72 bytes)
-        if token_bytes.len() != 72 {
+        // Verify token length (16 + 8 + 8 = 32 bytes)
+        if token_bytes.len() != 32 {
             return Err("Invalid token length".to_string());
         }
 
         // Extract components
-        let user_id_bytes = &token_bytes[0..32];
-        let timestamp_bytes = &token_bytes[32..40];
-        let provided_hmac = &token_bytes[40..72];
+        let user_id_bytes = &token_bytes[0..16];
+        let timestamp_bytes = &token_bytes[16..24];
+        let provided_compressed_hmac = &token_bytes[24..32];
 
-        // Verify HMAC integrity
+        // Verify HMAC integrity with compression
         let hmac_key =
             Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
         let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
-        mac.update(user_id_bytes);
-        mac.update(timestamp_bytes);
+        Mac::update(&mut mac, user_id_bytes);
+        Mac::update(&mut mac, timestamp_bytes);
+        let hmac_result = mac.finalize().into_bytes();
 
-        match mac.verify_slice(provided_hmac) {
-            Ok(_) => {
-                // Extract timestamp
-                let timestamp = u64::from_be_bytes(
-                    timestamp_bytes
-                        .try_into()
-                        .map_err(|_| "Invalid timestamp format")?,
-                );
+        // Compress HMAC to 8 bytes using SHAKE256 (same as generation)
+        let mut shake = Shake256::default();
+        Update::update(&mut shake, &hmac_result);
+        let mut expected_compressed_hmac = [0u8; 8];
+        shake.finalize_xof_into(&mut expected_compressed_hmac);
 
-                let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
-                    .ok_or_else(|| "Invalid timestamp value".to_string())?;
+        // Compare compressed HMAC values
+        if provided_compressed_hmac == expected_compressed_hmac {
+            // Extract timestamp
+            let timestamp = u64::from_be_bytes(
+                timestamp_bytes
+                    .try_into()
+                    .map_err(|_| "Invalid timestamp format")?,
+            );
 
-                // Convert user_id bytes to array
-                let mut user_id = [0u8; 32];
-                user_id.copy_from_slice(user_id_bytes);
+            let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
+                .ok_or_else(|| "Invalid timestamp value".to_string())?;
 
-                Ok((user_id, expires_at))
-            }
-            Err(_) => Err("Token integrity verification failed".to_string()),
+            // Convert user_id bytes to array
+            let mut user_id = [0u8; 16];
+            user_id.copy_from_slice(user_id_bytes);
+
+            Ok((user_id, expires_at))
+        } else {
+            Err("Token integrity verification failed".to_string())
         }
     }
 

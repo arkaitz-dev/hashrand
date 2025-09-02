@@ -6,7 +6,7 @@ A **Zero Knowledge (ZK) random hash generator** built with Fermyon Spin and WebA
 
 ### Zero Knowledge Architecture
 - **🛡️ Complete Privacy**: Server never stores emails or personal information
-- **🔐 Cryptographic User IDs**: SHA3-256 + PBKDF2 (600k iterations) for deterministic user identification
+- **🔐 Cryptographic User IDs**: Enhanced multi-layer security with SHA3-256 + HMAC + PBKDF2 + SHAKE256 for deterministic user identification
 - **🎫 Magic Link Authentication**: Passwordless authentication with cryptographic integrity verification
 - **🔒 JWT Endpoint Protection**: Bearer token authentication for all sensitive operations
 - **📊 Privacy-Preserving Audit**: Base58 usernames enable logging without compromising user privacy
@@ -68,7 +68,7 @@ A **Zero Knowledge (ZK) random hash generator** built with Fermyon Spin and WebA
   - **Explore First, Authenticate Later**: All generator pages accessible without login
   - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
   - **Privacy-First Design**: Server never stores or processes email addresses
-  - **Cryptographic User Identity**: Deterministic user IDs derived from email using SHA3-256 + PBKDF2
+  - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: SHA3-256 + HMAC + PBKDF2 + SHAKE256
   - **EmailInputDialog Component**: Reusable two-step authentication component
     - Step 1: Email input with real-time validation and error handling
     - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
@@ -322,9 +322,9 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 
 **Zero Knowledge Features:**
 - **No Email Storage**: Server never stores or processes email addresses
-- **Cryptographic User IDs**: Deterministic 32-byte user IDs derived from email using:
-  - `SHA3-256(email) → PBKDF2-SHA3-256(600k iterations) → user_id`
-- **Base58 Usernames**: User IDs displayed as readable ~44-character usernames
+- **Cryptographic User IDs**: Deterministic 16-byte user IDs derived from email using enhanced multi-layer security:
+  - `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → PBKDF2-SHA3-256(hmac_result, user_salt, 600k iter.) → SHAKE256(pbkdf2_result) → user_id`
+- **Base58 Usernames**: User IDs displayed as readable ~22-character usernames (50% size reduction)
 - **Magic Link Integrity**: HMAC-SHA3-256 prevents magic link tampering
 - **JWT Protection**: All endpoints require valid Bearer tokens
 
@@ -1030,6 +1030,7 @@ For production, pass secrets as Spin variables:
 # Deploy with secrets
 SPIN_VARIABLE_JWT_SECRET="your-secret" \
 SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-secret" \
+SPIN_VARIABLE_USER_ID_HMAC_KEY="your-secret" \
 SPIN_VARIABLE_PBKDF2_SALT="your-secret" \
 spin-cli deploy --runtime-config-file runtime-config.toml
 ```
@@ -1082,6 +1083,7 @@ tail -f .spin-predeploy.log  # Monitor deployment logs
 # Deploy to Fermyon Cloud (requires account with secrets)
 SPIN_VARIABLE_JWT_SECRET="your-production-secret" \
 SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-production-secret" \
+SPIN_VARIABLE_USER_ID_HMAC_KEY="your-production-secret" \
 SPIN_VARIABLE_PBKDF2_SALT="your-production-secret" \
 spin-cli deploy --runtime-config-file runtime-config.toml
 
@@ -1128,9 +1130,9 @@ The HashRand Spin system implements a **true Zero Knowledge architecture** where
 
 #### 🔐 Cryptographic User Identity System
 ```
-Email Input → SHA3-256 Hash → PBKDF2-SHA3-256 (600k iter.) → 32-byte user_id
-                                        ↓
-                            Base58 Username Display (~44 chars)
+Email Input → SHA3-256 Hash → HMAC-SHA3-256 → Per-User Salt → PBKDF2-SHA3-256 → SHAKE256 → 16-byte user_id
+                                (hmac_key)     (unique salt)      (600k iter.)                      ↓
+                                                                                       Base58 Username Display (~22 chars)
 ```
 
 **Key Properties:**
@@ -1177,9 +1179,12 @@ CREATE TABLE auth_sessions (
 - **Compliance Ready**: GDPR/CCPA compliant by design - no personal data to manage
 
 #### ✅ Cryptographic Security
-- **Industry Standards**: SHA3-256 and PBKDF2 are NIST-approved algorithms
+- **Industry Standards**: SHA3-256, HMAC-SHA3-256, PBKDF2, and SHAKE256 are NIST-approved algorithms
+- **Multi-Layer Defense**: HMAC layer adds protection against rainbow table and precomputation attacks
+- **Per-User Salt**: Each user gets unique PBKDF2 salt preventing parallel dictionary attacks
 - **High Iteration Count**: 600,000 PBKDF2 iterations exceed current security recommendations
-- **Salt Protection**: Application-level salt prevents rainbow table attacks
+- **SHAKE256 Compression**: Optimal entropy distribution in reduced 16-byte output
+- **Enhanced Secrets**: Dedicated HMAC key separate from PBKDF2 salt for additional security layers
 - **Forward Secrecy**: User identity derives from email but email is never stored
 
 #### ✅ Scalability & Performance

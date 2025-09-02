@@ -10,6 +10,7 @@ description = "A random hash generator API built with Fermyon Spin"
 [variables]
 jwt_secret = { required = true, secret = true }
 magic_link_hmac_key = { required = true, secret = true }
+user_id_hmac_key = { required = true, secret = true }
 pbkdf2_salt = { required = true, secret = true }
 # Email configuration for Mailtrap REST API
 mailtrap_api_url = { default = "https://sandbox.api.mailtrap.io/api/send" }
@@ -29,6 +30,7 @@ sqlite_databases = ["hashrand-dev", "hashrand"]
 [component.hashrand-spin.variables]
 jwt_secret = "{{ jwt_secret }}"
 magic_link_hmac_key = "{{ magic_link_hmac_key }}"
+user_id_hmac_key = "{{ user_id_hmac_key }}"
 pbkdf2_salt = "{{ pbkdf2_salt }}"
 mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"

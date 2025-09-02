@@ -258,14 +258,14 @@ impl AuthOperations {
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `user_id` - User ID bytes (32 bytes)
+    /// * `user_id` - User ID bytes (16 bytes)
     /// * `timestamp` - Expiration timestamp
     ///
     /// # Returns
     /// * `Result<Option<(String, String)>, SqliteError>` - (access_token, refresh_token) or None
     pub fn get_session_by_user_id_and_timestamp(
         env: DatabaseEnvironment,
-        user_id: &[u8; 32],
+        user_id: &[u8; 16],
         timestamp: u64,
     ) -> Result<Option<(String, String)>, SqliteError> {
         let connection = get_database_connection(env)?;
@@ -303,13 +303,13 @@ impl AuthOperations {
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `user_id` - User ID bytes (32 bytes)
+    /// * `user_id` - User ID bytes (16 bytes)
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
     pub fn ensure_user_exists(
         env: DatabaseEnvironment,
-        user_id: &[u8; 32],
+        user_id: &[u8; 16],
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection(env)?;
 
@@ -336,14 +336,14 @@ impl AuthOperations {
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `user_id` - User ID bytes (32 bytes)
+    /// * `user_id` - User ID bytes (16 bytes)
     /// * `timestamp` - Expiration timestamp
     ///
     /// # Returns
     /// * `Result<bool, SqliteError>` - True if deleted, false if not found
     pub fn delete_session_by_user_id_and_timestamp(
         env: DatabaseEnvironment,
-        user_id: &[u8; 32],
+        user_id: &[u8; 16],
         timestamp: u64,
     ) -> Result<bool, SqliteError> {
         let connection = get_database_connection(env)?;
