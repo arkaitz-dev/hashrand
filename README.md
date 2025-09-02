@@ -316,6 +316,8 @@ curl -X DELETE "http://localhost:3000/api/users/3"
 ```
 POST /api/login/         # Generate magic link (no email storage)
 GET /api/login/?magiclink=...  # Validate magic link and get JWT tokens
+DELETE /api/login/       # Clear refresh token cookie (logout)
+POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 ```
 
 **Zero Knowledge Features:**
@@ -362,8 +364,17 @@ GET /api/login/?magiclink=...  # Validate magic link and get JWT tokens
 **Zero Knowledge Authentication Features:**
 - **Privacy-First Magic Link Flow**: Email → Cryptographic Link → JWT tokens (no email storage anywhere)
 - **JWT Dual Token System**: 
-  - **Access Token**: 20 seconds validity (development), included in JSON response
-  - **Refresh Token**: 2 minutes validity (development), set as HttpOnly, Secure, SameSite=Strict cookie
+  - **Access Token**: 3 minutes validity (development), included in JSON response
+  - **Refresh Token**: 15 minutes validity (development), set as HttpOnly, Secure, SameSite=Strict cookie
+- **🔄 Automatic Token Refresh**: Transparent token renewal system for seamless user experience
+  - **Transparent Renewal**: Client-side automatic refresh when access token expires (401 errors)
+  - **HttpOnly Cookie Security**: Refresh tokens stored securely, inaccessible to JavaScript
+  - **Seamless UX**: Users never experience authentication interruptions
+  - **Fallback Authentication**: Shows login dialog only when refresh token also expires
+- **🚪 Complete Logout System**: Professional logout with HttpOnly cookie cleanup
+  - **Server-Side Cookie Clearing**: `DELETE /api/login/` expires refresh token cookie with `Max-Age=0`
+  - **Client-Side Cleanup**: Complete localStorage and authentication state removal
+  - **Confirmation Dialog**: Professional logout confirmation prevents accidental logouts
 - **Development Mode**: Magic links logged to console for testing (no email sending)
 - **Cryptographic Integrity**: All magic links protected with HMAC-SHA3-256 verification
 - **Session Privacy**: Sessions identified by cryptographic user IDs, never by email
@@ -378,6 +389,16 @@ curl -X POST "http://localhost:3000/api/login/" \
 
 # Validate magic link (from development log)
 curl "http://localhost:3000/api/login/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
+
+# Refresh expired access token (automatic - called by frontend)
+curl -X POST "http://localhost:3000/api/refresh" \
+  -H "Cookie: refresh_token=your-httponly-token"
+# Response: {"access_token": "eyJ...", "expires_in": 180, "user_id": "Base58Username", "message": "Token refreshed successfully"}
+
+# Logout and clear refresh token cookie
+curl -X DELETE "http://localhost:3000/api/login/"
+# Response: {"message": "Logged out successfully"}
+# Sets: Set-Cookie: refresh_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/
 ```
 
 ### Email Integration & Multilingual Support
@@ -456,8 +477,8 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.4.4",
-  "ui_version": "0.19.3"
+  "api_version": "1.4.5",
+  "ui_version": "0.19.4"
 }
 ```
 
@@ -736,8 +757,12 @@ just
 just dev          # Start complete development environment (recommended)
 just dev-fg       # Start with foreground Spin logs for debugging
 just watch        # Start in background and follow all logs
-just stop         # Stop all services (dev servers + Tailscale)
-just status       # Check status of all services (local + remote)
+just stop         # Stop all services (dev servers + Tailscale + predeploy)
+just status       # Check status of all services (local + remote + predeploy)
+
+# Production Deployment (NEW)
+just predeploy    # Complete production deployment with unified backend
+                  # Builds web interface, starts unified server, enables Tailscale
 
 # Remote Access (Tailscale)
 just tailscale-front-start  # Expose web interface via Tailscale
@@ -776,10 +801,12 @@ hashrand-spin/
 ├── CHANGELOG.md           # Version history
 ├── CLAUDE.md              # Development guidance
 ├── justfile               # Development task automation
-├── final_test.sh          # API comprehensive test suite (43 tests)
+├── final_test.sh          # API comprehensive test suite (64 tests)
 ├── runtime-config.toml    # SQLite database configuration
 ├── Cargo.toml             # Workspace configuration
-├── spin.toml              # Spin application configuration
+├── spin.toml              # Spin application configuration (with static-fileserver)
+├── .spin-predeploy.log    # Production deployment logs (created by just predeploy)
+├── .spin-predeploy.pid    # Production deployment process ID (created by just predeploy)
 ├── data/                  # SQLite database files
 │   ├── hashrand-dev.db    # Development database
 │   └── hashrand.db        # Production database (created when needed)
@@ -1017,7 +1044,40 @@ spin-cli deploy --runtime-config-file runtime-config.toml
 
 ### Deployment
 
-#### API Deployment
+#### Production Deployment (Unified Backend) - **NEW**
+```bash
+# Complete production deployment with unified backend (recommended)
+just predeploy
+```
+
+This single command will:
+- 🧹 **Stop & Clean**: Stop all services and clean build artifacts (`just stop` + `just clean`)
+- 🏗️ **Build Web Interface**: Compile SvelteKit SPA for production (`npm run build` → `web/dist/`)
+- ⚙️ **Build Backend**: Compile WebAssembly backend component (`spin-cli build`)
+- 🚀 **Start Unified Server**: Launch backend serving both API (`/api/*`) and static files (`/`)
+- 🌐 **External Access**: Automatically start Tailscale serve for remote access
+- ✅ **Verify Deployment**: Test API connectivity and confirm services are running
+
+**Unified Architecture Benefits:**
+- **Single Port Deployment**: Both web interface and API served from port 3000
+- **No Proxy Required**: Backend directly serves static files using `spin-fileserver` component
+- **Production Ready**: Optimized Vite build with proper caching and compression
+- **Remote Access**: Automatic Tailscale integration for external development/demo access
+
+**Access URLs:**
+- **Local**: `http://localhost:3000` (both web interface and API)
+- **Remote**: `https://your-tailscale-name.ts.net` (via Tailscale serve)
+
+**Management Commands:**
+```bash
+just status    # Check deployment status (predeploy server + Tailscale)
+just stop      # Stop all services (including predeploy and Tailscale)
+tail -f .spin-predeploy.log  # Monitor deployment logs
+```
+
+#### Cloud Deployment (Traditional)
+
+##### API Deployment
 ```bash
 # Deploy to Fermyon Cloud (requires account with secrets)
 SPIN_VARIABLE_JWT_SECRET="your-production-secret" \
@@ -1029,12 +1089,12 @@ spin-cli deploy --runtime-config-file runtime-config.toml
 just deploy
 ```
 
-#### Web Interface Deployment
+##### Web Interface Deployment (Separate)
 ```bash
 # Build static SPA
 cd web && npm run build
 
-# Deploy the 'build' directory to any static hosting service:
+# Deploy the 'dist' directory to any static hosting service:
 # - Vercel, Netlify, GitHub Pages
 # - AWS S3 + CloudFront
 # - Any CDN or static file server

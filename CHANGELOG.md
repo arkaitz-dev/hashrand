@@ -11,6 +11,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.4.5 / Web v0.19.4] - 2025-09-02
+
+### Production Deployment System (v1.4.5 / v0.19.4)
+#### Added
+- **🚀 Complete Production Deployment System**: New `just predeploy` command for unified deployment
+  - **Unified Backend Architecture**: Single server serves both API endpoints (`/api/*`) and static web interface (`/`)
+  - **Static File Server Integration**: Official Fermyon `spin-fileserver` component for production-grade static serving
+    - **Component Configuration**: `static-web` component in `spin.toml` with proper URL and digest verification
+    - **Route Configuration**: `/...` route serves static files from `web/dist/` directory
+    - **Fallback Support**: `index.html` fallback for SPA client-side routing
+  - **Production Build Pipeline**: Complete automation of production deployment process
+    - **Web Interface Compilation**: `npm run build` generates optimized SvelteKit SPA in `web/dist/`
+    - **WebAssembly Backend**: `spin-cli build` compiles Rust backend to optimized WASM
+    - **Service Management**: Automatic start of unified backend with both API and static serving
+    - **External Access**: Automatic Tailscale serve integration for remote access
+  - **Enhanced Process Management**: Complete overhaul of development and production service management
+    - **Predeploy Server Tracking**: `.spin-predeploy.pid` and `.spin-predeploy.log` for production deployment monitoring
+    - **Status Integration**: `just status` shows predeploy server status alongside development services
+    - **Complete Cleanup**: `just stop` now stops all services including Tailscale serve and predeploy servers
+    - **Tailscale Management**: Enhanced `tailscale-stop` command for comprehensive Tailscale serve cleanup
+
+#### Enhanced
+- **🔧 Development Workflow Improvements**: Enhanced justfile with production deployment capabilities
+  - **Process Cleanup**: `just clean` now removes predeploy logs and PID files
+  - **Status Monitoring**: Enhanced `just status` with predeploy server status display
+  - **Service Management**: `just stop` includes comprehensive Tailscale serve termination
+  - **Log Management**: Predeploy logs separate from development logs for clear separation
+
+#### Architecture
+- **📁 Static File Serving**: Production-grade static file serving architecture
+  - **Official Component**: Uses verified `spin-fileserver` WASM component from Fermyon
+  - **Secure Integration**: Component downloaded with SHA256 digest verification
+  - **Route Priority**: API routes (`/api/...`) take precedence over static routes (`/...`)
+  - **SPA Support**: Proper SPA fallback handling for client-side routing
+- **🔄 Unified Port Strategy**: Both development and production modes support unified backend approach
+  - **Development**: `just dev` continues to use separate ports (API 3000, Web 5173) for hot reload
+  - **Production**: `just predeploy` uses unified port 3000 for both API and web interface
+  - **Deployment Flexibility**: Choose between unified (predeploy) or separate (traditional cloud) deployment
+
+---
+
+## [API v1.4.5 / Web v0.19.4] - 2025-09-01
+
+### Automatic Token Refresh System (v1.4.5 / v0.19.4)
+#### Added
+- **🔄 Complete Automatic Token Refresh System**: Seamless user experience with transparent token renewal
+  - **Backend Refresh Endpoint**: New `POST /api/refresh` endpoint for automatic access token renewal
+    - **HttpOnly Cookie Authentication**: Secure refresh using HttpOnly, Secure, SameSite=Strict cookies
+    - **JWT Refresh Validation**: Complete JWT refresh token validation with error handling
+    - **New Access Token Generation**: Creates fresh 3-minute access tokens from valid refresh tokens
+    - **Public Endpoint**: No Bearer token required for refresh endpoint (uses cookies only)
+    - **Proper Error Responses**: 401 Unauthorized for missing/invalid refresh tokens
+  - **Frontend Automatic Refresh Wrapper**: Transparent token refresh for all authenticated API calls
+    - **authenticatedFetch() Function**: Intelligent wrapper for all protected API endpoints
+    - **Automatic 401 Detection**: Detects expired access tokens and attempts refresh automatically
+    - **Seamless Request Retry**: Retries original request with new access token after successful refresh
+    - **Graceful Fallback**: Shows login dialog only when refresh token also expires
+    - **Console Logging**: Clear debugging messages for refresh attempts and outcomes
+  - **Complete Logout Enhancement**: Professional logout system with HttpOnly cookie cleanup
+    - **Server-Side Cookie Clearing**: `DELETE /api/login/` endpoint expires refresh token with `Max-Age=0`
+    - **Client-Side Integration**: Updated `api.logout()` to call server endpoint for complete cleanup
+    - **Error Resilience**: Continues with logout even if server cookie clearing fails
+    - **Confirmation Dialog**: Professional logout confirmation prevents accidental logouts
+
+#### Enhanced
+- **🔧 Authentication Architecture Improvements**: Complete overhaul of authentication system reliability
+  - **Token Duration Optimization**: Extended access token to 3 minutes and refresh token to 15 minutes
+  - **Universal API Protection**: All generation endpoints now use `authenticatedFetch()` wrapper
+    - **Protected Endpoints**: `/api/custom`, `/api/password`, `/api/api-key`, `/api/mnemonic` (all variants)
+    - **Automatic Refresh**: GET and POST seed-based generation with transparent token refresh
+    - **Consistent Error Handling**: Unified 401 handling across all protected endpoints
+  - **Enhanced Auth Store**: New `updateTokens()` method for refresh-triggered token updates
+    - **Seamless Token Update**: Updates both memory state and localStorage automatically  
+    - **State Consistency**: Maintains authentication state during refresh operations
+    - **Proper Validation**: Validates new tokens and user information during updates
+  - **Cookie Management**: Complete HttpOnly refresh token lifecycle management
+    - **Secure Storage**: Refresh tokens stored in HttpOnly cookies inaccessible to JavaScript
+    - **Automatic Expiration**: 15-minute Max-Age with automatic cleanup on logout
+    - **Cross-Request Persistence**: Survives browser refresh and tab changes
+
+#### Technical Implementation
+- **Security Architecture**: Industry-standard refresh token implementation
+  - **HttpOnly Protection**: Refresh tokens completely inaccessible to client-side JavaScript
+  - **Secure Cookie Flags**: HttpOnly, Secure, SameSite=Strict protection against XSS/CSRF
+  - **JWT Validation**: Complete signature and expiration validation for refresh tokens
+  - **User Identity Continuity**: Maintains Base58 username consistency across token refresh
+- **Performance Optimized**: Zero-interruption user experience
+  - **Background Refresh**: Token refresh happens transparently without user awareness
+  - **Request Continuation**: Original API requests continue seamlessly after token refresh
+  - **No Double Authentication**: Users never need to re-authenticate during active sessions
+  - **Efficient Implementation**: Single refresh attempt per failed request, no retry loops
+
+---
+
 ## [API v1.4.4 / Web v0.19.3] - 2025-09-01
 
 ### Email Integration & Multilingual Support (v1.4.4)
