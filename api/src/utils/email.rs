@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde_json::json;
 use spin_sdk::{
     http::{Method, Request, Response},
@@ -17,10 +17,14 @@ pub struct EmailConfig {
 impl EmailConfig {
     /// Load email configuration from Spin environment variables
     pub fn from_environment() -> Result<Self> {
-        let api_url = variables::get("mailtrap_api_url").map_err(|e| anyhow!("Missing mailtrap_api_url: {}", e))?;
-        let api_token = variables::get("mailtrap_api_token").map_err(|e| anyhow!("Missing mailtrap_api_token: {}", e))?;
-        let inbox_id = variables::get("mailtrap_inbox_id").map_err(|e| anyhow!("Missing mailtrap_inbox_id: {}", e))?;
-        let from_email = variables::get("from_email").map_err(|e| anyhow!("Missing from_email: {}", e))?;
+        let api_url = variables::get("mailtrap_api_url")
+            .map_err(|e| anyhow!("Missing mailtrap_api_url: {}", e))?;
+        let api_token = variables::get("mailtrap_api_token")
+            .map_err(|e| anyhow!("Missing mailtrap_api_token: {}", e))?;
+        let inbox_id = variables::get("mailtrap_inbox_id")
+            .map_err(|e| anyhow!("Missing mailtrap_inbox_id: {}", e))?;
+        let from_email =
+            variables::get("from_email").map_err(|e| anyhow!("Missing from_email: {}", e))?;
 
         Ok(EmailConfig {
             api_url,
@@ -32,7 +36,12 @@ impl EmailConfig {
 }
 
 /// Creates an HTTP request for sending email via Mailtrap API
-fn create_email_request(config: &EmailConfig, recipient_email: &str, magic_link: &str, language: Option<&str>) -> Result<Request> {
+fn create_email_request(
+    config: &EmailConfig,
+    recipient_email: &str,
+    magic_link: &str,
+    language: Option<&str>,
+) -> Result<Request> {
     // Create email payload according to Mailtrap API format
     let email_payload = json!({
         "from": {
@@ -57,13 +66,13 @@ fn create_email_request(config: &EmailConfig, recipient_email: &str, magic_link:
 
     // Build full URL with inbox ID (format: https://sandbox.api.mailtrap.io/api/send/INBOX_ID)
     let full_url = format!("{}/{}", config.api_url, config.inbox_id);
-    
+
     // Build HTTP request using Spin's Request builder
     let request = Request::builder()
         .method(Method::Post)
         .uri(&full_url)
         .header("Content-Type", "application/json")
-        .header("Authorization", &format!("Bearer {}", config.api_token))
+        .header("Authorization", format!("Bearer {}", config.api_token))
         .body(body_json)
         .build();
 
@@ -71,38 +80,53 @@ fn create_email_request(config: &EmailConfig, recipient_email: &str, magic_link:
 }
 
 /// Sends a magic link email to the specified recipient using Mailtrap REST API
-/// 
+///
 /// # Arguments
 /// * `recipient_email` - The email address to send the magic link to
 /// * `magic_link` - The full magic link URL for authentication
 /// * `language` - Optional language code for email template (e.g., "es", "en")
-/// 
+///
 /// # Returns
 /// * `Ok(())` if the email was sent successfully
 /// * `Err(anyhow::Error)` if there was an error sending the email
-pub async fn send_magic_link_email(recipient_email: &str, magic_link: &str, language: Option<&str>) -> Result<()> {
+pub async fn send_magic_link_email(
+    recipient_email: &str,
+    magic_link: &str,
+    language: Option<&str>,
+) -> Result<()> {
     let config = EmailConfig::from_environment()?;
-    
+
     // Validate email format (basic validation)
     if recipient_email.is_empty() || !recipient_email.contains('@') {
-        return Err(anyhow!("Invalid recipient email address: {}", recipient_email));
+        return Err(anyhow!(
+            "Invalid recipient email address: {}",
+            recipient_email
+        ));
     }
 
     // Create HTTP request for Mailtrap API
     let request = create_email_request(&config, recipient_email, magic_link, language)?;
 
     // Send HTTP request using Spin's outbound HTTP
-    let response: Response = spin_sdk::http::send(request).await
+    let response: Response = spin_sdk::http::send(request)
+        .await
         .map_err(|e| anyhow!("Failed to send HTTP request to Mailtrap API: {}", e))?;
 
     // Check if the request was successful
     let status = response.status();
     if *status == 200 || *status == 202 {
-        println!("✅ Magic link email sent successfully to: {} (Status: {})", recipient_email, status);
+        println!(
+            "✅ Magic link email sent successfully to: {} (Status: {})",
+            recipient_email, status
+        );
         Ok(())
     } else {
         let body = String::from_utf8_lossy(response.body());
-        Err(anyhow!("Mailtrap API returned error. Status: {}, Body: {}", status, body))
+        Err(anyhow!(
+            "Mailtrap API returned error. Status: {}, Body: {}",
+            status,
+            body
+        ))
     }
 }
 
@@ -110,7 +134,7 @@ pub async fn send_magic_link_email(recipient_email: &str, magic_link: &str, lang
 fn create_subject(language: Option<&str>) -> &'static str {
     match language {
         Some("es") => "Tu enlace de autenticación para HashRand",
-        Some("ca") => "El teu enllaç d'autenticació per a HashRand", 
+        Some("ca") => "El teu enllaç d'autenticació per a HashRand",
         Some("eu") => "Zure HashRand autentifikazio esteka",
         Some("gl") => "A túa ligazón de autenticación para HashRand",
         Some("fr") => "Votre lien d'authentification HashRand",
@@ -146,7 +170,8 @@ fn create_magic_link_html(magic_link: &str, language: Option<&str>) -> String {
 
 /// Creates the English HTML email template
 fn create_english_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -197,12 +222,15 @@ fn create_english_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Spanish HTML email template
 fn create_spanish_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -253,7 +281,9 @@ fn create_spanish_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the plain text version of the magic link email
@@ -277,7 +307,8 @@ fn create_magic_link_text(magic_link: &str, language: Option<&str>) -> String {
 
 /// Creates the English plain text email
 fn create_english_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND AUTHENTICATION
 =======================
 
@@ -296,12 +327,15 @@ SECURITY NOTICE:
 ---
 HashRand - Zero Knowledge Random Hash Generator
 This is an automated message. Please do not reply to this email.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Spanish plain text email
 fn create_spanish_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 AUTENTICACIÓN HASHRAND
 ======================
 
@@ -320,12 +354,15 @@ AVISO DE SEGURIDAD:
 ---
 HashRand - Generador de Hashes Aleatorios con Zero Knowledge
 Este es un mensaje automático. Por favor no respondas a este email.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the French HTML email template
 fn create_french_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -376,12 +413,15 @@ fn create_french_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the French plain text email
 fn create_french_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 AUTHENTIFICATION HASHRAND
 =========================
 
@@ -400,12 +440,15 @@ AVIS DE SÉCURITÉ :
 ---
 HashRand - Générateur de Hachages Aléatoires Zero Knowledge
 Ceci est un message automatique. Veuillez ne pas répondre à cet email.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the German HTML email template  
 fn create_german_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -456,12 +499,15 @@ fn create_german_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the German plain text email
 fn create_german_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND AUTHENTIFIZIERUNG
 ===========================
 
@@ -480,12 +526,15 @@ SICHERHEITSHINWEIS:
 ---
 HashRand - Zero Knowledge Zufalls-Hash-Generator
 Dies ist eine automatische Nachricht. Bitte antworten Sie nicht auf diese E-Mail.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Portuguese HTML email template
 fn create_portuguese_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -536,12 +585,15 @@ fn create_portuguese_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Portuguese plain text email
 fn create_portuguese_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 AUTENTICAÇÃO HASHRAND
 =====================
 
@@ -560,12 +612,15 @@ AVISO DE SEGURANÇA:
 ---
 HashRand - Gerador de Hashes Aleatórios Zero Knowledge
 Esta é uma mensagem automática. Por favor não responda a este email.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Russian HTML email template
 fn create_russian_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -616,12 +671,15 @@ fn create_russian_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Russian plain text email
 fn create_russian_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 АУТЕНТИФИКАЦИЯ HASHRAND
 =======================
 
@@ -640,12 +698,15 @@ fn create_russian_text(magic_link: &str) -> String {
 ---
 HashRand - Генератор Случайных Хешей с Нулевым Разглашением
 Это автоматическое сообщение. Пожалуйста, не отвечайте на это письмо.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Chinese HTML email template
 fn create_chinese_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -696,12 +757,15 @@ fn create_chinese_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Chinese plain text email
 fn create_chinese_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND 身份验证
 =================
 
@@ -720,12 +784,15 @@ HASHRAND 身份验证
 ---
 HashRand - 零知识随机哈希生成器
 这是一封自动邮件。请不要回复此邮件。
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Japanese HTML email template
 fn create_japanese_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -776,12 +843,15 @@ fn create_japanese_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Japanese plain text email
 fn create_japanese_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND認証
 ============
 
@@ -800,12 +870,15 @@ HASHRAND認証
 ---
 HashRand - ゼロ知識ランダムハッシュジェネレーター
 これは自動送信メールです。このメールには返信しないでください。
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Arabic HTML email template
 fn create_arabic_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html dir="rtl">
 <head>
@@ -856,12 +929,15 @@ fn create_arabic_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Arabic plain text email
 fn create_arabic_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 مصادقة HASHRAND
 ================
 
@@ -880,12 +956,15 @@ fn create_arabic_text(magic_link: &str) -> String {
 ---
 HashRand - مولد الهاش العشوائي بالمعرفة الصفرية
 هذه رسالة تلقائية. يرجى عدم الرد على هذا الإيميل.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 /// Creates the Hindi HTML email template
 fn create_hindi_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -936,12 +1015,15 @@ fn create_hindi_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the Hindi plain text email
 fn create_hindi_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND प्रमाणीकरण
 ====================
 
@@ -960,13 +1042,16 @@ HashRand के साथ सुरक्षित रूप से प्रम
 ---
 HashRand - शून्य ज्ञान रैंडम हैश जनरेटर
 यह एक स्वचालित संदेश है। कृपया इस ईमेल का उत्तर न दें।
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 // Functions for Catalan, Basque, and Galician (Peninsula languages)
 /// Creates the Catalan HTML email template
 fn create_catalan_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1017,12 +1102,15 @@ fn create_catalan_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 /// Creates the remaining text functions for Peninsula languages
 fn create_catalan_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 AUTENTICACIÓ HASHRAND
 =====================
 
@@ -1041,11 +1129,14 @@ AVÍS DE SEGURETAT:
 ---
 HashRand - Generador d'Hashes Aleatoris amb Zero Knowledge
 Aquest és un missatge automàtic. Si us plau no responguis a aquest correu.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 fn create_basque_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1096,11 +1187,14 @@ fn create_basque_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 fn create_basque_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 HASHRAND AUTENTIFIKAZIOA
 ========================
 
@@ -1119,11 +1213,14 @@ SEGURTASUN OHARRA:
 ---
 HashRand - Zero Knowledge Hash Sortzaile Ausazkoa
 Mezu automatiko hau da. Ez erantzun mezu honi.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 fn create_galician_html(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1174,11 +1271,14 @@ fn create_galician_html(magic_link: &str) -> String {
     </div>
 </body>
 </html>
-"#, magic_link, magic_link)
+"#,
+        magic_link, magic_link
+    )
 }
 
 fn create_galician_text(magic_link: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
 AUTENTICACIÓN HASHRAND
 ======================
 
@@ -1197,7 +1297,9 @@ AVISO DE SEGURIDADE:
 ---
 HashRand - Xerador de Hashes Aleatorios con Zero Knowledge
 Esta é unha mensaxe automática. Por favor non respondas a este correo.
-"#, magic_link)
+"#,
+        magic_link
+    )
 }
 
 #[cfg(test)]
@@ -1209,7 +1311,7 @@ mod tests {
         // Test basic email validation logic
         assert!("".is_empty() || !"".contains('@'));
         assert!(!"invalid-email".contains('@'));
-        
+
         let valid_email = "valid@example.com";
         assert!(valid_email.contains('@') && !valid_email.is_empty());
     }
@@ -1217,13 +1319,13 @@ mod tests {
     #[test]
     fn test_html_content_generation() {
         let magic_link = "https://example.com/magic?token=abc123";
-        
+
         // Test English HTML
         let html_en = create_magic_link_html(magic_link, None);
         assert!(html_en.contains(magic_link));
         assert!(html_en.contains("HashRand Authentication"));
         assert!(html_en.contains("Security Notice"));
-        
+
         // Test Spanish HTML
         let html_es = create_magic_link_html(magic_link, Some("es"));
         assert!(html_es.contains(magic_link));
@@ -1234,13 +1336,13 @@ mod tests {
     #[test]
     fn test_text_content_generation() {
         let magic_link = "https://example.com/magic?token=abc123";
-        
+
         // Test English text
         let text_en = create_magic_link_text(magic_link, None);
         assert!(text_en.contains(magic_link));
         assert!(text_en.contains("HASHRAND AUTHENTICATION"));
         assert!(text_en.contains("SECURITY NOTICE"));
-        
+
         // Test Spanish text
         let text_es = create_magic_link_text(magic_link, Some("es"));
         assert!(text_es.contains(magic_link));
@@ -1252,10 +1354,16 @@ mod tests {
     fn test_subject_generation() {
         // Test English subject
         assert_eq!(create_subject(None), "Your HashRand Authentication Link");
-        assert_eq!(create_subject(Some("en")), "Your HashRand Authentication Link");
-        
+        assert_eq!(
+            create_subject(Some("en")),
+            "Your HashRand Authentication Link"
+        );
+
         // Test Spanish subject
-        assert_eq!(create_subject(Some("es")), "Tu enlace de autenticación para HashRand");
+        assert_eq!(
+            create_subject(Some("es")),
+            "Tu enlace de autenticación para HashRand"
+        );
     }
 
     #[test]
@@ -1265,10 +1373,15 @@ mod tests {
             api_token: "test_token".to_string(),
             from_email: "test@example.com".to_string(),
         };
-        
-        let request = create_email_request(&config, "recipient@example.com", "https://magic.link", Some("es"));
+
+        let request = create_email_request(
+            &config,
+            "recipient@example.com",
+            "https://magic.link",
+            Some("es"),
+        );
         assert!(request.is_ok());
-        
+
         if let Ok(req) = request {
             assert_eq!(req.method(), &Method::Post);
             // Test that the request was built successfully

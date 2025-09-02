@@ -10,7 +10,7 @@
 	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { base58 } from '@scure/base';
+	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { PasswordParams } from '$lib/types';
@@ -57,6 +57,7 @@
 
 	// Reference to AuthGuard component
 	let authGuard: AuthGuard;
+	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	// // Email dialog state
 	// let showEmailDialog = false;
@@ -76,22 +77,19 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado (verificación simple)
+		// Verificar si el usuario está autenticado
 		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
 		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
 
 		if (!hasToken || !hasUser) {
-			// No autenticado - redirigir a página de login
-			const urlParams = new URLSearchParams();
-			urlParams.set('endpoint', 'password');
-			urlParams.set('length', (params.length ?? 21).toString());
-			urlParams.set('alphabet', params.alphabet ?? 'full-with-symbols');
-			if (urlProvidedSeed) urlParams.set('seed', urlProvidedSeed);
-
-			const jsonString = JSON.stringify(Object.fromEntries(urlParams));
-			const bytes = new TextEncoder().encode(jsonString);
-			const nextParam = base58.encode(bytes);
-			goto(`/login?next=${encodeURIComponent(nextParam)}`);
+			// No autenticado - mostrar diálogo de autenticación
+			pendingGenerationParams = {
+				endpoint: 'password',
+				length: params.length ?? 21,
+				alphabet: params.alphabet ?? 'full-with-symbols',
+				...(urlProvidedSeed && { seed: urlProvidedSeed })
+			};
+			dialogStore.show('auth', pendingGenerationParams);
 			return;
 		}
 

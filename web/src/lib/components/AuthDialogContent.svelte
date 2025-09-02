@@ -5,7 +5,7 @@
 	 * Input email -> Send immediately -> Close dialog -> Show result
 	 */
 
-	import { _ } from '../stores/i18n';
+	import { _, currentLanguage } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
@@ -67,7 +67,8 @@
 					body: JSON.stringify({
 						email,
 						ui_host: typeof window !== 'undefined' ? window.location.origin : undefined,
-						next: nextParam
+						next: nextParam,
+						email_lang: $currentLanguage
 					})
 				});
 				debugMessage = `🔄 Response: ${response.status}`;

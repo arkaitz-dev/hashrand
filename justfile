@@ -23,7 +23,7 @@ up:
     spin-cli up --runtime-config-file runtime-config.toml
 
 # Stop any running development servers (foreground and background)
-stop: tailscale-front-stop
+stop: tailscale-stop
     #!/usr/bin/env bash
     echo "Stopping development servers..."
     
@@ -34,6 +34,15 @@ stop: tailscale-front-stop
             kill $PID 2>/dev/null && echo "✓ Stopped background server (PID: $PID)" || echo "• Failed to stop background server"
         fi
         rm -f .spin-dev.pid
+    fi
+    
+    # Kill predeploy server if PID file exists
+    if [ -f .spin-predeploy.pid ]; then
+        PID=$(cat .spin-predeploy.pid)
+        if kill -0 $PID 2>/dev/null; then
+            kill $PID 2>/dev/null && echo "✓ Stopped predeploy server (PID: $PID)" || echo "• Failed to stop predeploy server"
+        fi
+        rm -f .spin-predeploy.pid
     fi
     
     # Kill background npm server if PID file exists
@@ -59,6 +68,7 @@ stop: tailscale-front-stop
     # Clean up log files
     [ -f .spin-dev.log ] && rm -f .spin-dev.log && echo "✓ Cleaned up spin log file"
     [ -f .npm-dev.log ] && rm -f .npm-dev.log && echo "✓ Cleaned up npm log file"
+    [ -f .spin-predeploy.log ] && rm -f .spin-predeploy.log && echo "✓ Cleaned up predeploy log file"
     
     echo "Development servers stopped."
 
@@ -98,6 +108,22 @@ status:
         fi
     else
         echo "• No npm background server PID file"
+    fi
+    
+    # Check predeploy server status
+    if [ -f .spin-predeploy.pid ]; then
+        PID=$(cat .spin-predeploy.pid)
+        if kill -0 $PID 2>/dev/null; then
+            echo "✓ Predeploy server running (PID: $PID)"
+            if [ -f .spin-predeploy.log ]; then
+                echo "  Log file: .spin-predeploy.log ($(wc -l < .spin-predeploy.log) lines)"
+            fi
+        else
+            echo "✗ Predeploy PID file exists but process is dead (cleaning up...)"
+            rm -f .spin-predeploy.pid
+        fi
+    else
+        echo "• No predeploy server PID file"
     fi
     
     # Check if spin-cli watch is running
@@ -328,6 +354,81 @@ deploy:
         --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
         --variable pbkdf2_salt="${PBKDF2_SALT:-${SPIN_VARIABLE_PBKDF2_SALT}}"
 
+# Prepare for production deployment (compile web UI, start backend only with static serving, start tailscale)
+predeploy: stop clean
+    #!/usr/bin/env bash
+    echo "🚀 Preparing for production deployment..."
+    echo "======================================="
+    
+    # Build web interface for production
+    echo "Building web interface for production..."
+    cd web
+    npm run build
+    cd ..
+    
+    # Verify dist directory was created
+    if [ ! -d "web/dist" ]; then
+        echo "✗ Error: web/dist directory not found after build"
+        exit 1
+    fi
+    
+    echo "✓ Web interface built successfully ($(du -sh web/dist | cut -f1) in web/dist/)"
+    
+    # Build WebAssembly component
+    echo "Building WebAssembly backend component..."
+    spin-cli build
+    
+    # Start backend only (includes static file serving)
+    echo "Starting backend with static file serving..."
+    nohup spin-cli up --runtime-config-file runtime-config.toml > .spin-predeploy.log 2>&1 &
+    SPIN_PID=$!
+    echo $SPIN_PID > .spin-predeploy.pid
+    
+    # Wait for backend to start
+    sleep 3
+    
+    if kill -0 $SPIN_PID 2>/dev/null; then
+        echo "✓ Backend started (PID: $SPIN_PID)"
+        
+        # Check if port 3000 is responding
+        if curl -s http://localhost:3000/api/version > /dev/null; then
+            echo "✓ Backend API responding on port 3000"
+        else
+            echo "⚠ Backend started but API not yet responding (may need more time)"
+        fi
+        
+        # Start Tailscale serve for external access
+        echo "Starting Tailscale serve for external access..."
+        if command -v tailscale &> /dev/null; then
+            tailscale serve --bg 3000
+            echo "✓ Tailscale serve started on port 3000"
+            echo ""
+            echo "🎉 Production deployment ready!"
+            echo "==============================="
+            echo "  Local access: http://localhost:3000"
+            echo "  Tailscale access: Check 'tailscale serve status'"
+            echo "  Backend log: tail -f .spin-predeploy.log"
+            echo "  Stop: just stop"
+            echo "  Status: just status"
+            echo ""
+            echo "Note: Both web interface and API are served from port 3000"
+            echo "      Web files: Served statically from /web/dist/"
+            echo "      API endpoints: Available at /api/*"
+        else
+            echo "⚠ Tailscale not available, skipping external access setup"
+            echo ""
+            echo "🎉 Local production deployment ready!"
+            echo "====================================="
+            echo "  Access: http://localhost:3000"
+            echo "  Log: tail -f .spin-predeploy.log"
+            echo "  Stop: just stop"
+        fi
+    else
+        echo "✗ Failed to start backend"
+        rm -f .spin-predeploy.pid
+        exit 1
+    fi
+
 # Run development server in background and execute tests
 test-dev:
     #!/usr/bin/env bash
@@ -439,6 +540,20 @@ tailscale-front-stop:
     echo "Stopping Tailscale serve..."
     tailscale serve --https=443 off
     echo "✓ Tailscale serve stopped"
+
+# Stop all Tailscale serve instances
+tailscale-stop:
+    #!/usr/bin/env bash
+    if command -v tailscale &> /dev/null; then
+        echo "Stopping all Tailscale serve instances..."
+        tailscale serve --https=443 off 2>/dev/null || echo "• No Tailscale serve instances to stop"
+        # Also try stopping specific port configurations
+        tailscale serve --bg 3000 off 2>/dev/null || true
+        tailscale serve --bg 5173 off 2>/dev/null || true
+        echo "✓ All Tailscale serve instances stopped"
+    else
+        echo "• Tailscale CLI not available, skipping"
+    fi
 
 # Start Tailscale serve for backend API (port 3000)
 tailscale-back-start: check-tailscale

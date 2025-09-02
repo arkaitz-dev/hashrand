@@ -111,6 +111,7 @@ pub fn requires_authentication(path: &str) -> bool {
         // Public endpoints (no authentication required)
         p if p.ends_with("/api/version") => false,
         p if p.starts_with("/api/login") => false,
+        p if p.ends_with("/api/refresh") => false,
 
         // Protected endpoints (authentication required)
         p if p.ends_with("/api/custom") => true,

@@ -8,7 +8,7 @@
 	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { base58 } from '@scure/base';
+	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import type { MnemonicParams } from '$lib/types';
@@ -116,6 +116,7 @@
 
 	// Reference to AuthGuard component
 	let authGuard: AuthGuard;
+	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	// // Email dialog state
 	// let showEmailDialog = false;
@@ -135,22 +136,19 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado (verificación simple)
+		// Verificar si el usuario está autenticado
 		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
 		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
 
 		if (!hasToken || !hasUser) {
-			// No autenticado - redirigir a página de login
-			const urlParams = new URLSearchParams();
-			urlParams.set('endpoint', 'mnemonic');
-			urlParams.set('language', params.language ?? 'english');
-			urlParams.set('words', (params.words ?? 12).toString());
-			if (urlProvidedSeed) urlParams.set('seed', urlProvidedSeed);
-
-			const jsonString = JSON.stringify(Object.fromEntries(urlParams));
-			const bytes = new TextEncoder().encode(jsonString);
-			const nextParam = base58.encode(bytes);
-			goto(`/login?next=${encodeURIComponent(nextParam)}`);
+			// No autenticado - mostrar diálogo de autenticación
+			pendingGenerationParams = {
+				endpoint: 'mnemonic',
+				language: params.language ?? 'english',
+				words: params.words ?? 12,
+				...(urlProvidedSeed && { seed: urlProvidedSeed })
+			};
+			dialogStore.show('auth', pendingGenerationParams);
 			return;
 		}
 

@@ -72,14 +72,9 @@ impl JwtUtils {
         // Step 2: PBKDF2-SHA3-256 with high iteration count
         let mut user_id = [0u8; 32];
         let salt = Self::get_pbkdf2_salt()?;
-        
-        pbkdf2::<Hmac<Sha3_256>>(
-            &email_hash,
-            &salt,
-            Self::PBKDF2_ITERATIONS,
-            &mut user_id,
-        )
-        .map_err(|_| "PBKDF2 derivation failed".to_string())?;
+
+        pbkdf2::<Hmac<Sha3_256>>(&email_hash, &salt, Self::PBKDF2_ITERATIONS, &mut user_id)
+            .map_err(|_| "PBKDF2 derivation failed".to_string())?;
 
         Ok(user_id)
     }
@@ -106,8 +101,8 @@ impl JwtUtils {
         let user_id = Self::derive_user_id(email)?;
         Ok(Self::user_id_to_username(&user_id))
     }
-    /// Get JWT secret key (in production this should be from environment variable)
-    /// For development, we generate a consistent secret
+    // /// Get JWT secret key (in production this should be from environment variable)
+    // /// For development, we generate a consistent secret
     // fn get_jwt_secret() -> String {
     //     // In production, this should come from environment variable
     //     // For development, we use a consistent secret
@@ -115,7 +110,7 @@ impl JwtUtils {
     // }
 
     /// Get JWT secret from Spin variables
-    /// 
+    ///
     /// # Returns
     /// * `Result<String, String>` - JWT secret or error message
     fn get_jwt_secret() -> Result<String, String> {
@@ -124,25 +119,24 @@ impl JwtUtils {
     }
 
     /// Get PBKDF2 salt from Spin variables as bytes
-    /// 
+    ///
     /// # Returns  
     /// * `Result<Vec<u8>, String>` - Salt bytes or error message
     fn get_pbkdf2_salt() -> Result<Vec<u8>, String> {
         let salt_hex = spin_sdk::variables::get("pbkdf2_salt")
             .map_err(|e| format!("Failed to get pbkdf2_salt variable: {}", e))?;
-        
-        hex::decode(&salt_hex)
-            .map_err(|_| "PBKDF2_SALT must be a valid hex string".to_string())
+
+        hex::decode(&salt_hex).map_err(|_| "PBKDF2_SALT must be a valid hex string".to_string())
     }
 
     /// Get magic link HMAC key from Spin variables as bytes
-    /// 
+    ///
     /// # Returns
     /// * `Result<Vec<u8>, String>` - HMAC key bytes or error message  
     fn get_magic_link_hmac_key() -> Result<Vec<u8>, String> {
         let key_hex = spin_sdk::variables::get("magic_link_hmac_key")
             .map_err(|e| format!("Failed to get magic_link_hmac_key variable: {}", e))?;
-        
+
         hex::decode(&key_hex)
             .map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())
     }
@@ -163,6 +157,36 @@ impl JwtUtils {
 
         let claims = AccessTokenClaims {
             sub: username,
+            exp: expires_at.timestamp(),
+            iat: now.timestamp(),
+            token_type: "access".to_string(),
+        };
+
+        let header = Header::new(Algorithm::HS256);
+        let jwt_secret = Self::get_jwt_secret()?;
+        let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
+
+        match encode(&header, &claims, &encoding_key) {
+            Ok(token) => Ok((token, expires_at)),
+            Err(e) => Err(format!("Failed to create access token: {}", e)),
+        }
+    }
+
+    /// Create access token directly from username (used for refresh)
+    ///
+    /// # Arguments
+    /// * `username` - Base58 encoded username
+    ///
+    /// # Returns
+    /// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
+    pub fn create_access_token_from_username(
+        username: &str,
+    ) -> Result<(String, DateTime<Utc>), String> {
+        let now = Utc::now();
+        let expires_at = now + Duration::minutes(3); // 3 minutes
+
+        let claims = AccessTokenClaims {
+            sub: username.to_string(),
             exp: expires_at.timestamp(),
             iat: now.timestamp(),
             token_type: "access".to_string(),
@@ -223,8 +247,7 @@ impl JwtUtils {
     /// * `Result<AccessTokenClaims, String>` - Decoded claims or validation error
     #[allow(dead_code)]
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
-        let jwt_secret = Self::get_jwt_secret()
-            .map_err(|e| format!("JWT secret error: {}", e))?;
+        let jwt_secret = Self::get_jwt_secret().map_err(|e| format!("JWT secret error: {}", e))?;
         let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
         let validation = Validation::new(Algorithm::HS256);
 
@@ -248,8 +271,7 @@ impl JwtUtils {
     /// * `Result<RefreshTokenClaims, String>` - Decoded claims or validation error
     #[allow(dead_code)]
     pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String> {
-        let jwt_secret = Self::get_jwt_secret()
-            .map_err(|e| format!("JWT secret error: {}", e))?;
+        let jwt_secret = Self::get_jwt_secret().map_err(|e| format!("JWT secret error: {}", e))?;
         let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
         let validation = Validation::new(Algorithm::HS256);
 
@@ -289,8 +311,8 @@ impl JwtUtils {
         data.extend_from_slice(&timestamp_bytes);
 
         // Generate HMAC-SHA3-256 for integrity
-        let hmac_key = Self::get_magic_link_hmac_key()
-            .map_err(|e| format!("HMAC key error: {}", e))?;
+        let hmac_key =
+            Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
         let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
         mac.update(&data);
@@ -329,8 +351,8 @@ impl JwtUtils {
         let provided_hmac = &token_bytes[40..72];
 
         // Verify HMAC integrity
-        let hmac_key = Self::get_magic_link_hmac_key()
-            .map_err(|e| format!("HMAC key error: {}", e))?;
+        let hmac_key =
+            Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
         let mut mac = Hmac::<Sha3_256>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
         mac.update(user_id_bytes);

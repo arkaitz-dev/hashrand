@@ -38,7 +38,8 @@ export default [
 				HTMLSelectElement: 'readonly',
 				HTMLInputElement: 'readonly',
 				TextEncoder: 'readonly',
-				TextDecoder: 'readonly'
+				TextDecoder: 'readonly',
+				RequestInit: 'readonly'
 			}
 		},
 		plugins: {
@@ -81,7 +82,8 @@ export default [
 				HTMLSelectElement: 'readonly',
 				HTMLInputElement: 'readonly',
 				TextEncoder: 'readonly',
-				TextDecoder: 'readonly'
+				TextDecoder: 'readonly',
+				RequestInit: 'readonly'
 			}
 		},
 		plugins: {

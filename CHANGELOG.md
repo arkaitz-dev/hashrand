@@ -13,6 +13,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [API v1.4.5 / Web v0.19.4] - 2025-09-02
 
+### SPA Routing & Authentication System Enhancement (v1.4.5 / v0.19.4)
+#### Added
+- **🔄 Complete SPA Routing Support**: Production-grade single-page application routing system
+  - **Fallback Configuration**: `FALLBACK_PATH = "index.html"` in `static-fileserver` component for proper SPA routing
+  - **Route Resolution**: All non-API routes (`/custom/`, `/password/`, `/api-key/`, `/mnemonic/`) now properly fallback to `index.html`
+  - **Client-Side Navigation**: SvelteKit router handles all routing without 404 errors
+  - **Development/Production Compatibility**: Conditional static-fileserver configuration for optimal development workflow
+- **🎯 Unified Modal Authentication System**: Consistent authentication experience across all generation pages
+  - **Modern AuthGuard Integration**: Updated `/password/`, `/api-key/`, and `/mnemonic/` to use modern dialog system
+  - **Eliminated Redirections**: Replaced old `/login?next=...` redirect pattern with in-place modal dialogs
+  - **Form State Preservation**: User form data maintained throughout authentication process
+  - **Professional UX Flow**: Authentication modal appears seamlessly when clicking "Generate"
+- **🌍 Multilingual Magic Link Email System**: Complete email localization matching user interface language
+  - **Automatic Language Detection**: Frontend automatically sends `email_lang` parameter based on UI language selection
+  - **13-Language Email Delivery**: Magic link emails delivered in user's selected interface language
+    - Spanish, English, French, German, Portuguese, Russian, Chinese, Japanese, Arabic, Hindi, Catalan, Galician, Basque
+  - **Cultural Adaptation**: Proper RTL support for Arabic emails with native terminology for all languages
+  - **Intelligent Fallback**: Automatic English fallback for unsupported or missing language codes
+  - **Frontend Integration**: Uses `currentLanguage` store for seamless language detection
+
+#### Enhanced
+- **🔧 Development Environment Improvements**: Optimized development workflow without production conflicts
+  - **Conditional Static Serving**: `static-fileserver` component commented out in development mode
+  - **Clean Development Setup**: Prevents conflicts when running `just clean` → `just dev`
+  - **Production Readiness**: Static-fileserver automatically enabled for `just predeploy` production deployment
+- **🎨 Authentication Architecture Modernization**: Complete overhaul of authentication flow consistency
+  - **Universal Modal System**: All generation pages now use identical AuthGuard dialog pattern
+  - **Consistent Error Handling**: Unified authentication error handling across all pages
+  - **State Management**: Improved `pendingGenerationParams` handling for seamless authentication flow
+  - **Dialog Store Integration**: Enhanced `dialogStore.show('auth')` integration for all protected pages
+
+#### Technical Implementation
+- **Frontend Changes**: Updated all generation page components to use modern authentication flow
+  - **AuthDialogContent.svelte**: Enhanced with `currentLanguage` import and `email_lang` parameter
+  - **Generation Pages**: `/password/`, `/api-key/`, `/mnemonic/` updated to use `dialogStore.show('auth')`
+  - **Parameter Management**: Improved `pendingGenerationParams` structure for better state preservation
+- **Configuration Management**: Intelligent handling of development vs production static serving
+  - **Development Mode**: Static-fileserver disabled to prevent `web/dist` dependency issues
+  - **Production Mode**: Static-fileserver enabled with proper fallback configuration
+  - **Deployment Workflow**: Seamless transition between development and production configurations
+
+#### User Experience Impact
+- **Seamless SPA Navigation**: Users can directly access any URL without 404 errors
+- **Consistent Authentication**: Identical login experience across all generation tools
+- **Native Language Support**: Magic link emails arrive in user's preferred interface language
+- **Professional Workflow**: No disruptions, redirections, or authentication inconsistencies
+
+---
+
+## [API v1.4.5 / Web v0.19.4] - 2025-09-02
+
 ### Production Deployment System (v1.4.5 / v0.19.4)
 #### Added
 - **🚀 Complete Production Deployment System**: New `just predeploy` command for unified deployment

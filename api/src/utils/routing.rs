@@ -1,4 +1,5 @@
 use crate::handlers::custom::handle_custom_request;
+use crate::handlers::login::handle_refresh_token;
 use crate::handlers::{
     handle_api_key_request, handle_custom, handle_from_seed, handle_login, handle_mnemonic_request,
     handle_password_request, handle_users, handle_version,
@@ -62,6 +63,9 @@ pub async fn route_request_with_req(
 
         // Authentication endpoints (support GET and POST)
         path if path.starts_with("/api/login") => handle_login(req, query_params).await,
+
+        // Token refresh endpoint
+        path if path.ends_with("/api/refresh") => handle_refresh_token(req).await,
 
         // Not found
         _ => handle_not_found(),
