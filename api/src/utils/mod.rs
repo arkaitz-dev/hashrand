@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod email;
+pub mod email_templates;
 pub mod jwt;
 pub mod query;
 pub mod random_generator;

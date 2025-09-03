@@ -477,7 +477,7 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.4.5",
+  "api_version": "1.6.1",
   "ui_version": "0.19.4"
 }
 ```
@@ -541,24 +541,12 @@ CREATE TABLE users (
 );
 ```
 
-**Authentication Sessions Table:**
+**Magic Links Table:**
 ```sql
-CREATE TABLE auth_sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL,
-    magic_token TEXT NOT NULL UNIQUE,
-    access_token TEXT,
-    refresh_token TEXT,
-    created_at INTEGER DEFAULT (unixepoch()),
-    magic_expires_at INTEGER NOT NULL,
-    access_expires_at INTEGER,
-    refresh_expires_at INTEGER,
-    is_used BOOLEAN DEFAULT FALSE
+CREATE TABLE magiclinks (
+    token_hash BLOB PRIMARY KEY,    -- 16-byte HMAC-SHA3-256 → SHAKE-256 hash
+    expires_at INTEGER NOT NULL     -- Unix timestamp expiration
 );
-
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_auth_sessions_magic_token ON auth_sessions(magic_token);
-CREATE INDEX IF NOT EXISTS idx_auth_sessions_refresh_token ON auth_sessions(refresh_token);
 ```
 
 ### Configuration Files
@@ -1156,17 +1144,15 @@ User_ID + Timestamp + HMAC-SHA3-256 → Base58 Magic Token (72 bytes → ~98 cha
 ```sql
 -- Zero Knowledge Users Table
 CREATE TABLE users (
-    user_id BLOB PRIMARY KEY,           -- 32-byte cryptographic hash (no PII)
+    user_id BLOB PRIMARY KEY,           -- 16-byte cryptographic hash (no PII)
     created_at INTEGER DEFAULT (unixepoch())  -- Unix timestamp (timezone-agnostic)
 );
 
--- Zero Knowledge Authentication Sessions  
-CREATE TABLE auth_sessions (
-    user_id BLOB NOT NULL,              -- References cryptographic user_id
-    expires INTEGER,                    -- Unix timestamp expiration
-    access_token TEXT,                  -- JWT access token
-    refresh_token TEXT,                 -- JWT refresh token
-    -- No email, username, or PII fields anywhere
+-- Zero Knowledge Magic Links Table (Simplified)
+CREATE TABLE magiclinks (
+    token_hash BLOB PRIMARY KEY,        -- 16-byte HMAC-SHA3-256 → SHAKE-256 hash
+    expires_at INTEGER NOT NULL         -- Unix timestamp expiration
+    -- No user data, emails, or PII - only cryptographic hashes
 );
 ```
 

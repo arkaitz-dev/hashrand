@@ -76,7 +76,7 @@
 <!-- Auth Status Button Container -->
 <div class="auth-status-button relative">
 	<button
-		class="p-2 rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-12 h-12"
+		class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12"
 		class:bg-white={showUserDropdown}
 		class:dark:bg-gray-800={showUserDropdown}
 		class:shadow-lg={showUserDropdown}
@@ -89,9 +89,9 @@
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
 			{#if isAuthenticated}
-				<Icon name="check" size="w-5 h-5" />
+				<Icon name="check" size="w-4 h-4 sm:w-5 sm:h-5" />
 			{:else}
-				<Icon name="settings" size="w-5 h-5" />
+				<Icon name="settings" size="w-4 h-4 sm:w-5 sm:h-5" />
 			{/if}
 		</div>
 	</button>

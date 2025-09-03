@@ -48,7 +48,7 @@ pub fn get_database_connection(env: DatabaseEnvironment) -> Result<Connection, S
 
 /// Initialize database tables for the specified environment
 ///
-/// Creates the users and auth_sessions tables if they don't exist.
+/// Creates the users and magiclinks tables if they don't exist.
 ///
 /// # Arguments
 /// * `env` - Database environment to initialize
@@ -69,15 +69,12 @@ pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> 
         &[],
     )?;
 
-    // Create auth_sessions table optimized for magic link validation
+    // Create magiclinks table for magic link validation
     connection.execute(
         r#"
-        CREATE TABLE IF NOT EXISTS auth_sessions (
-            user_id BLOB NOT NULL,
-            expires INTEGER NOT NULL,
-            access_token TEXT NOT NULL,
-            refresh_token TEXT NOT NULL,
-            PRIMARY KEY (user_id, expires)
+        CREATE TABLE IF NOT EXISTS magiclinks (
+            token_hash BLOB PRIMARY KEY,
+            expires_at INTEGER NOT NULL
         )
         "#,
         &[],

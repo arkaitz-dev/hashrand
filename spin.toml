@@ -12,11 +12,11 @@ jwt_secret = { required = true, secret = true }
 magic_link_hmac_key = { required = true, secret = true }
 user_id_hmac_key = { required = true, secret = true }
 pbkdf2_salt = { required = true, secret = true }
-# Email configuration for Mailtrap REST API
-mailtrap_api_url = { default = "https://sandbox.api.mailtrap.io/api/send" }
+# Email configuration for Mailtrap REST API with custom domain
+mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
 mailtrap_inbox_id = { required = true }
-from_email = { default = "noreply@hashrand.dev" }
+from_email = { default = "noreply@mailer.hashrand.com" }
 
 [[trigger.http]]
 route = "/api/..."
@@ -24,7 +24,7 @@ component = "hashrand-spin"
 
 [component.hashrand-spin]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
-allowed_outbound_hosts = ["https://sandbox.api.mailtrap.io"]
+allowed_outbound_hosts = ["https://send.api.mailtrap.io"]
 sqlite_databases = ["hashrand-dev", "hashrand"]
 # Reference application variables in component variables
 [component.hashrand-spin.variables]

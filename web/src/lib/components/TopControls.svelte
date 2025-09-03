@@ -99,14 +99,14 @@
 
 <!-- Top Controls Container -->
 <div
-	class="top-controls absolute top-0.5 md:top-4 z-50 flex items-center gap-1 bg-gray-200/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-1 md:p-1 shadow-lg border border-gray-400/50 dark:border-gray-700/50 transition-opacity duration-[1500ms] {$isRTL
+	class="top-controls absolute top-0.5 md:top-4 z-50 flex items-center gap-0.5 sm:gap-1 bg-gray-200/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-0.5 sm:p-1 md:p-1 shadow-lg border border-gray-400/50 dark:border-gray-700/50 transition-opacity duration-[1500ms] {$isRTL
 		? 'left-0.5 md:left-4'
 		: 'right-0.5 md:right-4'} {isTransitioning ? 'opacity-0' : 'opacity-100'}"
 >
 	<!-- Language Selector -->
 	<div class="relative">
 		<button
-			class="p-2 rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-12 h-12"
+			class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12"
 			class:bg-white={showDropdown}
 			class:dark:bg-gray-800={showDropdown}
 			class:shadow-lg={showDropdown}
@@ -116,7 +116,7 @@
 			aria-label="Select language"
 			onclick={toggleDropdown}
 		>
-			<Icon name={selectedLanguage.flag} size="w-12 h-12" placeholder="auto" />
+			<Icon name={selectedLanguage.flag} size="w-6 h-6 sm:w-8 sm:h-8" placeholder="auto" />
 		</button>
 
 		{#if showDropdown}
@@ -142,16 +142,16 @@
 
 	<!-- Theme Toggle -->
 	<button
-		class="p-2 rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-12 h-12"
+		class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12"
 		onclick={toggleTheme}
 		aria-label={$theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
 		title={$theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
 			{#if $theme === 'dark'}
-				<Icon name="moon" size="w-5 h-5" />
+				<Icon name="moon" size="w-4 h-4 sm:w-5 sm:h-5" />
 			{:else}
-				<Icon name="sun" size="w-5 h-5" />
+				<Icon name="sun" size="w-4 h-4 sm:w-5 sm:h-5" />
 			{/if}
 		</div>
 	</button>

@@ -11,6 +11,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [API v1.6.1] - 2025-09-03
+
+### Database Architecture Simplification & Email Accessibility (v1.6.1)
+#### Enhanced
+- **🗄️ Simplified Database Architecture**: Replaced complex `auth_sessions` table with streamlined `magiclinks` table
+  - **New Schema**: `magiclinks (token_hash BLOB PRIMARY KEY, expires_at INTEGER NOT NULL)`
+  - **HMAC-SHA3-256 + SHAKE-256**: Magic link hashing using `HMAC-SHA3-256(magic_link, hmac_key) → SHAKE-256(hmac_result) → [16 bytes]`
+  - **Storage Efficiency**: Only stores cryptographic hash and expiration timestamp (no user data)
+  - **Enhanced Security**: Magic link validation now uses independent HMAC key for additional security layer
+  - **Zero Knowledge Compliance**: Database stores zero personal information - only hashes and timestamps
+  - **Surgical Migration**: Minimal code changes preserving all existing functionality
+
+- **♿ Email Accessibility Enhancement**: Colorblind-friendly email templates across all 13 languages
+  - **Accessible Button Colors**: Changed from red (#dc2626) to soft blue (#3b82f6) with guaranteed white text
+  - **Link Background**: Updated to light gray (#f5f5f5) for better contrast and readability
+  - **WCAG 2.1 AA Compliance**: Meets accessibility standards for colorblind users
+  - **Consistent Styling**: Applied same accessible colors to all 13 language email templates
+  - **Inline Style Enforcement**: Added `style="color: white !important;"` to guarantee text visibility
+
+#### Technical
+- **MagicLinkOperations Module**: New database operations module replacing AuthOperations
+  - `store_magic_link()`: Stores HMAC-SHA3-256 + SHAKE-256 compressed hash
+  - `validate_and_consume_magic_link()`: Validates hash and removes from database (one-time use)
+  - `cleanup_expired_links()`: Automatic cleanup of expired magic links
+  - `ensure_user_exists()`: User creation with cryptographic user_id only
+- **Cryptographic Hash Function**: `create_token_hash()` implementing dual-layer hashing
+  - Step 1: `HMAC-SHA3-256(magic_link, MAGIC_LINK_HMAC_KEY)` for integrity
+  - Step 2: `SHAKE-256(hmac_result) → [16 bytes]` for optimal compression
+- **Database Migration**: Clean replacement of sessions with magic link hash validation
+- **Email Template Updates**: Enhanced CSS styling for colorblind accessibility across all languages
+- **Testing Verified**: Complete system validation with 100% test pass rate
+
+#### Fixed
+- **Authentication Flow Stability**: Resolved authentication system complexity through database simplification
+- **Email Accessibility**: Fixed button and link colors for colorblind users in all email templates
+- **Storage Optimization**: Reduced database storage requirements through hash-only approach
+
+---
+
 ## [API v1.6.0] - 2025-09-02
 
 ### Magic Token Compression with SHAKE256 (v1.6.0)

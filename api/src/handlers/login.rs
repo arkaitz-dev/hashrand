@@ -11,8 +11,7 @@ use std::collections::HashMap;
 
 use crate::database::{
     connection::{DatabaseEnvironment, initialize_database},
-    models::AuthSession,
-    operations::AuthOperations,
+    operations::MagicLinkOperations,
 };
 use crate::utils::{JwtUtils, send_magic_link_email};
 
@@ -149,49 +148,31 @@ async fn handle_magic_link_generation(
         }
     };
 
-    // Create auth session
-    let auth_session = match AuthSession::new_magic_link(
-        magic_request.email.clone(),
-        magic_token.clone(),
-        magic_expires_at,
-    ) {
-        Ok(session) => session,
-        Err(e) => {
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(
-                    serde_json::to_string(&ErrorResponse {
-                        error: format!("Failed to create auth session: {}", e),
-                    })
-                    .unwrap_or_default(),
-                )
-                .build());
-        }
-    };
+    // No need to create AuthSession anymore - magic link contains all user info
 
-    // Save to database
-    match AuthOperations::create_auth_session(env.clone(), &auth_session) {
+    // Get host URL for magic link (prefer ui_host from request, fallback to request host)
+    println!("DEBUG: About to choose host URL");
+    println!("DEBUG: magic_request.ui_host = {:?}", magic_request.ui_host);
+
+    let fallback_host = JwtUtils::get_host_url_from_request(&req);
+    println!("DEBUG: fallback_host from request = {}", fallback_host);
+
+    let host_url = magic_request
+        .ui_host
+        .as_deref() // Más limpio que .as_ref().map(|s| s.as_str())
+        .unwrap_or(&fallback_host);
+
+    println!("DEBUG: Final chosen host_url = {}", host_url);
+    let magic_link = JwtUtils::create_magic_link_url(
+        host_url,
+        &magic_token,
+        magic_request.next.as_deref(),
+    );
+    println!("DEBUG: Generated magic_link = {}", magic_link);
+
+    // Store magic link hash in database
+    match MagicLinkOperations::store_magic_link(env.clone(), &magic_link, magic_expires_at.timestamp() as u64) {
         Ok(_) => {
-            // Get host URL for magic link (prefer ui_host from request, fallback to request host)
-            println!("DEBUG: About to choose host URL");
-            println!("DEBUG: magic_request.ui_host = {:?}", magic_request.ui_host);
-
-            let fallback_host = JwtUtils::get_host_url_from_request(&req);
-            println!("DEBUG: fallback_host from request = {}", fallback_host);
-
-            let host_url = magic_request
-                .ui_host
-                .as_deref() // Más limpio que .as_ref().map(|s| s.as_str())
-                .unwrap_or(&fallback_host);
-
-            println!("DEBUG: Final chosen host_url = {}", host_url);
-            let magic_link = JwtUtils::create_magic_link_url(
-                host_url,
-                &magic_token,
-                magic_request.next.as_deref(),
-            );
-            println!("DEBUG: Generated magic_link = {}", magic_link);
 
             // Try to send email via Mailtrap, fallback to console logging
             match send_magic_link_email(
@@ -248,7 +229,7 @@ async fn handle_magic_link_generation(
             }
 
             // Clean up expired sessions
-            let _ = AuthOperations::cleanup_expired_sessions(env);
+            let _ = MagicLinkOperations::cleanup_expired_links(env);
 
             Ok(Response::builder()
                 .status(200)
@@ -331,16 +312,48 @@ fn handle_magic_link_validation(
         username, timestamp
     );
 
-    match AuthOperations::get_session_by_user_id_and_timestamp(
-        env.clone(),
-        &user_id_bytes,
-        timestamp,
-    ) {
-        Ok(Some((access_token, refresh_token))) => {
+    // Build magic link URL for validation
+    let host_url = JwtUtils::get_host_url_from_request(&_req);
+    let magic_link_url = JwtUtils::create_magic_link_url(
+        &host_url,
+        magic_token,
+        None, // No next parameter during validation
+    );
+
+    // Validate and consume magic link
+    match MagicLinkOperations::validate_and_consume_magic_link(env.clone(), &magic_link_url) {
+        Ok(true) => {
             println!("User {} authenticated successfully", username);
 
             // Ensure user exists in users table
-            let _ = AuthOperations::ensure_user_exists(env.clone(), &user_id_bytes);
+            let _ = MagicLinkOperations::ensure_user_exists(env.clone(), &user_id_bytes);
+
+            // Generate new access and refresh tokens
+            let (access_token, access_expires) = match JwtUtils::create_access_token(&username) {
+                Ok((token, exp)) => (token, exp),
+                Err(e) => {
+                    println!("Failed to create access token: {}", e);
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Failed to create access token".to_string(),
+                        })?).build());
+                }
+            };
+
+            let (refresh_token, _) = match JwtUtils::create_refresh_token(&username, 0) {
+                Ok((token, exp)) => (token, exp),
+                Err(e) => {
+                    println!("Failed to create refresh token: {}", e);
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Failed to create refresh token".to_string(),
+                        })?).build());
+                }
+            };
 
             // Create response with access token, user_id, and secure refresh token cookie
             let auth_response = serde_json::json!({
@@ -357,13 +370,6 @@ fn handle_magic_link_validation(
                 15 * 60 // 15 minutes in seconds
             );
 
-            // Delete used auth session
-            let _ = AuthOperations::delete_session_by_user_id_and_timestamp(
-                env,
-                &user_id_bytes,
-                timestamp,
-            );
-
             Ok(Response::builder()
                 .status(200)
                 .header("content-type", "application/json")
@@ -371,7 +377,7 @@ fn handle_magic_link_validation(
                 .body(auth_response.to_string())
                 .build())
         }
-        Ok(None) => Ok(Response::builder()
+        Ok(false) => Ok(Response::builder()
             .status(400)
             .header("content-type", "application/json")
             .body(serde_json::to_string(&ErrorResponse {

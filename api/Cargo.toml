@@ -2,7 +2,7 @@
 name = "hashrand-spin"
 authors = ["Arkaitz Dev <me@arkaitz.dev>"]
 description = "A random hash generator API built with Fermyon Spin"
-version = "1.6.0"
+version = "1.6.1"
 rust-version = "1.89"
 edition = "2024"
 
