@@ -177,6 +177,7 @@ export const ar: I18nTexts = {
 		confirmEmailDescription: 'هل هذا صحيح؟',
 		magicLinkSent: 'تم إرسال الرابط!',
 		magicLinkInstructions: 'تحقق من بريدك الإلكتروني وانقر على الرابط السحري للمصادقة.',
+		magicLinkSentFlash: 'تم إرسال الرابط السحري. تحقق من بريدك الإلكتروني وانقر على الرابط للمتابعة.',
 		developmentMode: 'وضع التطوير:',
 		testMagicLink: 'انقر هنا لاختبار الرابط السحري',
 		authenticationFailed: 'فشل في المصادقة',

@@ -5,7 +5,7 @@ use spin_sdk::{
     variables,
 };
 
-use super::email_templates::{create_html_template, create_text_template, create_subject};
+use crate::email_templates::render_magic_link_email;
 
 /// Email configuration loaded from Spin variables
 #[derive(Debug)]
@@ -44,6 +44,9 @@ fn create_email_request(
     magic_link: &str,
     language: Option<&str>,
 ) -> Result<Request> {
+    // Generate email templates using Maud system
+    let (subject, html_content) = render_magic_link_email(magic_link, language.unwrap_or("en"));
+    
     // Create email payload according to Mailtrap API format
     let email_payload = json!({
         "from": {
@@ -56,9 +59,9 @@ fn create_email_request(
                 "name": recipient_email.split('@').next().unwrap_or("User")
             }
         ],
-        "subject": create_subject(language),
-        "text": create_text_template(magic_link, language),
-        "html": create_html_template(magic_link, language),
+        "subject": subject,
+        "text": format!("Your magic link: {}", magic_link), // Simple text fallback
+        "html": html_content,
         "category": "Authentication"
     });
 

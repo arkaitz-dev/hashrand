@@ -5,10 +5,10 @@ echo "🔐 Testing Complete Authentication Flow"
 echo "======================================"
 
 # Step 1: Request magic link
-echo "📧 Step 1: Requesting magic link for test@example.com..."
+echo "📧 Step 1: Requesting magic link for me@arkaitz.dev..."
 MAGIC_RESPONSE=$(curl -s -X POST http://localhost:3000/api/login/ \
   -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}')
+  -d '{"email": "me@arkaitz.dev"}')
 
 echo "Response: $MAGIC_RESPONSE"
 
@@ -73,6 +73,6 @@ echo ""
 echo "🚀 Frontend authentication flow should now work!"
 echo "   1. Go to: http://localhost:5173/custom"
 echo "   2. AuthGuard should show login dialog"
-echo "   3. Enter email: test@example.com"
+echo "   3. Enter email: me@arkaitz.dev"
 echo "   4. Click the generated magic link"
 echo "   5. Should be authenticated and able to use the form"

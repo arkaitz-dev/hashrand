@@ -1,0 +1,13 @@
+email:
+  magic_link:
+    subject: "HashRandのマジックリンク"
+    title: "HashRand"
+    subtitle: "ランダムハッシュジェネレーター"
+    greeting: "こんにちは！"
+    intro: "安全なログインリンクをリクエストされました。下のボタンをクリックして認証し、アカウントにアクセスしてください。"
+    button_text: "HashRandにアクセス"
+    manual_link_intro: "ボタンが機能しない場合は、このリンクをコピーしてブラウザに貼り付けてください："
+    security_warning: "このリンクは5分で有効期限が切れ、一度だけ使用できます。"
+    security_notice: "このログインリンクをリクエストしていない場合は、このメールを無視してください。"
+    footer_text: "HashRand - ランダムハッシュジェネレーター"
+    no_reply_notice: "これは自動メッセージです。このメールには返信しないでください。"

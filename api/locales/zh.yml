@@ -1,0 +1,13 @@
+email:
+  magic_link:
+    subject: "您的 HashRand 魔法链接"
+    title: "HashRand"
+    subtitle: "随机哈希生成器"
+    greeting: "您好！"
+    intro: "您请求了一个安全登录链接。请点击下面的按钮进行身份验证并访问您的账户。"
+    button_text: "访问 HashRand"
+    manual_link_intro: "如果按钮无法正常工作，请复制此链接并粘贴到您的浏览器中："
+    security_warning: "此链接将在5分钟后过期，只能使用一次。"
+    security_notice: "如果您没有请求此登录链接，请忽略此邮件。"
+    footer_text: "HashRand - 随机哈希生成器"
+    no_reply_notice: "这是一条自动消息。请勿回复此邮件。"

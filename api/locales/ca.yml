@@ -1,0 +1,13 @@
+email:
+  magic_link:
+    subject: "El teu Enllaç Màgic per HashRand"
+    title: "HashRand"
+    subtitle: "Generador de Hash Aleatori"
+    greeting: "Hola!"
+    intro: "Has sol·licitat un enllaç d'accés segur. Fes clic al botó de sota per autenticar-te i accedir al teu compte."
+    button_text: "Accedir a HashRand"
+    manual_link_intro: "Si el botó no funciona, copia i enganxa aquest enllaç al teu navegador:"
+    security_warning: "Aquest enllaç expirarà en 5 minuts i només es pot usar una vegada."
+    security_notice: "Si no has sol·licitat aquest enllaç d'accés, si us plau ignora aquest email."
+    footer_text: "HashRand - Generador de Hash Aleatori"
+    no_reply_notice: "Aquest és un missatge automàtic. Si us plau no responguis a aquest email."

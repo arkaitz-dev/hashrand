@@ -1,0 +1,13 @@
+email:
+  magic_link:
+    subject: "Votre Lien Magique pour HashRand"
+    title: "HashRand"
+    subtitle: "Générateur de Hash Aléatoire"
+    greeting: "Bonjour !"
+    intro: "Vous avez demandé un lien de connexion sécurisé. Cliquez sur le bouton ci-dessous pour vous authentifier et accéder à votre compte."
+    button_text: "Accéder à HashRand"
+    manual_link_intro: "Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :"
+    security_warning: "Ce lien expirera dans 5 minutes et ne peut être utilisé qu'une seule fois."
+    security_notice: "Si vous n'avez pas demandé ce lien de connexion, veuillez ignorer cet email."
+    footer_text: "HashRand - Générateur de Hash Aléatoire"
+    no_reply_notice: "Ceci est un message automatique. Veuillez ne pas répondre à cet email."

@@ -1,11 +1,15 @@
 use spin_sdk::http::{IntoResponse, Request};
 use spin_sdk::http_component;
 
+// Initialize rust-i18n for email templates
+rust_i18n::i18n!("locales");
+
 // Project modules organized by functionality
 mod database;
 mod handlers;
 mod types;
 mod utils;
+mod email_templates;
 
 use utils::{parse_query_params, route_request_with_req};
 

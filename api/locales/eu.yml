@@ -1,0 +1,13 @@
+email:
+  magic_link:
+    subject: "Zure Esteka Magikoa HashRand-entzat"
+    title: "HashRand"
+    subtitle: "Hash Aleatorio Sortzailea"
+    greeting: "Kaixo!"
+    intro: "Sarbide esteka seguru bat eskatu duzu. Beheko botoian klik egin autentifikatzeko eta zure kontura sartzeko."
+    button_text: "HashRand-era Sartu"
+    manual_link_intro: "Botoia ez bada funtzionatzen, kopiatu eta itsatsi esteka hau zure nabigatzailean:"
+    security_warning: "Esteka honek 5 minututan iraungiko du eta behin bakarrik erabil daiteke."
+    security_notice: "Sarbide esteka hau ez baduzu eskatu, mesedez ez ikusi egin email honi."
+    footer_text: "HashRand - Hash Aleatorio Sortzailea"
+    no_reply_notice: "Mezu automatikoa da hau. Mesedez ez erantzun email honi."

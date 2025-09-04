@@ -179,6 +179,7 @@ export const ca: I18nTexts = {
 		confirmEmailDescription: 'És correcte?',
 		magicLinkSent: 'Enllaç enviat!',
 		magicLinkInstructions:
+		magicLinkSentFlash: 'Enllaç màgic enviat. Revisa el teu email i fes clic a l'enllaç per continuar.',
 			"Reviseu el vostre correu electrònic i feu clic a l'enllaç màgic per autenticar-vos.",
 		developmentMode: 'Mode desenvolupament:',
 		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",

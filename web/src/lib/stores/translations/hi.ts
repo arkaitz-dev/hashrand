@@ -178,6 +178,7 @@ export const hi: I18nTexts = {
 		confirmEmailDescription: 'क्या यह सही है?',
 		magicLinkSent: 'लिंक भेज दिया गया!',
 		magicLinkInstructions: 'अपना ईमेल चेक करें और प्रमाणीकरण के लिए मैजिक लिंक पर क्लिक करें।',
+		magicLinkSentFlash: 'मैजिक लिंक भेजा गया। अपना ईमेल चेक करें और जारी रखने के लिए लिंक पर क्लिक करें।',
 		developmentMode: 'डेवलपमेंट मोड:',
 		testMagicLink: 'मैजिक लिंक टेस्ट करने के लिए यहां क्लिक करें',
 		authenticationFailed: 'प्रमाणीकरण फेल हो गया',

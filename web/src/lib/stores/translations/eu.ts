@@ -176,6 +176,7 @@ export const eu: I18nTexts = {
 		confirmEmailDescription: 'Zuzena da?',
 		magicLinkSent: 'Esteka Bidalita!',
 		magicLinkInstructions: 'Egiaztatu zure emaila eta klikatu esteka magikoan autentifikatzeko.',
+		magicLinkSentFlash: 'Esteka magikoa bidali da. Egiaztatu zure emaila eta klikatu estekan jarraitzeko.',
 		developmentMode: 'Garapen Modua:',
 		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
 		authenticationFailed: 'Autentifikazioak huts egin du',

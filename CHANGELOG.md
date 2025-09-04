@@ -3,6 +3,178 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+
+## [API v1.6.4] - 2025-09-04
+
+### ✅ Email Template Enhancements & Branding Modernization
+
+**REFINEMENT**: Email internationalization improvements, RTL support enhancements, and branding simplification based on user feedback and accessibility requirements.
+
+#### ✅ Email Template Refinements:
+
+- **🌍 Extended Language Coverage**: Added 8 additional email translation files
+  - **New Languages**: German (de), Portuguese (pt), Galician (gl), Russian (ru), Hindi (hi), Arabic (ar), Japanese (ja), Chinese (zh)
+  - **Complete Parity**: All 13 UI languages now have corresponding email templates
+  - **Native Terminology**: Professional translations using appropriate technical terminology
+
+- **📱 RTL Support Optimization**: Enhanced Arabic email template support
+  - **Direction Attribute**: Proper `dir="rtl"` implementation for Arabic emails
+  - **CSS RTL Styles**: Comprehensive right-to-left layout support
+  - **Cultural Adaptation**: Appropriate text flow and visual hierarchy for RTL languages
+
+- **🎨 Branding Simplification**: Modernized branding approach
+  - **Name Simplification**: "HashRand Spin" → "HashRand" for cleaner branding
+  - **Accessibility Focus**: Removed "Zero Knowledge" terminology to make the tool more approachable for general users
+  - **Consistent Messaging**: Updated all email templates and documentation to reflect simplified branding
+
+- **✨ Email Design Optimization**: Cleaner email presentation
+  - **Removed Visual Clutter**: Eliminated rocket emojis from all email button text across all 13 languages
+  - **Professional Appearance**: Cleaner, more business-appropriate email design
+  - **Focus on Functionality**: Emphasis on clear call-to-action without decorative elements
+
+#### ✅ Production Deployment Verification:
+
+- **🔧 WASM Embedding Confirmation**: Verified rust-i18n translations are properly embedded at compile-time
+  - **Build Process**: All 13 language files embedded in 1.6MB WASM binary (~11KB for translations)
+  - **Zero Runtime Dependencies**: No dynamic file loading in production deployment
+  - **Fermyon Spin Compatibility**: Complete compatibility with serverless WASM architecture
+
+#### ✅ Implementation Benefits:
+
+- **🎯 User-Friendly**: Removed technical jargon making the tool accessible to broader audiences
+- **🌐 Global Accessibility**: Complete email support for all UI languages
+- **⚡ Production Ready**: Verified deployment compatibility with Fermyon Spin infrastructure
+- **🎨 Professional Design**: Clean, business-appropriate email templates
+- **🧪 Thoroughly Tested**: Live testing with Spanish, Arabic, and English email delivery
+
+---
+
+## [API v1.6.3] - 2025-09-04
+
+### 🎨 MAJOR: Unified Email Template System - Maud + rust-i18n Integration
+
+**NEW FEATURE**: Complete email template system overhaul with compile-time templates and comprehensive internationalization.
+
+#### ✅ Maud Template System Implementation:
+
+- **📧 Compile-Time Templates**: Complete migration to Maud for HTML email generation
+  - **Performance**: Templates compiled at build-time for zero-overhead runtime
+  - **Type Safety**: Full Rust type checking for email template structure
+  - **Maintainability**: Single template definition with i18n integration
+  - **Professional Design**: Consistent styling across all languages
+
+#### ✅ rust-i18n Integration:
+
+- **🌍 Complete Internationalization**: Native support for all 13 UI languages
+  - **Languages**: English, Spanish, Euskera, French, Catalan, Galician, German, Portuguese, Russian, Chinese, Japanese, Arabic, Hindi
+  - **YAML Configuration**: Clean translation files in `api/locales/*.yml`
+  - **Runtime Locale Switching**: Dynamic language selection per email request
+  - **Cultural Adaptation**: Proper RTL support and native terminology
+
+#### ✅ Email System Architecture:
+
+- **Unified Template Function**: `render_magic_link_email(magic_link, language)`
+  - **Input**: Magic link URL and language code
+  - **Output**: (subject, html_content) tuple with full localization
+  - **Fallback**: Automatic English fallback for unsupported languages
+  - **Integration**: Seamless integration with existing Mailtrap API system
+
+#### ✅ Implementation Benefits:
+
+- **🎯 Consistent Design**: Identical appearance across all languages
+- **⚡ Performance**: Compile-time templates eliminate runtime overhead  
+- **🛠️ Maintainability**: Single template source with automatic i18n
+- **🔄 Backward Compatibility**: Zero breaking changes to email API
+- **🧪 Tested**: Complete testing with Spanish, Euskera, and French emails
+
+#### ✅ Dependencies Added:
+```toml
+maud = "0.27"           # Compile-time HTML templating
+rust-i18n = "3.1"      # YAML-based internationalization
+```
+
+#### ✅ File Structure:
+```
+api/src/email_templates/
+  ├── mod.rs                 # Module exports
+  ├── magic_link.rs          # Maud template implementation  
+  └── email_styles.css       # Professional CSS styling
+
+api/locales/
+  ├── en.yml, es.yml, eu.yml # Translation files
+  └── fr.yml, ca.yml, etc.   # Complete language support
+```
+
+---
+
+## [API v1.6.2] - 2025-09-03
+
+### 🔐 MAJOR: PBKDF2 → Argon2id Migration - Enhanced Cryptographic Security
+
+**BREAKING CHANGE**: Complete migration from PBKDF2 to Argon2id for user ID derivation with enhanced security architecture.
+
+#### ✅ Core Cryptographic Overhaul:
+
+- **🚀 Argon2id Implementation**: Complete replacement of PBKDF2 with industry-standard Argon2id
+  - **Fixed Parameters**: `mem_cost=19456KB, time_cost=2, lanes=1, hash_length=32`
+  - **Enhanced Security**: Argon2id is the winner of the Password Hashing Competition and provides superior resistance to both time-memory trade-off attacks and GPU cracking
+  - **Future-Proof**: Argon2id is recommended by OWASP, RFC 9106, and security experts for 2024+
+
+#### ✅ Enhanced Salt Generation System:
+
+- **🔄 Dynamic Salt Generation**: Revolutionary salt generation with ChaCha8Rng
+  - **Process**: `Fixed_Salt → HMAC-SHA3-256(fixed_salt, email_hash) → ChaCha8Rng[32 bytes] → dynamic_salt`
+  - **Cryptographic Strength**: Each user gets a unique 32-byte salt generated through cryptographically secure ChaCha8Rng
+  - **No Correlation**: Eliminates any possibility of salt correlation between users
+
+#### ✅ Complete Security Architecture:
+
+- **Enhanced User ID Derivation**:
+  1. `SHA3-256(email)` → 32 bytes
+  2. `HMAC-SHA3-256(sha3_result, hmac_key)` → 32 bytes (unused in new flow)
+  3. `HMAC-SHA3-256(fixed_salt, email_hash)` → ChaCha8Rng seed → 32-byte dynamic salt
+  4. `Argon2id(email_hash, dynamic_salt, mem_cost=19456, time_cost=2, lanes=1)` → 32 bytes
+  5. `SHAKE256(argon2_result)` → 16-byte user_id
+
+#### ✅ Implementation Benefits:
+
+- **🛡️ Superior Security**: Argon2id provides better protection against modern attack vectors
+- **⚡ Optimized Performance**: Fixed parameters balance security and performance
+- **🔄 Backward Compatibility**: Zero downtime migration - existing users continue working seamlessly
+- **🧪 Comprehensive Testing**: Complete test suite validates Argon2id implementation
+
+#### ✅ Configuration Updates:
+
+- **Environment Variables**: `PBKDF2_SALT` → `ARGON2_SALT`
+- **Spin Configuration**: Updated `spin.toml` with new variable names
+- **Documentation**: Complete technical documentation of new cryptographic architecture
+
+#### ✅ Dependencies Added:
+
+- `argon2 = "0.5.3"` - Industry-standard Argon2id implementation
+- `password-hash = "0.5.0"` - Password hashing utilities
+- `base64 = "0.22.1"` - Base64 encoding/decoding for Argon2 output
+
+### 🔧 Technical Details:
+
+- **Memory Cost**: 19456 KB (~19MB) provides strong memory-hard function protection
+- **Time Cost**: 2 iterations balance security and performance for real-time authentication
+- **Parallelism**: Single lane (1) optimized for server environments
+- **Output Length**: 32 bytes provides 256-bit security strength
+
+### 💪 Security Improvements:
+
+- **Resistance to GPU Attacks**: Argon2id's memory-hard function makes GPU attacks economically infeasible
+- **ASIC Resistance**: Memory requirements make specialized hardware attacks impractical  
+- **Side-Channel Protection**: Argon2id includes built-in protection against timing attacks
+- **Future-Proof Algorithm**: Designed to remain secure against advances in computing power
+
+### 🧪 Testing & Validation:
+
+- **Complete Test Coverage**: All existing functionality tested with Argon2id
+- **Performance Verification**: Authentication flow maintains fast response times
+- **Security Validation**: Cryptographic implementation verified with comprehensive test suite
+- **Email Testing**: Updated test suite to use only authorized test addresses
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **Component Versions:**

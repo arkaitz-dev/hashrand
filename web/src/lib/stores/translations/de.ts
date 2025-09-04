@@ -179,6 +179,7 @@ export const de: I18nTexts = {
 		magicLinkSent: 'Link Gesendet!',
 		magicLinkInstructions:
 			'Überprüfen Sie Ihre E-Mail und klicken Sie auf den magischen Link zur Authentifizierung.',
+		magicLinkSentFlash: 'Magic-Link gesendet. Überprüfen Sie Ihre E-Mail und klicken Sie auf den Link, um fortzufahren.',
 		developmentMode: 'Entwicklungsmodus:',
 		testMagicLink: 'Hier klicken, um den magischen Link zu testen',
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',

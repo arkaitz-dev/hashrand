@@ -176,6 +176,7 @@ export const pt: I18nTexts = {
 		confirmEmailDescription: 'Está correto?',
 		magicLinkSent: 'Link Enviado!',
 		magicLinkInstructions: 'Verifique seu email e clique no link mágico para se autenticar.',
+		magicLinkSentFlash: 'Link mágico enviado. Verifique seu email e clique no link para continuar.',
 		developmentMode: 'Modo Desenvolvimento:',
 		testMagicLink: 'Clique aqui para testar o link mágico',
 		authenticationFailed: 'Falha na autenticação',

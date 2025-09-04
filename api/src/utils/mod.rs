@@ -1,10 +1,11 @@
 pub mod auth;
 pub mod email;
-pub mod email_templates;
 pub mod jwt;
 pub mod query;
 pub mod random_generator;
 pub mod routing;
+#[cfg(test)]
+pub mod argon2_test;
 
 // Auth functions imported directly in routing.rs
 pub use email::send_magic_link_email;

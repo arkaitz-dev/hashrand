@@ -352,7 +352,7 @@ deploy:
     spin-cli deploy --runtime-config-file runtime-config.toml \
         --variable jwt_secret="${JWT_SECRET:-${SPIN_VARIABLE_JWT_SECRET}}" \
         --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
-        --variable pbkdf2_salt="${PBKDF2_SALT:-${SPIN_VARIABLE_PBKDF2_SALT}}"
+        --variable argon2_salt="${ARGON2_SALT:-${SPIN_VARIABLE_ARGON2_SALT}}"
 
 # Prepare for production deployment (compile web UI, start backend only with static serving, start tailscale)
 predeploy: stop clean

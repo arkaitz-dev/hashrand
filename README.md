@@ -1,12 +1,12 @@
-# HashRand Spin
+# HashRand
 
-A **Zero Knowledge (ZK) random hash generator** built with Fermyon Spin and WebAssembly. Generate cryptographically secure hashes, passwords, and API keys with complete user privacy - the server never stores or processes personal information. Features a professional web interface with magic link authentication and JWT-protected endpoints.
+A **cryptographically secure random hash generator** built with Fermyon Spin and WebAssembly. Generate secure hashes, passwords, and API keys with complete user privacy - the server never stores or processes personal information. Features a professional web interface with magic link authentication and JWT-protected endpoints.
 
 ## Features
 
-### Zero Knowledge Architecture
+### Privacy-First Architecture
 - **🛡️ Complete Privacy**: Server never stores emails or personal information
-- **🔐 Cryptographic User IDs**: Enhanced multi-layer security with SHA3-256 + HMAC + PBKDF2 + SHAKE256 for deterministic user identification
+- **🔐 Cryptographic User IDs**: Enhanced multi-layer security with SHA3-256 + HMAC + Argon2id + SHAKE256 for deterministic user identification
 - **🎫 Magic Link Authentication**: Passwordless authentication with cryptographic integrity verification
 - **🔒 JWT Endpoint Protection**: Bearer token authentication for all sensitive operations
 - **📊 Privacy-Preserving Audit**: Base58 usernames enable logging without compromising user privacy
@@ -64,11 +64,11 @@ A **Zero Knowledge (ZK) random hash generator** built with Fermyon Spin and WebA
   - **Informational Display**: Seeds shown as informational text without copy functionality
   - **Simplified Integration**: Clean seed handling without complex UI interactions
 - **🌍 Complete Internationalization**: Full RTL/LTR support with 13 languages featuring enhanced naturalness
-- **🔐 Zero Knowledge Authentication System**: Privacy-preserving magic link authentication with complete data protection
+- **🔐 Privacy-First Authentication System**: Privacy-preserving magic link authentication with complete data protection
   - **Explore First, Authenticate Later**: All generator pages accessible without login
   - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
   - **Privacy-First Design**: Server never stores or processes email addresses
-  - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: SHA3-256 + HMAC + PBKDF2 + SHAKE256
+  - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: SHA3-256 + HMAC + Argon2id + SHAKE256
   - **EmailInputDialog Component**: Reusable two-step authentication component
     - Step 1: Email input with real-time validation and error handling
     - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
@@ -323,7 +323,7 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 **Zero Knowledge Features:**
 - **No Email Storage**: Server never stores or processes email addresses
 - **Cryptographic User IDs**: Deterministic 16-byte user IDs derived from email using enhanced multi-layer security:
-  - `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → PBKDF2-SHA3-256(hmac_result, user_salt, 600k iter.) → SHAKE256(pbkdf2_result) → user_id`
+  - `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → Argon2id(hmac_result, user_salt, mem_cost=19456, time_cost=2) → SHAKE256(argon2_result) → user_id`
 - **Base58 Usernames**: User IDs displayed as readable ~22-character usernames (50% size reduction)
 - **Magic Link Integrity**: HMAC-SHA3-256 prevents magic link tampering
 - **JWT Protection**: All endpoints require valid Bearer tokens
@@ -436,7 +436,7 @@ Magic link emails are delivered in **13 languages** matching the web UI language
 #### Email Template Features
 - **HTML + Plain Text**: Dual format ensures compatibility with all email clients
 - **RTL Support**: Arabic template includes `dir="rtl"` for proper right-to-left display
-- **Professional Branding**: Consistent "HashRand Spin" branding across all languages
+- **Professional Branding**: Consistent "HashRand" branding across all languages
 - **Security Messaging**: Clear magic link expiration and security information in each language
 - **Cultural Adaptation**: Native terminology and proper grammar for each language
 - **Fallback System**: Automatic fallback to English for unsupported language codes
@@ -628,8 +628,8 @@ print()
 print('# HMAC Key for magic link integrity (64 hex chars = 32 bytes)')
 print('MAGIC_LINK_HMAC_KEY=' + secrets.token_hex(32))
 print()
-print('# Salt for PBKDF2 user ID derivation (64 hex chars = 32 bytes)')
-print('PBKDF2_SALT=' + secrets.token_hex(32))
+print('# Salt for Argon2id user ID derivation (64 hex chars = 32 bytes)')
+print('ARGON2_SALT=' + secrets.token_hex(32))
 print()
 print('# Development/Production mode')
 print('NODE_ENV=development')
@@ -976,8 +976,8 @@ JWT_SECRET=your-64-character-hex-secret-here
 # HMAC Key for magic link integrity (64 hex chars = 32 bytes) 
 MAGIC_LINK_HMAC_KEY=your-64-character-hex-secret-here
 
-# Salt for PBKDF2 user ID derivation (64 hex chars = 32 bytes)
-PBKDF2_SALT=your-64-character-hex-secret-here
+# Salt for Argon2id user ID derivation (64 hex chars = 32 bytes)
+ARGON2_SALT=your-64-character-hex-secret-here
 
 # Mailtrap API integration for email delivery
 MAILTRAP_API_TOKEN=your-mailtrap-api-token
@@ -991,7 +991,7 @@ Generate cryptographically secure secrets using Python:
 import secrets
 print("JWT_SECRET=" + secrets.token_hex(32))
 print("MAGIC_LINK_HMAC_KEY=" + secrets.token_hex(32))
-print("PBKDF2_SALT=" + secrets.token_hex(32))
+print("ARGON2_SALT=" + secrets.token_hex(32))
 ```
 
 #### Development Setup
@@ -1001,7 +1001,7 @@ print("PBKDF2_SALT=" + secrets.token_hex(32))
 # Copy the generated secrets to .env
 JWT_SECRET=e6024c8eada7b42bee415ef56eb597c62c170681f1946a8cb899fc5c102e2c11
 MAGIC_LINK_HMAC_KEY=464c57289ac9f1a0a93c98ebe1ced0c31ac777798b9ce55cd67a358db5931b26
-PBKDF2_SALT=637de2cf5c738c757fb4e663685721bf3dca002da5168626dbe07f1b9907e1e3
+ARGON2_SALT=637de2cf5c738c757fb4e663685721bf3dca002da5168626dbe07f1b9907e1e3
 NODE_ENV=development
 ```
 
@@ -1019,7 +1019,7 @@ For production, pass secrets as Spin variables:
 SPIN_VARIABLE_JWT_SECRET="your-secret" \
 SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-secret" \
 SPIN_VARIABLE_USER_ID_HMAC_KEY="your-secret" \
-SPIN_VARIABLE_PBKDF2_SALT="your-secret" \
+SPIN_VARIABLE_ARGON2_SALT="your-secret" \
 spin-cli deploy --runtime-config-file runtime-config.toml
 ```
 
@@ -1072,7 +1072,7 @@ tail -f .spin-predeploy.log  # Monitor deployment logs
 SPIN_VARIABLE_JWT_SECRET="your-production-secret" \
 SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY="your-production-secret" \
 SPIN_VARIABLE_USER_ID_HMAC_KEY="your-production-secret" \
-SPIN_VARIABLE_PBKDF2_SALT="your-production-secret" \
+SPIN_VARIABLE_ARGON2_SALT="your-production-secret" \
 spin-cli deploy --runtime-config-file runtime-config.toml
 
 # Or using justfile (loads from .env automatically)
@@ -1165,12 +1165,12 @@ CREATE TABLE magiclinks (
 - **Compliance Ready**: GDPR/CCPA compliant by design - no personal data to manage
 
 #### ✅ Cryptographic Security
-- **Industry Standards**: SHA3-256, HMAC-SHA3-256, PBKDF2, and SHAKE256 are NIST-approved algorithms
+- **Industry Standards**: SHA3-256, HMAC-SHA3-256, Argon2id, and SHAKE256 are industry-standard approved algorithms
 - **Multi-Layer Defense**: HMAC layer adds protection against rainbow table and precomputation attacks
-- **Per-User Salt**: Each user gets unique PBKDF2 salt preventing parallel dictionary attacks
-- **High Iteration Count**: 600,000 PBKDF2 iterations exceed current security recommendations
+- **Per-User Salt**: Each user gets unique Argon2id salt preventing parallel dictionary attacks
+- **High Security Parameters**: Argon2id with mem_cost=19456KB, time_cost=2 exceeds current security recommendations
 - **SHAKE256 Compression**: Optimal entropy distribution in reduced 16-byte output
-- **Enhanced Secrets**: Dedicated HMAC key separate from PBKDF2 salt for additional security layers
+- **Enhanced Secrets**: Dedicated HMAC key separate from Argon2id salt for additional security layers
 - **Forward Secrecy**: User identity derives from email but email is never stored
 
 #### ✅ Scalability & Performance
@@ -1206,14 +1206,16 @@ pub fn requires_authentication(path: &str) -> bool {
 #### User ID Derivation
 ```rust
 // Zero Knowledge user identification (utils/jwt.rs)
-pub fn derive_user_id(email: &str) -> [u8; 32] {
+pub fn derive_user_id(email: &str) -> [u8; 16] {
     let email_hash = SHA3_256::digest(email.to_lowercase());
-    let mut user_id = [0u8; 32];
-    pbkdf2::<Hmac<SHA3_256>>(&email_hash, SALT, 600_000, &mut user_id);
+    let dynamic_salt = generate_dynamic_salt(&email_hash);
+    let argon2_output = argon2id_hash(&email_hash, &dynamic_salt);
+    let mut user_id = [0u8; 16];
+    SHAKE256::digest_xof(&argon2_output).read(&mut user_id);
     user_id  // Never stored with email - cryptographically derived
 }
 
-pub fn user_id_to_username(user_id: &[u8; 32]) -> String {
+pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
     bs58::encode(user_id).into_string()  // Human-readable, no PII
 }
 ```

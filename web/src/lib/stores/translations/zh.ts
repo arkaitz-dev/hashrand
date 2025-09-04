@@ -171,6 +171,7 @@ export const zh: I18nTexts = {
 		confirmEmailDescription: '这是正确的吗？',
 		magicLinkSent: '链接已发送！',
 		magicLinkInstructions: '检查您的邮箱并点击魔法链接进行身份验证。',
+		magicLinkSentFlash: '已发送魔法链接。请检查您的邮件并点击链接以继续。',
 		developmentMode: '开发模式：',
 		testMagicLink: '点击这里测试魔法链接',
 		authenticationFailed: '身份验证失败',

@@ -6,7 +6,7 @@ PASSED=0
 FAILED=0
 TOTAL=0
 JWT_TOKEN=""
-TEST_EMAIL="testing@example.com"
+TEST_EMAIL="me@arkaitz.dev"
 
 # Colors
 RED='\033[0;31m'
@@ -419,7 +419,7 @@ test_api "Request magic link with valid email" \
     "200" \
     "" \
     "POST" \
-    '{"email":"auth.test@example.com"}'
+    '{"email":"arkaitzmugica@protonmail.com"}'
 
 test_api "Request magic link with invalid email format" \
     "$BASE_URL/api/login/" \
