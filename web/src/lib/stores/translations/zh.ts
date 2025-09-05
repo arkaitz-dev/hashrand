@@ -70,7 +70,7 @@ export const zh: I18nTexts = {
 		title: '哈希生成器',
 		subtitle: '选择生成方法',
 		version: '版本',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: '密码学安全的哈希、密码和API密钥生成器'
 	},
 	custom: {
@@ -181,6 +181,10 @@ export const zh: I18nTexts = {
 		login: '登录',
 		authenticatedAs: '已验证身份：',
 		logout: '退出登录',
+		logoutConfirmTitle: '退出登录',
+		logoutConfirmMessage:
+			'您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。',
+		loggedOut: '成功退出登录',
 		isCorrect: '正确'
 	},
 	logout: {
@@ -188,6 +192,15 @@ export const zh: I18nTexts = {
 		description: '您确定要退出登录吗？',
 		confirm: '退出登录',
 		cancel: '取消',
-		info: '您将失去对需要身份验证功能的访问权限，直到再次登录。'
+		info: '您将失去对需要身份验证功能的访问权限，直到再次登录。',
+		tokenExpired: '您的会话已过期。请重新登录。',
+		accessDenied: '访问被拒绝。需要身份验证。',
+		userMenu: '用户菜单',
+		login: '登录',
+		authenticatedAs: '已验证身份：',
+		logout: '退出登录',
+		confirmLogout: '退出登录？',
+		logoutDescription:
+			'您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。'
 	}
 };

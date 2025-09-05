@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-	<title>{$t.logout.title} - HashRand Spin</title>
+	<title>{$t.logout.title} - HashRand</title>
 	<meta name="description" content={$t.logout.description} />
 </svelte:head>
 

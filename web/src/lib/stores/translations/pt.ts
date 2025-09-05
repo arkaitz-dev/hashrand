@@ -71,7 +71,7 @@ export const pt: I18nTexts = {
 		title: 'Gerador de Hash',
 		subtitle: 'Escolha um método de geração',
 		version: 'Versão',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Gerador criptograficamente seguro de hashes, senhas e chaves API'
 	},
 	custom: {
@@ -186,6 +186,10 @@ export const pt: I18nTexts = {
 		login: 'Entrar',
 		authenticatedAs: 'Autenticado como:',
 		logout: 'Sair',
+		logoutConfirmTitle: 'Sair',
+		logoutConfirmMessage:
+			'Tem certeza de que deseja sair? Você precisará se autenticar novamente para acessar recursos protegidos.',
+		loggedOut: 'Sessão encerrada com sucesso',
 		isCorrect: 'Está correto'
 	},
 	logout: {
@@ -193,6 +197,15 @@ export const pt: I18nTexts = {
 		description: 'Tem certeza de que deseja sair?',
 		confirm: 'Sair',
 		cancel: 'Cancelar',
-		info: 'Você perderá o acesso às funcionalidades autenticadas até fazer login novamente.'
+		info: 'Você perderá o acesso às funcionalidades autenticadas até fazer login novamente.',
+		tokenExpired: 'Sua sessão expirou. Por favor, faça login novamente.',
+		accessDenied: 'Acesso negado. Autenticação necessária.',
+		userMenu: 'Menu do usuário',
+		login: 'Entrar',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Sair',
+		confirmLogout: 'Sair?',
+		logoutDescription:
+			'Tem certeza de que deseja sair? Você precisará se autenticar novamente para acessar recursos protegidos.'
 	}
 };

@@ -72,7 +72,7 @@ export const de: I18nTexts = {
 		title: 'Hash-Generator',
 		subtitle: 'Wählen Sie eine Generierungsmethode',
 		version: 'Version',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Kryptographisch sicherer Generator für Hashes, Passwörter und API-Schlüssel'
 	},
 	custom: {
@@ -189,6 +189,10 @@ export const de: I18nTexts = {
 		login: 'Anmelden',
 		authenticatedAs: 'Authentifiziert als:',
 		logout: 'Abmelden',
+		logoutConfirmTitle: 'Abmelden',
+		logoutConfirmMessage:
+			'Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut authentifizieren, um auf geschützte Funktionen zuzugreifen.',
+		loggedOut: 'Erfolgreich abgemeldet',
 		isCorrect: 'Das ist korrekt'
 	},
 	logout: {
@@ -196,6 +200,15 @@ export const de: I18nTexts = {
 		description: 'Sind Sie sicher, dass Sie sich abmelden möchten?',
 		confirm: 'Abmelden',
 		cancel: 'Abbrechen',
-		info: 'Sie verlieren den Zugang zu authentifizierten Funktionen, bis Sie sich erneut anmelden.'
+		info: 'Sie verlieren den Zugang zu authentifizierten Funktionen, bis Sie sich erneut anmelden.',
+		tokenExpired: 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.',
+		accessDenied: 'Zugang verweigert. Authentifizierung erforderlich.',
+		userMenu: 'Benutzermenü',
+		login: 'Anmelden',
+		authenticatedAs: 'Authentifiziert als:',
+		logout: 'Abmelden',
+		confirmLogout: 'Abmelden?',
+		logoutDescription:
+			'Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut authentifizieren, um auf geschützte Funktionen zuzugreifen.'
 	}
 };

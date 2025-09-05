@@ -71,7 +71,7 @@ export const es: I18nTexts = {
 		title: 'Generador de Hash',
 		subtitle: 'Elige un método de generación',
 		version: 'Versión',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Generador criptográficamente seguro de hashes, contraseñas y claves API'
 	},
 	custom: {

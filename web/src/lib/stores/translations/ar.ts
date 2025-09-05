@@ -71,7 +71,7 @@ export const ar: I18nTexts = {
 		title: 'مولد الهاش',
 		subtitle: 'اختر طريقة التوليد',
 		version: 'الإصدار',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'مولد آمن تشفيرياً للهاش وكلمات المرور ومفاتيح API'
 	},
 	custom: {
@@ -187,6 +187,10 @@ export const ar: I18nTexts = {
 		login: 'تسجيل الدخول',
 		authenticatedAs: 'مصادق عليه كـ:',
 		logout: 'تسجيل الخروج',
+		logoutConfirmTitle: 'تسجيل الخروج',
+		logoutConfirmMessage:
+			'هل أنت متأكد من أنك تريد تسجيل الخروج؟ ستحتاج إلى إعادة التوثيق للوصول إلى الوظائف المحمية.',
+		loggedOut: 'تم تسجيل الخروج بنجاح',
 		isCorrect: 'هذا صحيح'
 	},
 	logout: {
@@ -194,6 +198,15 @@ export const ar: I18nTexts = {
 		description: 'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
 		confirm: 'تسجيل الخروج',
 		cancel: 'إلغاء',
-		info: 'ستفقد الوصول إلى الوظائف المصادق عليها حتى تسجل الدخول مرة أخرى.'
+		info: 'ستفقد الوصول إلى الوظائف المصادق عليها حتى تسجل الدخول مرة أخرى.',
+		tokenExpired: 'انتهت صلاحية الجلسة. من فضلك، قم بتسجيل الدخول مرة أخرى.',
+		accessDenied: 'تم رفض الوصول. مطلوب مصادقة.',
+		userMenu: 'قائمة المستخدم',
+		login: 'تسجيل الدخول',
+		authenticatedAs: 'مصادق عليه كـ:',
+		logout: 'تسجيل الخروج',
+		confirmLogout: 'تسجيل الخروج؟',
+		logoutDescription:
+			'هل أنت متأكد من أنك تريد تسجيل الخروج؟ ستحتاج إلى إعادة التوثيق للوصول إلى الوظائف المحمية.'
 	}
 };

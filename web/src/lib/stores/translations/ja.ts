@@ -71,7 +71,7 @@ export const ja: I18nTexts = {
 		title: 'ハッシュ生成器',
 		subtitle: '生成方法を選択してください',
 		version: 'バージョン',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: '暗号学的に安全なハッシュ、パスワード、APIキーの生成器'
 	},
 	custom: {
@@ -189,6 +189,10 @@ export const ja: I18nTexts = {
 		login: 'ログイン',
 		authenticatedAs: '認証済みユーザー:',
 		logout: 'ログアウト',
+		logoutConfirmTitle: 'ログアウト',
+		logoutConfirmMessage:
+			'ログアウトしてもよろしいですか？保護された機能にアクセスするためには、再度認証する必要があります。',
+		loggedOut: 'ログアウトが完了しました',
 		isCorrect: '正しいです'
 	},
 	logout: {
@@ -196,6 +200,15 @@ export const ja: I18nTexts = {
 		description: 'ログアウトしてもよろしいですか？',
 		confirm: 'ログアウト',
 		cancel: 'キャンセル',
-		info: '再度ログインするまで、認証が必要な機能にアクセスできなくなります。'
+		info: '再度ログインするまで、認証が必要な機能にアクセスできなくなります。',
+		tokenExpired: 'セッションが期限切れです。再度ログインしてください。',
+		accessDenied: 'アクセスが拒否されました。認証が必要です。',
+		userMenu: 'ユーザーメニュー',
+		login: 'ログイン',
+		authenticatedAs: '認証済みユーザー:',
+		logout: 'ログアウト',
+		confirmLogout: 'ログアウトしますか？',
+		logoutDescription:
+			'ログアウトしてもよろしいですか？保護された機能にアクセスするためには、再度認証する必要があります。'
 	}
 };

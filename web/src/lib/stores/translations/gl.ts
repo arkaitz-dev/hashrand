@@ -71,7 +71,7 @@ export const gl: I18nTexts = {
 		title: 'Xerador de Hash',
 		subtitle: 'Escolle un método de xeración',
 		version: 'Versión',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Xerador criptograficamente seguro de hashes, contrasinais e chaves API'
 	},
 	custom: {
@@ -188,6 +188,10 @@ export const gl: I18nTexts = {
 		login: 'Iniciar sesión',
 		authenticatedAs: 'Autenticado como:',
 		logout: 'Pechar sesión',
+		logoutConfirmTitle: 'Pechar Sesión',
+		logoutConfirmMessage:
+			'Estás seguro de que queres pechar a sesión? Necesitarás autenticarte de novo para acceder ás funcionalidades protexidas.',
+		loggedOut: 'Sesión pechada correctamente',
 		isCorrect: 'É correcto'
 	},
 	logout: {
@@ -195,6 +199,15 @@ export const gl: I18nTexts = {
 		description: 'Estás seguro de que queres pechar a sesión?',
 		confirm: 'Pechar Sesión',
 		cancel: 'Cancelar',
-		info: 'Perderás acceso ás funcionalidades autenticadas ata que volvas iniciar sesión.'
+		info: 'Perderás acceso ás funcionalidades autenticadas ata que volvas iniciar sesión.',
+		tokenExpired: 'A túa sesión expirou. Por favor, inicia sesión de novo.',
+		accessDenied: 'Acceso denegado. Requírese autenticación.',
+		userMenu: 'Menú do usuario',
+		login: 'Iniciar sesión',
+		authenticatedAs: 'Autenticado como:',
+		logout: 'Pechar sesión',
+		confirmLogout: 'Pechar sesión?',
+		logoutDescription:
+			'Estás seguro de que queres pechar a sesión? Necesitarás autenticarte de novo para acceder ás funcionalidades protexidas.'
 	}
 };

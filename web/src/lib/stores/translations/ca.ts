@@ -72,7 +72,7 @@ export const ca: I18nTexts = {
 		title: 'Generador de Hash',
 		subtitle: 'Trieu un mètode de generació',
 		version: 'Versió',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Generador criptogràficament segur de hashs, contrasenyes i claus API'
 	},
 	custom: {
@@ -190,6 +190,10 @@ export const ca: I18nTexts = {
 		login: 'Iniciar sessió',
 		authenticatedAs: 'Autenticat com a:',
 		logout: 'Tancar sessió',
+		logoutConfirmTitle: 'Tancar Sessió',
+		logoutConfirmMessage:
+			'Esteu segur que voleu tancar la sessió? Haureu de tornar-vos a autenticar per accedir a les funcionalitats protegides.',
+		loggedOut: 'Sessió tancada correctament',
 		isCorrect: 'És correcte'
 	},
 	logout: {
@@ -197,6 +201,15 @@ export const ca: I18nTexts = {
 		description: 'Esteu segur que voleu tancar la sessió?',
 		confirm: 'Tancar Sessió',
 		cancel: 'Cancel·lar',
-		info: 'Perdreu accés a les funcionalitats autenticades fins que torneu a iniciar sessió.'
+		info: 'Perdreu accés a les funcionalitats autenticades fins que torneu a iniciar sessió.',
+		tokenExpired: 'La vostra sessió ha expirat. Si us plau, inicieu sessió de nou.',
+		accessDenied: 'Accés denegat. Cal autenticació.',
+		userMenu: "Menú d'usuari",
+		login: 'Iniciar sessió',
+		authenticatedAs: 'Autenticat com a:',
+		logout: 'Tancar sessió',
+		confirmLogout: 'Tancar sessió?',
+		logoutDescription:
+			'Esteu segur que voleu tancar la sessió? Haureu de tornar-vos a autenticar per accedir a les funcionalitats protegides.'
 	}
 };

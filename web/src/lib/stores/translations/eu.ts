@@ -71,7 +71,7 @@ export const eu: I18nTexts = {
 		title: 'Hash-Sortzailea',
 		subtitle: 'Sorkuntzako metodoa aukeratu',
 		version: 'Bertsioa',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Hash, pasahitz eta API gako kriptografikoki seguruak sortzeko tresna'
 	},
 	custom: {
@@ -186,6 +186,10 @@ export const eu: I18nTexts = {
 		login: 'Hasi saioa',
 		authenticatedAs: 'Autentifikatuta honela:',
 		logout: 'Amaitu saioa',
+		logoutConfirmTitle: 'Amaitu Saioa',
+		logoutConfirmMessage:
+			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.',
+		loggedOut: 'Saioa ongi amaitu da',
 		isCorrect: 'Zuzena da'
 	},
 	logout: {
@@ -193,6 +197,15 @@ export const eu: I18nTexts = {
 		description: 'Ziur zaude saioa amaitu nahi duzula?',
 		confirm: 'Amaitu Saioa',
 		cancel: 'Utzi',
-		info: 'Autentifikatutako funtzioetarako sarbidea galduko duzu saioa berriro hasi arte.'
+		info: 'Autentifikatutako funtzioetarako sarbidea galduko duzu saioa berriro hasi arte.',
+		tokenExpired: 'Zure saioa iraungitu da. Mesedez, hasi saioa berriro.',
+		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.',
+		userMenu: 'Erabiltzaile menua',
+		login: 'Hasi saioa',
+		authenticatedAs: 'Autentifikatuta honela:',
+		logout: 'Amaitu saioa',
+		confirmLogout: 'Saioa amaitu?',
+		logoutDescription:
+			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.'
 	}
 };

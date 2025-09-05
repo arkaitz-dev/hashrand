@@ -72,7 +72,7 @@ export const fr: I18nTexts = {
 		title: 'Générateur de Hash',
 		subtitle: 'Choisissez une méthode de génération',
 		version: 'Version',
-		brandName: 'HashRand Spin',
+		brandName: 'HashRand',
 		description: 'Générateur cryptographiquement sécurisé de hashs, mots de passe et clés API'
 	},
 	custom: {
@@ -189,6 +189,10 @@ export const fr: I18nTexts = {
 		login: 'Se connecter',
 		authenticatedAs: 'Connecté en tant que :',
 		logout: 'Se déconnecter',
+		logoutConfirmTitle: 'Se Déconnecter',
+		logoutConfirmMessage:
+			'Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous authentifier à nouveau pour accéder aux fonctionnalités protégées.',
+		loggedOut: 'Déconnexion réussie',
 		isCorrect: 'C\'est correct'
 	},
 	logout: {
@@ -196,6 +200,15 @@ export const fr: I18nTexts = {
 		description: 'Êtes-vous sûr de vouloir vous déconnecter?',
 		confirm: 'Se Déconnecter',
 		cancel: 'Annuler',
-		info: "Vous perdrez l'accès aux fonctionnalités authentifiées jusqu'à ce que vous vous reconnectiez."
+		info: "Vous perdrez l'accès aux fonctionnalités authentifiées jusqu'à ce que vous vous reconnectiez.",
+		tokenExpired: 'Votre session a expiré. Veuillez vous reconnecter.',
+		accessDenied: 'Accès refusé. Authentification requise.',
+		userMenu: 'Menu utilisateur',
+		login: 'Se connecter',
+		authenticatedAs: 'Connecté en tant que :',
+		logout: 'Se déconnecter',
+		confirmLogout: 'Se déconnecter?',
+		logoutDescription:
+			'Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous authentifier à nouveau pour accéder aux fonctionnalités protégées.'
 	}
 };
