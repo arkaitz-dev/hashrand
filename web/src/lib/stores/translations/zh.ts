@@ -180,7 +180,8 @@ export const zh: I18nTexts = {
 		userMenu: '用户菜单',
 		login: '登录',
 		authenticatedAs: '已验证身份：',
-		logout: '退出登录'
+		logout: '退出登录',
+		isCorrect: '正确'
 	},
 	logout: {
 		title: '退出登录',

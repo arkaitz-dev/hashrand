@@ -186,7 +186,8 @@ export const ar: I18nTexts = {
 		userMenu: 'قائمة المستخدم',
 		login: 'تسجيل الدخول',
 		authenticatedAs: 'مصادق عليه كـ:',
-		logout: 'تسجيل الخروج'
+		logout: 'تسجيل الخروج',
+		isCorrect: 'هذا صحيح'
 	},
 	logout: {
 		title: 'تسجيل الخروج',

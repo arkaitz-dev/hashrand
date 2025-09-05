@@ -13,7 +13,9 @@ use crate::database::{
     connection::{DatabaseEnvironment, initialize_database},
     operations::MagicLinkOperations,
 };
-use crate::utils::{JwtUtils, send_magic_link_email};
+use crate::utils::{
+    JwtUtils, check_rate_limit, extract_client_ip, send_magic_link_email, validate_email,
+};
 
 /// Request body for magic link generation
 #[derive(Deserialize)]
@@ -119,21 +121,34 @@ async fn handle_magic_link_generation(
             }
         };
 
-    // Validate email format (basic validation)
-    if magic_request.email.is_empty() || !magic_request.email.contains('@') {
+    // Check rate limiting for authentication requests
+    let client_ip = extract_client_ip(req.headers());
+    if let Err(e) = check_rate_limit(&client_ip) {
         return Ok(Response::builder()
-            .status(400)
+            .status(429) // Too Many Requests
             .header("content-type", "application/json")
+            .header("retry-after", "900") // 15 minutes in seconds
             .body(serde_json::to_string(&ErrorResponse {
-                error: "Invalid email address".to_string(),
+                error: format!("Rate limited: {}", e),
             })?)
             .build());
     }
 
-    // Generate magic token with integrity protection (15 minutes)
+    // Validate email format (strict validation)
+    if let Err(e) = validate_email(&magic_request.email) {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: format!("Invalid email: {}", e),
+            })?)
+            .build());
+    }
+
+    // Generate encrypted magic token with ChaCha20-Poly1305 protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
-    let magic_token = match JwtUtils::generate_magic_token(&magic_request.email, magic_expires_at) {
-        Ok(token) => token,
+    let (magic_token, encryption_blob, original_timestamp) = match JwtUtils::generate_magic_token_encrypted(&magic_request.email, magic_expires_at) {
+        Ok((token, blob, timestamp)) => (token, blob, timestamp),
         Err(e) => {
             return Ok(Response::builder()
                 .status(500)
@@ -170,8 +185,15 @@ async fn handle_magic_link_generation(
     );
     println!("DEBUG: Generated magic_link = {}", magic_link);
 
-    // Store magic link hash in database
-    match MagicLinkOperations::store_magic_link(env.clone(), &magic_link, magic_expires_at.timestamp() as u64) {
+    // Store encrypted magic token in database with ChaCha20-Poly1305 encryption data
+    match MagicLinkOperations::store_magic_link_encrypted(
+        env.clone(), 
+        &magic_token, 
+        &encryption_blob,
+        original_timestamp,
+        magic_request.next.as_deref(),
+        magic_expires_at.timestamp() as u64
+    ) {
         Ok(_) => {
 
             // Try to send email via Mailtrap, fallback to console logging
@@ -275,126 +297,108 @@ fn handle_magic_link_validation(
 
     println!("Magic token received: '{}'", magic_token);
 
-    // Validate magic token integrity and extract user_id + expiration
-    let (user_id_bytes, magic_expires_at) = match JwtUtils::validate_magic_token(magic_token) {
-        Ok((user_id, expires)) => (user_id, expires),
+    // Validate and consume encrypted magic token, get next parameter and user_id
+    let (is_valid, next_param, user_id_bytes) = match MagicLinkOperations::validate_and_consume_magic_link_encrypted(env.clone(), magic_token) {
+        Ok((valid, next, user_id)) => (valid, next, user_id),
         Err(error) => {
-            println!("Magic token validation failed: {}", error);
+            println!("Database error during magic token validation: {}", error);
             return Ok(Response::builder()
-                .status(400)
+                .status(500)
                 .header("content-type", "application/json")
                 .body(serde_json::to_string(&ErrorResponse {
-                    error: "Invalid or expired magic link".to_string(),
+                    error: "Database error".to_string(),
                 })?)
                 .build());
         }
     };
 
-    // Check if magic token has expired
-    let now = Utc::now();
-    if now > magic_expires_at {
+    if !is_valid {
+        println!("Magic token validation failed or expired");
         return Ok(Response::builder()
-            .status(400)
-            .header("content-type", "application/json")
-            .body(serde_json::to_string(&ErrorResponse {
-                error: "Magic link has expired".to_string(),
-            })?)
-            .build());
-    }
-
-    // Convert user_id to Base58 username
-    let username = JwtUtils::user_id_to_username(&user_id_bytes);
-
-    // Search for auth session by user_id and timestamp
-    let timestamp = magic_expires_at.timestamp() as u64;
-    println!(
-        "Searching for session: user_id={}, timestamp={}",
-        username, timestamp
-    );
-
-    // Build magic link URL for validation
-    let host_url = JwtUtils::get_host_url_from_request(&_req);
-    let magic_link_url = JwtUtils::create_magic_link_url(
-        &host_url,
-        magic_token,
-        None, // No next parameter during validation
-    );
-
-    // Validate and consume magic link
-    match MagicLinkOperations::validate_and_consume_magic_link(env.clone(), &magic_link_url) {
-        Ok(true) => {
-            println!("User {} authenticated successfully", username);
-
-            // Ensure user exists in users table
-            let _ = MagicLinkOperations::ensure_user_exists(env.clone(), &user_id_bytes);
-
-            // Generate new access and refresh tokens
-            let (access_token, access_expires) = match JwtUtils::create_access_token(&username) {
-                Ok((token, exp)) => (token, exp),
-                Err(e) => {
-                    println!("Failed to create access token: {}", e);
-                    return Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Failed to create access token".to_string(),
-                        })?).build());
-                }
-            };
-
-            let (refresh_token, _) = match JwtUtils::create_refresh_token(&username, 0) {
-                Ok((token, exp)) => (token, exp),
-                Err(e) => {
-                    println!("Failed to create refresh token: {}", e);
-                    return Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Failed to create refresh token".to_string(),
-                        })?).build());
-                }
-            };
-
-            // Create response with access token, user_id, and secure refresh token cookie
-            let auth_response = serde_json::json!({
-                "access_token": access_token,
-                "token_type": "Bearer",
-                "expires_in": 180, // 3 minutes
-                "user_id": username
-            });
-
-            // Set refresh token as HttpOnly, Secure, SameSite cookie
-            let cookie_value = format!(
-                "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-                refresh_token,
-                15 * 60 // 15 minutes in seconds
-            );
-
-            Ok(Response::builder()
-                .status(200)
-                .header("content-type", "application/json")
-                .header("set-cookie", cookie_value)
-                .body(auth_response.to_string())
-                .build())
-        }
-        Ok(false) => Ok(Response::builder()
             .status(400)
             .header("content-type", "application/json")
             .body(serde_json::to_string(&ErrorResponse {
                 error: "Invalid or expired magic link".to_string(),
             })?)
-            .build()),
+            .build());
+    }
+
+    // Extract user_id from the decrypted magic link
+    let user_id_array = match user_id_bytes {
+        Some(user_id) => user_id,
+        None => {
+            println!("No user_id returned from magic link validation");
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Invalid magic link data".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    // Convert user_id to Base58 username
+    let username = JwtUtils::user_id_to_username(&user_id_array);
+
+    println!("User {} authenticated successfully", username);
+
+    // Ensure user exists in users table
+    let _ = MagicLinkOperations::ensure_user_exists(env.clone(), &user_id_array);
+
+    // Generate new access and refresh tokens
+    let (access_token, _access_expires) = match JwtUtils::create_access_token(&username) {
+        Ok((token, exp)) => (token, exp),
         Err(e) => {
-            println!("Database error during magic link validation: {}", e);
-            Ok(Response::builder()
+            println!("Failed to create access token: {}", e);
+            return Ok(Response::builder()
                 .status(500)
                 .header("content-type", "application/json")
                 .body(serde_json::to_string(&ErrorResponse {
-                    error: "Authentication failed".to_string(),
-                })?)
-                .build())
+                    error: "Failed to create access token".to_string(),
+                })?).build());
         }
+    };
+
+    let (refresh_token, _) = match JwtUtils::create_refresh_token(&username, 0) {
+        Ok((token, exp)) => (token, exp),
+        Err(e) => {
+            println!("Failed to create refresh token: {}", e);
+            return Ok(Response::builder()
+                .status(500)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Failed to create refresh token".to_string(),
+                })?).build());
+        }
+    };
+
+    // Create response with access token, user_id, next parameter, and secure refresh token cookie
+    let mut auth_response = serde_json::json!({
+        "access_token": access_token,
+        "token_type": "Bearer",
+        "expires_in": 180, // 3 minutes
+        "user_id": username
+    });
+
+    // Add next parameter if present
+    if let Some(next) = next_param {
+        auth_response["next"] = serde_json::Value::String(next);
     }
+
+    // Set refresh token as HttpOnly, Secure, SameSite cookie
+    let cookie_value = format!(
+        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
+        refresh_token,
+        15 * 60 // 15 minutes in seconds
+    );
+
+    Ok(Response::builder()
+        .status(200)
+        .header("content-type", "application/json")
+        .header("set-cookie", cookie_value)
+        .body(auth_response.to_string())
+        .build())
 }
 
 /// Handle DELETE /api/login/ - Clear refresh token cookie (logout)

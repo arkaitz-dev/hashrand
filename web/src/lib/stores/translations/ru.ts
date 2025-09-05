@@ -186,7 +186,8 @@ export const ru: I18nTexts = {
 		userMenu: 'Меню пользователя',
 		login: 'Войти',
 		authenticatedAs: 'Аутентифицирован как:',
-		logout: 'Выйти'
+		logout: 'Выйти',
+		isCorrect: 'Это правильно'
 	},
 	logout: {
 		title: 'Выйти',

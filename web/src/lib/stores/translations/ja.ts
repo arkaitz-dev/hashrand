@@ -188,7 +188,8 @@ export const ja: I18nTexts = {
 		userMenu: 'ユーザーメニュー',
 		login: 'ログイン',
 		authenticatedAs: '認証済みユーザー:',
-		logout: 'ログアウト'
+		logout: 'ログアウト',
+		isCorrect: '正しいです'
 	},
 	logout: {
 		title: 'ログアウト',

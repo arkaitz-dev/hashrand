@@ -90,38 +90,6 @@ pub struct AuthSession {
 }
 
 impl AuthSession {
-    /// Create a new auth session for magic link generation
-    ///
-    /// # Arguments
-    /// * `email` - User email address (used to derive user_id, not stored)
-    /// * `magic_token` - Secure magic token with integrity protection
-    /// * `magic_expires_at` - Magic token expiration time
-    ///
-    /// # Returns
-    /// * `Result<AuthSession, String>` - New session instance ready for insertion or error
-    pub fn new_magic_link(
-        email: String,
-        magic_token: String,
-        magic_expires_at: DateTime<Utc>,
-    ) -> Result<Self, String> {
-        // Import JwtUtils here to avoid circular dependencies
-        use crate::utils::JwtUtils;
-        let user_id = JwtUtils::email_to_username(&email)?;
-
-        Ok(Self {
-            id: None,
-            user_id,
-            email: Some(email), // Keep for magic link generation, won't be stored in DB
-            magic_token,
-            access_token: None,
-            refresh_token: None,
-            created_at: None,
-            magic_expires_at: magic_expires_at.timestamp() as u64,
-            access_expires_at: None,
-            refresh_expires_at: None,
-            is_used: false,
-        })
-    }
 
     /// Update session with JWT tokens after successful magic link validation
     ///

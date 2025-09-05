@@ -11,6 +11,7 @@ use crate::database::{
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha3::{Sha3_256, Shake256, digest::{Update, ExtendableOutput, XofReader}};
+use bs58;
 
 type HmacSha3_256 = Hmac<Sha3_256>;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
@@ -214,19 +215,19 @@ impl UserOperations {
 pub struct MagicLinkOperations;
 
 impl MagicLinkOperations {
-    /// Create hash of magic link using HMAC-SHA3-256 + SHAKE-256 compression
+    /// Create hash of raw magic link using HMAC-SHA3-256 + SHAKE-256 compression
     ///
     /// # Arguments
-    /// * `magic_link` - The magic link string to hash
+    /// * `raw_magic_link` - The raw magic link bytes (32 bytes)
     /// * `hmac_key` - HMAC secret key
     ///
     /// # Returns
     /// * `[u8; 16]` - 16-byte hash
-    fn create_token_hash(magic_link: &str, hmac_key: &[u8]) -> [u8; 16] {
-        // Step 1: HMAC-SHA3-256(magic_link, MAGIC_LINK_HMAC_KEY)
+    fn create_token_hash(raw_magic_link: &[u8], hmac_key: &[u8]) -> [u8; 16] {
+        // Step 1: HMAC-SHA3-256(raw_magic_link, MAGIC_LINK_HMAC_KEY)
         let mut mac = HmacSha3_256::new_from_slice(hmac_key)
             .expect("HMAC can take key of any size");
-        Mac::update(&mut mac, magic_link.as_bytes());
+        Mac::update(&mut mac, raw_magic_link);
         let hmac_result = mac.finalize().into_bytes();
         
         // Step 2: SHAKE-256(hmac_result) → [16 bytes]
@@ -239,93 +240,173 @@ impl MagicLinkOperations {
         hash
     }
 
-    /// Store magic link hash with expiration
+    /// Create SHAKE-256 hash of encrypted magic token for database storage
+    ///
+    /// # Arguments
+    /// * `encrypted_data` - The encrypted magic token bytes (48 bytes: 32 + 16 auth tag)
+    ///
+    /// # Returns
+    /// * `[u8; 16]` - 16-byte SHAKE-256 hash for database indexing
+    fn create_encrypted_token_hash(encrypted_data: &[u8]) -> [u8; 16] {
+        // SHAKE-256(encrypted_data) → [16 bytes]
+        let mut hasher = Shake256::default();
+        hasher.update(encrypted_data);
+        
+        let mut reader = hasher.finalize_xof();
+        let mut hash = [0u8; 16];
+        reader.read(&mut hash);
+        hash
+    }
+
+    /// Store encrypted magic token with ChaCha20 encryption data
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `magic_link` - The magic link string
-    /// * `expires_at` - Expiration timestamp
+    /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
+    /// * `encryption_blob` - 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
+    /// * `timestamp` - Original timestamp used in raw_magic_link creation
+    /// * `next_param` - Optional next destination parameter
+    /// * `expires_at` - Magic link expiration timestamp
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
-    pub fn store_magic_link(
+    pub fn store_magic_link_encrypted(
         env: DatabaseEnvironment,
-        magic_link: &str,
+        encrypted_token: &str,
+        encryption_blob: &[u8; 44],
+        timestamp: i64,
+        next_param: Option<&str>,
         expires_at: u64,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection(env)?;
         
-        // Get HMAC key from environment variable
-        let hmac_key = spin_sdk::variables::get("MAGIC_LINK_HMAC_KEY")
-            .unwrap_or_else(|_| "default_hmac_key_for_development".to_string());
+        // Decode Base58 encrypted token
+        let encrypted_data = bs58::decode(encrypted_token)
+            .into_vec()
+            .map_err(|_| SqliteError::Io("Invalid Base58 encrypted token".to_string()))?;
+            
+        if encrypted_data.len() != 32 {
+            return Err(SqliteError::Io("Encrypted token must be 32 bytes (ChaCha20 encrypted raw magic link)".to_string()));
+        }
         
-        let token_hash = Self::create_token_hash(magic_link, hmac_key.as_bytes());
+        // Create SHAKE-256 hash of encrypted data for database storage (16 bytes)
+        let token_hash = Self::create_encrypted_token_hash(&encrypted_data);
         
-        println!("Database: Creating magic link with hash");
+        println!("Database: Creating encrypted magic link with SHAKE-256 hash");
 
         connection.execute(
-            "INSERT INTO magiclinks (token_hash, expires_at) VALUES (?, ?)",
+            "INSERT INTO magiclinks (token_hash, timestamp, encryption_blob, next_param, expires_at) VALUES (?, ?, ?, ?, ?)",
             &[
                 Value::Blob(token_hash.to_vec()),
+                Value::Integer(timestamp),
+                Value::Blob(encryption_blob.to_vec()),
+                match next_param {
+                    Some(next) => Value::Text(next.to_string()),
+                    None => Value::Null,
+                },
                 Value::Integer(expires_at as i64),
             ],
         )?;
 
-        println!("Database: Magic link stored successfully");
+        println!("Database: Encrypted magic link stored successfully");
         Ok(())
     }
 
-    /// Validate and consume magic link (removes it from database)
+    /// Validate and consume encrypted magic token with ChaCha20 decryption
     ///
     /// # Arguments
     /// * `env` - Database environment to use
-    /// * `magic_link` - The magic link string to validate
+    /// * `encrypted_token` - The Base58 encoded encrypted magic token to validate
     ///
     /// # Returns
-    /// * `Result<bool, SqliteError>` - True if valid and not expired, false otherwise
-    pub fn validate_and_consume_magic_link(
+    /// * `Result<(bool, Option<String>, Option<[u8; 16]>), SqliteError>` - (validation_result, next_param, user_id) or error
+    pub fn validate_and_consume_magic_link_encrypted(
         env: DatabaseEnvironment,
-        magic_link: &str,
-    ) -> Result<bool, SqliteError> {
+        encrypted_token: &str,
+    ) -> Result<(bool, Option<String>, Option<[u8; 16]>), SqliteError> {
         let connection = get_database_connection(env)?;
         
-        // Get HMAC key from environment variable
-        let hmac_key = spin_sdk::variables::get("MAGIC_LINK_HMAC_KEY")
-            .unwrap_or_else(|_| "default_hmac_key_for_development".to_string());
+        // Decode Base58 encrypted token
+        let encrypted_data = bs58::decode(encrypted_token)
+            .into_vec()
+            .map_err(|_| SqliteError::Io("Invalid Base58 encrypted token".to_string()))?;
+            
+        if encrypted_data.len() != 32 {
+            return Err(SqliteError::Io("Encrypted token must be 32 bytes (ChaCha20 encrypted raw magic link)".to_string()));
+        }
         
-        let token_hash = Self::create_token_hash(magic_link, hmac_key.as_bytes());
+        // Create SHAKE-256 hash of encrypted data for database lookup
+        let token_hash = Self::create_encrypted_token_hash(&encrypted_data);
         let now = Utc::now().timestamp() as u64;
         
-        println!("Database: Validating magic link hash");
+        println!("Database: Validating encrypted magic link hash");
 
-        // Check if magic link exists and is not expired
+        // Check if magic link exists and is not expired, get encryption data
         let result = connection.execute(
-            "SELECT expires_at FROM magiclinks WHERE token_hash = ?",
+            "SELECT timestamp, encryption_blob, next_param, expires_at FROM magiclinks WHERE token_hash = ?",
             &[Value::Blob(token_hash.to_vec())],
         )?;
 
         if let Some(row) = result.rows.first() {
-            let expires_at = match &row.values[0] {
+            let expires_at = match &row.values[3] {
                 Value::Integer(i) => *i as u64,
                 _ => return Err(SqliteError::Io("Invalid expires_at type".to_string())),
             };
 
             if expires_at > now {
-                // Valid and not expired - delete it (consume)
-                connection.execute(
-                    "DELETE FROM magiclinks WHERE token_hash = ?",
-                    &[Value::Blob(token_hash.to_vec())],
-                )?;
-                
-                println!("Database: Magic link validated and consumed");
-                Ok(true)
+                // Get encryption data
+                let encryption_blob = match &row.values[1] {
+                    Value::Blob(blob) => {
+                        if blob.len() != 44 {
+                            return Err(SqliteError::Io("Invalid encryption_blob length".to_string()));
+                        }
+                        let mut blob_array = [0u8; 44];
+                        blob_array.copy_from_slice(blob);
+                        blob_array
+                    },
+                    _ => return Err(SqliteError::Io("Invalid encryption_blob type".to_string())),
+                };
+
+                let next_param = match &row.values[2] {
+                    Value::Text(text) => Some(text.clone()),
+                    Value::Null => None,
+                    _ => return Err(SqliteError::Io("Invalid next_param type".to_string())),
+                };
+
+                // Extract nonce and secret_key from encryption_blob
+                let mut nonce = [0u8; 12];
+                let mut secret_key = [0u8; 32];
+                nonce.copy_from_slice(&encryption_blob[..12]);
+                secret_key.copy_from_slice(&encryption_blob[12..44]);
+
+                // Validate magic token using JWT utils (this will decrypt and verify)
+                match crate::utils::jwt::JwtUtils::validate_magic_token_encrypted(
+                    encrypted_token, 
+                    &nonce, 
+                    &secret_key
+                ) {
+                    Ok((user_id, _expires_at)) => {
+                        // Valid and not expired - delete it (consume)
+                        connection.execute(
+                            "DELETE FROM magiclinks WHERE token_hash = ?",
+                            &[Value::Blob(token_hash.to_vec())],
+                        )?;
+                        
+                        println!("Database: Encrypted magic link validated and consumed");
+                        Ok((true, next_param, Some(user_id)))
+                    },
+                    Err(e) => {
+                        println!("Database: Encrypted magic link validation failed: {}", e);
+                        Ok((false, None, None))
+                    }
+                }
             } else {
-                println!("Database: Magic link expired");
-                Ok(false)
+                println!("Database: Encrypted magic link expired");
+                Ok((false, None, None))
             }
         } else {
-            println!("Database: Magic link not found");
-            Ok(false)
+            println!("Database: Encrypted magic link not found");
+            Ok((false, None, None))
         }
     }
 

@@ -63,7 +63,7 @@
 
 <!-- Footer Actions -->
 <div
-	class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+	class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
 		? 'flex-row-reverse'
 		: ''}"
 >

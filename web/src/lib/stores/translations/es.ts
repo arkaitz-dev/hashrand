@@ -192,7 +192,8 @@ export const es: I18nTexts = {
 		logoutConfirmTitle: 'Cerrar Sesión',
 		logoutConfirmMessage:
 			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
-		loggedOut: 'Sesión cerrada correctamente'
+		loggedOut: 'Sesión cerrada correctamente',
+		isCorrect: 'Es correcto'
 	},
 	logout: {
 		title: 'Cerrar Sesión',

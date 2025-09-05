@@ -1,6 +1,7 @@
 use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
+    validate_length, validate_seed_string,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -46,6 +47,8 @@ fn handle_password_post(req: Request) -> anyhow::Result<Response> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("Missing 'seed' field in JSON body"))?;
 
+    // Validate seed string format first
+    validate_seed_string(seed_str)?;
     let seed_32 = base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
 
     // Extract other parameters from JSON
@@ -95,14 +98,11 @@ fn handle_password_with_seed(
         .unwrap_or(true);
 
     // Validate minimum and maximum length (44)
-    if length < min_length || length > 44 {
+    if let Err(e) = validate_length(length, min_length, 44) {
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "text/plain")
-            .body(format!(
-                "Password length must be between {} and 44",
-                min_length
-            ))
+            .body(format!("Password {}", e))
             .build());
     }
 

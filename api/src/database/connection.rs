@@ -69,12 +69,15 @@ pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> 
         &[],
     )?;
 
-    // Create magiclinks table for magic link validation
+    // Create magiclinks table for magic link validation with ChaCha20-Poly1305 encryption
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS magiclinks (
-            token_hash BLOB PRIMARY KEY,
-            expires_at INTEGER NOT NULL
+            token_hash BLOB PRIMARY KEY,    -- SHAKE-256[16] of encrypted new_raw_magic_link
+            timestamp INTEGER NOT NULL,     -- Original timestamp used in raw_magic_link creation
+            encryption_blob BLOB NOT NULL,  -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
+            next_param TEXT,                -- Optional next destination parameter 
+            expires_at INTEGER NOT NULL     -- Magic link expiration timestamp
         )
         "#,
         &[],

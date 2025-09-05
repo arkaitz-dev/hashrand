@@ -188,7 +188,8 @@ export const de: I18nTexts = {
 		userMenu: 'Benutzermenü',
 		login: 'Anmelden',
 		authenticatedAs: 'Authentifiziert als:',
-		logout: 'Abmelden'
+		logout: 'Abmelden',
+		isCorrect: 'Das ist korrekt'
 	},
 	logout: {
 		title: 'Abmelden',

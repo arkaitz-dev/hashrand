@@ -187,7 +187,8 @@ export const hi: I18nTexts = {
 		userMenu: 'यूजर मेन्यू',
 		login: 'लॉग इन करें',
 		authenticatedAs: 'प्रमाणित के रूप में:',
-		logout: 'लॉग आउट करें'
+		logout: 'लॉग आउट करें',
+		isCorrect: 'यह सही है'
 	},
 	logout: {
 		title: 'लॉग आउट करें',

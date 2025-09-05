@@ -178,8 +178,8 @@ export const fr: I18nTexts = {
 		confirmEmailDescription: 'Est-ce correct?',
 		magicLinkSent: 'Lien Envoyé!',
 		magicLinkInstructions:
-		magicLinkSentFlash: 'Lien magique envoyé. Vérifiez votre email et cliquez sur le lien pour continuer.',
 			'Vérifiez votre email et cliquez sur le lien magique pour vous authentifier.',
+		magicLinkSentFlash: 'Lien magique envoyé. Vérifiez votre email et cliquez sur le lien pour continuer.',
 		developmentMode: 'Mode Développement:',
 		testMagicLink: 'Cliquer ici pour tester le lien magique',
 		authenticationFailed: "Échec de l'authentification",
@@ -188,7 +188,8 @@ export const fr: I18nTexts = {
 		userMenu: 'Menu utilisateur',
 		login: 'Se connecter',
 		authenticatedAs: 'Connecté en tant que :',
-		logout: 'Se déconnecter'
+		logout: 'Se déconnecter',
+		isCorrect: 'C\'est correct'
 	},
 	logout: {
 		title: 'Se Déconnecter',

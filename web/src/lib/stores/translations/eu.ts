@@ -185,7 +185,8 @@ export const eu: I18nTexts = {
 		userMenu: 'Erabiltzaile menua',
 		login: 'Hasi saioa',
 		authenticatedAs: 'Autentifikatuta honela:',
-		logout: 'Amaitu saioa'
+		logout: 'Amaitu saioa',
+		isCorrect: 'Zuzena da'
 	},
 	logout: {
 		title: 'Amaitu Saioa',

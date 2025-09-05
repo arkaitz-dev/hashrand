@@ -325,6 +325,7 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 - **Cryptographic User IDs**: Deterministic 16-byte user IDs derived from email using enhanced multi-layer security:
   - `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → Argon2id(hmac_result, user_salt, mem_cost=19456, time_cost=2) → SHAKE256(argon2_result) → user_id`
 - **Base58 Usernames**: User IDs displayed as readable ~22-character usernames (50% size reduction)
+- **Magic Link Encryption**: ChaCha20 encryption with 44-character Base58 tokens (optimized from previous 66-character implementation)
 - **Magic Link Integrity**: HMAC-SHA3-256 prevents magic link tampering
 - **JWT Protection**: All endpoints require valid Bearer tokens
 
@@ -477,7 +478,7 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.6.1",
+  "api_version": "1.6.5",
   "ui_version": "0.19.4"
 }
 ```
@@ -938,11 +939,15 @@ bs58 = "0.5.1"              # Base58 encoding for seed format
 hex = "0.4.3"               # Hexadecimal utilities
 sha3 = "0.10.8"             # SHA3-256 hashing for seed generation
 
-# Authentication dependencies
+# Authentication & Encryption dependencies
 base64 = "0.22.1"           # Base64 encoding for JWT tokens
 chrono = { version = "0.4.34", features = ["serde"] }  # Date/time handling for token expiration
 jsonwebtoken = "9.3.0"      # JWT token generation and validation
 uuid = { version = "1.10.0", features = ["v4"] }  # UUID generation for secure tokens
+chacha20 = "0.9.1"          # ChaCha20 stream cipher for magic link encryption
+hmac = "0.12.1"             # HMAC for magic link integrity verification
+pbkdf2 = "0.12.2"           # PBKDF2 key derivation for user ID generation
+argon2 = "0.5.3"            # Argon2id for secure user ID derivation
 ```
 
 #### Linting & Formatting Tools
@@ -979,6 +984,9 @@ MAGIC_LINK_HMAC_KEY=your-64-character-hex-secret-here
 # Salt for Argon2id user ID derivation (64 hex chars = 32 bytes)
 ARGON2_SALT=your-64-character-hex-secret-here
 
+# ChaCha20 encryption key for magic link encryption (64 hex chars = 32 bytes)
+CHACHA_ENCRYPTION_KEY=your-64-character-hex-secret-here
+
 # Mailtrap API integration for email delivery
 MAILTRAP_API_TOKEN=your-mailtrap-api-token
 MAILTRAP_INBOX_ID=your-inbox-id
@@ -992,6 +1000,7 @@ import secrets
 print("JWT_SECRET=" + secrets.token_hex(32))
 print("MAGIC_LINK_HMAC_KEY=" + secrets.token_hex(32))
 print("ARGON2_SALT=" + secrets.token_hex(32))
+print("CHACHA_ENCRYPTION_KEY=" + secrets.token_hex(32))
 ```
 
 #### Development Setup
@@ -1002,6 +1011,7 @@ print("ARGON2_SALT=" + secrets.token_hex(32))
 JWT_SECRET=e6024c8eada7b42bee415ef56eb597c62c170681f1946a8cb899fc5c102e2c11
 MAGIC_LINK_HMAC_KEY=464c57289ac9f1a0a93c98ebe1ced0c31ac777798b9ce55cd67a358db5931b26
 ARGON2_SALT=637de2cf5c738c757fb4e663685721bf3dca002da5168626dbe07f1b9907e1e3
+CHACHA_ENCRYPTION_KEY=8db6db662a0af8881550bbda8dc4c6223c5485bf38964c5181a037d9f95d4a32
 NODE_ENV=development
 ```
 
@@ -1129,15 +1139,19 @@ Email Input → SHA3-256 Hash → HMAC-SHA3-256 → Per-User Salt → PBKDF2-SHA
 - **High Security**: 600,000 PBKDF2 iterations following OWASP 2024 standards
 - **User-Friendly**: Base58 encoding provides readable usernames without confusing characters
 
-#### 🎫 Magic Link Cryptographic Verification
+#### 🎫 Magic Link Cryptographic Verification & Encryption
 ```
-User_ID + Timestamp + HMAC-SHA3-256 → Base58 Magic Token (72 bytes → ~98 chars)
+User_ID + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token (32 bytes → 44 chars)
+HMAC-SHA3-256(raw_magic_link, hmac_key) → SHAKE-256[16] → Database Hash Index
 ```
 
-**Integrity Protection:**
-- **Tamper-Proof**: HMAC-SHA3-256 prevents modification of magic links
-- **Time-Limited**: 15-minute expiration prevents replay attacks
+**Security Architecture:**
+- **ChaCha20 Encryption**: 32-byte encrypted magic link data using ChaCha20 stream cipher
+- **HMAC-SHA3-256 Integrity**: Prevents modification and tampering of magic links
+- **Database Validation**: Additional security layer through token presence verification
+- **Time-Limited**: 5-minute expiration prevents replay attacks (development: 15 minutes)
 - **One-Time Use**: Magic links consumed immediately after validation
+- **Optimized Length**: 44-character Base58 tokens (reduced from previous 66-character implementation)
 - **No Email Reference**: Magic tokens contain only cryptographic hashes, never emails
 
 #### 🛡️ Zero Knowledge Database Schema
@@ -1148,11 +1162,14 @@ CREATE TABLE users (
     created_at INTEGER DEFAULT (unixepoch())  -- Unix timestamp (timezone-agnostic)
 );
 
--- Zero Knowledge Magic Links Table (Simplified)
+-- Zero Knowledge Magic Links Table with ChaCha20 Encryption Support  
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- 16-byte HMAC-SHA3-256 → SHAKE-256 hash
+    token_hash BLOB PRIMARY KEY,        -- 16-byte SHAKE-256 hash of encrypted token
+    timestamp INTEGER NOT NULL,         -- Original timestamp used in magic link creation
+    encryption_blob BLOB NOT NULL,      -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
+    next_param TEXT,                     -- Optional next destination parameter
     expires_at INTEGER NOT NULL         -- Unix timestamp expiration
-    -- No user data, emails, or PII - only cryptographic hashes
+    -- No user data, emails, or PII - only cryptographic hashes and encryption metadata
 );
 ```
 

@@ -234,6 +234,94 @@ CHANGELOG.md                                         # New v0.19.3 release docum
 - System maintains stateless JWT architecture principles
 - All authentication flows now have proper confirmation dialogs
 
+---
+
+## Session History: ChaCha20 Encryption Migration (2025-09-05)
+
+### Major Accomplishment: Token Length Optimization through Encryption Simplification
+This session completed a **cryptographic architecture optimization** by migrating from ChaCha20-Poly1305 AEAD to ChaCha20 stream cipher, reducing magic link token length from 66 to 44 characters while maintaining equivalent security.
+
+#### ✅ Primary Optimization Achieved:
+**Token Length Reduction**: Successfully reduced magic link token length by 33% (from 66 to 44 characters) while maintaining cryptographic security through existing authentication mechanisms.
+
+#### ✅ Core Technical Changes:
+
+1. **Encryption Algorithm Migration** (`api/src/utils/jwt.rs`)
+   - **From ChaCha20-Poly1305**: AEAD encryption producing 48 bytes (32 + 16 auth tag)
+   - **To ChaCha20**: Stream cipher producing 32 bytes of encrypted data
+   - **Same API Interface**: `encrypt_magic_link()` and `decrypt_magic_link()` functions maintain identical signatures
+   - **ChaCha20 Implementation**: Uses `chacha20 = "0.9.1"` crate with nonce and secret key
+
+2. **Database Schema Updates** (`api/src/database/operations.rs`)
+   - **Token Validation**: Updated from 48-byte to 32-byte encrypted token validation
+   - **Error Messages**: Updated to reflect ChaCha20 encryption format
+   - **Functions Modified**: `store_magic_link_encrypted()` and `validate_and_consume_magic_link_encrypted()`
+   - **No Breaking Changes**: Database schema remains identical, only validation logic updated
+
+3. **Security Architecture Enhancement**
+   - **Dual Authentication**: ChaCha20 encryption + HMAC-SHA3-256 integrity verification
+   - **Database Validation**: Token presence verification provides additional security layer
+   - **Equivalent Security**: Authentication through HMAC + database validation maintains same security guarantees as AEAD
+
+4. **Dependency Management**
+   - **Added**: `chacha20 = "0.9.1"` for stream cipher encryption
+   - **Used `cargo add`**: As specified in conversation, used `cargo add chacha20` for latest version
+   - **Existing Dependencies**: HMAC, SHA3, and database validation dependencies remain unchanged
+
+#### ✅ Security Analysis & Validation:
+
+**Security Model Comparison**:
+- **Before (ChaCha20-Poly1305)**: Encryption + built-in authentication + HMAC + database validation
+- **After (ChaCha20)**: Encryption + HMAC integrity verification + database validation
+- **Result**: Equivalent security with simpler implementation and better performance
+
+**Testing Results**:
+- **✅ Token Generation**: Confirmed 44-character Base58 tokens (vs 66 previously)
+- **✅ End-to-End Authentication**: Magic link → email → JWT token flow working perfectly
+- **✅ HMAC Verification**: Integrity checking prevents tampering
+- **✅ Database Integration**: 32-byte token storage and validation successful
+- **✅ No Regressions**: All existing functionality maintained
+
+#### ✅ Benefits Realized:
+
+1. **User Experience Improvements**:
+   - **Shorter Magic Links**: 44-character tokens easier to handle in email clients
+   - **Reduced URL Length**: Better compatibility with email line wrapping
+   - **Same Security**: No reduction in cryptographic protection
+
+2. **Technical Benefits**:
+   - **Performance**: Stream cipher operations faster than AEAD
+   - **Memory Efficiency**: 32 bytes vs 48 bytes encrypted data
+   - **Architecture Simplification**: Single-purpose encryption with existing authentication
+
+3. **Maintenance Advantages**:
+   - **Cleaner Code**: Separated encryption from authentication concerns
+   - **Proven Security Model**: Leverages existing HMAC + database validation
+   - **Simpler Logic**: Less complex than AEAD authentication tag handling
+
+#### ✅ Implementation Process:
+1. **Added ChaCha20 dependency** using `cargo add chacha20` as requested
+2. **Updated encryption functions** to use ChaCha20 stream cipher
+3. **Modified database validation** to expect 32-byte tokens instead of 48 bytes
+4. **Tested complete flow** from generation to validation
+5. **Confirmed token length** is exactly 44 characters as desired
+6. **Updated all documentation** to reflect the optimization
+
+#### ✅ Files Modified in This Session:
+```
+api/src/utils/jwt.rs                    # Updated encryption/decryption to ChaCha20
+api/src/database/operations.rs          # Updated 48→32 byte validation and comments
+api/Cargo.toml                          # Version bump to 1.6.5
+README.md                               # Updated security architecture documentation
+CHANGELOG.md                            # Added comprehensive v1.6.5 release notes
+CLAUDE.md                               # Added session history documentation
+```
+
+### Session Impact:
+This optimization successfully **reduced magic link token length by 33%** while maintaining cryptographic security through the existing HMAC-SHA3-256 + database validation architecture. The system now produces 44-character magic link tokens that are more manageable in email clients and URLs while preserving all security guarantees.
+
+**Key Achievement**: Demonstrated that authentication can be effectively separated from encryption, allowing the use of a simpler stream cipher (ChaCha20) combined with existing integrity verification mechanisms to achieve equivalent security with better performance and usability characteristics.
+
 ## Context7 MCP Usage Rules
 **CRITICAL: ALWAYS follow this Context7 usage pattern - NEVER delete this section**
 

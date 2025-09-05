@@ -185,7 +185,8 @@ export const pt: I18nTexts = {
 		userMenu: 'Menu do usuário',
 		login: 'Entrar',
 		authenticatedAs: 'Autenticado como:',
-		logout: 'Sair'
+		logout: 'Sair',
+		isCorrect: 'Está correto'
 	},
 	logout: {
 		title: 'Sair',

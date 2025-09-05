@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { dialogStore } from '$lib/stores/dialog';
-	import { flashMessagesStore } from '$lib/stores/flashMessages';
-	import { goto } from '$app/navigation';
-	import { _ } from '$lib/stores/i18n';
 	import AuthDialogContent from './AuthDialogContent.svelte';
+	import AuthConfirmDialogContent from './AuthConfirmDialogContent.svelte';
 	import SeedDialogContent from './SeedDialogContent.svelte';
 	import LogoutDialogContent from './LogoutDialogContent.svelte';
 
@@ -12,17 +10,6 @@
 		dialogStore.close();
 	}
 
-	// Handle magic link sent successfully
-	function handleMagicLinkSent() {
-		// Close dialog
-		dialogStore.close();
-
-		// Add flash message
-		flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
-
-		// Navigate to home
-		goto('/');
-	}
 
 	// Handle escape key
 	function handleKeydown(event: globalThis.KeyboardEvent) {
@@ -51,7 +38,12 @@
 				<AuthDialogContent
 					next={$dialogStore.props}
 					onClose={closeDialog}
-					onMagicLinkSent={handleMagicLinkSent}
+				/>
+			{:else if $dialogStore.type === 'auth-confirm'}
+				<AuthConfirmDialogContent
+					email={$dialogStore.props?.email || ''}
+					next={$dialogStore.props}
+					onClose={closeDialog}
 				/>
 			{:else if $dialogStore.type === 'seed'}
 				<SeedDialogContent

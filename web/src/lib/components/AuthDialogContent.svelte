@@ -1,83 +1,45 @@
 <script lang="ts">
 	/**
-	 * Auth Dialog Content - SIMPLIFIED VERSION
+	 * Auth Dialog Content
 	 *
-	 * Input email -> Send immediately -> Close dialog -> Show result
+	 * Input email -> Show confirmation dialog
 	 */
 
-	import { _, currentLanguage } from '../stores/i18n';
+	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
-	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { dialogStore } from '../stores/dialog';
 
 	// Props
 	export let onClose: () => void;
-	export let onMagicLinkSent: () => void;
 	export let next: Record<string, unknown> | null = null;
 
-	// Component state
-	let email = '';
-	let isSubmitting = false;
-	let debugMessage = next ? `📝 Props: ${JSON.stringify(next)}` : '📝 No next props received';
+	// Component state  
+	let email = (next?.email as string) || '';
 
 	/**
-	 * Handle form submission - send immediately
+	 * Handle form submission - show confirmation dialog
 	 */
 	async function handleSubmit() {
 		if (!email.trim()) {
-			debugMessage = '❌ Email required';
 			return;
 		}
 
 		if (!isValidEmail(email)) {
-			debugMessage = '❌ Invalid email';
 			return;
 		}
 
-		debugMessage = '🔄 Sending...';
-		isSubmitting = true;
+		// Filter out email from next parameters
+		const nextWithoutEmail = next ? { ...next } : {};
+		if (nextWithoutEmail.email) {
+			delete nextWithoutEmail.email;
+		}
 
-		// Close dialog immediately
-		onMagicLinkSent();
-
-		// Send API call in background
-		setTimeout(async () => {
-			try {
-				debugMessage = '🔄 Calling API...';
-
-				// Debug next parameters
-				debugMessage = `🔍 next=${JSON.stringify(next)}, keys=${next ? Object.keys(next).length : 0}`;
-
-				// Encode next parameters as Base58 if they exist
-				let nextParam: string | undefined = undefined;
-				if (next && Object.keys(next).length > 0) {
-					const jsonString = JSON.stringify(next);
-					const encoder = new TextEncoder();
-					const bytes = encoder.encode(jsonString);
-					// Import base58 encoding
-					const { base58 } = await import('@scure/base');
-					nextParam = base58.encode(bytes);
-					debugMessage = `🔄 Sending next (Base58): ${nextParam}`;
-				} else {
-					debugMessage = `🔄 No next params to send`;
-				}
-
-				const response = await fetch('/api/login/', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						email,
-						ui_host: typeof window !== 'undefined' ? window.location.origin : undefined,
-						next: nextParam,
-						email_lang: $currentLanguage
-					})
-				});
-				debugMessage = `🔄 Response: ${response.status}`;
-				const data = await response.json();
-				debugMessage = `✅ Success: ${JSON.stringify(data)}`;
-			} catch (error) {
-				debugMessage = `❌ Error: ${error?.message}`;
-			}
-		}, 100);
+		// Show confirmation dialog with email and next parameters
+		// This will automatically replace the current dialog
+		dialogStore.show('auth-confirm', { 
+			email, 
+			...(Object.keys(nextWithoutEmail).length > 0 ? nextWithoutEmail : {})
+		});
 	}
 
 	/**
@@ -129,44 +91,33 @@
 				type="email"
 				bind:value={email}
 				placeholder={$_('auth.emailPlaceholder')}
-				disabled={isSubmitting}
 				class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
 				       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-				       focus:ring-2 focus:ring-blue-500 focus:border-transparent
-				       disabled:opacity-50 disabled:cursor-not-allowed"
+				       focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
 			/>
 
-			{#if debugMessage}
-				<p class="text-blue-600 dark:text-blue-400 text-sm mt-1">
-					{debugMessage}
-				</p>
-			{/if}
 		</div>
 	</div>
 </div>
 
 <!-- Footer Actions -->
 <div
-	class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+	class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
 		? 'flex-row-reverse'
 		: ''}"
 >
 	<button
 		onclick={onClose}
-		disabled={isSubmitting}
-		class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+		class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
 	>
 		{$_('common.cancel')}
 	</button>
 	<button
 		onclick={handleSubmit}
-		disabled={isSubmitting || !email.trim()}
-		class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+		disabled={!email.trim()}
+		class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
 	>
-		{#if isSubmitting}
-			<LoadingSpinner size="sm" />
-		{/if}
-		{$_('auth.sendMagicLink')}
+		{$_('common.continue')}
 	</button>
 </div>

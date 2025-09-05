@@ -1,6 +1,7 @@
 use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
+    validate_length, validate_seed_string,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -41,6 +42,8 @@ fn handle_api_key_post(req: Request) -> anyhow::Result<Response> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("Missing 'seed' field in JSON body"))?;
 
+    // Validate seed string format first
+    validate_seed_string(seed_str)?;
     let seed_32 = base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
 
     // Extract other parameters from JSON
@@ -90,14 +93,11 @@ fn handle_api_key_with_seed(
         .unwrap_or(true);
 
     // Validate minimum and maximum length (64)
-    if length < min_length || length > 64 {
+    if let Err(e) = validate_length(length, min_length, 64) {
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "text/plain")
-            .body(format!(
-                "API key length must be between {} and 64",
-                min_length
-            ))
+            .body(format!("API key {}", e))
             .build());
     }
 

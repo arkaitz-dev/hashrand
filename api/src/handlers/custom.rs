@@ -1,6 +1,7 @@
 use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
+    validate_length, validate_prefix_suffix, validate_seed_string,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -121,6 +122,8 @@ pub fn handle_custom_post(req: Request) -> anyhow::Result<Response> {
     // Extract seed
     let seed_opt = if let Some(seed_val) = json_data.get("seed") {
         if let Some(seed_str) = seed_val.as_str() {
+            // Validate seed string format first
+            validate_seed_string(seed_str)?;
             Some(base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!(e))?)
         } else {
             None
@@ -157,20 +160,27 @@ pub fn handle_custom_with_params(
     let suffix = params.get("suffix").cloned().unwrap_or_default();
 
     // Validate length (2-128)
-    if !(2..=128).contains(&length) {
+    if let Err(e) = validate_length(length, 2, 128) {
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "text/plain")
-            .body("Length must be between 2 and 128")
+            .body(e.to_string())
             .build());
     }
 
-    // Validate prefix and suffix length (maximum 32 each)
-    if prefix.len() > 32 || suffix.len() > 32 {
+    // Validate prefix and suffix (4 bytes max, safe characters)
+    if let Err(e) = validate_prefix_suffix(&prefix, "Prefix") {
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "text/plain")
-            .body("Prefix and suffix must be 32 characters or less")
+            .body(e.to_string())
+            .build());
+    }
+    if let Err(e) = validate_prefix_suffix(&suffix, "Suffix") {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "text/plain")
+            .body(e.to_string())
             .build());
     }
 

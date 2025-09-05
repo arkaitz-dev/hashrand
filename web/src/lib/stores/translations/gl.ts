@@ -187,7 +187,8 @@ export const gl: I18nTexts = {
 		userMenu: 'Menú do usuario',
 		login: 'Iniciar sesión',
 		authenticatedAs: 'Autenticado como:',
-		logout: 'Pechar sesión'
+		logout: 'Pechar sesión',
+		isCorrect: 'É correcto'
 	},
 	logout: {
 		title: 'Pechar Sesión',

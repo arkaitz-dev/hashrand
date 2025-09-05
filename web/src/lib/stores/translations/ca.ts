@@ -179,8 +179,8 @@ export const ca: I18nTexts = {
 		confirmEmailDescription: 'És correcte?',
 		magicLinkSent: 'Enllaç enviat!',
 		magicLinkInstructions:
-		magicLinkSentFlash: 'Enllaç màgic enviat. Revisa el teu email i fes clic a l'enllaç per continuar.',
 			"Reviseu el vostre correu electrònic i feu clic a l'enllaç màgic per autenticar-vos.",
+		magicLinkSentFlash: 'Enllaç màgic enviat. Revisa el teu email i fes clic a l\'enllaç per continuar.',
 		developmentMode: 'Mode desenvolupament:',
 		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",
 		authenticationFailed: "Ha fallat l'autenticació",
@@ -189,7 +189,8 @@ export const ca: I18nTexts = {
 		userMenu: "Menú d'usuari",
 		login: 'Iniciar sessió',
 		authenticatedAs: 'Autenticat com a:',
-		logout: 'Tancar sessió'
+		logout: 'Tancar sessió',
+		isCorrect: 'És correcte'
 	},
 	logout: {
 		title: 'Tancar Sessió',
