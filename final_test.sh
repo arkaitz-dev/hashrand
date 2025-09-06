@@ -132,8 +132,8 @@ request_magic_link() {
 
 extract_magic_token() {
     echo -e "\n${PURPLE}=== Extracting Magic Token ===${NC}"
-    # Wait a moment for the log to be written
-    sleep 2
+    # Wait longer for the log to be written and email to be sent
+    sleep 5
     
     # Extract from Generated magic_link debug line (most reliable)
     local magic_token=$(grep "Generated magic_link" .spin-dev.log | tail -1 | grep -o "magiclink=[A-Za-z0-9]*" | cut -d= -f2)
@@ -146,6 +146,12 @@ extract_magic_token() {
         echo -e "${RED}✗ Could not extract magic token from logs${NC}"
         echo "Last 5 debug lines with magic_link:"
         grep "Generated magic_link" .spin-dev.log | tail -3
+        echo ""
+        echo "Full grep result:"
+        grep "Generated magic_link" .spin-dev.log | tail -1
+        echo ""
+        echo "Regex extraction result:"
+        grep "Generated magic_link" .spin-dev.log | tail -1 | grep -o "magiclink=[A-Za-z0-9]*"
         return 1
     fi
 }
@@ -153,20 +159,43 @@ extract_magic_token() {
 authenticate() {
     echo -e "\n${PURPLE}=== AUTHENTICATION FLOW ===${NC}"
     
-    # Step 1: Request magic link
-    if ! request_magic_link; then
+    # Clear previous logs to avoid confusion
+    echo "Clearing previous authentication logs..."
+    > .spin-dev.log
+    sleep 1
+    
+    # Step 1: Request magic link with fresh start
+    echo -e "\n${PURPLE}=== Requesting Fresh Magic Link ===${NC}"
+    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d '{"email":"me@arkaitz.dev"}' "$BASE_URL/api/login/")
+    echo "Magic link request response: $magic_response"
+    
+    if [[ "$magic_response" != *'"status":"OK"'* ]]; then
         echo -e "${RED}✗ Authentication failed: Could not request magic link${NC}"
         return 1
     fi
     
-    # Step 2: Extract magic token
-    local magic_token=$(extract_magic_token)
+    echo -e "${GREEN}✓ Magic link requested successfully${NC}"
+    
+    # Step 2: Wait and extract magic token
+    echo -e "\n${PURPLE}=== Extracting Magic Token ===${NC}"
+    echo "Waiting for magic link to be generated and logged..."
+    sleep 3
+    
+    # Extract from Generated magic_link debug line (treat as text file)
+    local magic_token=$(grep -a "Generated magic_link" .spin-dev.log | tail -1 | grep -o "magiclink=[A-Za-z0-9]*" | cut -d= -f2)
+    
     if [[ -z "$magic_token" ]]; then
-        echo -e "${RED}✗ Authentication failed: Could not extract magic token${NC}"
+        echo -e "${RED}✗ Could not extract magic token from logs${NC}"
+        echo "Debug - Last lines in log:"
+        tail -5 .spin-dev.log
+        echo "Debug - Magic link lines:"
+        grep -a "Generated magic_link" .spin-dev.log | tail -3
         return 1
     fi
     
-    # Step 3: Exchange magic token for JWT
+    echo "Magic token extracted: ${magic_token:0:20}..."
+    
+    # Step 3: Exchange magic token for JWT immediately
     echo -e "\n${PURPLE}=== Converting Magic Token to JWT ===${NC}"
     local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token")
     echo "JWT response: $jwt_response"
@@ -176,9 +205,11 @@ authenticate() {
     
     if [[ -n "$JWT_TOKEN" ]]; then
         echo -e "${GREEN}✓ JWT token obtained: ${JWT_TOKEN:0:30}...${NC}"
+        echo -e "${GREEN}✓ Authentication successful - JWT token ready for protected tests${NC}"
         return 0
     else
         echo -e "${RED}✗ Authentication failed: Could not obtain JWT token${NC}"
+        echo "Debug - Full JWT response: $jwt_response"
         return 1
     fi
 }

@@ -296,14 +296,51 @@ fn handle_magic_link_validation(
     let (is_valid, next_param, user_id_bytes) = match MagicLinkOperations::validate_and_consume_magic_link_encrypted(env.clone(), magic_token) {
         Ok((valid, next, user_id)) => (valid, next, user_id),
         Err(error) => {
-            println!("Database error during magic token validation: {}", error);
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: "Database error".to_string(),
-                })?)
-                .build());
+            let error_msg = error.to_string();
+            println!("Magic token validation error: {}", error_msg);
+            
+            // Categorize error types for appropriate HTTP status codes
+            if error_msg.contains("Invalid Base58") || error_msg.contains("must be 32 bytes") {
+                // Client validation error - malformed token format
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid magic link token format".to_string(),
+                    })?)
+                    .build());
+            } else if error_msg.contains("ChaCha20-Poly1305 decryption error") {
+                // Client validation error - corrupted or tampered token
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid or corrupted magic link".to_string(),
+                    })?)
+                    .build());
+            } else if error_msg.contains("Missing MLINK_CONTENT") || 
+                      error_msg.contains("Invalid MLINK_CONTENT") ||
+                      error_msg.contains("Argon2 params error") ||
+                      error_msg.contains("Invalid nonce key") ||
+                      error_msg.contains("Invalid cipher key") {
+                // System configuration/crypto errors - return 500 Internal Server Error
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Server configuration error".to_string(),
+                    })?)
+                    .build());
+            } else {
+                // Database connection or other system errors - return 500 Internal Server Error
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Database error".to_string(),
+                    })?)
+                    .build());
+            }
         }
     };
 

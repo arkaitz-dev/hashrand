@@ -85,13 +85,13 @@ impl JwtUtils {
         let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid USER_ID_HMAC_KEY format".to_string())?;
         Mac::update(&mut mac, &email_hash);
-        let _hmac_result = mac.finalize().into_bytes();
+        let hmac_result = mac.finalize().into_bytes();
 
         // Step 3: Generate dynamic salt using HMAC + ChaCha8Rng
         let dynamic_salt = Self::generate_dynamic_salt(&email_hash)?;
         
-        // Step 4: Argon2id with fixed parameters
-        let argon2_output = Self::derive_with_argon2id(&email_hash, &dynamic_salt)?;
+        // Step 4: Argon2id with fixed parameters (using HMAC result as data input)
+        let argon2_output = Self::derive_with_argon2id(&hmac_result[..], &dynamic_salt)?;
 
         // Step 5: SHAKE256 to compress to 16 bytes with better entropy distribution
         let mut shake = Shake256::default();
