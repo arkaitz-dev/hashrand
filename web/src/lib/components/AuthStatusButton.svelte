@@ -7,8 +7,6 @@
 	 * - Authenticated: check icon, opens user dropdown with logout option
 	 */
 
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { authStore } from '../stores/auth';
 	import { dialogStore } from '../stores/dialog';
 	import { _ } from '../stores/i18n';
@@ -38,9 +36,8 @@
 		if (isAuthenticated) {
 			showUserDropdown = !showUserDropdown;
 		} else {
-			// Redirect to login page with current page as next parameter
-			const currentPage = $page.url.pathname;
-			goto(`/login?next=${encodeURIComponent(currentPage)}`);
+			// Show authentication dialog
+			dialogStore.show('auth');
 		}
 	}
 

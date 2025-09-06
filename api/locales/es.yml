@@ -7,7 +7,7 @@ email:
     intro: "Solicitaste un enlace de acceso seguro. Haz clic en el botón de abajo para autenticarte y acceder a tu cuenta."
     button_text: "Acceder a HashRand"
     manual_link_intro: "Si el botón no funciona, copia y pega este enlace en tu navegador:"
-    security_warning: "Este enlace expirará en 5 minutos y solo puede ser usado una vez."
+    security_warning: "Este enlace expirará en 5 minutos y sólo puede ser usado una vez."
     security_notice: "Si no solicitaste este enlace de acceso, por favor ignora este email."
     footer_text: "HashRand - Generador de Hash Aleatorio"
     no_reply_notice: "Este es un mensaje automático. Por favor no respondas a este email."

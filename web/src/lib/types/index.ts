@@ -106,7 +106,7 @@ export interface AuthUser {
 export interface LoginRequest {
 	email: string;
 	ui_host?: string; // Frontend URL for magic link generation
-	next?: string; // Base58-encoded parameters to include in magic link URL
+	next?: string; // Simple URL path to redirect to after authentication
 }
 
 export interface LoginResponse {
@@ -114,6 +114,7 @@ export interface LoginResponse {
 	token_type: string;
 	expires_in: number; // seconds
 	user_id: string; // Base58 user_id
+	next?: string; // Optional next parameter from magic link
 }
 
 export interface MagicLinkResponse {

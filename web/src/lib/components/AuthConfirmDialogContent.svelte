@@ -38,15 +38,23 @@
 		// Send API call in background
 		setTimeout(async () => {
 			try {
-				// Encode next parameters as Base58 if they exist
+				// Convert next parameters to a simple URL string if they exist
 				let nextParam: string | undefined = undefined;
 				if (next && Object.keys(next).length > 0) {
-					const jsonString = JSON.stringify(next);
-					const encoder = new TextEncoder();
-					const bytes = encoder.encode(jsonString);
-					// Import base58 encoding
-					const { base58 } = await import('@scure/base');
-					nextParam = base58.encode(bytes);
+					// Build URL path from next object
+					if (next.endpoint) {
+						const params = new URLSearchParams();
+						if (next.length) params.set('length', next.length.toString());
+						if (next.alphabet) params.set('alphabet', next.alphabet.toString());
+						if (next.prefix) params.set('prefix', next.prefix.toString());
+						if (next.suffix) params.set('suffix', next.suffix.toString());
+						if (next.seed) params.set('seed', next.seed.toString());
+						if (next.raw !== undefined) params.set('raw', next.raw.toString());
+						if (next.language) params.set('language', next.language.toString());
+						if (next.words) params.set('words', next.words.toString());
+						
+						nextParam = `/result?endpoint=${next.endpoint}&${params.toString()}`;
+					}
 				}
 
 				await fetch('/api/login/', {

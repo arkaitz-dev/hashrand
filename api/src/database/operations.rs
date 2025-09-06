@@ -12,6 +12,9 @@ use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha3::{Sha3_256, Shake256, digest::{Update, ExtendableOutput, XofReader}};
 use bs58;
+use argon2::{Argon2, Algorithm, Version, Params};
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce, aead::{Aead, KeyInit}};
+use rand_chacha::{ChaCha8Rng, rand_core::SeedableRng, rand_core::RngCore};
 
 type HmacSha3_256 = Hmac<Sha3_256>;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
@@ -215,6 +218,135 @@ impl UserOperations {
 pub struct MagicLinkOperations;
 
 impl MagicLinkOperations {
+    /// Get magic link content encryption keys from environment
+    fn get_mlink_content_keys() -> Result<([u8; 32], [u8; 32], [u8; 32]), SqliteError> {
+        let cipher_key = spin_sdk::variables::get("mlink_content_cipher")
+            .map_err(|e| SqliteError::Io(format!("Missing MLINK_CONTENT_CIPHER: {}", e)))?;
+        let nonce_key = spin_sdk::variables::get("mlink_content_nonce")
+            .map_err(|e| SqliteError::Io(format!("Missing MLINK_CONTENT_NONCE: {}", e)))?;
+        let salt_key = spin_sdk::variables::get("mlink_content_salt")
+            .map_err(|e| SqliteError::Io(format!("Missing MLINK_CONTENT_SALT: {}", e)))?;
+
+        let cipher_bytes = hex::decode(&cipher_key)
+            .map_err(|_| SqliteError::Io("Invalid MLINK_CONTENT_CIPHER format".to_string()))?;
+        let nonce_bytes = hex::decode(&nonce_key)
+            .map_err(|_| SqliteError::Io("Invalid MLINK_CONTENT_NONCE format".to_string()))?;
+        let salt_bytes = hex::decode(&salt_key)
+            .map_err(|_| SqliteError::Io("Invalid MLINK_CONTENT_SALT format".to_string()))?;
+
+        if cipher_bytes.len() != 32 || nonce_bytes.len() != 32 || salt_bytes.len() != 32 {
+            return Err(SqliteError::Io("Magic link content keys must be 32 bytes each".to_string()));
+        }
+
+        let mut cipher_key = [0u8; 32];
+        let mut nonce_key = [0u8; 32];
+        let mut salt_key = [0u8; 32];
+        cipher_key.copy_from_slice(&cipher_bytes);
+        nonce_key.copy_from_slice(&nonce_bytes);
+        salt_key.copy_from_slice(&salt_bytes);
+
+        Ok((cipher_key, nonce_key, salt_key))
+    }
+
+    /// Encrypt encrypted_payload using multi-layer security
+    /// 
+    /// Process:
+    /// 1. Argon2id(encrypted_data, MLINK_CONTENT_SALT) → derived_key
+    /// 2. HMAC-SHA3-256(derived_key, MLINK_CONTENT_NONCE) → ChaCha8RNG → nonce[12]
+    /// 3. HMAC-SHA3-256(derived_key, MLINK_CONTENT_CIPHER) → ChaCha8RNG → cipher_key[32]
+    /// 4. ChaCha20-Poly1305.encrypt(payload, nonce, cipher_key) → encrypted_blob
+    fn encrypt_payload_content(encrypted_data: &[u8; 32], payload: &[u8]) -> Result<Vec<u8>, SqliteError> {
+        let (cipher_key_base, nonce_key_base, salt) = Self::get_mlink_content_keys()?;
+        
+        // Step 1: Derive key using Argon2id
+        let params = Params::new(65536, 3, 4, Some(32))
+            .map_err(|e| SqliteError::Io(format!("Argon2 params error: {}", e)))?;
+        let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+        let mut derived_key = [0u8; 32];
+        argon2.hash_password_into(encrypted_data, &salt, &mut derived_key)
+            .map_err(|e| SqliteError::Io(format!("Argon2 derivation error: {}", e)))?;
+
+        // Step 2: Generate nonce using HMAC + ChaCha8RNG
+        let mut nonce_mac = <HmacSha3_256 as Mac>::new_from_slice(&nonce_key_base)
+            .map_err(|_| SqliteError::Io("Invalid nonce key".to_string()))?;
+        Mac::update(&mut nonce_mac, &derived_key);
+        let nonce_hmac = nonce_mac.finalize().into_bytes();
+        
+        let mut nonce_seed = [0u8; 32];
+        nonce_seed.copy_from_slice(&nonce_hmac[..32]);
+        let mut nonce_rng = ChaCha8Rng::from_seed(nonce_seed);
+        let mut nonce_bytes = [0u8; 12];
+        nonce_rng.fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        // Step 3: Generate cipher key using HMAC + ChaCha8RNG
+        let mut cipher_mac = <HmacSha3_256 as Mac>::new_from_slice(&cipher_key_base)
+            .map_err(|_| SqliteError::Io("Invalid cipher key".to_string()))?;
+        Mac::update(&mut cipher_mac, &derived_key);
+        let cipher_hmac = cipher_mac.finalize().into_bytes();
+        
+        let mut cipher_seed = [0u8; 32];
+        cipher_seed.copy_from_slice(&cipher_hmac[..32]);
+        let mut cipher_rng = ChaCha8Rng::from_seed(cipher_seed);
+        let mut cipher_key = [0u8; 32];
+        cipher_rng.fill_bytes(&mut cipher_key);
+        let key = Key::from_slice(&cipher_key);
+
+        // Step 4: Encrypt with ChaCha20-Poly1305
+        let cipher = ChaCha20Poly1305::new(key);
+        let ciphertext = cipher.encrypt(nonce, payload)
+            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
+
+        println!("Database: Encrypted payload using multi-layer security");
+        Ok(ciphertext)
+    }
+
+    /// Decrypt encrypted_payload using multi-layer security (reverse process)
+    fn decrypt_payload_content(encrypted_data: &[u8; 32], ciphertext: &[u8]) -> Result<Vec<u8>, SqliteError> {
+        let (cipher_key_base, nonce_key_base, salt) = Self::get_mlink_content_keys()?;
+        
+        // Step 1: Derive key using Argon2id (same as encryption)
+        let params = Params::new(65536, 3, 4, Some(32))
+            .map_err(|e| SqliteError::Io(format!("Argon2 params error: {}", e)))?;
+        let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+        let mut derived_key = [0u8; 32];
+        argon2.hash_password_into(encrypted_data, &salt, &mut derived_key)
+            .map_err(|e| SqliteError::Io(format!("Argon2 derivation error: {}", e)))?;
+
+        // Step 2: Regenerate nonce (same process as encryption)
+        let mut nonce_mac = <HmacSha3_256 as Mac>::new_from_slice(&nonce_key_base)
+            .map_err(|_| SqliteError::Io("Invalid nonce key".to_string()))?;
+        Mac::update(&mut nonce_mac, &derived_key);
+        let nonce_hmac = nonce_mac.finalize().into_bytes();
+        
+        let mut nonce_seed = [0u8; 32];
+        nonce_seed.copy_from_slice(&nonce_hmac[..32]);
+        let mut nonce_rng = ChaCha8Rng::from_seed(nonce_seed);
+        let mut nonce_bytes = [0u8; 12];
+        nonce_rng.fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        // Step 3: Regenerate cipher key (same process as encryption)
+        let mut cipher_mac = <HmacSha3_256 as Mac>::new_from_slice(&cipher_key_base)
+            .map_err(|_| SqliteError::Io("Invalid cipher key".to_string()))?;
+        Mac::update(&mut cipher_mac, &derived_key);
+        let cipher_hmac = cipher_mac.finalize().into_bytes();
+        
+        let mut cipher_seed = [0u8; 32];
+        cipher_seed.copy_from_slice(&cipher_hmac[..32]);
+        let mut cipher_rng = ChaCha8Rng::from_seed(cipher_seed);
+        let mut cipher_key = [0u8; 32];
+        cipher_rng.fill_bytes(&mut cipher_key);
+        let key = Key::from_slice(&cipher_key);
+
+        // Step 4: Decrypt with ChaCha20-Poly1305
+        let cipher = ChaCha20Poly1305::new(key);
+        let plaintext = cipher.decrypt(nonce, ciphertext)
+            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
+
+        println!("Database: Decrypted payload using multi-layer security");
+        Ok(plaintext)
+    }
     /// Create hash of raw magic link using HMAC-SHA3-256 + SHAKE-256 compression
     ///
     /// # Arguments
@@ -225,7 +357,7 @@ impl MagicLinkOperations {
     /// * `[u8; 16]` - 16-byte hash
     fn create_token_hash(raw_magic_link: &[u8], hmac_key: &[u8]) -> [u8; 16] {
         // Step 1: HMAC-SHA3-256(raw_magic_link, MAGIC_LINK_HMAC_KEY)
-        let mut mac = HmacSha3_256::new_from_slice(hmac_key)
+        let mut mac = <HmacSha3_256 as Mac>::new_from_slice(hmac_key)
             .expect("HMAC can take key of any size");
         Mac::update(&mut mac, raw_magic_link);
         let hmac_result = mac.finalize().into_bytes();
@@ -264,9 +396,8 @@ impl MagicLinkOperations {
     /// * `env` - Database environment to use
     /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
     /// * `encryption_blob` - 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
-    /// * `timestamp` - Original timestamp used in raw_magic_link creation
+    /// * `expires_at_nanos` - Expiration timestamp in nanoseconds (will be converted to hours for storage)
     /// * `next_param` - Optional next destination parameter
-    /// * `expires_at` - Magic link expiration timestamp
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
@@ -274,9 +405,8 @@ impl MagicLinkOperations {
         env: DatabaseEnvironment,
         encrypted_token: &str,
         encryption_blob: &[u8; 44],
-        timestamp: i64,
+        expires_at_nanos: i64,
         next_param: Option<&str>,
-        expires_at: u64,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection(env)?;
         
@@ -292,19 +422,31 @@ impl MagicLinkOperations {
         // Create SHAKE-256 hash of encrypted data for database storage (16 bytes)
         let token_hash = Self::create_encrypted_token_hash(&encrypted_data);
         
+        // Create merged payload: encryption_blob[44] + next_param_bytes[variable]
+        let mut payload_plain = Vec::with_capacity(44 + next_param.map_or(0, |s| s.len()));
+        payload_plain.extend_from_slice(encryption_blob);
+        if let Some(next) = next_param {
+            payload_plain.extend_from_slice(next.as_bytes());
+        }
+        
+        // Convert encrypted_data to [u8; 32] for encryption function
+        let mut encrypted_data_array = [0u8; 32];
+        encrypted_data_array.copy_from_slice(&encrypted_data);
+        
+        // Encrypt payload using multi-layer security (Argon2id + HMAC + ChaCha20-Poly1305)
+        let encrypted_payload = Self::encrypt_payload_content(&encrypted_data_array, &payload_plain)?;
+        
+        // Convert nanoseconds to hours for storage (cleanup purposes)
+        let expires_at_hours = (expires_at_nanos / 1_000_000_000) / 3600;
+        
         println!("Database: Creating encrypted magic link with SHAKE-256 hash");
 
         connection.execute(
-            "INSERT INTO magiclinks (token_hash, timestamp, encryption_blob, next_param, expires_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO magiclinks (token_hash, expires_at, encrypted_payload) VALUES (?, ?, ?)",
             &[
                 Value::Blob(token_hash.to_vec()),
-                Value::Integer(timestamp),
-                Value::Blob(encryption_blob.to_vec()),
-                match next_param {
-                    Some(next) => Value::Text(next.to_string()),
-                    None => Value::Null,
-                },
-                Value::Integer(expires_at as i64),
+                Value::Integer(expires_at_hours),
+                Value::Blob(encrypted_payload),
             ],
         )?;
 
@@ -337,75 +479,90 @@ impl MagicLinkOperations {
         
         // Create SHAKE-256 hash of encrypted data for database lookup
         let token_hash = Self::create_encrypted_token_hash(&encrypted_data);
-        let now = Utc::now().timestamp() as u64;
         
         println!("Database: Validating encrypted magic link hash");
 
-        // Check if magic link exists and is not expired, get encryption data
+        // Check if magic link exists and is not expired, get encrypted payload
         let result = connection.execute(
-            "SELECT timestamp, encryption_blob, next_param, expires_at FROM magiclinks WHERE token_hash = ?",
+            "SELECT expires_at, encrypted_payload FROM magiclinks WHERE token_hash = ?",
             &[Value::Blob(token_hash.to_vec())],
         )?;
 
         if let Some(row) = result.rows.first() {
-            let expires_at = match &row.values[3] {
-                Value::Integer(i) => *i as u64,
-                _ => return Err(SqliteError::Io("Invalid expires_at type".to_string())),
+            // Get encrypted payload from database
+            let encrypted_payload_blob = match &row.values[1] {
+                Value::Blob(blob) => blob,
+                _ => {
+                    println!("Database: Invalid encrypted_payload type");
+                    return Ok((false, None, None));
+                }
             };
-
-            if expires_at > now {
-                // Get encryption data
-                let encryption_blob = match &row.values[1] {
-                    Value::Blob(blob) => {
-                        if blob.len() != 44 {
-                            return Err(SqliteError::Io("Invalid encryption_blob length".to_string()));
-                        }
-                        let mut blob_array = [0u8; 44];
-                        blob_array.copy_from_slice(blob);
-                        blob_array
-                    },
-                    _ => return Err(SqliteError::Io("Invalid encryption_blob type".to_string())),
-                };
-
-                let next_param = match &row.values[2] {
-                    Value::Text(text) => Some(text.clone()),
-                    Value::Null => None,
-                    _ => return Err(SqliteError::Io("Invalid next_param type".to_string())),
-                };
-
-                // Extract nonce and secret_key from encryption_blob
-                let mut nonce = [0u8; 12];
-                let mut secret_key = [0u8; 32];
-                nonce.copy_from_slice(&encryption_blob[..12]);
-                secret_key.copy_from_slice(&encryption_blob[12..44]);
-
-                // Validate magic token using JWT utils (this will decrypt and verify)
-                match crate::utils::jwt::JwtUtils::validate_magic_token_encrypted(
-                    encrypted_token, 
-                    &nonce, 
-                    &secret_key
-                ) {
-                    Ok((user_id, _expires_at)) => {
-                        // Valid and not expired - delete it (consume)
-                        connection.execute(
-                            "DELETE FROM magiclinks WHERE token_hash = ?",
-                            &[Value::Blob(token_hash.to_vec())],
-                        )?;
-                        
-                        println!("Database: Encrypted magic link validated and consumed");
-                        Ok((true, next_param, Some(user_id)))
-                    },
-                    Err(e) => {
-                        println!("Database: Encrypted magic link validation failed: {}", e);
-                        Ok((false, None, None))
+            
+            // Convert encrypted_data to [u8; 32] for decryption function
+            let mut encrypted_data_array = [0u8; 32];
+            encrypted_data_array.copy_from_slice(&encrypted_data);
+            
+            // Try to decrypt payload - if it fails, magic link is invalid
+            let payload_plain = match Self::decrypt_payload_content(&encrypted_data_array, encrypted_payload_blob) {
+                Ok(payload) => payload,
+                Err(e) => {
+                    println!("Database: Encrypted payload decryption failed: {}", e);
+                    return Ok((false, None, None));
+                }
+            };
+            
+            // Extract encryption_blob and next_param from decrypted payload
+            if payload_plain.len() < 44 {
+                println!("Database: Invalid decrypted payload length (minimum 44 bytes)");
+                return Ok((false, None, None));
+            }
+            
+            // Extract encryption_blob (first 44 bytes)
+            let mut encryption_blob = [0u8; 44];
+            encryption_blob.copy_from_slice(&payload_plain[..44]);
+            
+            // Extract next_param (remaining bytes as UTF-8 string if any)
+            let next_param = if payload_plain.len() > 44 {
+                match std::str::from_utf8(&payload_plain[44..]) {
+                    Ok(s) => Some(s.to_string()),
+                    Err(_) => {
+                        println!("Database: Invalid UTF-8 in decrypted next_param bytes");
+                        return Ok((false, None, None));
                     }
                 }
             } else {
-                println!("Database: Encrypted magic link expired");
-                Ok((false, None, None))
+                None
+            };
+
+            // Extract nonce and secret_key from encryption_blob
+            let mut nonce = [0u8; 12];
+            let mut secret_key = [0u8; 32];
+            nonce.copy_from_slice(&encryption_blob[..12]);
+            secret_key.copy_from_slice(&encryption_blob[12..44]);
+
+            // Validate magic token using JWT utils - this validates internal timestamp vs current time
+            match crate::utils::jwt::JwtUtils::validate_magic_token_encrypted(
+                encrypted_token, 
+                &nonce, 
+                &secret_key
+            ) {
+                Ok((user_id, _expires_at)) => {
+                    // Valid and not expired - delete it (consume)
+                    connection.execute(
+                        "DELETE FROM magiclinks WHERE token_hash = ?",
+                        &[Value::Blob(token_hash.to_vec())],
+                    )?;
+                    
+                    println!("Database: Encrypted magic link validated and consumed");
+                    Ok((true, next_param, Some(user_id)))
+                },
+                Err(e) => {
+                    println!("Database: Magic link internal validation failed: {}", e);
+                    Ok((false, None, None))
+                }
             }
         } else {
-            println!("Database: Encrypted magic link not found");
+            println!("Database: Encrypted magic link not found in database");
             Ok((false, None, None))
         }
     }
@@ -453,10 +610,10 @@ impl MagicLinkOperations {
     pub fn cleanup_expired_links(env: DatabaseEnvironment) -> Result<u32, SqliteError> {
         let connection = get_database_connection(env)?;
 
-        let now = Utc::now().timestamp() as u64;
+        let now_hours = (Utc::now().timestamp() / 3600) as u64;
         let _result = connection.execute(
             "DELETE FROM magiclinks WHERE expires_at < ?",
-            &[Value::Integer(now as i64)],
+            &[Value::Integer(now_hours as i64)],
         )?;
 
         // SQLite doesn't provide rows_affected in Spin SDK

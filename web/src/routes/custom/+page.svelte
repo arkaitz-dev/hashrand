@@ -8,8 +8,6 @@
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import TextInput from '$lib/components/TextInput.svelte';
-	import AuthGuard from '$lib/components/AuthGuard.svelte';
-	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
@@ -33,8 +31,6 @@
 
 	// Eliminados los debug messages
 
-	// // Login dialog state
-	// let showEmailDialog = false;
 
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
@@ -86,8 +82,6 @@
 	$: suffixValid = !params.suffix || params.suffix.length <= 32;
 	$: formValid = lengthValid && prefixValid && suffixValid;
 
-	// Reference to AuthGuard component
-	let authGuard: AuthGuard;
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	async function handleGenerate(event: Event) {
@@ -174,46 +168,6 @@
 		globalThis.window.addEventListener('authenticated', handleAuthenticated);
 	}
 
-	// // Email dialog handlers
-	// let emailDialogRef: EmailInputDialog;
-
-	// // Create next parameter object with current form state
-	// $: nextObject = {
-	// 	endpoint: 'custom',
-	// 	length: params.length,
-	// 	alphabet: params.alphabet,
-	// 	prefix: params.prefix || undefined,
-	// 	suffix: params.suffix || undefined,
-	// 	...(urlProvidedSeed && { seed: urlProvidedSeed })
-	// };
-
-	// function handleEmailDialogClose() {
-	// 	showEmailDialog = false;
-	// }
-
-	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
-	// 	// Email entered and moving to confirmation step
-	// }
-
-	// async function handleEmailConfirmed(
-	// 	event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
-	// ) {
-	// 	const { email } = event.detail;
-
-	// 	await handleEmailConfirmation(
-	// 		email,
-	// 		nextObject,
-	// 		() => {
-	// 			// Success callback
-	// 			emailDialogRef?.resetSubmitting();
-	// 			showEmailDialog = false;
-	// 		},
-	// 		(errorKey: string) => {
-	// 			// Error callback
-	// 			emailDialogRef?.setError($_(errorKey));
-	// 		}
-	// 	);
-	// }
 
 	// Initialize params based on navigation source
 	onMount(() => {
@@ -291,7 +245,6 @@
 		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
-		<AuthGuard bind:this={authGuard}>
 			<!-- Form -->
 			<div class="max-w-2xl mx-auto">
 				<div
@@ -403,7 +356,6 @@
 
 			<!-- Footer with Version Information -->
 			<Footer />
-		</AuthGuard>
 	</div>
 </div>
 

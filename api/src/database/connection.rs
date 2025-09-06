@@ -74,10 +74,8 @@ pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> 
         r#"
         CREATE TABLE IF NOT EXISTS magiclinks (
             token_hash BLOB PRIMARY KEY,    -- SHAKE-256[16] of encrypted new_raw_magic_link
-            timestamp INTEGER NOT NULL,     -- Original timestamp used in raw_magic_link creation
-            encryption_blob BLOB NOT NULL,  -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
-            next_param TEXT,                -- Optional next destination parameter 
-            expires_at INTEGER NOT NULL     -- Magic link expiration timestamp
+            expires_at INTEGER NOT NULL,    -- Expiration timestamp in hours since Unix epoch (for cleanup)
+            encrypted_payload BLOB NOT NULL -- Merged: encryption_blob[44] + next_param_bytes[variable]
         )
         "#,
         &[],

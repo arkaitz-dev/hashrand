@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.5 / Web v0.19.6] - 2025-09-06
+
+### 🧹 MAJOR: System Cleanup & Authentication Flow Simplification
+
+**COMPLETION**: Comprehensive modernization of authentication system with deprecated component removal and magic link parameter simplification for improved user experience and cleaner email links.
+
+#### ✅ Authentication System Modernization:
+
+- **🗑️ Deprecated Component Removal**:
+  - **AuthGuard.svelte**: Eliminated obsolete component (replaced by modern dialog system)
+  - **EmailInputDialog.svelte**: Removed unused legacy email input component  
+  - **simple-test route**: Deleted unused testing route for cleaner codebase
+  - **Obsolete imports/references**: Cleaned up all AuthGuard imports across generation pages
+  - **Commented legacy code**: Removed extensive obsolete email dialog code blocks
+
+- **⚡ AuthStatusButton Modernization**:
+  - **Fixed broken redirects**: Updated from obsolete `/login` redirects to modern `dialogStore.show('auth')`
+  - **Eliminated import dependencies**: Removed unused `goto` and `$page` imports
+  - **Consistent UX**: Unified authentication experience across all application components
+
+#### ✅ Magic Link Parameter System Simplification:
+
+- **🔗 Email URL Cleanup**:
+  - **Cleaner magic links**: Removed `&next=...` parameters from email URLs
+  - **Professional appearance**: Email links now contain only `?magiclink=TOKEN`
+  - **Better email compatibility**: Shorter URLs prevent wrapping in email clients
+
+- **📡 Backend-Frontend Communication**:
+  - **Simplified data flow**: `next` parameter sent as plain string (no Base58/Base64 encoding)
+  - **Direct URL construction**: Frontend builds simple `/result?endpoint=...&params` URLs  
+  - **Response-based navigation**: `next` returned in JWT validation response for seamless redirection
+
+- **🎯 Technical Implementation**:
+  - **Updated AuthConfirmDialogContent**: Builds clean URL parameters from form data
+  - **Modified create_magic_link_url()**: Simplified function signature, removed `next` parameter
+  - **Enhanced LoginResponse type**: Added optional `next?: string` field
+  - **Streamlined layout logic**: Uses `loginResponse.next` for automatic post-auth navigation
+
+#### ✅ Translation Improvements:
+
+- **📝 Spanish Orthography**: 
+  - **Corrected email template**: "solo puede ser usado" → "sólo puede ser usado"
+  - **Location**: `/api/locales/es.yml` security warning message
+  - **Proper grammar**: Uses tilde for "solamente" meaning to avoid ambiguity
+
+#### ✅ Quality Assurance:
+
+- **✅ End-to-End Testing**: Complete magic link flow validated from generation to authentication
+- **✅ Clean URLs Confirmed**: Email links verified without query parameters
+- **✅ Seamless Navigation**: Post-authentication redirection working correctly
+- **✅ No Breaking Changes**: All existing functionality preserved
+
+#### 💡 Benefits Achieved:
+
+- **👤 Improved UX**: Shorter, cleaner magic link URLs in emails
+- **🧹 Cleaner Codebase**: Removed 500+ lines of obsolete code and components
+- **⚡ Simplified Architecture**: Reduced complexity in authentication parameter handling
+- **📱 Better Email Client Compatibility**: Shorter URLs prevent formatting issues
+- **🔧 Maintainable Code**: Unified authentication approach across all components
+
 ## [Web v0.19.5] - 2025-09-05
 
 ### 🌍 MAJOR: Complete Translation System Overhaul - 143 Missing Translations Added

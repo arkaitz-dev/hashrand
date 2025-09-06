@@ -7,8 +7,6 @@
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
-	import AuthGuard from '$lib/components/AuthGuard.svelte';
-	// import EmailInputDialog from '$lib/components/EmailInputDialog.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
@@ -55,21 +53,8 @@
 	$: lengthValid = params.length && params.length >= minLength && params.length <= 44;
 	$: formValid = lengthValid;
 
-	// Reference to AuthGuard component
-	let authGuard: AuthGuard;
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
-	// // Email dialog state
-	// let showEmailDialog = false;
-	// let emailDialogRef: EmailInputDialog;
-
-	// // Create next parameter object with current form state
-	// $: nextObject = {
-	// 	endpoint: 'password',
-	// 	length: params.length,
-	// 	alphabet: params.alphabet,
-	// 	...(urlProvidedSeed && { seed: urlProvidedSeed })
-	// };
 
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -114,50 +99,6 @@
 		goto(`/result?${urlParams.toString()}`);
 	}
 
-	// // Email dialog handlers
-	// function handleEmailDialogClose() {
-	// 	showEmailDialog = false;
-	// }
-
-	// function handleEmailSubmitted(event: globalThis.CustomEvent<{ email: string }>) {
-	// 	// Email entered and moving to confirmation step
-	// }
-
-	// async function handleEmailConfirmed(
-	// 	event: globalThis.CustomEvent<{ email: string; redirectUrl: string }>
-	// ) {
-	// 	const { email, redirectUrl } = event.detail;
-
-	// 	try {
-	// 		// Obtener el host actual donde se ejecuta la UI
-	// 		const currentHost = window.location.origin;
-
-	// 		const requestBody = {
-	// 			email: email,
-	// 			ui_host: currentHost
-	// 		};
-
-	// 		const response = await fetch('/api/login/', {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				'Content-Type': 'application/json'
-	// 			},
-	// 			body: JSON.stringify(requestBody)
-	// 		});
-
-	// 		if (response.ok) {
-	// 			// Magic link enviado correctamente, redirigir con el parámetro next
-	// 			emailDialogRef?.resetSubmitting();
-	// 			goto(redirectUrl);
-	// 		} else {
-	// 			// En caso de error, mostrar mensaje de error
-	// 			emailDialogRef?.setError($_('common.sendError'));
-	// 		}
-	// 	} catch (error) {
-	// 		console.error('Error sending magic link:', error);
-	// 		emailDialogRef?.setError($_('common.connectionError'));
-	// 	}
-	// }
 
 	// Update length when alphabet changes with smooth adjustment
 	function handleAlphabetChange() {
@@ -233,7 +174,6 @@
 		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
-		<AuthGuard bind:this={authGuard}>
 			<!-- Form -->
 			<div class="max-w-2xl mx-auto">
 				<div
@@ -344,26 +284,6 @@
 
 			<!-- Footer with Version Information -->
 			<Footer />
-		</AuthGuard>
 	</div>
 </div>
 
-<!-- Email Input Dialog - Removed, now redirecting to /login page -->
-<!-- <EmailInputDialog
-	bind:this={emailDialogRef}
-	bind:show={showEmailDialog}
-	next={nextObject}
-	title={$_('auth.loginRequired')}
-	description={$_('auth.loginDescription')}
-	emailPlaceholder={$_('auth.emailPlaceholder')}
-	confirmTitle={$_('auth.confirmEmail')}
-	confirmDescription={$_('auth.confirmEmailDescription')}
-	cancelText={$_('common.cancel')}
-	continueText={$_('common.continue')}
-	correctText={$_('common.correct')}
-	sendText={$_('common.send')}
-	sendingText={$_('common.sending')}
-	on:close={handleEmailDialogClose}
-	on:emailSubmitted={handleEmailSubmitted}
-	on:emailConfirmed={handleEmailConfirmed}
-/> -->

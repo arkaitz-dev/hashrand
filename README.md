@@ -69,9 +69,9 @@ A **cryptographically secure random hash generator** built with Fermyon Spin and
   - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
   - **Privacy-First Design**: Server never stores or processes email addresses
   - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: SHA3-256 + HMAC + Argon2id + SHAKE256
-  - **EmailInputDialog Component**: Reusable two-step authentication component
-    - Step 1: Email input with real-time validation and error handling
-    - Step 2: Email confirmation with "Corregir" (Correct) and "Enviar" (Send) options
+  - **Dialog-Based Authentication**: Modern modal authentication system
+    - Unified authentication experience across all generation pages
+    - Two-step process: email input with validation and confirmation
     - Advanced state preservation using base58 encoding for form parameters
     - Universal integration across all generator pages (custom/, password/, api-key/, mnemonic/)
     - Professional design matching existing dialog components
@@ -82,7 +82,7 @@ A **cryptographically secure random hash generator** built with Fermyon Spin and
   - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale)
   - **Clean User Flow**: Seamless transition from form → authentication → result generation
   - **Magic Link Flow**: Email-based passwordless authentication with secure magic link generation and multilingual email delivery
-  - **AuthGuard Protection**: Automatic protection for custom/, password/, api-key/, and mnemonic/ routes  
+  - **Dialog-Based Protection**: Modern authentication flow with modal dialogs for all generation routes  
   - **JWT Dual Token System**: Access tokens (15 min) + HttpOnly refresh cookies (1 week)
   - **Frontend Integration**: LoginDialog modal, automatic token management, and session persistence
   - **Production Email System**: Complete Mailtrap integration with multilingual email templates for 13 languages
@@ -334,6 +334,7 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 {
   "email": "user@example.com",
   "ui_host": "http://localhost:5173",
+  "next": "/result?endpoint=mnemonic&language=english&words=12",
   "email_lang": "es"
 }
 ```
@@ -341,6 +342,7 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 **Request Parameters:**
 - `email` (required) - User email address for magic link delivery
 - `ui_host` (optional) - Frontend URL for magic link generation
+- `next` (optional) - URL path for post-authentication redirection (e.g., "/result?endpoint=mnemonic&words=12")
 - `email_lang` (optional) - Language code for email template (e.g., "es", "fr", "ar")
 
 **Response:**
@@ -357,8 +359,10 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "token_type": "Bearer",
-  "expires_in": 900
+  "token_type": "Bearer", 
+  "expires_in": 180,
+  "user_id": "HpGAge9YJ7uMvw4QV5qDPk",
+  "next": "/result?endpoint=mnemonic&language=english&words=12"
 }
 ```
 
@@ -376,6 +380,10 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
   - **Server-Side Cookie Clearing**: `DELETE /api/login/` expires refresh token cookie with `Max-Age=0`
   - **Client-Side Cleanup**: Complete localStorage and authentication state removal
   - **Confirmation Dialog**: Professional logout confirmation prevents accidental logouts
+- **🔗 Clean Magic Link URLs**: Simplified email links for better compatibility
+  - **No URL Parameters**: Magic links contain only the token (e.g., `?magiclink=TOKEN`)
+  - **Response-Based Navigation**: Next destination returned in JWT validation response
+  - **Email Client Friendly**: Shorter URLs prevent wrapping and formatting issues
 - **Development Mode**: Magic links logged to console for testing (no email sending)
 - **Cryptographic Integrity**: All magic links protected with HMAC-SHA3-256 verification
 - **Session Privacy**: Sessions identified by cryptographic user IDs, never by email
@@ -839,8 +847,9 @@ hashrand-spin/
 │   │   │   ├── api.ts     # Type-safe API service layer
 │   │   │   ├── components/    # Reusable Svelte components
 │   │   │   │   ├── BackButton.svelte         # Navigation component
-│   │   │   │   ├── AuthGuard.svelte          # Authentication guard (NEW)
-│   │   │   │   ├── LoginDialog.svelte        # Login modal dialog (NEW) 
+│   │   │   │   ├── DialogContainer.svelte    # Unified modal dialog system
+│   │   │   │   ├── AuthDialogContent.svelte  # Authentication dialog content
+│   │   │   │   ├── AuthConfirmDialogContent.svelte # Email confirmation dialog
 │   │   │   │   ├── Icon.svelte               # SVG icon sprite component
 │   │   │   │   ├── Iconize.svelte            # Universal RTL-aware icon wrapper
 │   │   │   │   ├── LoadingSpinner.svelte     # Loading animation

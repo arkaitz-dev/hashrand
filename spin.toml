@@ -13,6 +13,10 @@ magic_link_hmac_key = { required = true, secret = true }
 user_id_hmac_key = { required = true, secret = true }
 argon2_salt = { required = true, secret = true }
 chacha_encryption_key = { required = true, secret = true }
+# Magic Link Multi-Layer Security Keys
+mlink_content_cipher = { required = true, secret = true }
+mlink_content_nonce = { required = true, secret = true }
+mlink_content_salt = { required = true, secret = true }
 # Email configuration for Mailtrap REST API with custom domain
 mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
@@ -34,6 +38,9 @@ magic_link_hmac_key = "{{ magic_link_hmac_key }}"
 user_id_hmac_key = "{{ user_id_hmac_key }}"
 argon2_salt = "{{ argon2_salt }}"
 chacha_encryption_key = "{{ chacha_encryption_key }}"
+mlink_content_cipher = "{{ mlink_content_cipher }}"
+mlink_content_nonce = "{{ mlink_content_nonce }}"
+mlink_content_salt = "{{ mlink_content_salt }}"
 mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"

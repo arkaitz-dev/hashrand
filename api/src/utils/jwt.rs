@@ -518,9 +518,10 @@ impl JwtUtils {
         // Derive deterministic user_id from email
         let user_id = Self::derive_user_id(email)?;
 
-        // Timestamp as 8 bytes (big-endian u64)
-        let timestamp = expires_at.timestamp() as u64;
-        let timestamp_bytes = timestamp.to_be_bytes();
+        // Timestamp as nanoseconds since Unix epoch (8 bytes, big-endian u64)
+        let timestamp_nanos = expires_at.timestamp_nanos_opt()
+            .ok_or("Timestamp overflow in nanoseconds conversion")?;
+        let timestamp_bytes = timestamp_nanos.to_be_bytes();
 
         // Prepare data for HMAC: user_id + timestamp
         let mut data = Vec::with_capacity(24);
@@ -566,7 +567,7 @@ impl JwtUtils {
         Ok((
             bs58::encode(&encrypted_data).into_string(),
             encryption_blob,
-            timestamp as i64
+            timestamp_nanos as i64
         ))
     }
 
@@ -627,8 +628,7 @@ impl JwtUtils {
                     .map_err(|_| "Invalid timestamp format")?,
             );
 
-            let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
-                .ok_or_else(|| "Invalid timestamp value".to_string())?;
+            let expires_at = DateTime::from_timestamp_nanos(timestamp as i64);
 
             // Convert user_id bytes to array
             let mut user_id = [0u8; 16];
@@ -687,8 +687,7 @@ impl JwtUtils {
                     .map_err(|_| "Invalid timestamp format")?,
             );
 
-            let expires_at = DateTime::from_timestamp(timestamp as i64, 0)
-                .ok_or_else(|| "Invalid timestamp value".to_string())?;
+            let expires_at = DateTime::from_timestamp_nanos(timestamp as i64);
 
             // Convert user_id bytes to array
             let mut user_id = [0u8; 16];
@@ -705,19 +704,12 @@ impl JwtUtils {
     /// # Arguments
     /// * `host_url` - Base URL from request (e.g., "http://localhost:5173")
     /// * `magic_token` - Magic token to include in URL
-    /// * `next` - Optional Base58-encoded parameters for post-auth redirect
     ///
     /// # Returns
     /// * `String` - Complete magic link URL
-    pub fn create_magic_link_url(host_url: &str, magic_token: &str, next: Option<&str>) -> String {
+    pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
         let base_url = host_url.trim_end_matches('/');
-        match next {
-            Some(next_param) => format!(
-                "{}/?magiclink={}&next={}",
-                base_url, magic_token, next_param
-            ),
-            None => format!("{}/?magiclink={}", base_url, magic_token),
-        }
+        format!("{}/?magiclink={}", base_url, magic_token)
     }
 
     /// Extract host URL from request for magic link generation

@@ -147,8 +147,8 @@ async fn handle_magic_link_generation(
 
     // Generate encrypted magic token with ChaCha20-Poly1305 protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
-    let (magic_token, encryption_blob, original_timestamp) = match JwtUtils::generate_magic_token_encrypted(&magic_request.email, magic_expires_at) {
-        Ok((token, blob, timestamp)) => (token, blob, timestamp),
+    let (magic_token, encryption_blob, expires_at_nanos) = match JwtUtils::generate_magic_token_encrypted(&magic_request.email, magic_expires_at) {
+        Ok((token, blob, expires_at)) => (token, blob, expires_at),
         Err(e) => {
             return Ok(Response::builder()
                 .status(500)
@@ -178,11 +178,7 @@ async fn handle_magic_link_generation(
         .unwrap_or(&fallback_host);
 
     println!("DEBUG: Final chosen host_url = {}", host_url);
-    let magic_link = JwtUtils::create_magic_link_url(
-        host_url,
-        &magic_token,
-        magic_request.next.as_deref(),
-    );
+    let magic_link = JwtUtils::create_magic_link_url(host_url, &magic_token);
     println!("DEBUG: Generated magic_link = {}", magic_link);
 
     // Store encrypted magic token in database with ChaCha20-Poly1305 encryption data
@@ -190,9 +186,8 @@ async fn handle_magic_link_generation(
         env.clone(), 
         &magic_token, 
         &encryption_blob,
-        original_timestamp,
+        expires_at_nanos,
         magic_request.next.as_deref(),
-        magic_expires_at.timestamp() as u64
     ) {
         Ok(_) => {
 
