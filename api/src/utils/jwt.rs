@@ -7,13 +7,22 @@ use chrono::{DateTime, Duration, Utc};
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 // use pbkdf2::pbkdf2; // Replaced with Argon2id
-use argon2::{password_hash::{PasswordHasher, SaltString}, Argon2, Algorithm as Argon2Algorithm, Version as Argon2Version, Params};
+use argon2::{
+    Algorithm as Argon2Algorithm, Argon2, Params, Version as Argon2Version,
+    password_hash::{PasswordHasher, SaltString},
+};
 use base64::{Engine as _, engine::general_purpose};
-use serde::{Deserialize, Serialize};
-use sha3::{Digest, Sha3_256, Shake256, digest::{ExtendableOutput, Update}};
+use chacha20::{
+    ChaCha20,
+    cipher::{KeyIvInit, StreamCipher},
+};
+use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use rand::{SeedableRng, RngCore};
-use chacha20::{ChaCha20, cipher::{KeyIvInit, StreamCipher}};
+use serde::{Deserialize, Serialize};
+use sha3::{
+    Digest, Sha3_256, Shake256,
+    digest::{ExtendableOutput, Update},
+};
 
 /// JWT Claims structure for access tokens
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,8 +59,8 @@ impl JwtUtils {
     /// Argon2id parameters for current security standards (2024)
     /// Fixed parameters as requested: mem_cost=19456, time_cost=2, lane=1, hash_length=32
     const ARGON2_MEM_COST: u32 = 19456; // Memory usage in KB
-    const ARGON2_TIME_COST: u32 = 2;    // Number of iterations
-    const ARGON2_LANES: u32 = 1;        // Parallelism parameter
+    const ARGON2_TIME_COST: u32 = 2; // Number of iterations
+    const ARGON2_LANES: u32 = 1; // Parallelism parameter
     const ARGON2_HASH_LENGTH: usize = 32; // Output length in bytes
 
     // /// Salt for PBKDF2 derivation (should be from environment in production)
@@ -89,7 +98,7 @@ impl JwtUtils {
 
         // Step 3: Generate dynamic salt using HMAC + ChaCha8Rng
         let dynamic_salt = Self::generate_dynamic_salt(&email_hash)?;
-        
+
         // Step 4: Argon2id with fixed parameters (using HMAC result as data input)
         let argon2_output = Self::derive_with_argon2id(&hmac_result[..], &dynamic_salt)?;
 
@@ -153,7 +162,7 @@ impl JwtUtils {
     }
 
     /// Generate dynamic salt using HMAC-SHA3-256 → ChaCha8Rng → salt bytes
-    /// 
+    ///
     /// Process: fixed_salt → HMAC-SHA3-256(fixed_salt, data) → ChaCha8Rng[32 bytes] → salt
     ///
     /// # Arguments
@@ -163,7 +172,7 @@ impl JwtUtils {
     /// * `Result<[u8; 32], String>` - 32-byte dynamic salt
     fn generate_dynamic_salt(data: &[u8]) -> Result<[u8; 32], String> {
         let fixed_salt = Self::get_argon2_salt()?;
-        
+
         // Generate HMAC-SHA3-256(fixed_salt, data)
         let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&fixed_salt)
             .map_err(|_| "Invalid ARGON2_SALT format for HMAC".to_string())?;
@@ -173,15 +182,15 @@ impl JwtUtils {
         // Use HMAC result as seed for ChaCha8Rng
         let mut chacha_seed = [0u8; 32];
         chacha_seed.copy_from_slice(&hmac_result[..32]);
-        
+
         // Generate 32 bytes using ChaCha8Rng
         let mut rng = ChaCha8Rng::from_seed(chacha_seed);
         let mut dynamic_salt = [0u8; 32];
         rng.fill_bytes(&mut dynamic_salt);
-        
+
         Ok(dynamic_salt)
     }
-    
+
     /// Derive key using Argon2id with fixed parameters
     ///
     /// # Arguments
@@ -196,17 +205,19 @@ impl JwtUtils {
             Self::ARGON2_MEM_COST,
             Self::ARGON2_TIME_COST,
             Self::ARGON2_LANES,
-            Some(Self::ARGON2_HASH_LENGTH)
-        ).map_err(|e| format!("Invalid Argon2id parameters: {}", e))?;
-        
+            Some(Self::ARGON2_HASH_LENGTH),
+        )
+        .map_err(|e| format!("Invalid Argon2id parameters: {}", e))?;
+
         let argon2 = Argon2::new(Argon2Algorithm::Argon2id, Argon2Version::V0x13, params);
-        
+
         // Create salt string for argon2 crate
-        let salt_string = SaltString::encode_b64(salt)
-            .map_err(|e| format!("Failed to encode salt: {}", e))?;
-        
+        let salt_string =
+            SaltString::encode_b64(salt).map_err(|e| format!("Failed to encode salt: {}", e))?;
+
         // Hash the data with Argon2id
-        let password_hash = argon2.hash_password(data, &salt_string)
+        let password_hash = argon2
+            .hash_password(data, &salt_string)
             .map_err(|e| format!("Argon2id hashing failed: {}", e))?;
         let hash_string = password_hash.to_string();
 
@@ -215,21 +226,22 @@ impl JwtUtils {
         if hash_parts.len() < 6 {
             return Err("Invalid Argon2id hash format".to_string());
         }
-        
+
         let base64_hash = hash_parts[hash_parts.len() - 1];
-        
+
         // Decode base64 to get raw bytes (Argon2 uses base64 without padding)
-        let decoded_hash = general_purpose::STANDARD_NO_PAD.decode(base64_hash)
+        let decoded_hash = general_purpose::STANDARD_NO_PAD
+            .decode(base64_hash)
             .map_err(|e| format!("Base64 decode failed: {}", e))?;
 
         // Convert to [u8; 32]
         if decoded_hash.len() != 32 {
             return Err(format!("Expected 32 bytes, got {}", decoded_hash.len()));
         }
-        
+
         let mut final_result = [0u8; 32];
         final_result.copy_from_slice(&decoded_hash);
-        
+
         Ok(final_result)
     }
 
@@ -253,8 +265,7 @@ impl JwtUtils {
         let key_hex = spin_sdk::variables::get("user_id_hmac_key")
             .map_err(|e| format!("Failed to get user_id_hmac_key variable: {}", e))?;
 
-        hex::decode(&key_hex)
-            .map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())
+        hex::decode(&key_hex).map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())
     }
 
     /// Get ChaCha20-Poly1305 encryption key from Spin variables as bytes
@@ -278,10 +289,12 @@ impl JwtUtils {
     ///
     /// # Returns
     /// * `Result<([u8; 12], [u8; 32]), String>` - (nonce, secret_key) or error
-    fn generate_chacha_nonce_and_key(raw_magic_link: &[u8; 32]) -> Result<([u8; 12], [u8; 32]), String> {
+    fn generate_chacha_nonce_and_key(
+        raw_magic_link: &[u8; 32],
+    ) -> Result<([u8; 12], [u8; 32]), String> {
         // Get ChaCha encryption key
         let chacha_key = Self::get_chacha_encryption_key()?;
-        
+
         // Generate HMAC-SHA3-256(raw_magic_link, chacha_key)
         let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&chacha_key)
             .map_err(|_| "Invalid ChaCha encryption key format".to_string())?;
@@ -291,18 +304,18 @@ impl JwtUtils {
         // Use HMAC result as seed for ChaCha8Rng
         let mut chacha_seed = [0u8; 32];
         chacha_seed.copy_from_slice(&hmac_result[..32]);
-        
+
         // Generate 44 bytes using ChaCha8Rng: nonce[12] + secret_key[32]
         let mut rng = ChaCha8Rng::from_seed(chacha_seed);
         let mut combined_data = [0u8; 44];
         rng.fill_bytes(&mut combined_data);
-        
+
         // Extract nonce and secret_key
         let mut nonce = [0u8; 12];
         let mut secret_key = [0u8; 32];
         nonce.copy_from_slice(&combined_data[..12]);
         secret_key.copy_from_slice(&combined_data[12..44]);
-        
+
         Ok((nonce, secret_key))
     }
 
@@ -318,13 +331,13 @@ impl JwtUtils {
     fn encrypt_magic_link(
         raw_magic_link: &[u8; 32],
         nonce: &[u8; 12],
-        secret_key: &[u8; 32]
+        secret_key: &[u8; 32],
     ) -> Result<Vec<u8>, String> {
         let mut cipher = ChaCha20::new(secret_key.into(), nonce.into());
-        
-        let mut encrypted = raw_magic_link.clone();
+
+        let mut encrypted = *raw_magic_link;
         cipher.apply_keystream(&mut encrypted);
-        
+
         Ok(encrypted.to_vec())
     }
 
@@ -340,18 +353,18 @@ impl JwtUtils {
     fn decrypt_magic_link(
         encrypted_data: &[u8],
         nonce: &[u8; 12],
-        secret_key: &[u8; 32]
+        secret_key: &[u8; 32],
     ) -> Result<[u8; 32], String> {
         if encrypted_data.len() != 32 {
             return Err(format!("Expected 32 bytes, got {}", encrypted_data.len()));
         }
-        
+
         let mut cipher = ChaCha20::new(secret_key.into(), nonce.into());
-        
+
         let mut decrypted = [0u8; 32];
         decrypted.copy_from_slice(encrypted_data);
         cipher.apply_keystream(&mut decrypted);
-        
+
         Ok(decrypted)
     }
 
@@ -514,12 +527,16 @@ impl JwtUtils {
     ///
     /// # Returns
     /// * `Result<(String, [u8; 44], i64), String>` - (Base58 token, encryption_blob, timestamp) or error
-    pub fn generate_magic_token_encrypted(email: &str, expires_at: DateTime<Utc>) -> Result<(String, [u8; 44], i64), String> {
+    pub fn generate_magic_token_encrypted(
+        email: &str,
+        expires_at: DateTime<Utc>,
+    ) -> Result<(String, [u8; 44], i64), String> {
         // Derive deterministic user_id from email
         let user_id = Self::derive_user_id(email)?;
 
         // Timestamp as nanoseconds since Unix epoch (8 bytes, big-endian u64)
-        let timestamp_nanos = expires_at.timestamp_nanos_opt()
+        let timestamp_nanos = expires_at
+            .timestamp_nanos_opt()
             .ok_or("Timestamp overflow in nanoseconds conversion")?;
         let timestamp_bytes = timestamp_nanos.to_be_bytes();
 
@@ -553,11 +570,11 @@ impl JwtUtils {
 
         // Encrypt raw_magic_link with ChaCha20
         let encrypted_data = Self::encrypt_magic_link(&raw_magic_link, &nonce, &secret_key)?;
-        
+
         if encrypted_data.len() != 32 {
             return Err(format!("Expected 32 bytes, got {}", encrypted_data.len()));
         }
-        
+
         // Create encryption_blob: nonce[12] + secret_key[32] = 44 bytes
         let mut encryption_blob = [0u8; 44];
         encryption_blob[..12].copy_from_slice(&nonce);
@@ -567,7 +584,7 @@ impl JwtUtils {
         Ok((
             bs58::encode(&encrypted_data).into_string(),
             encryption_blob,
-            timestamp_nanos as i64
+            timestamp_nanos,
         ))
     }
 
@@ -589,7 +606,7 @@ impl JwtUtils {
     pub fn validate_magic_token_encrypted(
         encrypted_token: &str,
         nonce: &[u8; 12],
-        secret_key: &[u8; 32]
+        secret_key: &[u8; 32],
     ) -> Result<([u8; 16], DateTime<Utc>), String> {
         // Decode Base58 encrypted token
         let encrypted_data = bs58::decode(encrypted_token)
@@ -605,65 +622,6 @@ impl JwtUtils {
         let provided_compressed_hmac = &raw_magic_link[24..32];
 
         // Verify HMAC integrity
-        let hmac_key = Self::get_magic_link_hmac_key()
-            .map_err(|e| format!("HMAC key error: {}", e))?;
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)
-            .map_err(|_| "Invalid HMAC key format".to_string())?;
-        Mac::update(&mut mac, user_id_bytes);
-        Mac::update(&mut mac, timestamp_bytes);
-        let hmac_result = mac.finalize().into_bytes();
-
-        // Compress HMAC to 8 bytes using SHAKE256 (same as generation)
-        let mut shake = Shake256::default();
-        Update::update(&mut shake, &hmac_result);
-        let mut expected_compressed_hmac = [0u8; 8];
-        shake.finalize_xof_into(&mut expected_compressed_hmac);
-
-        // Compare compressed HMAC values
-        if provided_compressed_hmac == expected_compressed_hmac {
-            // Extract timestamp
-            let timestamp = u64::from_be_bytes(
-                timestamp_bytes
-                    .try_into()
-                    .map_err(|_| "Invalid timestamp format")?,
-            );
-
-            let expires_at = DateTime::from_timestamp_nanos(timestamp as i64);
-
-            // Convert user_id bytes to array
-            let mut user_id = [0u8; 16];
-            user_id.copy_from_slice(user_id_bytes);
-
-            Ok((user_id, expires_at))
-        } else {
-            Err("Token integrity verification failed".to_string())
-        }
-    }
-
-    /// Validate magic token and extract user_id and expiration timestamp
-    ///
-    /// # Arguments
-    /// * `magic_token` - Base58 encoded magic token
-    ///
-    /// # Returns
-    /// * `Result<([u8; 16], DateTime<Utc>), String>` - (user_id, expiration) or validation error
-    pub fn validate_magic_token(magic_token: &str) -> Result<([u8; 16], DateTime<Utc>), String> {
-        // Decode Base58 token
-        let token_bytes = bs58::decode(magic_token)
-            .into_vec()
-            .map_err(|_| "Invalid Base58 encoding")?;
-
-        // Verify token length (16 + 8 + 8 = 32 bytes)
-        if token_bytes.len() != 32 {
-            return Err("Invalid token length".to_string());
-        }
-
-        // Extract components
-        let user_id_bytes = &token_bytes[0..16];
-        let timestamp_bytes = &token_bytes[16..24];
-        let provided_compressed_hmac = &token_bytes[24..32];
-
-        // Verify HMAC integrity with compression
         let hmac_key =
             Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
         let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)

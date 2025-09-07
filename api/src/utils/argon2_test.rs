@@ -1,24 +1,24 @@
 //! Test module for Argon2id implementation
-//! 
+//!
 //! Verifies that the Argon2id scheme works correctly with specified parameters
 
 use argon2::{
+    Algorithm, Argon2, Params, Version,
     password_hash::{PasswordHasher, SaltString},
-    Argon2, Algorithm, Version, Params
 };
 use base64::{Engine as _, engine::general_purpose};
 use hmac::{Hmac, Mac};
-use sha3::{Digest, Sha3_256};
+use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use rand::{SeedableRng, RngCore};
+use sha3::{Digest, Sha3_256};
 
 /// Test the complete Argon2id scheme with specified parameters
 #[cfg(test)]
 pub fn test_argon2id_scheme() -> Result<[u8; 32], String> {
     // Parameters as specified
-    let mem_cost = 19456;  // Memory cost in KB
-    let time_cost = 2;     // Time cost (iterations)
-    let parallelism = 1;   // Lanes/parallelism
+    let mem_cost = 19456; // Memory cost in KB
+    let time_cost = 2; // Time cost (iterations)
+    let parallelism = 1; // Lanes/parallelism
     let hash_length = Some(32); // Output length in bytes
 
     // Test data
@@ -47,13 +47,14 @@ pub fn test_argon2id_scheme() -> Result<[u8; 32], String> {
     let params = Params::new(mem_cost, time_cost, parallelism, hash_length)
         .map_err(|e| format!("Invalid Argon2id parameters: {}", e))?;
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
-    
+
     // Create salt string for argon2 crate
     let salt_string = SaltString::encode_b64(&dynamic_salt)
         .map_err(|e| format!("Failed to encode salt: {}", e))?;
-    
+
     // Hash the SHA3 result with Argon2id
-    let password_hash = argon2.hash_password(&sha3_result, &salt_string)
+    let password_hash = argon2
+        .hash_password(&sha3_result, &salt_string)
         .map_err(|e| format!("Argon2id hashing failed: {}", e))?;
     let hash_string = password_hash.to_string();
 
@@ -62,18 +63,19 @@ pub fn test_argon2id_scheme() -> Result<[u8; 32], String> {
     if hash_parts.len() < 6 {
         return Err("Invalid Argon2id hash format".to_string());
     }
-    
+
     let base64_hash = hash_parts[hash_parts.len() - 1];
-    
+
     // Decode base64 to get raw bytes (Argon2 uses base64 without padding)
-    let decoded_hash = general_purpose::STANDARD_NO_PAD.decode(base64_hash)
+    let decoded_hash = general_purpose::STANDARD_NO_PAD
+        .decode(base64_hash)
         .map_err(|e| format!("Base64 decode failed: {}", e))?;
 
     // Convert to [u8; 32]
     if decoded_hash.len() != 32 {
         return Err(format!("Expected 32 bytes, got {}", decoded_hash.len()));
     }
-    
+
     let mut final_result = [0u8; 32];
     final_result.copy_from_slice(&decoded_hash);
 
@@ -88,13 +90,17 @@ mod tests {
     fn test_argon2id_implementation() {
         let result = test_argon2id_scheme();
         assert!(result.is_ok(), "Argon2id scheme failed: {:?}", result.err());
-        
+
         let hash_bytes = result.unwrap();
         assert_eq!(hash_bytes.len(), 32, "Expected 32 bytes output");
-        
+
         // Test deterministic behavior - same input should give same output
         let result2 = test_argon2id_scheme();
         assert!(result2.is_ok());
-        assert_eq!(hash_bytes, result2.unwrap(), "Argon2id should be deterministic");
+        assert_eq!(
+            hash_bytes,
+            result2.unwrap(),
+            "Argon2id should be deterministic"
+        );
     }
 }

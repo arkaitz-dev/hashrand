@@ -27,6 +27,8 @@ struct MagicLinkRequest {
     next: Option<String>, // Base58-encoded parameters for post-auth redirect
     #[serde(skip_serializing_if = "Option::is_none")]
     email_lang: Option<String>, // Language code for email template (e.g., "es", "en")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    random_hash: Option<String>, // Additional validation hash (32 bytes in base58)
 }
 
 /// Response for magic link generation (development)
@@ -145,23 +147,35 @@ async fn handle_magic_link_generation(
             .build());
     }
 
-    // Generate encrypted magic token with ChaCha20-Poly1305 protection (15 minutes)
+    // Validate random_hash is provided (required for dual-factor authentication)
+    if magic_request.random_hash.is_none() {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Missing random_hash: Dual-factor validation hash is required".to_string(),
+            })?)
+            .build());
+    }
+
+    // Generate encrypted magic token with ChaCha20 protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
-    let (magic_token, encryption_blob, expires_at_nanos) = match JwtUtils::generate_magic_token_encrypted(&magic_request.email, magic_expires_at) {
-        Ok((token, blob, expires_at)) => (token, blob, expires_at),
-        Err(e) => {
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(
-                    serde_json::to_string(&ErrorResponse {
-                        error: format!("Failed to generate magic token: {}", e),
-                    })
-                    .unwrap_or_default(),
-                )
-                .build());
-        }
-    };
+    let (magic_token, encryption_blob, expires_at_nanos) =
+        match JwtUtils::generate_magic_token_encrypted(&magic_request.email, magic_expires_at) {
+            Ok((token, blob, expires_at)) => (token, blob, expires_at),
+            Err(e) => {
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(
+                        serde_json::to_string(&ErrorResponse {
+                            error: format!("Failed to generate magic token: {}", e),
+                        })
+                        .unwrap_or_default(),
+                    )
+                    .build());
+            }
+        };
 
     // No need to create AuthSession anymore - magic link contains all user info
 
@@ -181,16 +195,16 @@ async fn handle_magic_link_generation(
     let magic_link = JwtUtils::create_magic_link_url(host_url, &magic_token);
     println!("DEBUG: Generated magic_link = {}", magic_link);
 
-    // Store encrypted magic token in database with ChaCha20-Poly1305 encryption data
+    // Store encrypted magic token in database with ChaCha20 encryption data and random hash
     match MagicLinkOperations::store_magic_link_encrypted(
-        env.clone(), 
-        &magic_token, 
+        env.clone(),
+        &magic_token,
         &encryption_blob,
         expires_at_nanos,
         magic_request.next.as_deref(),
+        magic_request.random_hash.as_deref(),
     ) {
         Ok(_) => {
-
             // Try to send email via Mailtrap, fallback to console logging
             match send_magic_link_email(
                 &magic_request.email,
@@ -293,56 +307,65 @@ fn handle_magic_link_validation(
     println!("Magic token received: '{}'", magic_token);
 
     // Validate and consume encrypted magic token, get next parameter and user_id
-    let (is_valid, next_param, user_id_bytes) = match MagicLinkOperations::validate_and_consume_magic_link_encrypted(env.clone(), magic_token) {
-        Ok((valid, next, user_id)) => (valid, next, user_id),
-        Err(error) => {
-            let error_msg = error.to_string();
-            println!("Magic token validation error: {}", error_msg);
-            
-            // Categorize error types for appropriate HTTP status codes
-            if error_msg.contains("Invalid Base58") || error_msg.contains("must be 32 bytes") {
-                // Client validation error - malformed token format
-                return Ok(Response::builder()
-                    .status(400)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Invalid magic link token format".to_string(),
-                    })?)
-                    .build());
-            } else if error_msg.contains("ChaCha20-Poly1305 decryption error") {
-                // Client validation error - corrupted or tampered token
-                return Ok(Response::builder()
-                    .status(400)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Invalid or corrupted magic link".to_string(),
-                    })?)
-                    .build());
-            } else if error_msg.contains("Missing MLINK_CONTENT") || 
-                      error_msg.contains("Invalid MLINK_CONTENT") ||
-                      error_msg.contains("Argon2 params error") ||
-                      error_msg.contains("Invalid nonce key") ||
-                      error_msg.contains("Invalid cipher key") {
-                // System configuration/crypto errors - return 500 Internal Server Error
-                return Ok(Response::builder()
-                    .status(500)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Server configuration error".to_string(),
-                    })?)
-                    .build());
-            } else {
-                // Database connection or other system errors - return 500 Internal Server Error
-                return Ok(Response::builder()
-                    .status(500)
-                    .header("content-type", "application/json")
-                    .body(serde_json::to_string(&ErrorResponse {
-                        error: "Database error".to_string(),
-                    })?)
-                    .build());
+    // Get random_hash from query params (needed for validation)
+    let random_hash = query_params.get("hash").map(|s| s.as_str());
+
+    let (is_valid, next_param, user_id_bytes) =
+        match MagicLinkOperations::validate_and_consume_magic_link_encrypted(
+            env.clone(),
+            magic_token,
+            random_hash,
+        ) {
+            Ok((valid, next, user_id)) => (valid, next, user_id),
+            Err(error) => {
+                let error_msg = error.to_string();
+                println!("Magic token validation error: {}", error_msg);
+
+                // Categorize error types for appropriate HTTP status codes
+                if error_msg.contains("Invalid Base58") || error_msg.contains("must be 32 bytes") {
+                    // Client validation error - malformed token format
+                    return Ok(Response::builder()
+                        .status(400)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Invalid magic link token format".to_string(),
+                        })?)
+                        .build());
+                } else if error_msg.contains("ChaCha20-Poly1305 decryption error") {
+                    // Client validation error - corrupted or tampered token
+                    return Ok(Response::builder()
+                        .status(400)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Invalid or corrupted magic link".to_string(),
+                        })?)
+                        .build());
+                } else if error_msg.contains("Missing MLINK_CONTENT")
+                    || error_msg.contains("Invalid MLINK_CONTENT")
+                    || error_msg.contains("Argon2 params error")
+                    || error_msg.contains("Invalid nonce key")
+                    || error_msg.contains("Invalid cipher key")
+                {
+                    // System configuration/crypto errors - return 500 Internal Server Error
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Server configuration error".to_string(),
+                        })?)
+                        .build());
+                } else {
+                    // Database connection or other system errors - return 500 Internal Server Error
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Database error".to_string(),
+                        })?)
+                        .build());
+                }
             }
-        }
-    };
+        };
 
     if !is_valid {
         println!("Magic token validation failed or expired");
@@ -388,7 +411,8 @@ fn handle_magic_link_validation(
                 .header("content-type", "application/json")
                 .body(serde_json::to_string(&ErrorResponse {
                     error: "Failed to create access token".to_string(),
-                })?).build());
+                })?)
+                .build());
         }
     };
 
@@ -401,7 +425,8 @@ fn handle_magic_link_validation(
                 .header("content-type", "application/json")
                 .body(serde_json::to_string(&ErrorResponse {
                     error: "Failed to create refresh token".to_string(),
-                })?).build());
+                })?)
+                .build());
         }
     };
 

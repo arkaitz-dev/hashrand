@@ -46,7 +46,7 @@ fn create_email_request(
 ) -> Result<Request> {
     // Generate email templates using Maud system
     let (subject, html_content) = render_magic_link_email(magic_link, language.unwrap_or("en"));
-    
+
     // Create email payload according to Mailtrap API format
     let email_payload = json!({
         "from": {
@@ -70,7 +70,7 @@ fn create_email_request(
         .map_err(|e| anyhow!("Failed to serialize email payload: {}", e))?;
 
     // Build full URL - for custom domains, don't append inbox ID
-    // For sandbox: https://sandbox.api.mailtrap.io/api/send/INBOX_ID  
+    // For sandbox: https://sandbox.api.mailtrap.io/api/send/INBOX_ID
     // For custom domain: https://send.api.mailtrap.io/api/send
     let full_url = if config.api_url.contains("send.api.mailtrap.io") {
         // Custom domain - use URL as-is without inbox ID

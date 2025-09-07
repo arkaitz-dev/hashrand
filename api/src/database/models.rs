@@ -90,7 +90,6 @@ pub struct AuthSession {
 }
 
 impl AuthSession {
-
     /// Update session with JWT tokens after successful magic link validation
     ///
     /// # Arguments

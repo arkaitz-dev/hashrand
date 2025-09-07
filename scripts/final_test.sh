@@ -118,11 +118,25 @@ test_api() {
 # Authentication helper functions
 request_magic_link() {
     echo -e "\n${PURPLE}=== Requesting Magic Link ===${NC}"
-    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\"}" "$BASE_URL/api/login/")
+    
+    # Generate random hash using Node.js helper
+    local random_hash=$(node scripts/generate_hash.js)
+    if [[ -z "$random_hash" ]]; then
+        echo -e "${RED}✗ Failed to generate random hash${NC}"
+        return 1
+    fi
+    
+    echo "Generated random hash: ${random_hash:0:20}..."
+    
+    # Store hash for later validation (simulate localStorage behavior)
+    echo "$random_hash" > .test-magiclink-hash
+    
+    # Include hash in magic link request
+    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"random_hash\":\"$random_hash\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $response"
     
     if [[ "$response" == *'"status":"OK"'* ]]; then
-        echo -e "${GREEN}✓ Magic link requested successfully${NC}"
+        echo -e "${GREEN}✓ Magic link requested successfully with hash validation${NC}"
         return 0
     else
         echo -e "${RED}✗ Failed to request magic link${NC}"
@@ -166,7 +180,21 @@ authenticate() {
     
     # Step 1: Request magic link with fresh start
     echo -e "\n${PURPLE}=== Requesting Fresh Magic Link ===${NC}"
-    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d '{"email":"me@arkaitz.dev"}' "$BASE_URL/api/login/")
+    
+    # Generate random hash using Node.js helper
+    local random_hash=$(node scripts/generate_hash.js)
+    if [[ -z "$random_hash" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not generate random hash${NC}"
+        return 1
+    fi
+    
+    echo "Generated random hash: ${random_hash:0:20}..."
+    
+    # Store hash for later validation (simulate localStorage behavior)
+    echo "$random_hash" > .test-magiclink-hash
+    
+    # Include hash in magic link request
+    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"random_hash\":\"$random_hash\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $magic_response"
     
     if [[ "$magic_response" != *'"status":"OK"'* ]]; then
@@ -197,8 +225,22 @@ authenticate() {
     
     # Step 3: Exchange magic token for JWT immediately
     echo -e "\n${PURPLE}=== Converting Magic Token to JWT ===${NC}"
-    local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token")
+    
+    # Read the stored hash for validation
+    local stored_hash=$(cat .test-magiclink-hash 2>/dev/null)
+    if [[ -z "$stored_hash" ]]; then
+        echo -e "${RED}✗ Authentication failed: No stored hash found${NC}"
+        return 1
+    fi
+    
+    echo "Using stored hash: ${stored_hash:0:20}..."
+    
+    # Include hash in JWT conversion request
+    local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token&hash=$stored_hash")
     echo "JWT response: $jwt_response"
+    
+    # Clean up the stored hash file
+    rm -f .test-magiclink-hash
     
     # Extract JWT token
     JWT_TOKEN=$(echo "$jwt_response" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
@@ -450,23 +492,34 @@ test_api "Request magic link with valid email" \
     "200" \
     "" \
     "POST" \
-    '{"email":"arkaitzmugica@protonmail.com"}'
+    "{\"email\":\"arkaitzmugica@protonmail.com\",\"random_hash\":\"$(node scripts/generate_hash.js)\"}"
 
 test_api "Request magic link with invalid email format" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    '{"email":"invalid-email"}'
+    "{\"email\":\"invalid-email\",\"random_hash\":\"$(node scripts/generate_hash.js)\"}"
 
 test_api "Request magic link with missing email" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    '{}'
+    "{\"random_hash\":\"$(node scripts/generate_hash.js)\"}"
+
+test_api "Request magic link with missing random_hash (should fail)" \
+    "$BASE_URL/api/login/" \
+    "400" \
+    "" \
+    "POST" \
+    '{"email":"arkaitzmugica@protonmail.com"}'
 
 test_api "Invalid magic link (should fail)" \
+    "$BASE_URL/api/login/?magiclink=invalid_token_12345&hash=$(node scripts/generate_hash.js)" \
+    "400"
+
+test_api "Magic link without hash parameter (should fail)" \
     "$BASE_URL/api/login/?magiclink=invalid_token_12345" \
     "400"
 
@@ -526,12 +579,18 @@ else
     echo -e "${PURPLE}JWT Authentication:${NC} ✗ Failed (some tests skipped)"
 fi
 
+# Cleanup temporary files
+echo -e "\n${PURPLE}Cleaning up temporary files...${NC}"
+rm -f .test-magiclink-hash
+echo "✓ Temporary files cleaned"
+
 if [[ $FAILED -eq 0 ]]; then
     echo -e "\n${GREEN}🎉 ALL TESTS PASSED! 🎉${NC}"
-    echo -e "${GREEN}HashRand Spin API with Zero Knowledge Auth is working perfectly!${NC}"
-    echo -e "${GREEN}✓ Authentication flow working${NC}"
+    echo -e "${GREEN}HashRand Spin API with Zero Knowledge Auth + Dual-Factor Validation is working perfectly!${NC}"
+    echo -e "${GREEN}✓ Authentication flow with random hash validation working${NC}"
     echo -e "${GREEN}✓ JWT protection active on all endpoints${NC}"
     echo -e "${GREEN}✓ Public endpoints accessible${NC}"
+    echo -e "${GREEN}✓ Dual-factor magic link security active${NC}"
     echo -e "${GREEN}✓ All endpoint validations correct${NC}"
     exit 0
 else

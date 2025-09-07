@@ -6,10 +6,10 @@ rust_i18n::i18n!("locales");
 
 // Project modules organized by functionality
 mod database;
+mod email_templates;
 mod handlers;
 mod types;
 mod utils;
-mod email_templates;
 
 use utils::{init_rate_limiter, parse_query_params, route_request_with_req};
 
@@ -27,7 +27,7 @@ use utils::{init_rate_limiter, parse_query_params, route_request_with_req};
 async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
     // Initialize rate limiter on first request
     init_rate_limiter();
-    
+
     // Get the full URL from the spin-full-url header
     let full_url = req
         .header("spin-full-url")

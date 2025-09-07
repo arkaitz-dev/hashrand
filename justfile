@@ -285,7 +285,7 @@ watch: dev
 
 # Run comprehensive test suite
 test:
-    ./final_test.sh
+    ./scripts/final_test.sh
 
 # Run linting checks
 lint:
@@ -439,7 +439,7 @@ test-dev:
     SPIN_PID=$!
     sleep 3
     echo "Running tests..."
-    ./final_test.sh
+    ./scripts/final_test.sh
     echo "Stopping development server..."
     kill $SPIN_PID 2>/dev/null || true
     just stop > /dev/null 2>&1
