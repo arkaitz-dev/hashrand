@@ -11,14 +11,9 @@ use chacha20poly1305::{
     aead::{Aead, KeyInit},
 };
 use chrono::Utc;
-use hmac::{Hmac, Mac};
+use blake2::{Blake2bVar, Blake2bMac, digest::{Update, VariableOutput, Mac, KeyInit as Blake2KeyInit}};
+use chacha20poly1305::consts::U32;
 use rand_chacha::{ChaCha8Rng, rand_core::RngCore, rand_core::SeedableRng};
-use sha3::{
-    Sha3_256, Shake256,
-    digest::{ExtendableOutput, Update, XofReader},
-};
-
-type HmacSha3_256 = Hmac<Sha3_256>;
 type MagicLinkKeys = ([u8; 32], [u8; 32], [u8; 32]);
 type ValidationResult = (bool, Option<String>, Option<[u8; 16]>);
 use spin_sdk::sqlite::{Error as SqliteError, Value};
@@ -276,11 +271,11 @@ impl MagicLinkOperations {
             .hash_password_into(encrypted_data, &salt, &mut derived_key)
             .map_err(|e| SqliteError::Io(format!("Argon2 derivation error: {}", e)))?;
 
-        // Step 2: Generate nonce using HMAC + ChaCha8RNG
-        let mut nonce_mac = <HmacSha3_256 as Mac>::new_from_slice(&nonce_key_base)
+        // Step 2: Generate nonce using Blake2b keyed + ChaCha8RNG
+        let mut nonce_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&nonce_key_base)
             .map_err(|_| SqliteError::Io("Invalid nonce key".to_string()))?;
-        Mac::update(&mut nonce_mac, &derived_key);
-        let nonce_hmac = nonce_mac.finalize().into_bytes();
+        Mac::update(&mut nonce_hasher, &derived_key);
+        let nonce_hmac = nonce_hasher.finalize().into_bytes();
 
         let mut nonce_seed = [0u8; 32];
         nonce_seed.copy_from_slice(&nonce_hmac[..32]);
@@ -289,11 +284,11 @@ impl MagicLinkOperations {
         nonce_rng.fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
-        // Step 3: Generate cipher key using HMAC + ChaCha8RNG
-        let mut cipher_mac = <HmacSha3_256 as Mac>::new_from_slice(&cipher_key_base)
+        // Step 3: Generate cipher key using Blake2b keyed + ChaCha8RNG
+        let mut cipher_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&cipher_key_base)
             .map_err(|_| SqliteError::Io("Invalid cipher key".to_string()))?;
-        Mac::update(&mut cipher_mac, &derived_key);
-        let cipher_hmac = cipher_mac.finalize().into_bytes();
+        Mac::update(&mut cipher_hasher, &derived_key);
+        let cipher_hmac = cipher_hasher.finalize().into_bytes();
 
         let mut cipher_seed = [0u8; 32];
         cipher_seed.copy_from_slice(&cipher_hmac[..32]);
@@ -329,10 +324,10 @@ impl MagicLinkOperations {
             .map_err(|e| SqliteError::Io(format!("Argon2 derivation error: {}", e)))?;
 
         // Step 2: Regenerate nonce (same process as encryption)
-        let mut nonce_mac = <HmacSha3_256 as Mac>::new_from_slice(&nonce_key_base)
+        let mut nonce_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&nonce_key_base)
             .map_err(|_| SqliteError::Io("Invalid nonce key".to_string()))?;
-        Mac::update(&mut nonce_mac, &derived_key);
-        let nonce_hmac = nonce_mac.finalize().into_bytes();
+        Mac::update(&mut nonce_hasher, &derived_key);
+        let nonce_hmac = nonce_hasher.finalize().into_bytes();
 
         let mut nonce_seed = [0u8; 32];
         nonce_seed.copy_from_slice(&nonce_hmac[..32]);
@@ -342,10 +337,10 @@ impl MagicLinkOperations {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Step 3: Regenerate cipher key (same process as encryption)
-        let mut cipher_mac = <HmacSha3_256 as Mac>::new_from_slice(&cipher_key_base)
+        let mut cipher_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&cipher_key_base)
             .map_err(|_| SqliteError::Io("Invalid cipher key".to_string()))?;
-        Mac::update(&mut cipher_mac, &derived_key);
-        let cipher_hmac = cipher_mac.finalize().into_bytes();
+        Mac::update(&mut cipher_hasher, &derived_key);
+        let cipher_hmac = cipher_hasher.finalize().into_bytes();
 
         let mut cipher_seed = [0u8; 32];
         cipher_seed.copy_from_slice(&cipher_hmac[..32]);
@@ -364,21 +359,20 @@ impl MagicLinkOperations {
         Ok(plaintext)
     }
 
-    /// Create SHAKE-256 hash of encrypted magic token for database storage
+    /// Create Blake2b variable hash of encrypted magic token for database storage
     ///
     /// # Arguments
-    /// * `encrypted_data` - The encrypted magic token bytes (48 bytes: 32 + 16 auth tag)
+    /// * `encrypted_data` - The encrypted magic token bytes (32 bytes: ChaCha20 encrypted)
     ///
     /// # Returns
-    /// * `[u8; 16]` - 16-byte SHAKE-256 hash for database indexing
+    /// * `[u8; 16]` - 16-byte Blake2b hash for database indexing
     fn create_encrypted_token_hash(encrypted_data: &[u8]) -> [u8; 16] {
-        // SHAKE-256(encrypted_data) → [16 bytes]
-        let mut hasher = Shake256::default();
+        // Blake2b variable output(encrypted_data) → [16 bytes]
+        let mut hasher = Blake2bVar::new(16).expect("Blake2b initialization failed");
         hasher.update(encrypted_data);
 
-        let mut reader = hasher.finalize_xof();
         let mut hash = [0u8; 16];
-        reader.read(&mut hash);
+        hasher.finalize_variable(&mut hash).expect("Blake2b finalization failed");
         hash
     }
 

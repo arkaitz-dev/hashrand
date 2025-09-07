@@ -2,7 +2,7 @@ use bs58;
 use nanoid::nanoid;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use sha3::{Digest, Sha3_256};
+use blake2::{Blake2b512, Digest};
 
 /// Generates a random seed generator function for nanoid using ChaCha8Rng internally
 ///
@@ -51,14 +51,12 @@ pub fn generate_random_seed() -> [u8; 32] {
     // Generate 128-character hash using nanoid (cryptographically secure)
     let random_hash = nanoid!(128);
 
-    // Apply SHA3-256 to the hash to get exactly 32 bytes
-    let mut hasher = Sha3_256::new();
-    hasher.update(random_hash.as_bytes());
-    let hash_result = hasher.finalize();
+    // Apply Blake2b to the hash to get exactly 32 bytes
+    let hash_result = Blake2b512::digest(random_hash.as_bytes());
 
-    // Convert to [u8; 32] array
+    // Convert to [u8; 32] array (take first 32 bytes from Blake2b512's 64 bytes)
     let mut seed = [0u8; 32];
-    seed.copy_from_slice(&hash_result);
+    seed.copy_from_slice(&hash_result[..32]);
     seed
 }
 

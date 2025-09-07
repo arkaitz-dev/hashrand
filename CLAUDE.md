@@ -95,7 +95,7 @@ just build       # Build API (WASM) + Web (SPA)
 ## Historial de Sesiones Principales
 
 ### ✅ Zero Knowledge Authentication (2025-08-29)
-Sistema completo ZK donde el servidor nunca almacena emails ni información personal. JWT middleware, schema sin PII, user IDs criptográficos con SHA3-256→PBKDF2-SHA3-256, Base58 usernames.
+Sistema completo ZK donde el servidor nunca almacena emails ni información personal. JWT middleware, schema sin PII, user IDs criptográficos con Blake2b→Argon2id→Blake2b-variable, Base58 usernames.
 
 ### ✅ Logout Confirmation System (2025-08-31)  
 Sistema profesional de confirmación de logout con LogoutDialogContent.svelte, integración dialog system, cleanup completo de localStorage y cookies HttpOnly.

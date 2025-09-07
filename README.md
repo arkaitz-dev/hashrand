@@ -6,7 +6,7 @@ A **cryptographically secure random hash generator** built with Fermyon Spin and
 
 ### Privacy-First Architecture
 - **🛡️ Complete Privacy**: Server never stores emails or personal information
-- **🔐 Cryptographic User IDs**: Enhanced multi-layer security with SHA3-256 + HMAC + Argon2id + SHAKE256 for deterministic user identification
+- **🔐 Cryptographic User IDs**: Enhanced multi-layer security with Blake2b + keyed Blake2b + Argon2id + Blake2b variable output for deterministic user identification
 - **🎫 Magic Link Authentication**: Passwordless authentication with cryptographic integrity verification
 - **🔒 JWT Endpoint Protection**: Bearer token authentication for all sensitive operations
 - **📊 Privacy-Preserving Audit**: Base58 usernames enable logging without compromising user privacy
@@ -68,7 +68,7 @@ A **cryptographically secure random hash generator** built with Fermyon Spin and
   - **Explore First, Authenticate Later**: All generator pages accessible without login
   - **On-Demand Login**: Authentication dialog appears only when clicking "Generate"
   - **Privacy-First Design**: Server never stores or processes email addresses
-  - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: SHA3-256 + HMAC + Argon2id + SHAKE256
+  - **Cryptographic User Identity**: Deterministic user IDs derived from email using enhanced multi-layer security: Blake2b + keyed Blake2b + Argon2id + Blake2b variable output
   - **Dialog-Based Authentication**: Modern modal authentication system
     - Unified authentication experience across all generation pages
     - Two-step process: email input with validation and confirmation
@@ -323,10 +323,10 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 **Zero Knowledge Features:**
 - **No Email Storage**: Server never stores or processes email addresses
 - **Cryptographic User IDs**: Deterministic 16-byte user IDs derived from email using enhanced multi-layer security:
-  - `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → Argon2id(hmac_result, user_salt, mem_cost=19456, time_cost=2) → SHAKE256(argon2_result) → user_id`
+  - `Blake2b(email) → Blake2b-keyed(blake2b_result, hmac_key) → derive_user_salt(Blake2b-keyed(email, global_salt)) → Argon2id(hmac_result, user_salt, mem_cost=19456, time_cost=2) → Blake2b-variable(argon2_result) → user_id`
 - **Base58 Usernames**: User IDs displayed as readable ~22-character usernames (50% size reduction)
 - **Magic Link Encryption**: ChaCha20 encryption with 44-character Base58 tokens (optimized from previous 66-character implementation)
-- **Magic Link Integrity**: HMAC-SHA3-256 prevents magic link tampering
+- **Magic Link Integrity**: Blake2b-keyed prevents magic link tampering
 - **JWT Protection**: All endpoints require valid Bearer tokens
 
 **Magic Link Generation (POST /api/login/):**
@@ -385,7 +385,7 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
   - **Response-Based Navigation**: Next destination returned in JWT validation response
   - **Email Client Friendly**: Shorter URLs prevent wrapping and formatting issues
 - **Development Mode**: Magic links logged to console for testing (no email sending)
-- **Cryptographic Integrity**: All magic links protected with HMAC-SHA3-256 verification
+- **Cryptographic Integrity**: All magic links protected with Blake2b-keyed verification
 - **Session Privacy**: Sessions identified by cryptographic user IDs, never by email
 - **Zero Knowledge Database**: No PII stored - only cryptographic hashes and timestamps
 
@@ -486,7 +486,7 @@ GET /api/version
 **Response:**
 ```json
 {
-  "api_version": "1.6.5",
+  "api_version": "1.6.6",
   "ui_version": "0.19.4"
 }
 ```
@@ -553,7 +553,7 @@ CREATE TABLE users (
 **Magic Links Table:**
 ```sql
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,    -- 16-byte HMAC-SHA3-256 → SHAKE-256 hash
+    token_hash BLOB PRIMARY KEY,    -- 16-byte Blake2b-keyed → Blake2b-variable hash
     expires_at INTEGER NOT NULL     -- Unix timestamp expiration
 );
 ```
@@ -946,16 +946,14 @@ anyhow = "1"                # Error handling
 bip39 = { version = "2.2.0", features = ["spanish", "french", "portuguese", "chinese-simplified", "chinese-traditional", "japanese", "italian", "korean", "czech"] }  # BIP39 mnemonic generation with all language support
 bs58 = "0.5.1"              # Base58 encoding for seed format
 hex = "0.4.3"               # Hexadecimal utilities
-sha3 = "0.10.8"             # SHA3-256 hashing for seed generation
+blake2 = "0.10"              # Blake2b hashing for unified cryptographic operations
 
 # Authentication & Encryption dependencies
 base64 = "0.22.1"           # Base64 encoding for JWT tokens
 chrono = { version = "0.4.34", features = ["serde"] }  # Date/time handling for token expiration
 jsonwebtoken = "9.3.0"      # JWT token generation and validation
-uuid = { version = "1.10.0", features = ["v4"] }  # UUID generation for secure tokens
 chacha20 = "0.9.1"          # ChaCha20 stream cipher for magic link encryption
-hmac = "0.12.1"             # HMAC for magic link integrity verification
-pbkdf2 = "0.12.2"           # PBKDF2 key derivation for user ID generation
+chacha20poly1305 = "0.10.1"  # ChaCha20-Poly1305 AEAD for secure magic link encryption
 argon2 = "0.5.3"            # Argon2id for secure user ID derivation
 ```
 
@@ -1137,26 +1135,26 @@ The HashRand Spin system implements a **true Zero Knowledge architecture** where
 
 #### 🔐 Cryptographic User Identity System
 ```
-Email Input → SHA3-256 Hash → HMAC-SHA3-256 → Per-User Salt → PBKDF2-SHA3-256 → SHAKE256 → 16-byte user_id
-                                (hmac_key)     (unique salt)      (600k iter.)                      ↓
-                                                                                       Base58 Username Display (~22 chars)
+Email Input → Blake2b Hash → Blake2b-keyed → Per-User Salt → Argon2id → Blake2b-variable → 16-byte user_id
+                               (hmac_key)     (unique salt)   (19456KB)                      ↓
+                                                                                    Base58 Username Display (~22 chars)
 ```
 
 **Key Properties:**
 - **Deterministic**: Same email always generates same user_id for consistency
 - **One-Way**: Cryptographically impossible to reverse user_id back to email
-- **High Security**: 600,000 PBKDF2 iterations following OWASP 2024 standards
+- **High Security**: Argon2id with 19456KB memory cost following OWASP 2024 standards
 - **User-Friendly**: Base58 encoding provides readable usernames without confusing characters
 
 #### 🎫 Magic Link Cryptographic Verification & Encryption
 ```
 User_ID + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token (32 bytes → 44 chars)
-HMAC-SHA3-256(raw_magic_link, hmac_key) → SHAKE-256[16] → Database Hash Index
+Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Hash Index
 ```
 
 **Security Architecture:**
 - **ChaCha20 Encryption**: 32-byte encrypted magic link data using ChaCha20 stream cipher
-- **HMAC-SHA3-256 Integrity**: Prevents modification and tampering of magic links
+- **Blake2b-keyed Integrity**: Prevents modification and tampering of magic links
 - **Database Validation**: Additional security layer through token presence verification
 - **Time-Limited**: 5-minute expiration prevents replay attacks (development: 15 minutes)
 - **One-Time Use**: Magic links consumed immediately after validation
@@ -1173,7 +1171,7 @@ CREATE TABLE users (
 
 -- Zero Knowledge Magic Links Table with ChaCha20 Encryption Support  
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- 16-byte SHAKE-256 hash of encrypted token
+    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake2b-variable hash of encrypted token
     timestamp INTEGER NOT NULL,         -- Original timestamp used in magic link creation
     encryption_blob BLOB NOT NULL,      -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     next_param TEXT,                     -- Optional next destination parameter
@@ -1191,12 +1189,12 @@ CREATE TABLE magiclinks (
 - **Compliance Ready**: GDPR/CCPA compliant by design - no personal data to manage
 
 #### ✅ Cryptographic Security
-- **Industry Standards**: SHA3-256, HMAC-SHA3-256, Argon2id, and SHAKE256 are industry-standard approved algorithms
-- **Multi-Layer Defense**: HMAC layer adds protection against rainbow table and precomputation attacks
+- **Industry Standards**: Blake2b, Blake2b-keyed, Argon2id, and Blake2b-variable are industry-standard approved algorithms
+- **Multi-Layer Defense**: Blake2b-keyed layer adds protection against rainbow table and precomputation attacks
 - **Per-User Salt**: Each user gets unique Argon2id salt preventing parallel dictionary attacks
 - **High Security Parameters**: Argon2id with mem_cost=19456KB, time_cost=2 exceeds current security recommendations
-- **SHAKE256 Compression**: Optimal entropy distribution in reduced 16-byte output
-- **Enhanced Secrets**: Dedicated HMAC key separate from Argon2id salt for additional security layers
+- **Blake2b-variable Compression**: Optimal entropy distribution in reduced 16-byte output
+- **Enhanced Secrets**: Dedicated Blake2b-keyed key separate from Argon2id salt for additional security layers
 - **Forward Secrecy**: User identity derives from email but email is never stored
 
 #### ✅ Scalability & Performance
@@ -1233,11 +1231,11 @@ pub fn requires_authentication(path: &str) -> bool {
 ```rust
 // Zero Knowledge user identification (utils/jwt.rs)
 pub fn derive_user_id(email: &str) -> [u8; 16] {
-    let email_hash = SHA3_256::digest(email.to_lowercase());
+    let email_hash = Blake2b512::digest(email.to_lowercase());
     let dynamic_salt = generate_dynamic_salt(&email_hash);
     let argon2_output = argon2id_hash(&email_hash, &dynamic_salt);
     let mut user_id = [0u8; 16];
-    SHAKE256::digest_xof(&argon2_output).read(&mut user_id);
+    Blake2bVar::new(16).unwrap().update(&argon2_output).finalize_variable(&mut user_id);
     user_id  // Never stored with email - cryptographically derived
 }
 
@@ -1257,7 +1255,7 @@ This architecture ensures that **even with complete database access**, user emai
   - **Industry Standard**: ChaCha8 is cryptographically robust and widely audited
   - **Domain Separation**: Professional technique ensures hash and OTP are cryptographically independent
 - **Seed Security**: All seeds use cryptographically secure random generation
-  - **Initial Generation**: Uses `nanoid` (128 characters) → SHA3-256 → 32-byte seed
+  - **Initial Generation**: Uses `nanoid` (128 characters) → Blake2b512 → 32-byte seed
   - **Base58 Encoding**: Eliminates confusing characters (0, O, I, l) for better usability
   - **Deterministic Reproducibility**: Same seed always produces same results for audit trails
 

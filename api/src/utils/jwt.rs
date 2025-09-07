@@ -4,7 +4,8 @@
 //! with proper expiration times and security claims.
 
 use chrono::{DateTime, Duration, Utc};
-use hmac::{Hmac, Mac};
+use blake2::{Blake2b512, Blake2bVar, Blake2bMac, Digest, digest::{Update, VariableOutput, Mac, KeyInit as Blake2KeyInit}};
+use chacha20poly1305::consts::U32;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 // use pbkdf2::pbkdf2; // Replaced with Argon2id
 use argon2::{
@@ -19,10 +20,6 @@ use chacha20::{
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use serde::{Deserialize, Serialize};
-use sha3::{
-    Digest, Sha3_256, Shake256,
-    digest::{ExtendableOutput, Update},
-};
 
 /// JWT Claims structure for access tokens
 #[derive(Debug, Serialize, Deserialize)]
@@ -84,29 +81,29 @@ impl JwtUtils {
     /// # Returns
     /// * `Result<[u8; 16], String>` - 128-bit deterministic user ID or error
     pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
-        // Step 1: SHA3-256 hash of email
-        let mut hasher = Sha3_256::new();
-        Digest::update(&mut hasher, email.to_lowercase().trim().as_bytes());
-        let email_hash = hasher.finalize();
+        // Step 1: Blake2b hash of email (32 bytes)
+        let email_hash = Blake2b512::digest(email.to_lowercase().trim().as_bytes());
 
-        // Step 2: HMAC-SHA3-256 of the email hash
+        // Step 2: Blake2b keyed hash of the email hash (replaces HMAC-SHA3-256)
         let hmac_key = Self::get_user_id_hmac_key()?;
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)
+        let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid USER_ID_HMAC_KEY format".to_string())?;
-        Mac::update(&mut mac, &email_hash);
-        let hmac_result = mac.finalize().into_bytes();
+        Mac::update(&mut keyed_hasher, &email_hash[..32]); // Take first 32 bytes from Blake2b512
+        let hmac_result = keyed_hasher.finalize().into_bytes();
 
-        // Step 3: Generate dynamic salt using HMAC + ChaCha8Rng
+        // Step 3: Generate dynamic salt using Blake2b keyed + ChaCha8Rng
         let dynamic_salt = Self::generate_dynamic_salt(&email_hash)?;
 
-        // Step 4: Argon2id with fixed parameters (using HMAC result as data input)
+        // Step 4: Argon2id with fixed parameters (using Blake2b result as data input)
         let argon2_output = Self::derive_with_argon2id(&hmac_result[..], &dynamic_salt)?;
 
-        // Step 5: SHAKE256 to compress to 16 bytes with better entropy distribution
-        let mut shake = Shake256::default();
-        Update::update(&mut shake, &argon2_output);
+        // Step 5: Blake2b variable output to compress to 16 bytes (replaces SHAKE256)
+        let mut final_hasher = Blake2bVar::new(16)
+            .map_err(|_| "Blake2b initialization failed".to_string())?;
+        Update::update(&mut final_hasher, &argon2_output);
         let mut user_id = [0u8; 16];
-        shake.finalize_xof_into(&mut user_id);
+        final_hasher.finalize_variable(&mut user_id)
+            .map_err(|_| "Blake2b finalization failed".to_string())?;
 
         Ok(user_id)
     }
@@ -173,11 +170,11 @@ impl JwtUtils {
     fn generate_dynamic_salt(data: &[u8]) -> Result<[u8; 32], String> {
         let fixed_salt = Self::get_argon2_salt()?;
 
-        // Generate HMAC-SHA3-256(fixed_salt, data)
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&fixed_salt)
-            .map_err(|_| "Invalid ARGON2_SALT format for HMAC".to_string())?;
-        Mac::update(&mut mac, data);
-        let hmac_result = mac.finalize().into_bytes();
+        // Generate Blake2b keyed hash (replaces HMAC-SHA3-256)
+        let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&fixed_salt)
+            .map_err(|_| "Invalid ARGON2_SALT format for Blake2b keyed".to_string())?;
+        Mac::update(&mut keyed_hasher, data);
+        let hmac_result = keyed_hasher.finalize().into_bytes();
 
         // Use HMAC result as seed for ChaCha8Rng
         let mut chacha_seed = [0u8; 32];
@@ -295,11 +292,11 @@ impl JwtUtils {
         // Get ChaCha encryption key
         let chacha_key = Self::get_chacha_encryption_key()?;
 
-        // Generate HMAC-SHA3-256(raw_magic_link, chacha_key)
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&chacha_key)
+        // Generate Blake2b keyed hash (replaces HMAC-SHA3-256)
+        let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&chacha_key)
             .map_err(|_| "Invalid ChaCha encryption key format".to_string())?;
-        Mac::update(&mut mac, raw_magic_link);
-        let hmac_result = mac.finalize().into_bytes();
+        Mac::update(&mut keyed_hasher, raw_magic_link);
+        let hmac_result = keyed_hasher.finalize().into_bytes();
 
         // Use HMAC result as seed for ChaCha8Rng
         let mut chacha_seed = [0u8; 32];
@@ -545,19 +542,21 @@ impl JwtUtils {
         data.extend_from_slice(&user_id);
         data.extend_from_slice(&timestamp_bytes);
 
-        // Generate HMAC-SHA3-256 for integrity
+        // Generate Blake2b keyed hash for integrity (replaces HMAC-SHA3-256)
         let hmac_key =
             Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)
+        let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
-        Mac::update(&mut mac, &data);
-        let hmac_result = mac.finalize().into_bytes();
+        Mac::update(&mut keyed_hasher, &data);
+        let hmac_result = keyed_hasher.finalize().into_bytes();
 
-        // Compress HMAC to 8 bytes using SHAKE256
-        let mut shake = Shake256::default();
-        Update::update(&mut shake, &hmac_result);
+        // Compress to 8 bytes using Blake2b variable output (replaces SHAKE256)
+        let mut compressor = Blake2bVar::new(8)
+            .map_err(|_| "Blake2b initialization failed".to_string())?;
+        compressor.update(&hmac_result);
         let mut compressed_hmac = [0u8; 8];
-        shake.finalize_xof_into(&mut compressed_hmac);
+        compressor.finalize_variable(&mut compressed_hmac)
+            .map_err(|_| "Blake2b finalization failed".to_string())?;
 
         // Create raw_magic_link: user_id + timestamp + compressed_hmac (32 bytes)
         let mut raw_magic_link = [0u8; 32];
@@ -621,20 +620,27 @@ impl JwtUtils {
         let timestamp_bytes = &raw_magic_link[16..24];
         let provided_compressed_hmac = &raw_magic_link[24..32];
 
-        // Verify HMAC integrity
+        // Verify Blake2b keyed hash integrity (replaces HMAC verification)
         let hmac_key =
             Self::get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
-        let mut mac = <Hmac<Sha3_256> as Mac>::new_from_slice(&hmac_key)
+        
+        // Prepare data for verification (same as generation)
+        let mut verification_data = Vec::with_capacity(24);
+        verification_data.extend_from_slice(user_id_bytes);
+        verification_data.extend_from_slice(timestamp_bytes);
+        
+        let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
             .map_err(|_| "Invalid HMAC key format".to_string())?;
-        Mac::update(&mut mac, user_id_bytes);
-        Mac::update(&mut mac, timestamp_bytes);
-        let hmac_result = mac.finalize().into_bytes();
+        Mac::update(&mut keyed_hasher, &verification_data);
+        let hmac_result = keyed_hasher.finalize().into_bytes();
 
-        // Compress HMAC to 8 bytes using SHAKE256 (same as generation)
-        let mut shake = Shake256::default();
-        Update::update(&mut shake, &hmac_result);
+        // Compress to 8 bytes using Blake2b variable output (same as generation)
+        let mut compressor = Blake2bVar::new(8)
+            .map_err(|_| "Blake2b initialization failed".to_string())?;
+        compressor.update(&hmac_result);
         let mut expected_compressed_hmac = [0u8; 8];
-        shake.finalize_xof_into(&mut expected_compressed_hmac);
+        compressor.finalize_variable(&mut expected_compressed_hmac)
+            .map_err(|_| "Blake2b finalization failed".to_string())?;
 
         // Compare compressed HMAC values
         if provided_compressed_hmac == expected_compressed_hmac {

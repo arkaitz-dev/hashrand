@@ -3,6 +3,8 @@ target/
 .spin/
 .spin-dev.log
 .spin-dev.pid
+.spin-predeploy.log
+.spin-predeploy.pid
 .npm-dev.pid
 *.wasm
 
@@ -32,6 +34,12 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# SQLite databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # Temporary files
 *.tmp
