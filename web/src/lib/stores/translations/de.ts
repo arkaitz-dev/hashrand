@@ -66,7 +66,8 @@ export const de: I18nTexts = {
 		seed: 'Seed',
 		otp: 'OTP',
 		sessionExpired: 'Ihre Sitzung ist abgelaufen.',
-		close: 'Schließen'
+		close: 'Schließen',
+		understand: 'Ich verstehe'
 	},
 	menu: {
 		title: 'Hash-Generator',
@@ -179,7 +180,8 @@ export const de: I18nTexts = {
 		magicLinkSent: 'Link Gesendet!',
 		magicLinkInstructions:
 			'Überprüfen Sie Ihre E-Mail und klicken Sie auf den magischen Link zur Authentifizierung.',
-		magicLinkSentFlash: 'Magic-Link gesendet. Überprüfen Sie Ihre E-Mail und klicken Sie auf den Link, um fortzufahren.',
+		magicLinkSentFlash:
+			'Magic-Link gesendet. Überprüfen Sie Ihre E-Mail und klicken Sie auf den Link, um fortzufahren.',
 		developmentMode: 'Entwicklungsmodus:',
 		testMagicLink: 'Hier klicken, um den magischen Link zu testen',
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',
@@ -193,7 +195,16 @@ export const de: I18nTexts = {
 		logoutConfirmMessage:
 			'Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut authentifizieren, um auf geschützte Funktionen zuzugreifen.',
 		loggedOut: 'Erfolgreich abgemeldet',
-		isCorrect: 'Das ist korrekt'
+		isCorrect: 'Das ist korrekt',
+		magicLinkError: {
+			title: 'Magic-Link-Fehler',
+			message: 'Dieser Magic-Link kann nur im ursprünglichen Browser verwendet werden',
+			explanation:
+				'Aus Sicherheitsgründen müssen Magic-Links im selben Browser geöffnet werden, in dem sie angefordert wurden.',
+			securityTitle: 'Warum diese Sicherheitsmaßnahme?',
+			securityExplanation:
+				'Diese Zwei-Faktor-Validierung stellt sicher, dass nur die Person, die den Magic-Link von diesem spezifischen Browser angefordert hat, ihn verwenden kann.'
+		}
 	},
 	logout: {
 		title: 'Abmelden',

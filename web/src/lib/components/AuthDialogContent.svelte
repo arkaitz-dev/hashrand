@@ -13,7 +13,7 @@
 	export let onClose: () => void;
 	export let next: Record<string, unknown> | null = null;
 
-	// Component state  
+	// Component state
 	let email = (next?.email as string) || '';
 
 	/**
@@ -36,8 +36,8 @@
 
 		// Show confirmation dialog with email and next parameters
 		// This will automatically replace the current dialog
-		dialogStore.show('auth-confirm', { 
-			email, 
+		dialogStore.show('auth-confirm', {
+			email,
 			...(Object.keys(nextWithoutEmail).length > 0 ? nextWithoutEmail : {})
 		});
 	}
@@ -96,7 +96,6 @@
 				       focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
 			/>
-
 		</div>
 	</div>
 </div>

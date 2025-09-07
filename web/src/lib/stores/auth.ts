@@ -131,13 +131,14 @@ export const authStore = {
 	 * Validate magic link and complete authentication
 	 *
 	 * @param magicToken - Magic link token from URL parameter
+	 * @param randomHash - Random hash from localStorage for additional validation
 	 * @returns Promise<LoginResponse>
 	 */
-	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
+	async validateMagicLink(magicToken: string, randomHash: string): Promise<LoginResponse> {
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
-			const loginResponse = await api.validateMagicLink(magicToken);
+			const loginResponse = await api.validateMagicLink(magicToken, randomHash);
 
 			// Calculate token expiration (15 minutes from now)
 			const expiresAt = new Date();

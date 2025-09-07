@@ -65,7 +65,8 @@ export const ja: I18nTexts = {
 		sendError: 'リンクの送信エラーです。再試行してください。',
 		otp: 'OTP',
 		sessionExpired: 'セッションが期限切れになりました。',
-		close: '閉じる'
+		close: '閉じる',
+		understand: '理解しました'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -179,7 +180,8 @@ export const ja: I18nTexts = {
 		confirmEmailDescription: 'これで正しいですか？',
 		magicLinkSent: 'リンクを送信しました！',
 		magicLinkInstructions: 'メールをチェックして、認証用のマジックリンクをクリックしてください。',
-		magicLinkSentFlash: 'マジックリンクが送信されました。メールをチェックして、リンクをクリックして続行してください。',
+		magicLinkSentFlash:
+			'マジックリンクが送信されました。メールをチェックして、リンクをクリックして続行してください。',
 		developmentMode: '開発モード：',
 		testMagicLink: 'マジックリンクをテストするにはここをクリック',
 		authenticationFailed: '認証に失敗しました',

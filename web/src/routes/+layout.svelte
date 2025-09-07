@@ -11,7 +11,7 @@
 	import { initializeSpriteLoader } from '$lib/stores/spriteLoader';
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
-	import { flashMessagesStore } from '$lib/stores/flashMessages';
+	import { dialogStore } from '$lib/stores/dialog';
 	import DialogContainer from '$lib/components/DialogContainer.svelte';
 
 	let { children } = $props();
@@ -42,8 +42,27 @@
 		currentPage: { url: globalThis.URL }
 	) {
 		try {
-			// Validate the magic link (it's self-contained, no email needed)
-			const loginResponse = await authStore.validateMagicLink(magicToken);
+			// Get random hash from localStorage (required for validation)
+			const randomHash = localStorage.getItem('magiclink_hash');
+
+			if (!randomHash) {
+				console.error('No random hash found in localStorage for magic link validation');
+
+				// Remove magiclink parameter from URL
+				const newUrl = new globalThis.URL(currentPage.url);
+				newUrl.searchParams.delete('magiclink');
+				globalThis.window?.history?.replaceState({}, '', newUrl.toString());
+
+				// Show magic link error dialog instead of redirecting silently
+				dialogStore.show('magic-link-error');
+				return;
+			}
+
+			// Validate the magic link with the random hash
+			const loginResponse = await authStore.validateMagicLink(magicToken, randomHash);
+
+			// Clear the used hash from localStorage
+			localStorage.removeItem('magiclink_hash');
 
 			// Remove magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
@@ -56,7 +75,10 @@
 			if (loginResponse.next) {
 				await goto(loginResponse.next);
 			}
-		} catch (error) {
+		} catch {
+			// Clear hash on error
+			localStorage.removeItem('magiclink_hash');
+
 			// Remove failed magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
@@ -66,7 +88,6 @@
 			goto('/');
 		}
 	}
-
 
 	// Apply RTL direction to document
 	$effect(() => {

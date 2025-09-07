@@ -39,7 +39,9 @@ export default [
 				HTMLInputElement: 'readonly',
 				TextEncoder: 'readonly',
 				TextDecoder: 'readonly',
-				RequestInit: 'readonly'
+				RequestInit: 'readonly',
+				crypto: 'readonly',
+				EventListener: 'readonly'
 			}
 		},
 		plugins: {
@@ -83,7 +85,9 @@ export default [
 				HTMLInputElement: 'readonly',
 				TextEncoder: 'readonly',
 				TextDecoder: 'readonly',
-				RequestInit: 'readonly'
+				RequestInit: 'readonly',
+				crypto: 'readonly',
+				EventListener: 'readonly'
 			}
 		},
 		plugins: {

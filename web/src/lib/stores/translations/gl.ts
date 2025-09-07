@@ -65,7 +65,8 @@ export const gl: I18nTexts = {
 		seed: 'Semente',
 		otp: 'OTP',
 		sessionExpired: 'A túa sesión caducou.',
-		close: 'Pechar'
+		close: 'Pechar',
+		understand: 'Entendo'
 	},
 	menu: {
 		title: 'Xerador de Hash',
@@ -178,7 +179,8 @@ export const gl: I18nTexts = {
 		confirmEmailDescription: 'É correcto?',
 		magicLinkSent: 'Ligazón enviada!',
 		magicLinkInstructions: 'Revisa o teu email e fai clic na ligazón máxica para autenticarte.',
-		magicLinkSentFlash: 'Enlace máxico enviado. Revisa o teu email e fai clic no enlace para continuar.',
+		magicLinkSentFlash:
+			'Enlace máxico enviado. Revisa o teu email e fai clic no enlace para continuar.',
 		developmentMode: 'Modo desenvolvemento:',
 		testMagicLink: 'Fai clic aquí para probar a ligazón máxica',
 		authenticationFailed: 'Fallou a autenticación',

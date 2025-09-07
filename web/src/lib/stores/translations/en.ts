@@ -65,7 +65,8 @@ export const en: I18nTexts = {
 		seed: 'Seed',
 		otp: 'OTP',
 		sessionExpired: 'Your session has expired.',
-		close: 'Close'
+		close: 'Close',
+		understand: 'I understand'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -192,7 +193,16 @@ export const en: I18nTexts = {
 		logoutConfirmMessage:
 			'Are you sure you want to log out? You will need to authenticate again to access protected features.',
 		loggedOut: 'Logged out successfully',
-		isCorrect: 'It is correct'
+		isCorrect: 'It is correct',
+		magicLinkError: {
+			title: 'Magic Link Error',
+			message: 'This magic link can only be used in the original browser',
+			explanation:
+				'For security reasons, magic links must be opened in the same browser where they were requested.',
+			securityTitle: 'Why this security measure?',
+			securityExplanation:
+				'This dual-factor validation ensures that only the person who requested the magic link from this specific browser can use it.'
+		}
 	},
 	logout: {
 		title: 'Log Out',

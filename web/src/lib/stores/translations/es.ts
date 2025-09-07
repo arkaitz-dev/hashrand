@@ -65,7 +65,8 @@ export const es: I18nTexts = {
 		seed: 'Semilla',
 		otp: 'OTP',
 		sessionExpired: 'Tu sesión ha caducado.',
-		close: 'Cerrar'
+		close: 'Cerrar',
+		understand: 'Entendido'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -193,7 +194,16 @@ export const es: I18nTexts = {
 		logoutConfirmMessage:
 			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
 		loggedOut: 'Sesión cerrada correctamente',
-		isCorrect: 'Es correcto'
+		isCorrect: 'Es correcto',
+		magicLinkError: {
+			title: 'Error de Enlace Mágico',
+			message: 'Este enlace mágico sólo puede utilizarse en el navegador original',
+			explanation:
+				'Por razones de seguridad, los enlaces mágicos deben abrirse en el mismo navegador donde fueron solicitados.',
+			securityTitle: '¿Por qué esta medida de seguridad?',
+			securityExplanation:
+				'Esta validación de doble factor garantiza que sólo la persona que solicitó el enlace mágico desde este navegador específico pueda utilizarlo.'
+		}
 	},
 	logout: {
 		title: 'Cerrar Sesión',

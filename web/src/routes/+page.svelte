@@ -8,7 +8,6 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { authStore } from '$lib/stores/auth';
-	import { flashMessagesStore } from '$lib/stores/flashMessages';
 
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults

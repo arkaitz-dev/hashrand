@@ -65,7 +65,8 @@ export const pt: I18nTexts = {
 		seed: 'Semente',
 		otp: 'OTP',
 		sessionExpired: 'Sua sessão expirou.',
-		close: 'Fechar'
+		close: 'Fechar',
+		understand: 'Eu entendo'
 	},
 	menu: {
 		title: 'Gerador de Hash',
@@ -190,7 +191,16 @@ export const pt: I18nTexts = {
 		logoutConfirmMessage:
 			'Tem certeza de que deseja sair? Você precisará se autenticar novamente para acessar recursos protegidos.',
 		loggedOut: 'Sessão encerrada com sucesso',
-		isCorrect: 'Está correto'
+		isCorrect: 'Está correto',
+		magicLinkError: {
+			title: 'Erro de Link Mágico',
+			message: 'Este link mágico só pode ser usado no navegador original',
+			explanation:
+				'Por razões de segurança, links mágicos devem ser abertos no mesmo navegador onde foram solicitados.',
+			securityTitle: 'Por que esta medida de segurança?',
+			securityExplanation:
+				'Esta validação de dois fatores garante que apenas a pessoa que solicitou o link mágico deste navegador específico pode usá-lo.'
+		}
 	},
 	logout: {
 		title: 'Sair',

@@ -1,7 +1,14 @@
 import { writable } from 'svelte/store';
 
 export interface DialogData {
-	type: 'auth' | 'auth-confirm' | 'seed' | 'logout' | 'confirmation' | 'custom';
+	type:
+		| 'auth'
+		| 'auth-confirm'
+		| 'seed'
+		| 'logout'
+		| 'confirmation'
+		| 'custom'
+		| 'magic-link-error';
 	props?: Record<string, unknown>;
 	id: string;
 }

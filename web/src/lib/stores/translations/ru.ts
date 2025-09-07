@@ -66,7 +66,8 @@ export const ru: I18nTexts = {
 		seed: 'Зерно',
 		otp: 'OTP',
 		sessionExpired: 'Ваша сессия истекла.',
-		close: 'Закрыть'
+		close: 'Закрыть',
+		understand: 'Я понимаю'
 	},
 	menu: {
 		title: 'Генератор хешей',
@@ -177,7 +178,8 @@ export const ru: I18nTexts = {
 		confirmEmailDescription: 'Это правильно?',
 		magicLinkSent: 'Ссылка отправлена!',
 		magicLinkInstructions: 'Проверьте ваш email и нажмите на магическую ссылку для аутентификации.',
-		magicLinkSentFlash: 'Магическая ссылка отправлена. Проверьте электронную почту и нажмите на ссылку для продолжения.',
+		magicLinkSentFlash:
+			'Магическая ссылка отправлена. Проверьте электронную почту и нажмите на ссылку для продолжения.',
 		developmentMode: 'Режим разработки:',
 		testMagicLink: 'Нажмите здесь для тестирования магической ссылки',
 		authenticationFailed: 'Аутентификация не удалась',

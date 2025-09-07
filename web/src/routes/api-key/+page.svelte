@@ -55,7 +55,6 @@
 
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
-
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) {
@@ -98,7 +97,6 @@
 
 		goto(`/result?${urlParams.toString()}`);
 	}
-
 
 	// Update length when alphabet changes with smooth adjustment
 	function handleAlphabetChange() {
@@ -174,136 +172,135 @@
 		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
-			<!-- Form -->
-			<div class="max-w-2xl mx-auto">
-				<div
-					class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
-				>
-					<form onsubmit={handleGenerate} class="space-y-6">
-						<!-- Alphabet -->
-						<AlphabetSelector
-							bind:value={params.alphabet}
-							options={alphabetOptions}
-							label={$_('apiKey.alphabet')}
-							id="alphabet"
-							onChange={handleAlphabetChange}
-						/>
+		<!-- Form -->
+		<div class="max-w-2xl mx-auto">
+			<div
+				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
+			>
+				<form onsubmit={handleGenerate} class="space-y-6">
+					<!-- Alphabet -->
+					<AlphabetSelector
+						bind:value={params.alphabet}
+						options={alphabetOptions}
+						label={$_('apiKey.alphabet')}
+						id="alphabet"
+						onChange={handleAlphabetChange}
+					/>
 
-						<!-- Length -->
+					<!-- Length -->
+					<div>
+						<label
+							for="length"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('apiKey.length')} ({minLength}-64 {$_('common.characters')})
+						</label>
+						<div class="flex items-center gap-4">
+							<input
+								type="range"
+								id="length"
+								bind:value={params.length}
+								min={minLength}
+								max="64"
+								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
+							/>
+							<span
+								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
+								>{params.length}</span
+							>
+						</div>
+						{#if !lengthValid}
+							<p class="text-red-500 text-sm mt-1">
+								{$_('common.length')}
+								{$_('common.mustBeBetween')}
+								{minLength}
+								{$_('common.and')} 64
+							</p>
+						{/if}
+						<div
+							class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"
+						>
+							<p class="text-sm text-blue-800 dark:text-blue-200">
+								<strong>{$_('common.format')}:</strong> ak_ prefix + {params.length || 44}
+								{$_('apiKey.randomCharacters')}
+								{#if params.alphabet === 'no-look-alike'}
+									{$_('apiKey.noLookAlikeAlphabet')}
+								{:else}
+									{$_('apiKey.fullAlphanumericAlphabet')}
+								{/if}
+								<br /><strong>{$_('common.security')}:</strong>
+								{#if params.alphabet === 'no-look-alike'}
+									{$_('apiKey.noLookAlikeNote').replace('{0}', minLength.toString())}
+								{:else}
+									{$_('apiKey.fullAlphanumericNote').replace('{0}', minLength.toString())}
+								{/if}
+							</p>
+						</div>
+					</div>
+
+					<!-- Format Notice -->
+					<div
+						class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+					>
+						<div class="flex items-start">
+							<span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
+							<div class="text-sm text-blue-800 dark:text-blue-200">
+								<strong>{$_('common.format')}:</strong>
+								{$_('apiKey.formatNotice')}
+							</div>
+						</div>
+					</div>
+
+					<!-- Seed (only show if provided via URL) -->
+					{#if urlProvidedSeed}
 						<div>
 							<label
-								for="length"
+								for="seed"
 								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 							>
-								{$_('apiKey.length')} ({minLength}-64 {$_('common.characters')})
+								{$_('common.seed')}
 							</label>
-							<div class="flex items-center gap-4">
-								<input
-									type="range"
-									id="length"
-									bind:value={params.length}
-									min={minLength}
-									max="64"
-									class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
-								/>
-								<span
-									class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
-									>{params.length}</span
-								>
-							</div>
-							{#if !lengthValid}
-								<p class="text-red-500 text-sm mt-1">
-									{$_('common.length')}
-									{$_('common.mustBeBetween')}
-									{minLength}
-									{$_('common.and')} 64
-								</p>
-							{/if}
-							<div
-								class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"
-							>
-								<p class="text-sm text-blue-800 dark:text-blue-200">
-									<strong>{$_('common.format')}:</strong> ak_ prefix + {params.length || 44}
-									{$_('apiKey.randomCharacters')}
-									{#if params.alphabet === 'no-look-alike'}
-										{$_('apiKey.noLookAlikeAlphabet')}
-									{:else}
-										{$_('apiKey.fullAlphanumericAlphabet')}
-									{/if}
-									<br /><strong>{$_('common.security')}:</strong>
-									{#if params.alphabet === 'no-look-alike'}
-										{$_('apiKey.noLookAlikeNote').replace('{0}', minLength.toString())}
-									{:else}
-										{$_('apiKey.fullAlphanumericNote').replace('{0}', minLength.toString())}
-									{/if}
-								</p>
-							</div>
-						</div>
-
-						<!-- Format Notice -->
-						<div
-							class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-						>
-							<div class="flex items-start">
-								<span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
-								<div class="text-sm text-blue-800 dark:text-blue-200">
-									<strong>{$_('common.format')}:</strong>
-									{$_('apiKey.formatNotice')}
-								</div>
-							</div>
-						</div>
-
-						<!-- Seed (only show if provided via URL) -->
-						{#if urlProvidedSeed}
-							<div>
-								<label
-									for="seed"
-									class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-								>
-									{$_('common.seed')}
-								</label>
-								<input
-									id="seed"
-									type="text"
-									value={urlProvidedSeed}
-									disabled
-									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
-								/>
-							</div>
-						{/if}
-
-						<!-- Security Notice -->
-						<div
-							class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
-						>
-							<div class="flex items-start">
-								<span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span>
-								<div class="text-sm text-amber-800 dark:text-amber-200">
-									<strong>{$_('common.security')}:</strong>
-									{$_('apiKey.securityNotice')}
-								</div>
-							</div>
-						</div>
-
-						<!-- Action Buttons -->
-						<div class="flex flex-col sm:flex-row gap-4 mt-4">
-							<!-- Generate API key button -->
-							<GenerateButton
-								type="submit"
-								disabled={!formValid || $isLoading}
-								loading={$isLoading}
-								text={$_('apiKey.generateApiKey')}
+							<input
+								id="seed"
+								type="text"
+								value={urlProvidedSeed}
+								disabled
+								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
 							/>
-
-							<!-- Back to menu button -->
-							<BackToMenuButton />
 						</div>
-					</form>
-				</div>
-			</div>
+					{/if}
 
-			<!-- Footer with Version Information -->
-			<Footer />
+					<!-- Security Notice -->
+					<div
+						class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
+					>
+						<div class="flex items-start">
+							<span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span>
+							<div class="text-sm text-amber-800 dark:text-amber-200">
+								<strong>{$_('common.security')}:</strong>
+								{$_('apiKey.securityNotice')}
+							</div>
+						</div>
+					</div>
+
+					<!-- Action Buttons -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<!-- Generate API key button -->
+						<GenerateButton
+							type="submit"
+							disabled={!formValid || $isLoading}
+							loading={$isLoading}
+							text={$_('apiKey.generateApiKey')}
+						/>
+
+						<!-- Back to menu button -->
+						<BackToMenuButton />
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- Footer with Version Information -->
+		<Footer />
 	</div>
 </div>
-

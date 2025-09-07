@@ -64,7 +64,8 @@ export const zh: I18nTexts = {
 		seed: '种子',
 		otp: 'OTP',
 		sessionExpired: '您的会话已过期。',
-		close: '关闭'
+		close: '关闭',
+		understand: '我明白了'
 	},
 	menu: {
 		title: '哈希生成器',
@@ -182,8 +183,7 @@ export const zh: I18nTexts = {
 		authenticatedAs: '已验证身份：',
 		logout: '退出登录',
 		logoutConfirmTitle: '退出登录',
-		logoutConfirmMessage:
-			'您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。',
+		logoutConfirmMessage: '您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。',
 		loggedOut: '成功退出登录',
 		isCorrect: '正确'
 	},
@@ -200,7 +200,6 @@ export const zh: I18nTexts = {
 		authenticatedAs: '已验证身份：',
 		logout: '退出登录',
 		confirmLogout: '退出登录？',
-		logoutDescription:
-			'您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。'
+		logoutDescription: '您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。'
 	}
 };

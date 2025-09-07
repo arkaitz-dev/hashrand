@@ -65,7 +65,8 @@ export const eu: I18nTexts = {
 		seed: 'Hazia',
 		otp: 'OTP',
 		sessionExpired: 'Zure saioa bukatu da.',
-		close: 'Itxi'
+		close: 'Itxi',
+		understand: 'Ulertzen dut'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',
@@ -176,7 +177,8 @@ export const eu: I18nTexts = {
 		confirmEmailDescription: 'Zuzena da?',
 		magicLinkSent: 'Esteka Bidalita!',
 		magicLinkInstructions: 'Egiaztatu zure emaila eta klikatu esteka magikoan autentifikatzeko.',
-		magicLinkSentFlash: 'Esteka magikoa bidali da. Egiaztatu zure emaila eta klikatu estekan jarraitzeko.',
+		magicLinkSentFlash:
+			'Esteka magikoa bidali da. Egiaztatu zure emaila eta klikatu estekan jarraitzeko.',
 		developmentMode: 'Garapen Modua:',
 		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
 		authenticationFailed: 'Autentifikazioak huts egin du',

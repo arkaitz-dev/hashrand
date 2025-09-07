@@ -66,7 +66,8 @@ export const ca: I18nTexts = {
 		seed: 'Llavor',
 		otp: 'OTP',
 		sessionExpired: 'La vostra sessió ha caducat.',
-		close: 'Tancar'
+		close: 'Tancar',
+		understand: 'Ho entenc'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -180,7 +181,8 @@ export const ca: I18nTexts = {
 		magicLinkSent: 'Enllaç enviat!',
 		magicLinkInstructions:
 			"Reviseu el vostre correu electrònic i feu clic a l'enllaç màgic per autenticar-vos.",
-		magicLinkSentFlash: 'Enllaç màgic enviat. Revisa el teu email i fes clic a l\'enllaç per continuar.',
+		magicLinkSentFlash:
+			"Enllaç màgic enviat. Revisa el teu email i fes clic a l'enllaç per continuar.",
 		developmentMode: 'Mode desenvolupament:',
 		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",
 		authenticationFailed: "Ha fallat l'autenticació",

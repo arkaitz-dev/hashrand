@@ -114,7 +114,6 @@
 
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
-
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
 		if (!formValid) {
@@ -157,7 +156,6 @@
 
 		goto(`/result?${urlParams.toString()}`);
 	}
-
 
 	// Initialize params based on navigation source
 	onMount(() => {
@@ -221,122 +219,121 @@
 		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
-			<!-- Form -->
-			<div class="max-w-2xl mx-auto">
-				<div
-					class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
-				>
-					<form onsubmit={handleGenerate} class="space-y-6">
-						<!-- Language -->
-						<div>
-							<label
-								for="language"
-								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-							>
-								{$_('mnemonic.language')}
-							</label>
-							<select
-								id="language"
-								bind:value={params.language}
-								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-							>
-								{#each languageOptions as option}
-									<option value={option.value}>{option.label}</option>
-								{/each}
-							</select>
+		<!-- Form -->
+		<div class="max-w-2xl mx-auto">
+			<div
+				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
+			>
+				<form onsubmit={handleGenerate} class="space-y-6">
+					<!-- Language -->
+					<div>
+						<label
+							for="language"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('mnemonic.language')}
+						</label>
+						<select
+							id="language"
+							bind:value={params.language}
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+						>
+							{#each languageOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
+						</select>
+						<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+							{$_('mnemonic.languageDescription')}
+						</p>
+					</div>
+
+					<!-- Word Count -->
+					<div>
+						<label
+							for="words"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('mnemonic.wordCount')}
+						</label>
+						<select
+							id="words"
+							bind:value={params.words}
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+						>
+							{#each wordOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
+						</select>
+						{#if params.words}
 							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-								{$_('mnemonic.languageDescription')}
+								{wordOptions.find((o) => o.value === params.words)?.description}
 							</p>
-						</div>
+						{/if}
+					</div>
 
-						<!-- Word Count -->
+					<!-- Format Notice -->
+					<div
+						class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+					>
+						<div class="flex items-start">
+							<span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
+							<div class="text-sm text-blue-800 dark:text-blue-200">
+								<strong>{$_('common.format')}:</strong>
+								{$_('mnemonic.formatNotice')}
+							</div>
+						</div>
+					</div>
+
+					<!-- Seed (only show if provided via URL) -->
+					{#if urlProvidedSeed}
 						<div>
 							<label
-								for="words"
+								for="seed"
 								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 							>
-								{$_('mnemonic.wordCount')}
+								{$_('common.seed')}
 							</label>
-							<select
-								id="words"
-								bind:value={params.words}
-								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-							>
-								{#each wordOptions as option}
-									<option value={option.value}>{option.label}</option>
-								{/each}
-							</select>
-							{#if params.words}
-								<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-									{wordOptions.find((o) => o.value === params.words)?.description}
-								</p>
-							{/if}
-						</div>
-
-						<!-- Format Notice -->
-						<div
-							class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-						>
-							<div class="flex items-start">
-								<span class="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
-								<div class="text-sm text-blue-800 dark:text-blue-200">
-									<strong>{$_('common.format')}:</strong>
-									{$_('mnemonic.formatNotice')}
-								</div>
-							</div>
-						</div>
-
-						<!-- Seed (only show if provided via URL) -->
-						{#if urlProvidedSeed}
-							<div>
-								<label
-									for="seed"
-									class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-								>
-									{$_('common.seed')}
-								</label>
-								<input
-									id="seed"
-									type="text"
-									value={urlProvidedSeed}
-									disabled
-									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
-								/>
-							</div>
-						{/if}
-
-						<!-- Security Notice -->
-						<div
-							class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
-						>
-							<div class="flex items-start">
-								<span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span>
-								<div class="text-sm text-amber-800 dark:text-amber-200">
-									<strong>{$_('common.security')}:</strong>
-									{$_('mnemonic.securityNotice')}
-								</div>
-							</div>
-						</div>
-
-						<!-- Action Buttons -->
-						<div class="flex flex-col sm:flex-row gap-4 mt-4">
-							<!-- Generate mnemonic button -->
-							<GenerateButton
-								type="submit"
-								disabled={!formValid || $isLoading}
-								loading={$isLoading}
-								text={$_('mnemonic.generateMnemonic')}
+							<input
+								id="seed"
+								type="text"
+								value={urlProvidedSeed}
+								disabled
+								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
 							/>
-
-							<!-- Back to menu button -->
-							<BackToMenuButton />
 						</div>
-					</form>
-				</div>
-			</div>
+					{/if}
 
-			<!-- Footer with Version Information -->
-			<Footer />
+					<!-- Security Notice -->
+					<div
+						class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
+					>
+						<div class="flex items-start">
+							<span class="text-amber-600 dark:text-amber-400 mr-2">⚠️</span>
+							<div class="text-sm text-amber-800 dark:text-amber-200">
+								<strong>{$_('common.security')}:</strong>
+								{$_('mnemonic.securityNotice')}
+							</div>
+						</div>
+					</div>
+
+					<!-- Action Buttons -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<!-- Generate mnemonic button -->
+						<GenerateButton
+							type="submit"
+							disabled={!formValid || $isLoading}
+							loading={$isLoading}
+							text={$_('mnemonic.generateMnemonic')}
+						/>
+
+						<!-- Back to menu button -->
+						<BackToMenuButton />
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- Footer with Version Information -->
+		<Footer />
 	</div>
 </div>
-

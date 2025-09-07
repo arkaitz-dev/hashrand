@@ -31,7 +31,6 @@
 
 	// Eliminados los debug messages
 
-
 	// Get URL parameters reactively
 	$: searchParams = $page.url.searchParams;
 
@@ -143,8 +142,8 @@
 	 * Handle successful authentication
 	 */
 	// Listen for authentication success event from DialogContainer
-	function handleAuthenticated(event: globalThis.CustomEvent) {
-		const authData = event.detail;
+	function handleAuthenticated() {
+		// Authentication data is handled by the auth system automatically
 
 		// Perform the generation with the pending parameters
 		if (pendingGenerationParams) {
@@ -165,9 +164,8 @@
 
 	// Add event listener for authentication
 	if (typeof globalThis.window !== 'undefined') {
-		globalThis.window.addEventListener('authenticated', handleAuthenticated);
+		globalThis.window.addEventListener('authenticated', handleAuthenticated as EventListener);
 	}
-
 
 	// Initialize params based on navigation source
 	onMount(() => {
@@ -245,117 +243,117 @@
 		<FlashMessages />
 
 		<!-- Auth Guard: wraps the form -->
-			<!-- Form -->
-			<div class="max-w-2xl mx-auto">
-				<div
-					class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
-				>
-					<form onsubmit={handleGenerate} class="space-y-6">
-						<!-- Length -->
+		<!-- Form -->
+		<div class="max-w-2xl mx-auto">
+			<div
+				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
+			>
+				<form onsubmit={handleGenerate} class="space-y-6">
+					<!-- Length -->
+					<div>
+						<label
+							for="length"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
+							{$_('custom.length')} (2-128)
+						</label>
+						<div class="flex items-center gap-4">
+							<input
+								type="range"
+								id="length"
+								bind:value={params.length}
+								min="2"
+								max="128"
+								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
+							/>
+							<span
+								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
+								>{params.length}</span
+							>
+						</div>
+						{#if !lengthValid}
+							<p class="text-red-500 text-sm mt-1">{$_('custom.lengthMustBeBetween')}</p>
+						{/if}
+					</div>
+
+					<!-- Alphabet -->
+					<AlphabetSelector
+						bind:value={params.alphabet}
+						options={alphabetOptions}
+						label={$_('custom.alphabet')}
+						id="alphabet"
+					/>
+
+					<!-- Prefix -->
+					<TextInput
+						id="prefix"
+						label={$_('custom.prefix') +
+							' (' +
+							$_('common.cannotExceed') +
+							' 32 ' +
+							$_('common.characters') +
+							')'}
+						bind:value={params.prefix}
+						placeholder={$_('common.optionalPrefix')}
+						maxlength={32}
+						isValid={prefixValid}
+						errorMessage={$_('common.prefixCannotExceed')}
+					/>
+
+					<!-- Suffix -->
+					<TextInput
+						id="suffix"
+						label={$_('custom.suffix') +
+							' (' +
+							$_('common.cannotExceed') +
+							' 32 ' +
+							$_('common.characters') +
+							')'}
+						bind:value={params.suffix}
+						placeholder={$_('common.optionalSuffix')}
+						maxlength={32}
+						isValid={suffixValid}
+						errorMessage={$_('common.suffixCannotExceed')}
+					/>
+
+					<!-- Seed (only show if provided via URL) -->
+					{#if urlProvidedSeed}
 						<div>
 							<label
-								for="length"
+								for="seed"
 								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 							>
-								{$_('custom.length')} (2-128)
+								{$_('common.seed')}
 							</label>
-							<div class="flex items-center gap-4">
-								<input
-									type="range"
-									id="length"
-									bind:value={params.length}
-									min="2"
-									max="128"
-									class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
-								/>
-								<span
-									class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
-									>{params.length}</span
-								>
-							</div>
-							{#if !lengthValid}
-								<p class="text-red-500 text-sm mt-1">{$_('custom.lengthMustBeBetween')}</p>
-							{/if}
-						</div>
-
-						<!-- Alphabet -->
-						<AlphabetSelector
-							bind:value={params.alphabet}
-							options={alphabetOptions}
-							label={$_('custom.alphabet')}
-							id="alphabet"
-						/>
-
-						<!-- Prefix -->
-						<TextInput
-							id="prefix"
-							label={$_('custom.prefix') +
-								' (' +
-								$_('common.cannotExceed') +
-								' 32 ' +
-								$_('common.characters') +
-								')'}
-							bind:value={params.prefix}
-							placeholder={$_('common.optionalPrefix')}
-							maxlength={32}
-							isValid={prefixValid}
-							errorMessage={$_('common.prefixCannotExceed')}
-						/>
-
-						<!-- Suffix -->
-						<TextInput
-							id="suffix"
-							label={$_('custom.suffix') +
-								' (' +
-								$_('common.cannotExceed') +
-								' 32 ' +
-								$_('common.characters') +
-								')'}
-							bind:value={params.suffix}
-							placeholder={$_('common.optionalSuffix')}
-							maxlength={32}
-							isValid={suffixValid}
-							errorMessage={$_('common.suffixCannotExceed')}
-						/>
-
-						<!-- Seed (only show if provided via URL) -->
-						{#if urlProvidedSeed}
-							<div>
-								<label
-									for="seed"
-									class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-								>
-									{$_('common.seed')}
-								</label>
-								<input
-									id="seed"
-									type="text"
-									value={urlProvidedSeed}
-									disabled
-									class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
-								/>
-							</div>
-						{/if}
-
-						<!-- Action Buttons -->
-						<div class="flex flex-col sm:flex-row gap-4 mt-4">
-							<!-- Generate hash button -->
-							<GenerateButton
-								type="submit"
-								disabled={!formValid || $isLoading}
-								loading={$isLoading}
-								text={$_('custom.generateHash')}
+							<input
+								id="seed"
+								type="text"
+								value={urlProvidedSeed}
+								disabled
+								class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
 							/>
-
-							<!-- Back to menu button -->
-							<BackToMenuButton />
 						</div>
-					</form>
-				</div>
-			</div>
+					{/if}
 
-			<!-- Footer with Version Information -->
-			<Footer />
+					<!-- Action Buttons -->
+					<div class="flex flex-col sm:flex-row gap-4 mt-4">
+						<!-- Generate hash button -->
+						<GenerateButton
+							type="submit"
+							disabled={!formValid || $isLoading}
+							loading={$isLoading}
+							text={$_('custom.generateHash')}
+						/>
+
+						<!-- Back to menu button -->
+						<BackToMenuButton />
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- Footer with Version Information -->
+		<Footer />
 	</div>
 </div>
 

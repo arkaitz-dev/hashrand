@@ -284,8 +284,10 @@ export const api = {
 		return response.json() as Promise<MagicLinkResponse>;
 	},
 
-	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
-		const response = await fetch(`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}`);
+	async validateMagicLink(magicToken: string, randomHash: string): Promise<LoginResponse> {
+		const response = await fetch(
+			`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}&hash=${encodeURIComponent(randomHash)}`
+		);
 
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;

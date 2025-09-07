@@ -5,7 +5,6 @@
 	import { currentLanguage } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import { languages, findLanguageByCode } from '$lib/languageConfig';
-	import { authStore } from '$lib/stores/auth';
 
 	let showDropdown = $state(false);
 	let isTransitioning = $state(false);

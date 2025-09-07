@@ -119,6 +119,7 @@ export interface LoginResponse {
 
 export interface MagicLinkResponse {
 	status: string;
+	dev_magic_link?: string; // Development-only field for easy testing
 }
 
 export interface AuthError {

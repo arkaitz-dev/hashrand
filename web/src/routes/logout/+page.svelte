@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { t, currentLanguage } from '$lib/stores/i18n';
+	import { _, currentLanguage } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
@@ -45,8 +45,8 @@
 </script>
 
 <svelte:head>
-	<title>{$t.logout.title} - HashRand</title>
-	<meta name="description" content={$t.logout.description} />
+	<title>{$_('logout.title')} - HashRand</title>
+	<meta name="description" content={$_('logout.description')} />
 </svelte:head>
 
 <div class="container max-w-md mx-auto px-4 py-8">
@@ -80,12 +80,12 @@
 
 		<!-- Title -->
 		<h1 class="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">
-			{$t.logout.title}
+			{$_('logout.title')}
 		</h1>
 
 		<!-- Description -->
 		<p class="text-center text-gray-600 dark:text-gray-300 mb-6">
-			{$t.logout.description}
+			{$_('logout.description')}
 		</p>
 
 		<!-- Action Buttons -->
@@ -96,7 +96,7 @@
 				disabled={isLoggingOut}
 				class="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				{$t.logout.cancel}
+				{$_('logout.cancel')}
 			</button>
 
 			<!-- Logout Button -->
@@ -116,14 +116,14 @@
 						></path>
 					</svg>
 				{/if}
-				{$t.logout.confirm}
+				{$_('logout.confirm')}
 			</button>
 		</div>
 
 		<!-- Additional Information -->
 		<div class="mt-6 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
 			<p class="text-sm text-blue-800 dark:text-blue-200">
-				{$t.logout.info}
+				{$_('logout.info')}
 			</p>
 		</div>
 	</div>

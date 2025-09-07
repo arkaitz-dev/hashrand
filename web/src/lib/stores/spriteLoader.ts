@@ -55,22 +55,18 @@ export function initializeSpriteLoader(): void {
 	});
 
 	// Fallback: poll global state until loaded
-	// eslint-disable-next-line no-undef
 	const pollInterval = setInterval(() => {
 		if (window.__SPRITE_STATE__ && window.__SPRITE_STATE__.loaded) {
 			spriteState.set(window.__SPRITE_STATE__);
-			// eslint-disable-next-line no-undef
 			clearInterval(pollInterval);
 		} else if (window.__SPRITE_STATE__ && window.__SPRITE_STATE__.error) {
 			spriteState.set(window.__SPRITE_STATE__);
-			// eslint-disable-next-line no-undef
 			clearInterval(pollInterval);
 		}
 	}, 100);
 
 	// Clear polling after reasonable timeout
 	setTimeout(() => {
-		// eslint-disable-next-line no-undef
 		clearInterval(pollInterval);
 	}, 5000);
 }

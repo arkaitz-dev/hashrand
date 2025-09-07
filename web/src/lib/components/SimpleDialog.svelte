@@ -72,15 +72,18 @@
 	<!-- Backdrop -->
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-		dir={$textDirection}
+		dir={$textDirection as 'ltr' | 'rtl'}
 		onclick={handleBackdropClick}
+		onkeydown={(e) => e.key === 'Enter' && closeOnBackdrop && closable && close()}
+		role="presentation"
+		tabindex="-1"
 	>
 		<!-- Dialog Content -->
 		<div
 			class="relative w-full {sizeClasses[
 				size
 			]} transform rounded-xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300"
-			onclick={(e) => e.stopPropagation()}
+			role="document"
 		>
 			<!-- Header -->
 			{#if title || closable}

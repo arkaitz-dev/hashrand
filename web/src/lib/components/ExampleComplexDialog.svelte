@@ -2,7 +2,7 @@
 	/**
 	 * Example Complex Dialog Component
 	 *
-	 * Demonstrates how to inject arbitrary components into UniversalDialog:
+	 * Demonstrates how to inject arbitrary components into SimpleDialog:
 	 * - Custom forms with validation
 	 * - Multi-step workflows
 	 * - Dynamic content
@@ -11,7 +11,7 @@
 
 	import { createEventDispatcher } from 'svelte';
 	import { _ } from '../stores/i18n';
-	import UniversalDialog from './UniversalDialog.svelte';
+	import SimpleDialog from './SimpleDialog.svelte';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
 	// Props
@@ -77,68 +77,77 @@
 	}
 </script>
 
-<UniversalDialog
+<SimpleDialog
 	bind:show
 	title={currentStep === 1 ? 'Step 1: Email Input' : 'Step 2: Confirmation'}
 	size="md"
 	closable={!isLoading}
 	closeOnBackdrop={!isLoading}
 >
-	<!-- Dynamic content based on step -->
-	{#if currentStep === 1}
-		<div class="space-y-4">
-			<p class="text-gray-600 dark:text-gray-300">
-				Enter your email address to continue with the process.
-			</p>
+	{#snippet children()}
+		<!-- Dynamic content based on step -->
+		{#if currentStep === 1}
+			<div class="space-y-4">
+				<p class="text-gray-600 dark:text-gray-300">
+					Enter your email address to continue with the process.
+				</p>
 
-			<div>
-				<label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-					{$_('auth.emailAddress')}
-				</label>
-				<input
-					id="email"
-					type="email"
-					bind:value={email}
-					placeholder={$_('auth.emailPlaceholder')}
-					disabled={isLoading}
-					class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+				<div>
+					<label
+						for="email"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+					>
+						{$_('auth.emailAddress')}
+					</label>
+					<input
+						id="email"
+						type="email"
+						bind:value={email}
+						placeholder={$_('auth.emailPlaceholder')}
+						disabled={isLoading}
+						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
 					       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
 					       focus:ring-2 focus:ring-blue-500 focus:border-transparent
 					       disabled:opacity-50 disabled:cursor-not-allowed"
-				/>
-				{#if formErrors.email}
-					<p class="text-red-600 dark:text-red-400 text-sm mt-1" role="alert">
-						{formErrors.email}
-					</p>
-				{/if}
-			</div>
-		</div>
-	{:else if currentStep === 2}
-		<div class="space-y-4">
-			<div class="text-center">
-				<div
-					class="mx-auto w-12 h-12 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mb-4"
-				>
-					<svg
-						class="w-6 h-6 text-green-600 dark:text-green-400"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-						></path>
-					</svg>
+					/>
+					{#if formErrors.email}
+						<p class="text-red-600 dark:text-red-400 text-sm mt-1" role="alert">
+							{formErrors.email}
+						</p>
+					{/if}
 				</div>
-				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Email Confirmed</h3>
-				<p class="text-gray-600 dark:text-gray-300">
-					Your email <strong>{email}</strong> has been validated successfully.
-				</p>
 			</div>
-		</div>
-	{/if}
+		{:else if currentStep === 2}
+			<div class="space-y-4">
+				<div class="text-center">
+					<div
+						class="mx-auto w-12 h-12 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mb-4"
+					>
+						<svg
+							class="w-6 h-6 text-green-600 dark:text-green-400"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M5 13l4 4L19 7"
+							></path>
+						</svg>
+					</div>
+					<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Email Confirmed</h3>
+					<p class="text-gray-600 dark:text-gray-300">
+						Your email <strong>{email}</strong> has been validated successfully.
+					</p>
+				</div>
+			</div>
+		{/if}
+	{/snippet}
 
-	<!-- Dynamic actions based on step and loading state -->
-	<div slot="actions">
+	{#snippet actions()}
+		<!-- Dynamic actions based on step and loading state -->
 		{#if currentStep === 1}
 			<button
 				on:click={handleClose}
@@ -171,5 +180,5 @@
 				Complete
 			</button>
 		{/if}
-	</div>
-</UniversalDialog>
+	{/snippet}
+</SimpleDialog>

@@ -66,7 +66,8 @@ export const fr: I18nTexts = {
 		seed: 'Graine',
 		otp: 'OTP',
 		sessionExpired: 'Votre session a expiré.',
-		close: 'Fermer'
+		close: 'Fermer',
+		understand: 'Je comprends'
 	},
 	menu: {
 		title: 'Générateur de Hash',
@@ -179,7 +180,8 @@ export const fr: I18nTexts = {
 		magicLinkSent: 'Lien Envoyé!',
 		magicLinkInstructions:
 			'Vérifiez votre email et cliquez sur le lien magique pour vous authentifier.',
-		magicLinkSentFlash: 'Lien magique envoyé. Vérifiez votre email et cliquez sur le lien pour continuer.',
+		magicLinkSentFlash:
+			'Lien magique envoyé. Vérifiez votre email et cliquez sur le lien pour continuer.',
 		developmentMode: 'Mode Développement:',
 		testMagicLink: 'Cliquer ici pour tester le lien magique',
 		authenticationFailed: "Échec de l'authentification",
@@ -193,7 +195,16 @@ export const fr: I18nTexts = {
 		logoutConfirmMessage:
 			'Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous authentifier à nouveau pour accéder aux fonctionnalités protégées.',
 		loggedOut: 'Déconnexion réussie',
-		isCorrect: 'C\'est correct'
+		isCorrect: "C'est correct",
+		magicLinkError: {
+			title: 'Erreur de Lien Magique',
+			message: 'Ce lien magique ne peut être utilisé que dans le navigateur original',
+			explanation:
+				'Pour des raisons de sécurité, les liens magiques doivent être ouverts dans le même navigateur où ils ont été demandés.',
+			securityTitle: 'Pourquoi cette mesure de sécurité ?',
+			securityExplanation:
+				"Cette validation à double facteur garantit que seule la personne qui a demandé le lien magique depuis ce navigateur spécifique peut l'utiliser."
+		}
 	},
 	logout: {
 		title: 'Se Déconnecter',
