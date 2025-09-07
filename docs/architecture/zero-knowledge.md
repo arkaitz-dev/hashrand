@@ -27,7 +27,7 @@ Email Input → Blake2b Hash → Blake2b-keyed → Per-User Salt → Argon2id �
 ### Implementation Architecture
 
 ```rust
-// Zero Knowledge user identification (utils/jwt.rs)
+// Zero Knowledge user identification (utils/jwt/crypto.rs)
 pub fn derive_user_id(email: &str) -> [u8; 16] {
     let email_hash = Blake2b512::digest(email.to_lowercase());
     let dynamic_salt = generate_dynamic_salt(&email_hash);

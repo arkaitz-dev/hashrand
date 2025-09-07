@@ -1,8 +1,8 @@
+use blake2::{Blake2b512, Digest};
 use bs58;
 use nanoid::nanoid;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use blake2::{Blake2b512, Digest};
 
 /// Generates a random seed generator function for nanoid using ChaCha8Rng internally
 ///

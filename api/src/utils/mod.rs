@@ -1,6 +1,7 @@
 #[cfg(test)]
 pub mod argon2_test;
 pub mod auth;
+pub mod jwt_middleware;
 pub mod email;
 pub mod jwt;
 pub mod query;

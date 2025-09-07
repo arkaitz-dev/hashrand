@@ -37,7 +37,7 @@ Email Input → Blake2b512(email) → Blake2b-keyed(result, hmac_key) → derive
 ### Implementation Details
 
 ```rust
-// Zero Knowledge user identification (utils/jwt.rs)
+// Zero Knowledge user identification (utils/jwt/crypto.rs)
 pub fn derive_user_id(email: &str) -> [u8; 16] {
     let email_hash = Blake2b512::digest(email.to_lowercase());
     let dynamic_salt = generate_dynamic_salt(&email_hash);
@@ -163,8 +163,9 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 
 ### Key Implementation Files
 
-- **api/src/utils/jwt.rs**: User ID derivation and magic link generation
-- **api/src/database/operations.rs**: Magic link encryption/decryption
+- **api/src/utils/jwt/crypto.rs**: User ID derivation and cryptographic operations
+- **api/src/utils/jwt/magic_links.rs**: Magic link generation and processing
+- **api/src/database/operations/magic_link_ops.rs**: Magic link encryption/decryption
 - **api/src/utils/random_generator.rs**: Seed generation with Blake2b512
 
 ## Security Considerations

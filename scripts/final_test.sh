@@ -120,7 +120,7 @@ request_magic_link() {
     echo -e "\n${PURPLE}=== Requesting Magic Link ===${NC}"
     
     # Generate random hash using Node.js helper
-    local random_hash=$(node ./generate_hash.js)
+    local random_hash=$(node ./scripts/generate_hash.js)
     if [[ -z "$random_hash" ]]; then
         echo -e "${RED}✗ Failed to generate random hash${NC}"
         return 1
@@ -182,7 +182,7 @@ authenticate() {
     echo -e "\n${PURPLE}=== Requesting Fresh Magic Link ===${NC}"
     
     # Generate random hash using Node.js helper
-    local random_hash=$(node ./generate_hash.js)
+    local random_hash=$(node ./scripts/generate_hash.js)
     if [[ -z "$random_hash" ]]; then
         echo -e "${RED}✗ Authentication failed: Could not generate random hash${NC}"
         return 1
@@ -492,21 +492,21 @@ test_api "Request magic link with valid email" \
     "200" \
     "" \
     "POST" \
-    "{\"email\":\"arkaitzmugica@protonmail.com\",\"random_hash\":\"$(node ./generate_hash.js)\"}"
+    "{\"email\":\"arkaitzmugica@protonmail.com\",\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
 
 test_api "Request magic link with invalid email format" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    "{\"email\":\"invalid-email\",\"random_hash\":\"$(node ./generate_hash.js)\"}"
+    "{\"email\":\"invalid-email\",\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
 
 test_api "Request magic link with missing email" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    "{\"random_hash\":\"$(node ./generate_hash.js)\"}"
+    "{\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
 
 test_api "Request magic link with missing random_hash (should fail)" \
     "$BASE_URL/api/login/" \
@@ -516,7 +516,7 @@ test_api "Request magic link with missing random_hash (should fail)" \
     '{"email":"arkaitzmugica@protonmail.com"}'
 
 test_api "Invalid magic link (should fail)" \
-    "$BASE_URL/api/login/?magiclink=invalid_token_12345&hash=$(node ./generate_hash.js)" \
+    "$BASE_URL/api/login/?magiclink=invalid_token_12345&hash=$(node ./scripts/generate_hash.js)" \
     "400"
 
 test_api "Magic link without hash parameter (should fail)" \
