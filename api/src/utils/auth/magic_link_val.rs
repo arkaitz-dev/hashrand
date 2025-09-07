@@ -3,15 +3,12 @@
 use spin_sdk::http::Response;
 use std::collections::HashMap;
 
-use crate::database::{
-    connection::DatabaseEnvironment,
-    operations::MagicLinkOperations,
-};
-use crate::utils::JwtUtils;
 use super::types::ErrorResponse;
+use crate::database::{connection::DatabaseEnvironment, operations::MagicLinkOperations};
+use crate::utils::JwtUtils;
 
 /// Validate magic link and generate JWT tokens
-/// 
+///
 /// This function handles the business logic for magic link validation:
 /// - Extracts magic link token from query parameters
 /// - Validates and consumes the encrypted magic token

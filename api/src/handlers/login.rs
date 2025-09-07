@@ -9,7 +9,9 @@ use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
 use crate::database::connection::{DatabaseEnvironment, initialize_database};
-use crate::utils::auth::{MagicLinkRequest, ErrorResponse, generate_magic_link, validate_magic_link, handle_refresh_token};
+use crate::utils::auth::{
+    ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token, validate_magic_link,
+};
 
 /// Handle login authentication requests
 ///

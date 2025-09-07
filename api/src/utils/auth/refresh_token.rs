@@ -2,11 +2,11 @@
 
 use spin_sdk::http::{Method, Request, Response};
 
-use crate::utils::JwtUtils;
 use super::types::ErrorResponse;
+use crate::utils::JwtUtils;
 
 /// Handle refresh token request and generate new access token
-/// 
+///
 /// This function handles the business logic for token refresh:
 /// - Extracts refresh token from HttpOnly cookies
 /// - Validates the refresh token

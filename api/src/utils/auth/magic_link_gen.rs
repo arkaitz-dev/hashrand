@@ -3,17 +3,14 @@
 use chrono::{Duration, Utc};
 use spin_sdk::http::{Request, Response};
 
-use crate::database::{
-    connection::DatabaseEnvironment,
-    operations::MagicLinkOperations,
-};
+use super::types::{ErrorResponse, MagicLinkRequest};
+use crate::database::{connection::DatabaseEnvironment, operations::MagicLinkOperations};
 use crate::utils::{
     JwtUtils, check_rate_limit, extract_client_ip, send_magic_link_email, validate_email,
 };
-use super::types::{MagicLinkRequest, ErrorResponse};
 
 /// Generate and send magic link for authentication
-/// 
+///
 /// This function handles the business logic for magic link generation:
 /// - Validates email format and rate limiting
 /// - Generates encrypted magic token with ChaCha20
