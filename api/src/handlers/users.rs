@@ -63,9 +63,7 @@ pub fn handle_users(
 }
 
 /// Handle GET /api/users - List users
-fn handle_list_users(
-    query_params: HashMap<String, String>,
-) -> anyhow::Result<Response> {
+fn handle_list_users(query_params: HashMap<String, String>) -> anyhow::Result<Response> {
     // Parse optional limit parameter
     let limit = query_params
         .get("limit")

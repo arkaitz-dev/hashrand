@@ -14,9 +14,7 @@ use crate::utils::JwtUtils;
 /// - Validates and consumes the encrypted magic token
 /// - Generates new access and refresh tokens
 /// - Returns JWT response with secure HttpOnly cookie
-pub fn validate_magic_link(
-    query_params: HashMap<String, String>,
-) -> anyhow::Result<Response> {
+pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Result<Response> {
     // Get magic link from query parameters
     let magic_token = match query_params.get("magiclink") {
         Some(token) if !token.is_empty() => token,

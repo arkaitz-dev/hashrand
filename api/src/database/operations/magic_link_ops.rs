@@ -413,9 +413,7 @@ impl MagicLinkOperations {
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
-    pub fn ensure_user_exists(
-        user_id: &[u8; 16],
-    ) -> Result<(), SqliteError> {
+    pub fn ensure_user_exists(user_id: &[u8; 16]) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
         // Insert user if it doesn't exist (ignore if already exists)

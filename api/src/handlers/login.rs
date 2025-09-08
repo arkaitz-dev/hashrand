@@ -56,9 +56,7 @@ pub async fn handle_login(
 }
 
 /// Handle POST /api/login/ - Generate magic link (HTTP routing wrapper)
-async fn handle_magic_link_generation(
-    req: Request,
-) -> anyhow::Result<Response> {
+async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
     println!(

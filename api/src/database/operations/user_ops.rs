@@ -50,9 +50,7 @@ impl UserOperations {
     ///
     /// # Returns
     /// * `Result<Option<User>, SqliteError>` - User if found, None if not found, or database error
-    pub fn get_user_by_id(
-        user_id: i64,
-    ) -> Result<Option<User>, SqliteError> {
+    pub fn get_user_by_id(user_id: i64) -> Result<Option<User>, SqliteError> {
         let connection = get_database_connection()?;
 
         let result = connection.execute(
@@ -76,9 +74,7 @@ impl UserOperations {
     /// # Returns
     /// * `Result<Option<User>, SqliteError>` - User if found, None if not found, or database error
     #[allow(dead_code)]
-    pub fn get_user_by_username(
-        username: &str,
-    ) -> Result<Option<User>, SqliteError> {
+    pub fn get_user_by_username(username: &str) -> Result<Option<User>, SqliteError> {
         let connection = get_database_connection()?;
 
         let result = connection.execute(
@@ -101,9 +97,7 @@ impl UserOperations {
     ///
     /// # Returns
     /// * `Result<Vec<User>, SqliteError>` - Vector of users or database error
-    pub fn list_users(
-        limit: Option<u32>,
-    ) -> Result<Vec<User>, SqliteError> {
+    pub fn list_users(limit: Option<u32>) -> Result<Vec<User>, SqliteError> {
         let connection = get_database_connection()?;
 
         let query = match limit {
