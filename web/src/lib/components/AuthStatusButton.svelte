@@ -85,11 +85,7 @@
 		onclick={handleButtonClick}
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
-			{#if isAuthenticated}
-				<Icon name="check" size="w-4 h-4 sm:w-5 sm:h-5" />
-			{:else}
-				<Icon name="settings" size="w-4 h-4 sm:w-5 sm:h-5" />
-			{/if}
+			<Icon name="user" size="w-5 h-5 sm:w-6 sm:h-6" />
 		</div>
 	</button>
 

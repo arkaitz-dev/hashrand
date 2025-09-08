@@ -29,7 +29,8 @@ The HashRand web interface is built with a modular component architecture using 
   - UTF emoji placeholders for instant feedback
   - 189KB professional sprite with zero quality compromise
   - Smart loading states with smooth transitions
-- **Usage**: Icons throughout the interface
+  - User silhouette icon (👤) with filled design matching theme system
+- **Usage**: Icons throughout the interface, including consistent session management
 
 #### Iconize.svelte
 - **Purpose**: Universal RTL-aware wrapper for any content
@@ -53,6 +54,16 @@ The HashRand web interface is built with a modular component architecture using 
 - **State Management**: Integrated with theme store
 
 ### 🔐 Authentication Components
+
+#### AuthStatusButton.svelte
+- **Purpose**: Session management button with consistent user icon
+- **Features**:
+  - Always-visible authentication button regardless of session state
+  - Consistent filled user silhouette icon (👤) for all states
+  - Dual functionality: login trigger (unauthenticated) and user menu (authenticated)
+  - Enhanced icon sizes (`w-5 h-5 sm:w-6 sm:h-6`) for better visibility
+  - Integrated with authentication store for state management
+- **Design**: Solid user icon with `fill="currentColor"` matching theme system
 
 #### DialogContainer.svelte
 - **Purpose**: Unified modal dialog system

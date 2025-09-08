@@ -21,6 +21,7 @@ export const iconEmojis: Record<string, string> = {
 	refresh: '🔄', // Refresh/regenerate icon
 	settings: '⚙️', // Settings/gear icon
 	play: '▶️', // Play button for generate actions
+	user: '👤', // User silhouette for authentication
 
 	// Flag emojis
 	// Countries with standard UTF flag emojis

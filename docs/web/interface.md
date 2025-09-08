@@ -40,9 +40,10 @@ The HashRand web interface is a modern **Single Page Application (SPA)** built w
 ### 🖼️ Advanced Icon System
 - **Progressive SVG Sprite Loading**: Non-blocking sprite loading after DOM ready
 - **Instant Placeholders**: UTF emoji placeholders for immediate visual feedback
-- **189KB Professional Sprite**: High-quality flag SVGs and UI icons
+- **189KB Professional Sprite**: High-quality flag SVGs and UI icons including user silhouette
 - **Smart Loading States**: Visual feedback during sprite loading with smooth transitions
 - **Zero Quality Compromise**: Full-resolution icons with optimized loading
+- **Consistent User Icon**: Filled user silhouette (👤) with emoji fallback for session management
 
 ## URL Parameter Support
 
@@ -77,6 +78,7 @@ http://localhost:5173/mnemonic/?language=spanish&words=24
 - **On-Demand Authentication**: Authentication dialog appears only when clicking "Generate"
 - **Privacy-First Design**: Server never stores or processes email addresses
 - **Dialog-Based Protection**: Modern authentication flow with modal dialogs for all generation routes
+- **Always-Visible Session Button**: User icon (👤) always visible for consistent authentication access
 
 ### Authentication Dialog System
 - **Unified Experience**: Consistent authentication across all generation pages

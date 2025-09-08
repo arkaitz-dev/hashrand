@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.6 / Web v0.19.8] - 2025-09-08
+
+### 🎨 UI/UX Improvements
+
+**Enhanced Session Management Widget**
+
+#### ✅ Authentication Button Improvements:
+- **👤 Consistent User Icon**: Authentication button now always displays a filled user silhouette icon
+  - Replaced dynamic icon switching (settings ⚙️ vs check ✅) with consistent user icon 👤
+  - Icon now uses `fill="currentColor"` for solid appearance matching theme system
+  - Added user icon (`icon-user`) to SVG sprite with proper Heroicons design
+  - Emoji fallback 👤 (bust in silhouette) for loading states
+
+#### ✅ Always-Visible Session Button:
+- **🔍 Improved Visibility**: Session management button now always visible regardless of authentication state
+  - Removed conditional rendering logic (`hasActiveSession` check) from TopControls component
+  - Cleaned up unused session detection functions (`checkActiveSession`)
+  - Button serves dual purpose: login trigger (unauthenticated) and user menu (authenticated)
+  - Streamlined code architecture by removing unnecessary session state polling
+
+#### ✅ Visual Icon Enhancements:
+- **📏 Larger Icon Sizes**: Increased theme toggle and session icons from `w-4 h-4 sm:w-5 sm:h-5` to `w-5 h-5 sm:w-6 sm:h-6`
+  - Better visual prominence within button containers
+  - Improved accessibility and touch target clarity
+  - Consistent sizing between sun/moon and user icons
+  - Maintained button container sizes for layout stability
+
+#### 📱 User Experience Impact:
+- **Consistent Interface**: Users always see session management option
+- **Intuitive Design**: Single user icon represents authentication regardless of state
+- **Improved Recognition**: Filled icons provide better visual distinction
+- **Streamlined Interaction**: Reduced cognitive load with consistent visual patterns
+
+## [API v1.6.6 / Web v0.19.7] - 2025-09-07
+
+### 🎨 UI/UX Improvements
+
+**Enhanced Authentication Dialog Experience**
+
+#### ✅ Dialog Interaction Fixes:
+- **🔧 Fixed Dialog Close Behavior**: Corrected issue where clicking inside the authentication dialog would incorrectly close it
+  - Added `stopPropagation()` to dialog content container
+  - Dialog now only closes when clicking outside (backdrop) or pressing Escape
+  - Prevents accidental dialog closure when interacting with form elements
+
+#### ✅ Email Input Enhancements:
+- **🎯 Auto-Focus Email Input**: Email field automatically receives focus when dialog opens
+  - Users can immediately start typing without clicking the input field
+  - Improved keyboard-first user experience and accessibility
+- **👁️ Refined Placeholder Styling**: Made email placeholder text more subtle and professional
+  - Light mode: `text-gray-400` (softer appearance)
+  - Dark mode: `text-gray-500` (improved contrast)
+  - Better visual hierarchy between placeholder and actual input content
+
+#### 📱 User Experience Impact:
+- **Streamlined Authentication Flow**: Reduced friction in login process
+- **Improved Accessibility**: Better keyboard navigation and visual feedback
+- **Professional Polish**: Enhanced visual refinement across dialog interactions
+- **Mobile-Friendly**: Touch interaction improvements prevent accidental dialog dismissal
+
 ## [API v1.6.6 / Web v0.19.6] - 2025-09-07
 
 ### 🏗️ MAJOR: Enterprise-Grade Code Architecture Refactoring

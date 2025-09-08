@@ -8,46 +8,6 @@
 
 	let showDropdown = $state(false);
 	let isTransitioning = $state(false);
-	let hasActiveSession = $state(false);
-
-	// Check if user has an active session (user_id + access_token)
-	function checkActiveSession() {
-		if (typeof window === 'undefined') return false;
-
-		const authUser = localStorage.getItem('auth_user');
-		const accessToken = localStorage.getItem('access_token');
-
-		// Both must exist
-		if (!authUser || !accessToken) return false;
-
-		try {
-			// Validate auth_user structure
-			const user = JSON.parse(authUser);
-			if (!user.user_id) return false;
-
-			// Check if token is not expired
-			if (user.expiresAt) {
-				const expiresAt = new Date(user.expiresAt);
-				if (expiresAt <= new Date()) return false;
-			}
-
-			return true;
-		} catch {
-			return false;
-		}
-	}
-
-	// Update session status reactively
-	$effect(() => {
-		hasActiveSession = checkActiveSession();
-
-		// Set up periodic check for session expiry
-		const interval = setInterval(() => {
-			hasActiveSession = checkActiveSession();
-		}, 5000); // Check every 5 seconds
-
-		return () => clearInterval(interval);
-	});
 
 	// Initialize selected language based on current language store
 	let selectedLanguage = $state(findLanguageByCode($currentLanguage));
@@ -148,15 +108,13 @@
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
 			{#if $theme === 'dark'}
-				<Icon name="moon" size="w-4 h-4 sm:w-5 sm:h-5" />
+				<Icon name="moon" size="w-5 h-5 sm:w-6 sm:h-6" />
 			{:else}
-				<Icon name="sun" size="w-4 h-4 sm:w-5 sm:h-5" />
+				<Icon name="sun" size="w-5 h-5 sm:w-6 sm:h-6" />
 			{/if}
 		</div>
 	</button>
 
-	<!-- Auth Status Button (only when authenticated) -->
-	{#if hasActiveSession}
-		<AuthStatusButton />
-	{/if}
+	<!-- Auth Status Button (always visible) -->
+	<AuthStatusButton />
 </div>

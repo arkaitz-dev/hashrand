@@ -1,7 +1,7 @@
 {
 	"name": "hashrand-spin-web",
 	"private": true,
-	"version": "0.19.4",
+	"version": "0.19.8",
 	"description": "Professional web interface for HashRand Spin API - hash, password, and API key generator",
 	"type": "module",
 	"scripts": {

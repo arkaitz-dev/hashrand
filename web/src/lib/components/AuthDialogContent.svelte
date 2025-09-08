@@ -8,6 +8,7 @@
 	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
 	import { dialogStore } from '../stores/dialog';
+	import { onMount } from 'svelte';
 
 	// Props
 	export let onClose: () => void;
@@ -15,6 +16,7 @@
 
 	// Component state
 	let email = (next?.email as string) || '';
+	let emailInput: HTMLInputElement;
 
 	/**
 	 * Handle form submission - show confirmation dialog
@@ -49,6 +51,15 @@
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		return emailRegex.test(email);
 	}
+
+	/**
+	 * Focus the email input when the component mounts
+	 */
+	onMount(() => {
+		if (emailInput) {
+			emailInput.focus();
+		}
+	});
 </script>
 
 <!-- Header -->
@@ -87,12 +98,14 @@
 				{$_('auth.emailAddress')}
 			</label>
 			<input
+				bind:this={emailInput}
 				id="auth-email"
 				type="email"
 				bind:value={email}
 				placeholder={$_('auth.emailPlaceholder')}
 				class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
 				       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+				       placeholder:text-gray-400 dark:placeholder:text-gray-500
 				       focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
 			/>
