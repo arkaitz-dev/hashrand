@@ -134,11 +134,12 @@ hashrand-spin/
 ├── justfile               # Development task automation
 ├── runtime-config.toml    # SQLite database configuration
 ├── Cargo.toml             # Workspace configuration
-├── spin.toml              # Spin application configuration
+├── spin-dev.toml          # Development Spin configuration (no static server)
+├── spin-prod.toml         # Production Spin configuration (with static server)
 ├── .env                   # Development environment variables
-├── data/                  # SQLite database files
-│   ├── hashrand-dev.db    # Development database
-│   └── hashrand.db        # Production database
+├── data/                  # SQLite database files (auto-generated, gitignored)
+│   ├── hashrand-dev.db    # Development database (auto-created)
+│   └── hashrand.db        # Production database (auto-created)
 ├── api/                   # API implementation (Rust + Spin)
 │   ├── Cargo.toml         # API crate configuration
 │   └── src/               # Modular source code

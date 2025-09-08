@@ -14,10 +14,11 @@ hashrand-spin/
 ├── .env                         # Development environment variables (gitignored)
 ├── runtime-config.toml          # SQLite database configuration for Spin
 ├── Cargo.toml                   # Rust workspace configuration
-├── spin.toml                    # Spin application configuration with fileserver
-├── data/                        # SQLite database files (gitignored)
-│   ├── hashrand-dev.db         # Development database
-│   └── hashrand.db             # Production database
+├── spin-dev.toml               # Development Spin configuration (no static fileserver)
+├── spin-prod.toml              # Production Spin configuration (with static fileserver)
+├── data/                        # SQLite database files (auto-generated, gitignored)
+│   ├── hashrand-dev.db         # Development database (auto-created)
+│   └── hashrand.db             # Production database (auto-created)
 ├── api/                         # API Backend (Rust + Spin WebAssembly)
 ├── web/                         # Web Interface (SvelteKit + TypeScript)
 ├── scripts/                     # Development and utility scripts
@@ -243,28 +244,46 @@ spin-sdk = "3.1.0"
 bip39 = { version = "2.2.0", features = ["all-languages"] }
 ```
 
-#### Spin Configuration (`spin.toml`)
+#### Environment-Specific Spin Configuration
+
+**Development Configuration (`spin-dev.toml`)**
 ```toml
 spin_manifest_version = 2
 
 [application]
 name = "hashrand-spin"
-version = "1.6.6"
 
 [[trigger.http]]
 route = "/api/..."
-component = "hashrand-api"
+component = "hashrand-spin"
+
+[component.hashrand-spin]
+source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
+# No static fileserver - SvelteKit serves web interface on port 5173
+```
+
+**Production Configuration (`spin-prod.toml`)**
+```toml
+spin_manifest_version = 2
+
+[application]  
+name = "hashrand-spin"
+
+[[trigger.http]]
+route = "/api/..."
+component = "hashrand-spin"
 
 [[trigger.http]]
 route = "/..."
-component = "fileserver"
+component = "static-fileserver"
 
-[component.hashrand-api]
-source = "target/wasm32-wasi/release/hashrand_spin_api.wasm"
+[component.hashrand-spin]
+source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 
-[component.fileserver]
-source = { url = "https://github.com/fermyon/spin-fileserver/releases/download/v0.0.1/spin_static_fs.wasm", digest = "sha256:650376c33a0756b1a52cad7ca670f1126391b79050df0321407da9c741d32375" }
+[component.static-fileserver]
+source = { url = "https://github.com/spinframework/spin-fileserver/releases/download/v0.3.0/spin_static_fs.wasm", digest = "sha256:ef88708817e107bf49985c7cefe4dd1f199bf26f6727819183d5c996baa3d148" }
 files = [{ source = "web/dist", destination = "/" }]
+environment = { FALLBACK_PATH = "index.html" }
 ```
 
 #### Web Configuration (`package.json`)
@@ -299,6 +318,7 @@ files = [{ source = "web/dist", destination = "/" }]
 *.db
 *.db-journal
 *.sqlite*
+data/
 
 # Development secrets and environment
 .env

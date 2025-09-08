@@ -1,0 +1,59 @@
+spin_manifest_version = 2
+
+[application]
+name = "hashrand-spin"
+version = "0.1.0"
+authors = ["Arkaitz Dev <me@arkaitz.dev>"]
+description = "A random hash generator API built with Fermyon Spin"
+
+# Application variables for secure secrets management
+[variables]
+jwt_secret = { required = true, secret = true }
+magic_link_hmac_key = { required = true, secret = true }
+user_id_hmac_key = { required = true, secret = true }
+argon2_salt = { required = true, secret = true }
+chacha_encryption_key = { required = true, secret = true }
+# Magic Link Multi-Layer Security Keys
+mlink_content_cipher = { required = true, secret = true }
+mlink_content_nonce = { required = true, secret = true }
+mlink_content_salt = { required = true, secret = true }
+# Email configuration for Mailtrap REST API with custom domain
+mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
+mailtrap_api_token = { required = true, secret = true }
+mailtrap_inbox_id = { required = true }
+from_email = { default = "noreply@mailer.hashrand.com" }
+
+[[trigger.http]]
+route = "/api/..."
+component = "hashrand-spin"
+
+[[trigger.http]]
+route = "/..."
+component = "static-fileserver"
+
+[component.hashrand-spin]
+source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
+allowed_outbound_hosts = ["https://send.api.mailtrap.io"]
+sqlite_databases = ["hashrand-dev", "hashrand"]
+# Reference application variables in component variables
+[component.hashrand-spin.variables]
+jwt_secret = "{{ jwt_secret }}"
+magic_link_hmac_key = "{{ magic_link_hmac_key }}"
+user_id_hmac_key = "{{ user_id_hmac_key }}"
+argon2_salt = "{{ argon2_salt }}"
+chacha_encryption_key = "{{ chacha_encryption_key }}"
+mlink_content_cipher = "{{ mlink_content_cipher }}"
+mlink_content_nonce = "{{ mlink_content_nonce }}"
+mlink_content_salt = "{{ mlink_content_salt }}"
+mailtrap_api_url = "{{ mailtrap_api_url }}"
+mailtrap_api_token = "{{ mailtrap_api_token }}"
+mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
+from_email = "{{ from_email }}"
+[component.hashrand-spin.build]
+command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
+watch = ["api/src/**/*.rs", "api/Cargo.toml"]
+
+[component.static-fileserver]
+source = { url = "https://github.com/spinframework/spin-fileserver/releases/download/v0.3.0/spin_static_fs.wasm", digest = "sha256:ef88708817e107bf49985c7cefe4dd1f199bf26f6727819183d5c996baa3d148" }
+files = [{ source = "web/dist", destination = "/" }]
+environment = { FALLBACK_PATH = "index.html" }

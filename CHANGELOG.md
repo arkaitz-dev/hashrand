@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.6 / Web v0.19.9] - 2025-09-08
+
+### 🧹 Project Cleanup & Configuration Improvements
+
+**Environment-Specific Configuration Management**
+
+#### ✅ Configuration Architecture Enhancement:
+- **📁 Split Configuration Files**: Separated `spin.toml` into environment-specific configurations
+  - **`spin-dev.toml`**: Development configuration (no static fileserver, SvelteKit on port 5173)  
+  - **`spin-prod.toml`**: Production configuration (with static fileserver enabled)
+  - Eliminates commented sections and provides cleaner configuration management
+
+#### ✅ Justfile Command Updates:
+- **⚙️ Environment-Specific Commands**: All development commands now use appropriate configuration
+  - Development (`just dev`, `just up`, `just dev-fg`) → use `spin-dev.toml`
+  - Production (`just predeploy`, `just deploy`) → use `spin-prod.toml`
+  - Testing (`just test-dev`) → uses development configuration
+
+#### ✅ Project Cleanup:
+- **🗑️ Removed Unnecessary Files**:
+  - `test_auth_flow.sh` - Redundant test script
+  - `test_deterministic.rs` - Unused test file
+  - `generate_hash.js` - Duplicate script (removed from both root and `/scripts/`)
+  - `implement/` directory - Legacy planning files (`plan.md`, `state.json`)
+  - `data/hashrand-dev.db` - Development database (regenerated automatically)
+- **📋 Updated .gitignore**: Added `data/` directory to prevent database files from being committed
+
+#### 🎯 Developer Experience Impact:
+- **Simplified Configuration**: Clear separation between development and production setups
+- **Reduced Clutter**: Cleaner project structure with only essential files
+- **Environment Clarity**: No more commented sections in configuration files
+- **Automated Deployment**: Production builds automatically use correct static fileserver setup
+
 ## [API v1.6.6 / Web v0.19.8] - 2025-09-08
 
 ### 🎨 UI/UX Improvements

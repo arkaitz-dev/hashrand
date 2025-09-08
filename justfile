@@ -20,7 +20,7 @@ build:
 
 # Start the application locally
 up:
-    spin-cli up --runtime-config-file runtime-config.toml
+    spin-cli up --runtime-config-file runtime-config.toml -f spin-dev.toml
 
 # Stop any running development servers (foreground and background)
 stop: tailscale-stop
@@ -210,7 +210,7 @@ dev-fg: stop
     echo "  API: http://localhost:3000"
     echo "  Web: http://localhost:5173"
     echo "  Press Ctrl+C to stop"
-    spin-cli watch
+    spin-cli watch -f spin-dev.toml
 
 # Start complete development environment (both servers in background)
 dev: stop
@@ -219,7 +219,7 @@ dev: stop
     
     # Start spin-cli watch in background (first - API backend)
     echo "Starting spin-cli watch in background..."
-    nohup spin-cli watch --runtime-config-file runtime-config.toml > .spin-dev.log 2>&1 &
+    nohup spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml > .spin-dev.log 2>&1 &
     SPIN_PID=$!
     echo $SPIN_PID > .spin-dev.pid
     
@@ -349,7 +349,7 @@ deploy:
     #!/usr/bin/env bash
     # Read secrets from .env file and deploy to Fermyon Cloud
     source .env
-    spin-cli deploy --runtime-config-file runtime-config.toml \
+    spin-cli deploy --runtime-config-file runtime-config.toml -f spin-prod.toml \
         --variable jwt_secret="${JWT_SECRET:-${SPIN_VARIABLE_JWT_SECRET}}" \
         --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
         --variable argon2_salt="${ARGON2_SALT:-${SPIN_VARIABLE_ARGON2_SALT}}"
@@ -380,7 +380,7 @@ predeploy: stop clean
     
     # Start backend only (includes static file serving)
     echo "Starting backend with static file serving..."
-    nohup spin-cli up --runtime-config-file runtime-config.toml > .spin-predeploy.log 2>&1 &
+    nohup spin-cli up --runtime-config-file runtime-config.toml -f spin-prod.toml > .spin-predeploy.log 2>&1 &
     SPIN_PID=$!
     echo $SPIN_PID > .spin-predeploy.pid
     
@@ -435,7 +435,7 @@ test-dev:
     # Stop any existing servers first
     just stop > /dev/null 2>&1
     echo "Starting development server in background..."
-    spin-cli watch --runtime-config-file runtime-config.toml > /dev/null 2>&1 &
+    spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml > /dev/null 2>&1 &
     SPIN_PID=$!
     sleep 3
     echo "Running tests..."
