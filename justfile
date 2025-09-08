@@ -14,7 +14,7 @@ default:
 build:
     #!/usr/bin/env bash
     echo "Building WebAssembly component..."
-    spin-cli build
+    spin-cli build -f spin-dev.toml
     echo "Building web interface..."
     cd web && npx svelte-kit sync && npm run build
 
@@ -376,7 +376,7 @@ predeploy: stop clean
     
     # Build WebAssembly component
     echo "Building WebAssembly backend component..."
-    spin-cli build
+    spin-cli build -f spin-prod.toml
     
     # Start backend only (includes static file serving)
     echo "Starting backend with static file serving..."

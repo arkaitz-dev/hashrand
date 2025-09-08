@@ -4,7 +4,7 @@ use chrono::{Duration, Utc};
 use spin_sdk::http::{Request, Response};
 
 use super::types::{ErrorResponse, MagicLinkRequest};
-use crate::database::{connection::DatabaseEnvironment, operations::MagicLinkOperations};
+use crate::database::operations::MagicLinkOperations;
 use crate::utils::{
     JwtUtils, check_rate_limit, extract_client_ip, send_magic_link_email, validate_email,
 };
@@ -19,7 +19,6 @@ use crate::utils::{
 pub async fn generate_magic_link(
     req: &Request,
     magic_request: &MagicLinkRequest,
-    env: DatabaseEnvironment,
 ) -> anyhow::Result<Response> {
     // Check rate limiting for authentication requests
     let client_ip = extract_client_ip(req.headers());
@@ -93,7 +92,6 @@ pub async fn generate_magic_link(
 
     // Store encrypted magic token in database with ChaCha20 encryption data and random hash
     match MagicLinkOperations::store_magic_link_encrypted(
-        env.clone(),
         &magic_token,
         &encryption_blob,
         expires_at_nanos,
@@ -156,7 +154,7 @@ pub async fn generate_magic_link(
             }
 
             // Clean up expired sessions
-            let _ = MagicLinkOperations::cleanup_expired_links(env);
+            let _ = MagicLinkOperations::cleanup_expired_links();
 
             Ok(Response::builder()
                 .status(200)

@@ -1,23 +1,25 @@
 # Database System
 
-HashRand includes a **complete SQLite database system** for user management with environment-aware database selection and Zero Knowledge privacy architecture.
+HashRand includes a **complete SQLite database system** for user management with Spin variable-based database selection and Zero Knowledge privacy architecture.
 
 ## Database Architecture
 
-### Environment-Aware Selection
+### Spin Variable-Based Selection
 
-The application automatically selects the appropriate database based on the HTTP Host header:
+The application selects the appropriate database using Spin configuration variables:
 
-- **Development Database**: `hashrand-dev.db` - Used for localhost and elite.faun-pirate.ts.net requests
-- **Production Database**: `hashrand.db` - Used for all other hosts
-- **Automatic Environment Detection**: Based on HTTP Host header in requests
+- **Development Database**: `hashrand-dev.db` - Used when `database_name = "hashrand-dev"` (spin-dev.toml)
+- **Production Database**: `hashrand.db` - Used when `database_name = "hashrand"` (spin-prod.toml)
+- **Configuration-Driven**: Database selection through Spin variables, no hardcoded logic
+- **Environment Separation**: Complete isolation between development and production databases
 - **Table Auto-Creation**: All tables created automatically on first access
 
 ### Configuration Files
 
-- **`runtime-config.toml`**: Defines database paths and configuration
-- **`spin.toml`**: Declares SQLite database access permissions
-- **`data/`**: Directory containing SQLite database files
+- **`runtime-config.toml`**: Defines database paths for both environments
+- **`spin-dev.toml`**: Development configuration with `database_name = "hashrand-dev"`
+- **`spin-prod.toml`**: Production configuration with `database_name = "hashrand"`
+- **`data/`**: Directory containing SQLite database files (gitignored)
 
 ## Zero Knowledge Database Schema
 

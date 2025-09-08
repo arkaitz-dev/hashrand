@@ -7,7 +7,7 @@ use serde_json;
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
-use crate::database::{DatabaseEnvironment, User, UserOperations, initialize_database};
+use crate::database::{User, UserOperations, initialize_database};
 
 /// Handle user-related requests
 ///
@@ -29,13 +29,8 @@ pub fn handle_users(
     path: &str,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
-    // Convert Request to IncomingRequest for environment detection
-    // For now, use default development environment detection
-    // TODO: Implement proper host header detection from Request
-    let env = DatabaseEnvironment::Development;
-
     // Initialize database tables if needed
-    if let Err(e) = initialize_database(env.clone()) {
+    if let Err(e) = initialize_database() {
         eprintln!("Database initialization error: {:?}", e);
         return Ok(Response::new(
             500,
@@ -48,16 +43,16 @@ pub fn handle_users(
 
     match (method, path_parts.as_slice()) {
         // GET /api/users - List all users
-        (Method::Get, ["api", "users"]) => handle_list_users(env, query_params),
+        (Method::Get, ["api", "users"]) => handle_list_users(query_params),
 
         // GET /api/users/:id - Get specific user
-        (Method::Get, ["api", "users", id_str]) => handle_get_user(env, id_str),
+        (Method::Get, ["api", "users", id_str]) => handle_get_user(id_str),
 
         // POST /api/users - Create new user
-        (Method::Post, ["api", "users"]) => handle_create_user(env, req),
+        (Method::Post, ["api", "users"]) => handle_create_user(req),
 
         // DELETE /api/users/:id - Delete user
-        (Method::Delete, ["api", "users", id_str]) => handle_delete_user(env, id_str),
+        (Method::Delete, ["api", "users", id_str]) => handle_delete_user(id_str),
 
         // Unsupported routes
         _ => Ok(Response::new(
@@ -69,7 +64,6 @@ pub fn handle_users(
 
 /// Handle GET /api/users - List users
 fn handle_list_users(
-    env: DatabaseEnvironment,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
     // Parse optional limit parameter
@@ -77,7 +71,7 @@ fn handle_list_users(
         .get("limit")
         .and_then(|s| s.parse::<u32>().ok());
 
-    match UserOperations::list_users(env, limit) {
+    match UserOperations::list_users(limit) {
         Ok(users) => {
             let response = serde_json::json!({
                 "users": users,
@@ -94,7 +88,7 @@ fn handle_list_users(
 }
 
 /// Handle GET /api/users/:id - Get specific user
-fn handle_get_user(env: DatabaseEnvironment, id_str: &str) -> anyhow::Result<Response> {
+fn handle_get_user(id_str: &str) -> anyhow::Result<Response> {
     let user_id = match id_str.parse::<i64>() {
         Ok(id) => id,
         Err(_) => {
@@ -102,7 +96,7 @@ fn handle_get_user(env: DatabaseEnvironment, id_str: &str) -> anyhow::Result<Res
         }
     };
 
-    match UserOperations::get_user_by_id(env, user_id) {
+    match UserOperations::get_user_by_id(user_id) {
         Ok(Some(user)) => Ok(Response::new(200, serde_json::to_string(&user)?)),
         Ok(None) => Ok(Response::new(404, r#"{"error": "User not found"}"#)),
         Err(e) => {
@@ -113,7 +107,7 @@ fn handle_get_user(env: DatabaseEnvironment, id_str: &str) -> anyhow::Result<Res
 }
 
 /// Handle POST /api/users - Create new user
-fn handle_create_user(env: DatabaseEnvironment, req: Request) -> anyhow::Result<Response> {
+fn handle_create_user(req: Request) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
     let body_str = std::str::from_utf8(body_bytes)?;
@@ -136,10 +130,10 @@ fn handle_create_user(env: DatabaseEnvironment, req: Request) -> anyhow::Result<
     }
 
     // Create user in database
-    match UserOperations::create_user(env.clone(), &user) {
+    match UserOperations::create_user(&user) {
         Ok(user_id) => {
             // Return created user
-            match UserOperations::get_user_by_id(env, user_id) {
+            match UserOperations::get_user_by_id(user_id) {
                 Ok(Some(created_user)) => {
                     Ok(Response::new(201, serde_json::to_string(&created_user)?))
                 }
@@ -165,7 +159,7 @@ fn handle_create_user(env: DatabaseEnvironment, req: Request) -> anyhow::Result<
 }
 
 /// Handle DELETE /api/users/:id - Delete user
-fn handle_delete_user(env: DatabaseEnvironment, id_str: &str) -> anyhow::Result<Response> {
+fn handle_delete_user(id_str: &str) -> anyhow::Result<Response> {
     let user_id = match id_str.parse::<i64>() {
         Ok(id) => id,
         Err(_) => {
@@ -173,7 +167,7 @@ fn handle_delete_user(env: DatabaseEnvironment, id_str: &str) -> anyhow::Result<
         }
     };
 
-    match UserOperations::delete_user(env, user_id) {
+    match UserOperations::delete_user(user_id) {
         Ok(true) => Ok(Response::new(
             200,
             r#"{"message": "User deleted successfully"}"#,

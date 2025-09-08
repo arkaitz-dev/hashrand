@@ -37,7 +37,7 @@ api/
     ├── lib.rs                   # Main HTTP handler and Spin component entry
     ├── database/                # Database abstraction layer
     │   ├── mod.rs              # Database module exports
-    │   ├── connection.rs        # Environment-aware database connections
+    │   ├── connection.rs        # Spin variable-based database connections
     │   ├── models.rs           # User model and data structures  
     │   └── operations/         # Modular database operations
     │       ├── mod.rs          # Operations module exports

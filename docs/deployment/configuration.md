@@ -39,9 +39,9 @@ FROM_EMAIL=noreply@hashrand.dev  # Default sender address
 # Environment mode
 NODE_ENV=development  # or 'production'
 
-# Database configuration (automatic based on host)
-# Development: hashrand-dev.db
-# Production: hashrand.db
+# Database configuration (Spin variable-based)
+# Development: database_name = "hashrand-dev" (spin-dev.toml)
+# Production: database_name = "hashrand" (spin-prod.toml)
 ```
 
 ## Secret Generation
@@ -179,32 +179,46 @@ In development mode:
 
 ## Database Configuration
 
-### Environment-Aware Database Selection
+### Spin Variable-Based Database Selection
 
-Automatic database selection based on request host:
+Database selection using Spin configuration variables:
 
-| Environment | Host Pattern | Database File | Features |
-|-------------|--------------|---------------|----------|
-| Development | `localhost`, `*.ts.net` | `hashrand-dev.db` | Extended timeouts, debug logging |
-| Production | All other hosts | `hashrand.db` | Standard security settings |
+| Environment | Configuration File | Database Variable | Database File | Features |
+|-------------|-------------------|------------------|---------------|----------|
+| Development | `spin-dev.toml` | `database_name = "hashrand-dev"` | `hashrand-dev.db` | Extended timeouts, debug logging |
+| Production | `spin-prod.toml` | `database_name = "hashrand"` | `hashrand.db` | Standard security settings |
 
-### Database Paths
+### Runtime Configuration
 
 ```toml
-# runtime-config.toml
-[variables]
-database_url = "sqlite://data/hashrand.db"
+# runtime-config.toml - Database path definitions
+[sqlite_database.hashrand-dev]
+type = "spin"
+path = "./data/hashrand-dev.db"
 
-[variables.development]
-database_url = "sqlite://data/hashrand-dev.db"
+[sqlite_database.hashrand]
+type = "spin" 
+path = "./data/hashrand.db"
+```
+
+### Configuration Files
+
+```toml
+# spin-dev.toml - Development
+[variables]
+database_name = { default = "hashrand-dev" }
+
+# spin-prod.toml - Production  
+[variables]
+database_name = { default = "hashrand" }
 ```
 
 ### Database Directory Structure
 
 ```
 data/
-├── hashrand-dev.db      # Development database
-├── hashrand.db          # Production database
+├── hashrand-dev.db      # Development database (spin-dev.toml)
+├── hashrand.db          # Production database (spin-prod.toml)
 ├── *.db-journal         # SQLite journal files (ignored in git)
 └── *.sqlite*            # Other SQLite files (ignored in git)
 ```

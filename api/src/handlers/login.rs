@@ -8,7 +8,7 @@
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
-use crate::database::connection::{DatabaseEnvironment, initialize_database};
+use crate::database::connection::initialize_database;
 use crate::utils::auth::{
     ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token, validate_magic_link,
 };
@@ -27,11 +27,9 @@ pub async fn handle_login(
 ) -> anyhow::Result<Response> {
     // Determine database environment
     // For now use Development since we don't have access to IncomingRequest
-    let env = DatabaseEnvironment::Development;
-
     // Initialize database to ensure auth_sessions table exists
     println!("Initializing database...");
-    if let Err(e) = initialize_database(env.clone()) {
+    if let Err(e) = initialize_database() {
         println!("Failed to initialize database: {}", e);
         return Ok(Response::builder()
             .status(500)
@@ -44,8 +42,8 @@ pub async fn handle_login(
     println!("Database initialized successfully");
 
     match *req.method() {
-        Method::Post => handle_magic_link_generation(req, env).await,
-        Method::Get => validate_magic_link(query_params, env),
+        Method::Post => handle_magic_link_generation(req).await,
+        Method::Get => validate_magic_link(query_params),
         Method::Delete => handle_logout(),
         _ => Ok(Response::builder()
             .status(405)
@@ -60,7 +58,6 @@ pub async fn handle_login(
 /// Handle POST /api/login/ - Generate magic link (HTTP routing wrapper)
 async fn handle_magic_link_generation(
     req: Request,
-    env: DatabaseEnvironment,
 ) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
@@ -91,7 +88,7 @@ async fn handle_magic_link_generation(
         };
 
     // Delegate to business logic
-    generate_magic_link(&req, &magic_request, env).await
+    generate_magic_link(&req, &magic_request).await
 }
 
 /// Handle DELETE /api/login/ - Clear refresh token cookie (logout)

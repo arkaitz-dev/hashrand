@@ -3,7 +3,7 @@
 //! Provides CRUD operations for the users table with proper error handling
 //! and type safety using Spin's SQLite interface.
 
-use crate::database::{connection::DatabaseEnvironment, get_database_connection, models::User};
+use crate::database::{get_database_connection, models::User};
 use spin_sdk::sqlite::{Error as SqliteError, Value};
 
 /// User database operations
@@ -18,8 +18,8 @@ impl UserOperations {
     ///
     /// # Returns
     /// * `Result<i64, SqliteError>` - Created user ID or database error
-    pub fn create_user(env: DatabaseEnvironment, user: &User) -> Result<i64, SqliteError> {
-        let connection = get_database_connection(env)?;
+    pub fn create_user(user: &User) -> Result<i64, SqliteError> {
+        let connection = get_database_connection()?;
 
         connection.execute(
             "INSERT INTO users (username, email) VALUES (?, ?)",
@@ -51,10 +51,9 @@ impl UserOperations {
     /// # Returns
     /// * `Result<Option<User>, SqliteError>` - User if found, None if not found, or database error
     pub fn get_user_by_id(
-        env: DatabaseEnvironment,
         user_id: i64,
     ) -> Result<Option<User>, SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         let result = connection.execute(
             "SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?",
@@ -78,10 +77,9 @@ impl UserOperations {
     /// * `Result<Option<User>, SqliteError>` - User if found, None if not found, or database error
     #[allow(dead_code)]
     pub fn get_user_by_username(
-        env: DatabaseEnvironment,
         username: &str,
     ) -> Result<Option<User>, SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         let result = connection.execute(
             "SELECT id, username, email, created_at, updated_at FROM users WHERE username = ?",
@@ -104,10 +102,9 @@ impl UserOperations {
     /// # Returns
     /// * `Result<Vec<User>, SqliteError>` - Vector of users or database error
     pub fn list_users(
-        env: DatabaseEnvironment,
         limit: Option<u32>,
     ) -> Result<Vec<User>, SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         let query = match limit {
             Some(l) => format!("SELECT id, username, email, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT {}", l),
@@ -132,8 +129,8 @@ impl UserOperations {
     ///
     /// # Returns
     /// * `Result<bool, SqliteError>` - True if user was deleted, false if not found
-    pub fn delete_user(env: DatabaseEnvironment, user_id: i64) -> Result<bool, SqliteError> {
-        let connection = get_database_connection(env.clone())?;
+    pub fn delete_user(user_id: i64) -> Result<bool, SqliteError> {
+        let connection = get_database_connection()?;
 
         // First check if user exists
         let exists_result = connection.execute(

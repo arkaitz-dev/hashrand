@@ -22,6 +22,8 @@ mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
 mailtrap_inbox_id = { required = true }
 from_email = { default = "noreply@mailer.hashrand.com" }
+# Database configuration
+database_name = { default = "hashrand" }
 
 [[trigger.http]]
 route = "/api/..."
@@ -34,7 +36,7 @@ component = "static-fileserver"
 [component.hashrand-spin]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 allowed_outbound_hosts = ["https://send.api.mailtrap.io"]
-sqlite_databases = ["hashrand-dev", "hashrand"]
+sqlite_databases = ["hashrand"]
 # Reference application variables in component variables
 [component.hashrand-spin.variables]
 jwt_secret = "{{ jwt_secret }}"
@@ -49,6 +51,7 @@ mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
 from_email = "{{ from_email }}"
+database_name = "{{ database_name }}"
 [component.hashrand-spin.build]
 command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]

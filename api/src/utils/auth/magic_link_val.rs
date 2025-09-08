@@ -4,7 +4,7 @@ use spin_sdk::http::Response;
 use std::collections::HashMap;
 
 use super::types::ErrorResponse;
-use crate::database::{connection::DatabaseEnvironment, operations::MagicLinkOperations};
+use crate::database::operations::MagicLinkOperations;
 use crate::utils::JwtUtils;
 
 /// Validate magic link and generate JWT tokens
@@ -16,7 +16,6 @@ use crate::utils::JwtUtils;
 /// - Returns JWT response with secure HttpOnly cookie
 pub fn validate_magic_link(
     query_params: HashMap<String, String>,
-    env: DatabaseEnvironment,
 ) -> anyhow::Result<Response> {
     // Get magic link from query parameters
     let magic_token = match query_params.get("magiclink") {
@@ -40,7 +39,6 @@ pub fn validate_magic_link(
 
     let (is_valid, next_param, user_id_bytes) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(
-            env.clone(),
             magic_token,
             random_hash,
         ) {
@@ -127,7 +125,7 @@ pub fn validate_magic_link(
     println!("User {} authenticated successfully", username);
 
     // Ensure user exists in users table
-    let _ = MagicLinkOperations::ensure_user_exists(env.clone(), &user_id_array);
+    let _ = MagicLinkOperations::ensure_user_exists(&user_id_array);
 
     // Generate new access and refresh tokens
     let (access_token, _access_expires) = match JwtUtils::create_access_token(&username) {

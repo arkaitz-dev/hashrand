@@ -1,62 +1,30 @@
-//! Database connection management with environment detection
+//! Database connection management
 //!
-//! Provides environment-aware database connection based on request host headers.
-//! Development hosts (localhost, elite.faun-pirate.ts.net) use hashrand-dev database,
-//! while production hosts use hashrand database.
+//! Provides database connection using Spin variables.
+//! Database name is configured in spin configuration files.
 
-use spin_sdk::http::IncomingRequest;
 use spin_sdk::sqlite::{Connection, Error as SqliteError};
+use spin_sdk::variables;
 
-/// Database environment determination based on request context
-#[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
-pub enum DatabaseEnvironment {
-    Development,
-    Production,
-}
-
-impl DatabaseEnvironment {
-    /// Determine environment from HTTP request host header
-    #[allow(unused_variables, dead_code)]
-    pub fn from_request(req: &IncomingRequest) -> Self {
-        // For now, always return Development
-        // TODO: Implement proper host header detection
-        DatabaseEnvironment::Development
-    }
-
-    /// Get database name for the environment
-    pub fn database_name(&self) -> &'static str {
-        match self {
-            DatabaseEnvironment::Development => "hashrand-dev",
-            DatabaseEnvironment::Production => "hashrand",
-        }
-    }
-}
-
-/// Get database connection based on environment
-///
-/// # Arguments
-/// * `env` - Database environment (Development or Production)
+/// Get database connection using configured database name
 ///
 /// # Returns
 /// * `Result<Connection, SqliteError>` - Database connection or error
-pub fn get_database_connection(env: DatabaseEnvironment) -> Result<Connection, SqliteError> {
-    let db_name = env.database_name();
+pub fn get_database_connection() -> Result<Connection, SqliteError> {
+    let db_name = variables::get("database_name")
+        .map_err(|_| SqliteError::AccessDenied)?;
     println!("Database: Connecting to database: '{}'", db_name);
-    Connection::open(db_name)
+    Connection::open(&db_name)
 }
 
-/// Initialize database tables for the specified environment
+/// Initialize database tables
 ///
 /// Creates the users and magiclinks tables if they don't exist.
 ///
-/// # Arguments
-/// * `env` - Database environment to initialize
-///
 /// # Returns
 /// * `Result<(), SqliteError>` - Success or database error
-pub fn initialize_database(env: DatabaseEnvironment) -> Result<(), SqliteError> {
-    let connection = get_database_connection(env)?;
+pub fn initialize_database() -> Result<(), SqliteError> {
+    let connection = get_database_connection()?;
 
     // Create users table if it doesn't exist
     connection.execute(

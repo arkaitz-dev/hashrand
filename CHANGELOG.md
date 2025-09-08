@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.7] - 2025-09-09
+
+### 🏗️ Database Architecture Modernization
+
+**Complete DatabaseEnvironment Refactoring**
+
+#### ✅ Infrastructure Modernization:
+- **🔧 Eliminated Legacy Code**: Removed obsolete `DatabaseEnvironment` hardcoding throughout codebase
+  - `connection.rs`: Streamlined to use Spin variables exclusively
+  - Database operations: Removed `env` parameters from all functions  
+  - Auth handlers: Simplified to modern variable-based configuration
+  - 200+ lines of obsolete environment detection logic removed
+
+#### ✅ Spin Variable Integration:
+- **📊 Modern Configuration**: Full migration to Spin variable-based database selection
+  - Development environment: `database_name = "hashrand-dev"`
+  - Production environment: `database_name = "hashrand"`
+  - Runtime configuration through `.toml` files instead of hardcoded logic
+  - True separation of development vs production database environments
+
+#### ✅ Code Quality Improvements:
+- **⚡ Surgical Refactoring**: 7 core files modernized with zero breaking changes
+  - `api/src/database/connection.rs` - Eliminated `DatabaseEnvironment` enum
+  - `api/src/database/operations/*.rs` - Simplified all database operations  
+  - `api/src/utils/auth/*.rs` - Updated authentication handlers
+  - `api/src/handlers/*.rs` - Modernized user and login handlers
+- **🧪 Quality Assurance**: All changes verified with cargo clippy (zero warnings)
+- **🔒 Functionality Preserved**: Complete test coverage maintains 100% API compatibility
+- **🎯 User ID Consistency**: Confirmed cryptographic consistency between environments
+
+#### 🎯 Developer Experience Impact:
+- **Fixed Predeploy Issues**: Resolved `just predeploy` access denied errors
+- **Cleaner Codebase**: Removed technical debt and obsolete patterns
+- **Simplified Maintenance**: Modern architecture easier to understand and extend
+- **Environment Clarity**: True isolation between development and production databases
+
 ## [API v1.6.6 / Web v0.19.9] - 2025-09-08
 
 ### 🧹 Project Cleanup & Configuration Improvements

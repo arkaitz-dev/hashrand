@@ -3,7 +3,7 @@
 //! Provides operations for storing and validating encrypted magic links with
 //! multi-layer security using Argon2id, Blake2b, and ChaCha20-Poly1305.
 
-use crate::database::{connection::DatabaseEnvironment, get_database_connection};
+use crate::database::get_database_connection;
 use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::{
     Blake2bMac, Blake2bVar,
@@ -198,14 +198,13 @@ impl MagicLinkOperations {
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
     pub fn store_magic_link_encrypted(
-        env: DatabaseEnvironment,
         encrypted_token: &str,
         encryption_blob: &[u8; 44],
         expires_at_nanos: i64,
         next_param: Option<&str>,
         random_hash: Option<&str>,
     ) -> Result<(), SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         // Decode Base58 encrypted token
         let encrypted_data = bs58::decode(encrypted_token)
@@ -280,11 +279,10 @@ impl MagicLinkOperations {
     /// # Returns
     /// * `Result<ValidationResult, SqliteError>` - (validation_result, next_param, user_id) or error
     pub fn validate_and_consume_magic_link_encrypted(
-        env: DatabaseEnvironment,
         encrypted_token: &str,
         provided_hash: Option<&str>,
     ) -> Result<ValidationResult, SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         // Decode Base58 encrypted token
         let encrypted_data = bs58::decode(encrypted_token)
@@ -416,10 +414,9 @@ impl MagicLinkOperations {
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
     pub fn ensure_user_exists(
-        env: DatabaseEnvironment,
         user_id: &[u8; 16],
     ) -> Result<(), SqliteError> {
-        let connection = get_database_connection(env)?;
+        let connection = get_database_connection()?;
 
         // Insert user if it doesn't exist (ignore if already exists)
         match connection.execute(
@@ -447,8 +444,8 @@ impl MagicLinkOperations {
     ///
     /// # Returns
     /// * `Result<u32, SqliteError>` - Number of links deleted or database error
-    pub fn cleanup_expired_links(env: DatabaseEnvironment) -> Result<u32, SqliteError> {
-        let connection = get_database_connection(env)?;
+    pub fn cleanup_expired_links() -> Result<u32, SqliteError> {
+        let connection = get_database_connection()?;
 
         let now_hours = (Utc::now().timestamp() / 3600) as u64;
         let _result = connection.execute(

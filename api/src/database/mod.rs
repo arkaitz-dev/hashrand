@@ -6,6 +6,6 @@ pub mod connection;
 pub mod models;
 pub mod operations;
 
-pub use connection::{DatabaseEnvironment, get_database_connection, initialize_database};
+pub use connection::{get_database_connection, initialize_database};
 pub use models::User;
 pub use operations::UserOperations;
