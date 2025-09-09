@@ -12,6 +12,7 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
+	import { authStore } from '$lib/stores/auth';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
 
 	// Default values
@@ -26,13 +27,13 @@
 	}
 
 	// Form state - will be initialized in onMount
-	let params: GenerateParams = getDefaultParams();
-	let urlProvidedSeed: string = ''; // Seed from URL parameters (read-only)
+	let params: GenerateParams = $state(getDefaultParams());
+	let urlProvidedSeed: string = $state(''); // Seed from URL parameters (read-only)
 
 	// Eliminados los debug messages
 
 	// Get URL parameters reactively
-	$: searchParams = $page.url.searchParams;
+	let searchParams = $derived($page.url.searchParams);
 
 	// Function to validate alphabet parameter
 	function isValidAlphabet(value: string): value is AlphabetType {
@@ -40,7 +41,7 @@
 	}
 
 	// Reactive alphabet options that update when language changes
-	$: alphabetOptions = [
+	let alphabetOptions = $derived([
 		{
 			value: 'base58' as AlphabetType,
 			label: $_('alphabets.base58'),
@@ -66,7 +67,7 @@
 			label: $_('alphabets.numeric'),
 			description: $_('custom.numericDescription')
 		}
-	];
+	]);
 
 	// Seed validation functions (commented out as we now only show seeds read-only)
 	// function isValidHexSeed(seed: string): boolean {
@@ -76,10 +77,10 @@
 	// }
 
 	// Validation
-	$: lengthValid = params.length && params.length >= 2 && params.length <= 128;
-	$: prefixValid = !params.prefix || params.prefix.length <= 32;
-	$: suffixValid = !params.suffix || params.suffix.length <= 32;
-	$: formValid = lengthValid && prefixValid && suffixValid;
+	let lengthValid = $derived(params.length && params.length >= 2 && params.length <= 128);
+	let prefixValid = $derived(!params.prefix || params.prefix.length <= 32);
+	let suffixValid = $derived(!params.suffix || params.suffix.length <= 32);
+	let formValid = $derived(lengthValid && prefixValid && suffixValid);
 
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
@@ -90,12 +91,11 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado
-		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
-		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
+		// Verify authentication with automatic refresh
+		const isAuthenticated = await authStore.ensureAuthenticated();
 
-		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de autenticación
+		if (!isAuthenticated) {
+			// No se pudo autenticar - mostrar diálogo de autenticación
 			pendingGenerationParams = {
 				endpoint: 'custom',
 				length: params.length ?? 21,
@@ -108,7 +108,7 @@
 			return;
 		}
 
-		// Usuario autenticado - proceder con la generación
+		// User authenticated - proceed with generation
 		await performGeneration();
 	}
 
@@ -340,9 +340,10 @@
 						<!-- Generate hash button -->
 						<GenerateButton
 							type="submit"
-							disabled={!formValid || $isLoading}
-							loading={$isLoading}
+							disabled={!formValid || $isLoading || $authStore.isRefreshing}
+							loading={$isLoading || $authStore.isRefreshing}
 							text={$_('custom.generateHash')}
+							loadingText={$authStore.isRefreshing ? $_('auth.authenticating') : $_('common.loading') + '...'}
 						/>
 
 						<!-- Back to menu button -->

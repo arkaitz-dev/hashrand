@@ -12,6 +12,7 @@ import { api } from '../api';
 interface AuthState {
 	user: AuthUser | null;
 	isLoading: boolean;
+	isRefreshing: boolean;
 	error: string | null;
 	accessToken: string | null;
 }
@@ -19,6 +20,7 @@ interface AuthState {
 const initialState: AuthState = {
 	user: null,
 	isLoading: false,
+	isRefreshing: false,
 	error: null,
 	accessToken: null
 };
@@ -27,14 +29,14 @@ const initialState: AuthState = {
 const { subscribe, set, update } = writable<AuthState>(initialState);
 
 /**
- * Load authentication state from localStorage on initialization
+ * Load authentication state from sessionStorage on initialization
  */
 function loadAuthFromStorage(): void {
 	if (typeof window === 'undefined') return;
 
 	try {
-		const storedAuth = localStorage.getItem('auth_user');
-		const storedToken = localStorage.getItem('access_token');
+		const storedAuth = sessionStorage.getItem('auth_user');
+		const storedToken = sessionStorage.getItem('access_token');
 
 		if (storedAuth && storedToken) {
 			const user = JSON.parse(storedAuth);
@@ -58,27 +60,91 @@ function loadAuthFromStorage(): void {
 }
 
 /**
- * Save authentication state to localStorage
+ * Save authentication state to sessionStorage
  */
 function saveAuthToStorage(user: AuthUser, accessToken: string): void {
 	if (typeof window === 'undefined') return;
 
 	try {
-		localStorage.setItem('auth_user', JSON.stringify(user));
-		localStorage.setItem('access_token', accessToken);
+		sessionStorage.setItem('auth_user', JSON.stringify(user));
+		sessionStorage.setItem('access_token', accessToken);
 	} catch (error) {
 		console.warn('Failed to save auth to storage:', error);
 	}
 }
 
 /**
- * Clear authentication state from localStorage
+ * Clear authentication state from sessionStorage
  */
 function clearAuthFromStorage(): void {
 	if (typeof window === 'undefined') return;
 
-	localStorage.removeItem('auth_user');
-	localStorage.removeItem('access_token');
+	sessionStorage.removeItem('auth_user');
+	sessionStorage.removeItem('access_token');
+	// Also clear crypto tokens when clearing auth
+	sessionStorage.removeItem('cipher_token');
+	sessionStorage.removeItem('nonce_token');
+}
+
+/**
+ * Generate cryptographically secure cipher and nonce tokens
+ */
+function generateCryptoTokens(): void {
+	if (typeof window === 'undefined') return;
+
+	try {
+		// Generate 32-byte tokens using Web Crypto API
+		const cipherToken = new Uint8Array(32);
+		const nonceToken = new Uint8Array(32);
+		
+		crypto.getRandomValues(cipherToken);
+		crypto.getRandomValues(nonceToken);
+
+		// Convert to base64 for storage
+		const cipherB64 = btoa(String.fromCharCode(...cipherToken));
+		const nonceB64 = btoa(String.fromCharCode(...nonceToken));
+
+		sessionStorage.setItem('cipher_token', cipherB64);
+		sessionStorage.setItem('nonce_token', nonceB64);
+
+		// Show tokens in flash messages for debugging
+		import('./flashMessages').then(({ flashMessagesStore }) => {
+			flashMessagesStore.addMessages([
+				`🔐 Cipher Token: ${cipherB64.substring(0, 16)}...${cipherB64.slice(-8)}`,
+				`🎲 Nonce Token: ${nonceB64.substring(0, 16)}...${nonceB64.slice(-8)}`
+			]);
+		});
+	} catch (error) {
+		console.warn('Failed to generate crypto tokens:', error);
+	}
+}
+
+/**
+ * Check if cipher and nonce tokens exist in sessionStorage
+ */
+function hasCryptoTokens(): boolean {
+	if (typeof window === 'undefined') return false;
+	
+	return !!(sessionStorage.getItem('cipher_token') && sessionStorage.getItem('nonce_token'));
+}
+
+/**
+ * Check if refresh cookie exists and is valid
+ */
+async function hasValidRefreshCookie(): Promise<boolean> {
+	if (typeof window === 'undefined') return false;
+
+	try {
+		// Try to refresh token to see if refresh cookie is valid
+		const response = await fetch('/api/refresh', {
+			method: 'POST',
+			credentials: 'include',
+		});
+		
+		return response.ok;
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -88,10 +154,96 @@ export const authStore = {
 	subscribe,
 
 	/**
-	 * Initialize the auth store by loading from localStorage
+	 * Initialize the auth store by loading from sessionStorage
 	 */
-	init(): void {
+	async init(): Promise<void> {
+		// Load existing session data
 		loadAuthFromStorage();
+		
+		// Only check if we need to refresh session for existing users
+		// but don't generate crypto tokens here
+		await this.checkSessionValidity();
+	},
+
+	/**
+	 * Check session validity and handle expired refresh cookies
+	 */
+	async checkSessionValidity(): Promise<void> {
+		// If we have access token but no crypto tokens, something might be wrong
+		const state = get(authStore);
+		if (state.accessToken && !hasCryptoTokens()) {
+			// Check if refresh cookie is still valid
+			const hasValidCookie = await hasValidRefreshCookie();
+			
+			if (!hasValidCookie) {
+				// Refresh cookie expired/invalid, clear everything
+				clearAuthFromStorage();
+			}
+			// If valid cookie exists, crypto tokens will be generated on next API call via refresh
+		}
+	},
+
+	/**
+	 * Generate crypto tokens - only called after successful login/refresh
+	 */
+	generateCryptoTokens(): void {
+		generateCryptoTokens();
+	},
+
+	/**
+	 * Ensure authentication by trying refresh only if no access token exists
+	 * Returns true if authenticated (or after successful refresh), false if needs login
+	 */
+	async ensureAuthenticated(): Promise<boolean> {
+		// Check if we already have access token in sessionStorage
+		const hasToken = typeof window !== 'undefined' && sessionStorage.getItem('access_token');
+		const hasUser = typeof window !== 'undefined' && sessionStorage.getItem('auth_user');
+
+		if (hasToken && hasUser) {
+			// We have tokens, verify they're not expired
+			try {
+				const user = JSON.parse(hasUser);
+				if (user.expiresAt && new Date(user.expiresAt) > new Date()) {
+					return true; // Valid session exists - NO refresh needed
+				}
+				// Token expired, clear it and continue to refresh
+				sessionStorage.removeItem('access_token');
+				sessionStorage.removeItem('auth_user');
+				sessionStorage.removeItem('cipher_token');
+				sessionStorage.removeItem('nonce_token');
+			} catch (error) {
+				console.warn('Failed to parse user data from sessionStorage:', error);
+				// Clear invalid data and continue to refresh
+				sessionStorage.removeItem('access_token');
+				sessionStorage.removeItem('auth_user');
+			}
+		}
+
+		// No valid access token in sessionStorage, try to refresh using cookie
+		console.log('🔄 No valid access token found, attempting automatic refresh...');
+		
+		// Set refreshing state
+		update((state) => ({ ...state, isRefreshing: true }));
+		
+		try {
+			// Import api to avoid circular dependencies
+			const { api } = await import('../api');
+			const refreshSuccess = await api.refreshToken();
+			
+			if (refreshSuccess) {
+				console.log('✅ Automatic refresh successful');
+				return true;
+			} else {
+				console.log('❌ Automatic refresh failed - login required');
+				return false;
+			}
+		} catch (error) {
+			console.warn('Refresh attempt failed:', error);
+			return false;
+		} finally {
+			// Always clear refreshing state
+			update((state) => ({ ...state, isRefreshing: false }));
+		}
 	},
 
 	/**
@@ -160,8 +312,11 @@ export const authStore = {
 				error: null
 			}));
 
-			// Save to localStorage
+			// Save to sessionStorage
 			saveAuthToStorage(user, loginResponse.access_token);
+
+			// Generate crypto tokens ONLY after successful login
+			generateCryptoTokens();
 
 			return loginResponse;
 		} catch (error) {
@@ -208,6 +363,26 @@ export const authStore = {
 	},
 
 	/**
+	 * Get cipher token from sessionStorage
+	 *
+	 * @returns string | null
+	 */
+	getCipherToken(): string | null {
+		if (typeof window === 'undefined') return null;
+		return sessionStorage.getItem('cipher_token');
+	},
+
+	/**
+	 * Get nonce token from sessionStorage
+	 *
+	 * @returns string | null
+	 */
+	getNonceToken(): string | null {
+		if (typeof window === 'undefined') return null;
+		return sessionStorage.getItem('nonce_token');
+	},
+
+	/**
 	 * Logout user and clear all authentication data
 	 */
 	async logout(): Promise<void> {
@@ -243,5 +418,7 @@ export const authStore = {
 
 // Initialize the store when module loads
 if (typeof window !== 'undefined') {
-	authStore.init();
+	authStore.init().catch((error) => {
+		console.warn('Failed to initialize auth store:', error);
+	});
 }

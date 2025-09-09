@@ -28,6 +28,6 @@ pub struct RefreshTokenClaims {
     pub iat: i64,
     /// Token type
     pub token_type: String,
-    /// Session ID for token revocation
+    /// Random ID for cryptographic uniqueness (not persisted)
     pub session_id: i64,
 }

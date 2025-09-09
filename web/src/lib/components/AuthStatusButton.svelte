@@ -32,12 +32,20 @@
 	/**
 	 * Handle main button click
 	 */
-	function handleButtonClick() {
+	async function handleButtonClick() {
 		if (isAuthenticated) {
 			showUserDropdown = !showUserDropdown;
 		} else {
-			// Show authentication dialog
-			dialogStore.show('auth');
+			// Try to authenticate with automatic refresh first
+			const isNowAuthenticated = await authStore.ensureAuthenticated();
+			
+			if (isNowAuthenticated) {
+				// Refresh succeeded - show dropdown
+				showUserDropdown = true;
+			} else {
+				// Only show authentication dialog if refresh failed
+				dialogStore.show('auth');
+			}
 		}
 	}
 
@@ -73,19 +81,25 @@
 <!-- Auth Status Button Container -->
 <div class="auth-status-button relative">
 	<button
-		class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12"
+		class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+		disabled={$authStore.isRefreshing}
 		class:bg-white={showUserDropdown}
 		class:dark:bg-gray-800={showUserDropdown}
 		class:shadow-lg={showUserDropdown}
 		class:border-gray-200={showUserDropdown}
 		class:dark:border-gray-700={showUserDropdown}
 		class:scale-105={showUserDropdown}
-		aria-label={isAuthenticated ? $_('auth.userMenu') : $_('auth.login')}
-		title={isAuthenticated ? $_('auth.userMenu') : $_('auth.login')}
+		aria-label={$authStore.isRefreshing ? $_('common.loading') : (isAuthenticated ? $_('auth.userMenu') : $_('auth.login'))}
+		title={$authStore.isRefreshing ? $_('common.loading') : (isAuthenticated ? $_('auth.userMenu') : $_('auth.login'))}
 		onclick={handleButtonClick}
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
-			<Icon name="user" size="w-5 h-5 sm:w-6 sm:h-6" />
+			{#if $authStore.isRefreshing}
+				<!-- Loading spinner - CSS circle -->
+				<div class="w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 dark:border-gray-600 border-t-gray-700 dark:border-t-gray-300 rounded-full animate-spin"></div>
+			{:else}
+				<Icon name="user" size="w-5 h-5 sm:w-6 sm:h-6" />
+			{/if}
 		</div>
 	</button>
 

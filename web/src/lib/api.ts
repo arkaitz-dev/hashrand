@@ -19,8 +19,8 @@ const API_BASE = '/api';
 
 // Helper function to get authentication headers
 async function getAuthHeaders(): Promise<Record<string, string>> {
-	const authStore = localStorage.getItem('auth_user');
-	const accessToken = localStorage.getItem('access_token');
+	const authStore = sessionStorage.getItem('auth_user');
+	const accessToken = sessionStorage.getItem('access_token');
 
 	if (!authStore || !accessToken) {
 		return {};
@@ -34,8 +34,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 			const expiresAt = new Date(user.expiresAt);
 			if (expiresAt <= new Date()) {
 				// Token expired, clear storage and return empty headers
-				localStorage.removeItem('auth_user');
-				localStorage.removeItem('access_token');
+				sessionStorage.removeItem('auth_user');
+				sessionStorage.removeItem('access_token');
+				sessionStorage.removeItem('cipher_token');
+				sessionStorage.removeItem('nonce_token');
 				return {};
 			}
 		}
@@ -299,9 +301,9 @@ export const api = {
 	},
 
 	async checkAuthStatus(): Promise<boolean> {
-		// Check if we have both user info and access token in localStorage
-		const authStore = localStorage.getItem('auth_user');
-		const accessToken = localStorage.getItem('access_token');
+		// Check if we have both user info and access token in sessionStorage
+		const authStore = sessionStorage.getItem('auth_user');
+		const accessToken = sessionStorage.getItem('access_token');
 
 		if (!authStore || !accessToken) return false;
 
@@ -354,8 +356,14 @@ export const api = {
 					expiresAt
 				};
 
-				// Update store and localStorage
+				// Update store and sessionStorage
 				authStore.updateTokens(user, data.access_token);
+				
+				// Generate crypto tokens if they don't exist (new tab scenario)
+				if (!sessionStorage.getItem('cipher_token') || !sessionStorage.getItem('nonce_token')) {
+					authStore.generateCryptoTokens();
+				}
+				
 				return true;
 			}
 			return false;

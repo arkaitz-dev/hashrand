@@ -22,10 +22,10 @@
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { dialogStore } from '$lib/stores/dialog';
 
-	let copySuccess = false;
+	let copySuccess = $state(false);
 	let copyTimeout: ReturnType<typeof setTimeout>;
-	let showGenerationDetails = false; // Collapsed by default on mobile
-	let showParametersUsed = false; // Collapsed by default on mobile
+	let showGenerationDetails = $state(false); // Collapsed by default on mobile
+	let showParametersUsed = $state(false); // Collapsed by default on mobile
 	// showSeedDialog removed - now using DialogContainer system
 
 	function toggleGenerationDetails() {
@@ -37,11 +37,11 @@
 	}
 
 	// Get URL parameters reactively
-	$: searchParams = $page.url.searchParams;
+	let searchParams = $derived($page.url.searchParams);
 
 	// Only treat as "provided seed" if seed parameter comes from URL GET parameters
 	// (this controls whether to show the regenerate button)
-	$: usedProvidedSeed = searchParams.has('seed');
+	let usedProvidedSeed = $derived(searchParams.has('seed'));
 
 	// Handle result state and API calls
 	onMount(async () => {
@@ -66,9 +66,11 @@
 			return;
 		}
 
-		// Verify auth is available (should be guaranteed by +layout.svelte)
-		const authData = localStorage.getItem('auth_user');
-		if (!authData) {
+		// Verify auth is available with automatic refresh if needed
+		const { authStore } = await import('$lib/stores/auth');
+		const isAuthenticated = await authStore.ensureAuthenticated();
+		
+		if (!isAuthenticated) {
 			goto('/');
 			return;
 		}
@@ -235,8 +237,8 @@
 		}
 	}
 
-	// Reactive endpoint display name that updates when language changes
-	$: getEndpointDisplayName = (endpoint: string): string => {
+	// Function to get endpoint display name
+	function getEndpointDisplayName(endpoint: string): string {
 		switch (endpoint) {
 			case 'custom':
 				return $_('custom.title');
@@ -288,7 +290,7 @@
 	}
 
 	// Reactive parameter key translation that updates when language changes
-	$: translateParameterKey = (key: string): string => {
+	let translateParameterKey = $derived((key: string): string => {
 		const translations: Record<string, string> = {
 			length: $_('common.length'),
 			alphabet: $_('common.alphabet'),
@@ -299,10 +301,10 @@
 		};
 
 		return translations[key] || key.replace(/([A-Z])/g, ' $1').trim();
-	};
+	});
 
 	// Reactive parameter value translation that updates when language changes
-	$: translateParameterValue = (key: string, value: string | number | boolean): string => {
+	let translateParameterValue = $derived((key: string, value: string | number | boolean): string => {
 		if (typeof value === 'boolean') {
 			return value ? $_('common.yes') || 'Yes' : $_('common.no') || 'No';
 		}
@@ -323,7 +325,7 @@
 		}
 
 		return String(value);
-	};
+	});
 
 	async function handleAdjustSettings() {
 		if (!$resultState) {

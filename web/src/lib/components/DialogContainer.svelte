@@ -34,10 +34,13 @@
 		tabindex="-1"
 	>
 		<!-- Dialog Content Container -->
+		<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<div
 			class="relative w-full max-w-lg transform rounded-xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300"
 			role="document"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
 		>
 			<!-- Render different dialog types -->
 			{#if $dialogStore.type === 'auth'}

@@ -56,14 +56,17 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🔐 Authentication Components
 
 #### AuthStatusButton.svelte
-- **Purpose**: Session management button with consistent user icon
+- **Purpose**: Session management button with consistent user icon and centralized loading state
 - **Features**:
   - Always-visible authentication button regardless of session state
   - Consistent filled user silhouette icon (👤) for all states
+  - **Centralized Loading Management**: Uses `$authStore.isRefreshing` for unified authentication feedback
+  - Pure CSS spinner animation during authentication attempts (no external dependencies)
   - Dual functionality: login trigger (unauthenticated) and user menu (authenticated)
   - Enhanced icon sizes (`w-5 h-5 sm:w-6 sm:h-6`) for better visibility
   - Integrated with authentication store for state management
 - **Design**: Solid user icon with `fill="currentColor"` matching theme system
+- **Loading State**: Displays CSS-animated spinner during `$authStore.isRefreshing`
 
 #### DialogContainer.svelte
 - **Purpose**: Unified modal dialog system
@@ -125,11 +128,14 @@ interface AuthState {
   accessToken: string | null;
   userId: string | null;
   isLoading: boolean;
+  isRefreshing: boolean;  // Centralized loading state for authentication attempts
   error: string | null;
 }
 ```
-- **Features**: JWT token management, automatic refresh, session persistence
-- **Methods**: `login()`, `logout()`, `refreshToken()`, `checkAuth()`
+- **Features**: JWT token management, automatic refresh, session persistence, centralized loading state
+- **Methods**: `login()`, `logout()`, `refreshToken()`, `checkAuth()`, `ensureAuthenticated()`
+- **DRY Architecture**: Single source of truth for authentication loading states across all components
+- **Loading Management**: `isRefreshing` state automatically managed during token refresh operations
 
 #### Theme Store (`theme.ts`)
 ```typescript

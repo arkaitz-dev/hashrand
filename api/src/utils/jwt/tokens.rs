@@ -74,7 +74,7 @@ pub fn create_access_token_from_username(
 ///
 /// # Arguments
 /// * `email` - User email address (will be converted to user_id)
-/// * `session_id` - Database session ID for token revocation
+/// * `session_id` - Random ID for cryptographic uniqueness (not persisted)
 ///
 /// # Returns
 /// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
@@ -90,6 +90,48 @@ pub fn create_refresh_token(
 
     let claims = RefreshTokenClaims {
         sub: username,
+        exp: expires_at.timestamp(),
+        iat: now.timestamp(),
+        token_type: "refresh".to_string(),
+        session_id,
+    };
+
+    let header = Header::new(Algorithm::HS256);
+    let jwt_secret = get_jwt_secret()?;
+    let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
+
+    match encode(&header, &claims, &encoding_key) {
+        Ok(token) => Ok((token, expires_at)),
+        Err(e) => Err(format!("Failed to create refresh token: {}", e)),
+    }
+}
+
+/// Create a new refresh token from username (for token rotation)
+///
+/// # Arguments
+/// * `username` - Base58-encoded username (already processed)
+/// * `session_id` - Optional crypto noise ID to preserve. If None, generates new random one
+/// 
+/// # Returns
+/// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
+pub fn create_refresh_token_from_username(
+    username: &str,
+    session_id: Option<i64>,
+) -> Result<(String, DateTime<Utc>), String> {
+    let now = Utc::now();
+    let expires_at = now + Duration::minutes(15); // 15 minutes
+
+    // Use provided crypto noise ID or generate new random one
+    let session_id = match session_id {
+        Some(id) => id,
+        None => {
+            use rand::Rng;
+            rand::rng().random::<i64>()
+        }
+    };
+
+    let claims = RefreshTokenClaims {
+        sub: username.to_string(),
         exp: expires_at.timestamp(),
         iat: now.timestamp(),
         token_type: "refresh".to_string(),

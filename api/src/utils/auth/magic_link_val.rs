@@ -140,7 +140,7 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
         }
     };
 
-    let (refresh_token, _) = match JwtUtils::create_refresh_token(&username, 0) {
+    let (refresh_token, _) = match JwtUtils::create_refresh_token_from_username(&username, None) {
         Ok((token, exp)) => (token, exp),
         Err(e) => {
             println!("Failed to create refresh token: {}", e);

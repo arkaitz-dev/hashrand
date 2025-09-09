@@ -9,6 +9,7 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
+	import { authStore } from '$lib/stores/auth';
 	import type { MnemonicParams } from '$lib/types';
 
 	// Default values
@@ -21,11 +22,11 @@
 	}
 
 	// Form state - will be initialized in onMount
-	let params: MnemonicParams = getDefaultParams();
-	let urlProvidedSeed: string = ''; // Seed from URL parameters (read-only)
+	let params: MnemonicParams = $state(getDefaultParams());
+	let urlProvidedSeed: string = $state(''); // Seed from URL parameters (read-only)
 
 	// Get URL parameters reactively
-	$: searchParams = $page.url.searchParams;
+	let searchParams = $derived($page.url.searchParams);
 
 	// Function to validate language parameter
 	function isValidMnemonicLanguage(value: string): boolean {
@@ -50,7 +51,7 @@
 	}
 
 	// Reactive language options that update when language changes
-	$: languageOptions = [
+	let languageOptions = $derived([
 		{
 			value: 'english' as const,
 			label: $_('mnemonic.languages.english')
@@ -91,10 +92,10 @@
 			value: 'czech' as const,
 			label: $_('mnemonic.languages.czech')
 		}
-	];
+	]);
 
 	// Reactive word count options
-	$: wordOptions = [
+	let wordOptions = $derived([
 		{
 			value: 12 as const,
 			label: $_('mnemonic.words12'),
@@ -105,12 +106,12 @@
 			label: $_('mnemonic.words24'),
 			description: $_('mnemonic.words24Description')
 		}
-	];
+	]);
 
 	// Validation
-	$: languageValid = params.language && isValidMnemonicLanguage(params.language);
-	$: wordsValid = params.words && isValidMnemonicWords(params.words);
-	$: formValid = languageValid && wordsValid;
+	let languageValid = $derived(params.language && isValidMnemonicLanguage(params.language));
+	let wordsValid = $derived(params.words && isValidMnemonicWords(params.words));
+	let formValid = $derived(languageValid && wordsValid);
 
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
@@ -120,12 +121,11 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado
-		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
-		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
+		// Verify authentication with automatic refresh
+		const isAuthenticated = await authStore.ensureAuthenticated();
 
-		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de autenticación
+		if (!isAuthenticated) {
+			// No se pudo autenticar - mostrar diálogo de autenticación
 			pendingGenerationParams = {
 				endpoint: 'mnemonic',
 				language: params.language ?? 'english',
@@ -136,7 +136,7 @@
 			return;
 		}
 
-		// Usuario autenticado - proceder con la generación
+		// User authenticated - proceed with generation
 		proceedWithGeneration();
 	}
 
@@ -321,9 +321,10 @@
 						<!-- Generate mnemonic button -->
 						<GenerateButton
 							type="submit"
-							disabled={!formValid || $isLoading}
-							loading={$isLoading}
+							disabled={!formValid || $isLoading || $authStore.isRefreshing}
+							loading={$isLoading || $authStore.isRefreshing}
 							text={$_('mnemonic.generateMnemonic')}
+							loadingText={$authStore.isRefreshing ? $_('auth.authenticating') : $_('common.loading') + '...'}
 						/>
 
 						<!-- Back to menu button -->

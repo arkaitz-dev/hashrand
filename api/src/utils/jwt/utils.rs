@@ -48,6 +48,13 @@ impl JwtUtils {
         tokens::create_refresh_token(email, session_id)
     }
 
+    pub fn create_refresh_token_from_username(
+        username: &str,
+        session_id: Option<i64>,
+    ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
+        tokens::create_refresh_token_from_username(username, session_id)
+    }
+
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
         tokens::validate_access_token(token)
     }

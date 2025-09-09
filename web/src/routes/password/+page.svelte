@@ -11,6 +11,7 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { isLoading, resultState } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
+	import { authStore } from '$lib/stores/auth';
 	import type { PasswordParams } from '$lib/types';
 
 	// Default values
@@ -23,11 +24,11 @@
 	}
 
 	// Form state - will be initialized in onMount
-	let params: PasswordParams = getDefaultParams();
-	let urlProvidedSeed: string = ''; // Seed from URL parameters (read-only)
+	let params: PasswordParams = $state(getDefaultParams());
+	let urlProvidedSeed: string = $state(''); // Seed from URL parameters (read-only)
 
 	// Get URL parameters reactively
-	$: searchParams = $page.url.searchParams;
+	let searchParams = $derived($page.url.searchParams);
 
 	// Function to validate alphabet parameter
 	function isValidPasswordAlphabet(value: string): value is 'full-with-symbols' | 'no-look-alike' {
@@ -35,7 +36,7 @@
 	}
 
 	// Reactive alphabet options that update when language changes
-	$: alphabetOptions = [
+	let alphabetOptions = $derived([
 		{
 			value: 'full-with-symbols' as const,
 			label: $_('alphabets.full-with-symbols'),
@@ -46,12 +47,12 @@
 			label: $_('alphabets.no-look-alike'),
 			description: $_('password.easyReadDescription')
 		}
-	];
+	]);
 
 	// Dynamic minimum length based on alphabet
-	$: minLength = params.alphabet === 'full-with-symbols' ? 21 : 24;
-	$: lengthValid = params.length && params.length >= minLength && params.length <= 44;
-	$: formValid = lengthValid;
+	let minLength = $derived(params.alphabet === 'full-with-symbols' ? 21 : 24);
+	let lengthValid = $derived(params.length && params.length >= minLength && params.length <= 44);
+	let formValid = $derived(lengthValid);
 
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
@@ -61,12 +62,11 @@
 			return;
 		}
 
-		// Verificar si el usuario está autenticado
-		const hasToken = typeof window !== 'undefined' && localStorage.getItem('access_token');
-		const hasUser = typeof window !== 'undefined' && localStorage.getItem('auth_user');
+		// Verify authentication with automatic refresh
+		const isAuthenticated = await authStore.ensureAuthenticated();
 
-		if (!hasToken || !hasUser) {
-			// No autenticado - mostrar diálogo de autenticación
+		if (!isAuthenticated) {
+			// No se pudo autenticar - mostrar diálogo de autenticación
 			pendingGenerationParams = {
 				endpoint: 'password',
 				length: params.length ?? 21,
@@ -77,7 +77,7 @@
 			return;
 		}
 
-		// Usuario autenticado - proceder con la generación
+		// User authenticated - proceed with generation
 		proceedWithGeneration();
 	}
 
@@ -268,9 +268,10 @@
 						<!-- Generate password button -->
 						<GenerateButton
 							type="submit"
-							disabled={!formValid || $isLoading}
-							loading={$isLoading}
+							disabled={!formValid || $isLoading || $authStore.isRefreshing}
+							loading={$isLoading || $authStore.isRefreshing}
 							text={$_('password.generatePassword')}
+							loadingText={$authStore.isRefreshing ? $_('auth.authenticating') : $_('common.loading') + '...'}
 						/>
 
 						<!-- Back to menu button -->
