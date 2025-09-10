@@ -11,3 +11,8 @@ email:
     security_notice: "Sarbide esteka hau ez baduzu eskatu, mesedez ez ikusi egin email honi."
     footer_text: "HashRand - Hash Aleatorio Sortzailea"
     no_reply_notice: "Mezu automatikoa da hau. Mesedez ez erantzun email honi."
+    
+    # Testu bersioak (testu soileko emailentzat)
+    text_intro: "Sarbide esteka seguru bat eskatu duzu. Erabili beheko esteka autentifikatzeko eta zure kontura sartzeko."
+    text_access_label: "HashRand-erako Sarbide Esteka"
+    text_security_section: "⚠️ Segurtasun Informazioa:"

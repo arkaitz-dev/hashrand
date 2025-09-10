@@ -119,13 +119,15 @@ Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Ha
 
 ### Production Email Delivery
 
-The magic link authentication system includes **complete Mailtrap email integration** for production-grade email delivery:
+The magic link authentication system includes **complete Mailtrap email integration** with enhanced text-plain internationalization:
 
 ```bash
 # Email delivery via Mailtrap REST API
 - **Endpoint**: https://sandbox.api.mailtrap.io/api/send/{inbox_id}
 - **Authentication**: Bearer token authentication
-- **Format**: HTML + plain text dual format for all email clients
+- **Format**: HTML + plain text dual format with text-specific translations
+- **Internationalization**: 13 languages with dedicated plain text optimization
+- **Architecture**: Proper separation of HTML and text concerns
 - **Confirmation**: HTTP 200/202 status validation with error handling
 - **Fallback**: Console logging when email delivery fails (development mode)
 ```
@@ -150,11 +152,16 @@ Magic link emails are delivered in **13 languages** matching the web UI language
 - **🏴󠁥󠁳󠁰󠁶󠁿 Basque** (`eu`) - Euskera termino tekniko egokiekin
 
 ### Email Template Features
-- **HTML + Plain Text**: Dual format ensures compatibility with all email clients
+- **HTML + Plain Text**: Dual format with text-specific translations for optimal compatibility
+- **Text-Specific Translation Keys**: Dedicated plain text versions optimized for text-only email clients
+  - `text_intro`: "Use the link below" (vs HTML "Click the button below")
+  - `text_access_label`: "Access Link to HashRand" (text-appropriate instructions)
+  - `text_security_section`: Localized security headers ("⚠️ Security Information:")
 - **RTL Support**: Arabic template includes `dir="rtl"` for proper right-to-left display
 - **Professional Branding**: Consistent "HashRand" branding across all languages
 - **Security Messaging**: Clear magic link expiration and security information in each language
 - **Cultural Adaptation**: Native terminology and proper grammar for each language
+- **Architectural Separation**: HTML concerns (buttons, styling) properly separated from plain text
 - **Fallback System**: Automatic fallback to English for unsupported language codes
 
 ### Email Configuration

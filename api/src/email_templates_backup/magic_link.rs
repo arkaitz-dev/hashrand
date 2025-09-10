@@ -9,15 +9,15 @@ use rust_i18n::t;
 ///
 /// # Returns
 /// * Complete HTML email as String
-pub fn render_magic_link_email(magic_link: &str, language: &str) -> (String, String, String) {
+pub fn render_magic_link_email(magic_link: &str, language: &str) -> (String, String) {
     // Set the locale for this email
     rust_i18n::set_locale(language);
 
     let subject = t!("email.magic_link.subject").to_string();
     let html_body = render_html_body(magic_link, language);
-    let text_body = render_text_body(magic_link, language);
+    let _text_body = render_text_body(magic_link);
 
-    (subject, html_body, text_body)
+    (subject, html_body)
 }
 
 fn render_html_body(magic_link: &str, language: &str) -> String {
@@ -80,40 +80,35 @@ fn render_html_body(magic_link: &str, language: &str) -> String {
     markup.into_string()
 }
 
-fn render_text_body(magic_link: &str, language: &str) -> String {
-    // Ensure locale is set for this text rendering
-    rust_i18n::set_locale(language);
-    
+fn render_text_body(magic_link: &str) -> String {
     format!(
-        r#"{title} - {subtitle}
-{separator}
+        r#"
+{subject}
 
 {greeting}
 
-{intro_text}
+{intro}
 
-{access_instructions}
+{button_text}: {magic_link}
+
+{manual_link_intro}
 {magic_link}
 
-{security_section}
 {security_warning}
 
 {security_notice}
 
-{footer_separator}
+---
 {footer_text}
 {no_reply_notice}
         "#,
-        title = t!("email.magic_link.title"),
-        subtitle = t!("email.magic_link.subtitle"),
-        separator = "=".repeat(50),
+        subject = t!("email.magic_link.subject"),
         greeting = t!("email.magic_link.greeting"),
-        intro_text = t!("email.magic_link.text_intro"),
-        access_instructions = format!(">> {} <<", t!("email.magic_link.text_access_label")),
-        security_section = t!("email.magic_link.text_security_section"),
-        security_warning = format!("• {}", t!("email.magic_link.security_warning")),
-        security_notice = format!("• {}", t!("email.magic_link.security_notice")),
-        footer_separator = "-".repeat(50),
+        intro = t!("email.magic_link.intro"),
+        button_text = t!("email.magic_link.button_text"),
+        manual_link_intro = t!("email.magic_link.manual_link_intro"),
+        security_warning = t!("email.magic_link.security_warning"),
+        security_notice = t!("email.magic_link.security_notice"),
         footer_text = t!("email.magic_link.footer_text"),
         no_reply_notice = t!("email.magic_link.no_reply_notice"),
         magic_link = magic_link

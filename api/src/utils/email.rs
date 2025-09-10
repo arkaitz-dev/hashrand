@@ -44,8 +44,13 @@ fn create_email_request(
     magic_link: &str,
     language: Option<&str>,
 ) -> Result<Request> {
-    // Generate email templates using Maud system
-    let (subject, html_content) = render_magic_link_email(magic_link, language.unwrap_or("en"));
+    let (subject, html_content, text_content) = render_magic_link_email(magic_link, language.unwrap_or("en"));
+
+    // Generate unique Message-ID to prevent spam warnings
+    let message_id = format!("<{}.{}@mailer.hashrand.com>", 
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0),
+        nanoid::nanoid!(8)
+    );
 
     // Create email payload according to Mailtrap API format
     let email_payload = json!({
@@ -60,9 +65,14 @@ fn create_email_request(
             }
         ],
         "subject": subject,
-        "text": format!("Your magic link: {}", magic_link), // Simple text fallback
+        "text": text_content,
         "html": html_content,
-        "category": "Authentication"
+        "category": "Authentication",
+        "headers": {
+            "Message-ID": message_id,
+            "Content-Type": "text/html; charset=UTF-8",
+            "Content-Transfer-Encoding": "quoted-printable"
+        }
     });
 
     // Convert payload to JSON string

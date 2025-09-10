@@ -11,3 +11,7 @@ email:
     security_notice: "Si no solicitaste este enlace de acceso, por favor ignora este email."
     footer_text: "HashRand - Generador de Hash Aleatorio"
     no_reply_notice: "Este es un mensaje automático. Por favor no respondas a este email."
+    # Versiones específicas para texto (emails de texto plano)
+    text_intro: "Solicitaste un enlace de acceso seguro. Usa el enlace de abajo para autenticarte y acceder a tu cuenta."
+    text_access_label: "Enlace de Acceso a HashRand"
+    text_security_section: "⚠️ Información de Seguridad:"

@@ -99,14 +99,19 @@ All translations undergo comprehensive review and enhancement for authentic, nat
 
 ### 📧 Multilingual Email Templates
 
-All magic link authentication emails support the full 13-language set:
+All magic link authentication emails support the full 13-language set with **dedicated text-specific translations**:
 
 #### Template Features
 - **HTML + Plain Text**: Dual format ensures compatibility with all email clients
-- **RTL Email Support**: Arabic templates include proper `dir="rtl"` markup
+- **Text-Specific Translations**: Separate translation keys optimized for plain text email clients
+  - `text_intro`: Plain text version without HTML button references ("Use the link below" vs "Click the button below")
+  - `text_access_label`: Text-appropriate access instructions ("Access Link to HashRand")
+  - `text_security_section`: Localized security information headers ("⚠️ Security Information:")
+- **RTL Email Support**: Arabic templates include proper `dir="rtl"` markup for HTML and native RTL text
 - **Professional Branding**: Consistent "HashRand" branding across all languages
 - **Security Messaging**: Clear magic link expiration and security information
 - **Cultural Adaptation**: Native terminology and proper grammar for each language
+- **Architectural Separation**: HTML concerns (buttons, styling) properly separated from plain text content
 - **Fallback System**: Automatic fallback to English for unsupported language codes
 
 #### Usage Examples
@@ -154,6 +159,24 @@ curl -X POST "http://localhost:3000/api/login/" \
     "length": "Length",
     "alphabet": "Alphabet",
     "generate": "Generate"
+  },
+  "email": {
+    "magic_link": {
+      "subject": "Your Magic Link for HashRand",
+      "title": "HashRand",
+      "subtitle": "Random Hash Generator",
+      "greeting": "Hello!",
+      "intro": "You requested a secure login link. Click the button below to authenticate and access your account.",
+      "button_text": "Access HashRand",
+      "manual_link_intro": "If the button doesn't work, copy and paste this link into your browser:",
+      "security_warning": "This link will expire in 5 minutes and can only be used once.",
+      "security_notice": "If you didn't request this login link, please ignore this email.",
+      "footer_text": "HashRand - Random Hash Generator",
+      "no_reply_notice": "This is an automated message. Please do not reply to this email.",
+      "text_intro": "You requested a secure login link. Use the link below to authenticate and access your account.",
+      "text_access_label": "Access Link to HashRand",
+      "text_security_section": "⚠️ Security Information:"
+    }
   }
 }
 ```

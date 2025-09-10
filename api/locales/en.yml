@@ -11,3 +11,7 @@ email:
     security_notice: "If you didn't request this login link, please ignore this email."
     footer_text: "HashRand - Random Hash Generator"
     no_reply_notice: "This is an automated message. Please do not reply to this email."
+    # Text-specific versions (for plain text emails)
+    text_intro: "You requested a secure login link. Use the link below to authenticate and access your account."
+    text_access_label: "Access Link to HashRand"
+    text_security_section: "⚠️ Security Information:"

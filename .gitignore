@@ -21,6 +21,7 @@ target/
 node_modules/
 *.log
 .env
+.env-dev
 .env.local
 .env.production
 

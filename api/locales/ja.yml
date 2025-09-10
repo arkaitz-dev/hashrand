@@ -11,3 +11,8 @@ email:
     security_notice: "このログインリンクをリクエストしていない場合は、このメールを無視してください。"
     footer_text: "HashRand - ランダムハッシュジェネレーター"
     no_reply_notice: "これは自動メッセージです。このメールには返信しないでください。"
+    
+    # テキスト版（プレーンテキストメール用）
+    text_intro: "安全なログインリンクをリクエストされました。下のリンクを使用して認証し、アカウントにアクセスしてください。"
+    text_access_label: "HashRandへのアクセスリンク"
+    text_security_section: "⚠️ セキュリティ情報："

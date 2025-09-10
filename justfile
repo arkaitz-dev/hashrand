@@ -1,9 +1,13 @@
 # HashRand Spin - Development Tasks
 # Run `just` to see available commands
-#
+
+# Environment file configuration
+set dotenv-load := true
+set dotenv-filename := ".env-dev"
+
 # IMPORTANT: just has native .env file loading capability
-# - Automatically loads .env from current directory (can be disabled with --no-dotenv)
-# - Variables from .env are available to all recipes without explicit sourcing
+# - Now configured to load .env-dev by default for development
+# - Variables are available to all recipes without explicit sourcing
 # - Spin reads SPIN_VARIABLE_* variables directly from the loaded environment
 
 # Show available commands
@@ -346,9 +350,9 @@ rebuild: clean build
 
 # Deploy to Fermyon Cloud with secrets
 deploy:
+    set dotenv-filename := ".env"
     #!/usr/bin/env bash
     # Read secrets from .env file and deploy to Fermyon Cloud
-    source .env
     spin-cli deploy --runtime-config-file runtime-config.toml -f spin-prod.toml \
         --variable jwt_secret="${JWT_SECRET:-${SPIN_VARIABLE_JWT_SECRET}}" \
         --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
@@ -356,6 +360,7 @@ deploy:
 
 # Prepare for production deployment (compile web UI, start backend only with static serving, start tailscale)
 predeploy: stop clean
+    set dotenv-filename := ".env"
     #!/usr/bin/env bash
     echo "🚀 Preparing for production deployment..."
     echo "======================================="
@@ -368,8 +373,8 @@ predeploy: stop clean
     
     # Verify dist directory was created
     if [ ! -d "web/dist" ]; then
-        echo "✗ Error: web/dist directory not found after build"
-        exit 1
+    echo "Error: web/dist directory not found after build"
+    exit 1
     fi
     
     echo "✓ Web interface built successfully ($(du -sh web/dist | cut -f1) in web/dist/)"
@@ -388,45 +393,45 @@ predeploy: stop clean
     sleep 3
     
     if kill -0 $SPIN_PID 2>/dev/null; then
-        echo "✓ Backend started (PID: $SPIN_PID)"
-        
-        # Check if port 3000 is responding
-        if curl -s http://localhost:3000/api/version > /dev/null; then
-            echo "✓ Backend API responding on port 3000"
-        else
-            echo "⚠ Backend started but API not yet responding (may need more time)"
-        fi
-        
-        # Start Tailscale serve for external access
-        echo "Starting Tailscale serve for external access..."
-        if command -v tailscale &> /dev/null; then
-            tailscale serve --bg 3000
-            echo "✓ Tailscale serve started on port 3000"
-            echo ""
-            echo "🎉 Production deployment ready!"
-            echo "==============================="
-            echo "  Local access: http://localhost:3000"
-            echo "  Tailscale access: Check 'tailscale serve status'"
-            echo "  Backend log: tail -f .spin-predeploy.log"
-            echo "  Stop: just stop"
-            echo "  Status: just status"
-            echo ""
-            echo "Note: Both web interface and API are served from port 3000"
-            echo "      Web files: Served statically from /web/dist/"
-            echo "      API endpoints: Available at /api/*"
-        else
-            echo "⚠ Tailscale not available, skipping external access setup"
-            echo ""
-            echo "🎉 Local production deployment ready!"
-            echo "====================================="
-            echo "  Access: http://localhost:3000"
-            echo "  Log: tail -f .spin-predeploy.log"
-            echo "  Stop: just stop"
-        fi
+    echo "✓ Backend started (PID: $SPIN_PID)"
+    
+    # Check if port 3000 is responding
+    if curl -s http://localhost:3000/api/version > /dev/null; then
+    echo "Backend API responding on port 3000"
     else
-        echo "✗ Failed to start backend"
-        rm -f .spin-predeploy.pid
-        exit 1
+    echo "Backend started but API not yet responding (may need more time)"
+    fi
+    
+    # Start Tailscale serve for external access
+    echo "Starting Tailscale serve for external access..."
+    if command -v tailscale &> /dev/null; then
+    tailscale serve --bg 3000
+    echo "Tailscale serve started on port 3000"
+    echo ""
+    echo "Production deployment ready!"
+    echo "==============================="
+    echo "  Local access: http://localhost:3000"
+    echo "  Tailscale access: Check 'tailscale serve status'"
+    echo "  Backend log: tail -f .spin-predeploy.log"
+    echo "  Stop: just stop"
+    echo "  Status: just status"
+    echo ""
+    echo "Note: Both web interface and API are served from port 3000"
+    echo "      Web files: Served statically from /web/dist/"
+    echo "      API endpoints: Available at /api/*"
+    else
+    echo "Tailscale not available, skipping external access setup"
+    echo ""
+    echo "Local production deployment ready!"
+    echo "====================================="
+    echo "  Access: http://localhost:3000"
+    echo "  Log: tail -f .spin-predeploy.log"
+    echo "  Stop: just stop"
+    fi
+    else
+    echo "Failed to start backend"
+    rm -f .spin-predeploy.pid
+    exit 1
     fi
 
 # Run development server in background and execute tests

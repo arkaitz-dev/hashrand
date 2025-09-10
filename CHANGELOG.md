@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.8] - 2025-09-10
+
+### 📧 Email Template Text-Plain Enhancement
+
+**Complete Email Template Architecture Improvement**
+
+#### ✅ Text-Specific Translation System:
+- **🌐 Multilingual Plain Text Support**: Added dedicated translation keys for all 13 languages
+  - `text_intro`: Plain text version without HTML button references
+  - `text_access_label`: Text-appropriate access instructions
+  - `text_security_section`: Localized security information headers
+- **🏗️ Architecture Fix**: Eliminated hardcoded text in Rust code, proper separation of concerns
+- **📝 Content Optimization**: Plain text emails no longer reference impossible UI elements (buttons)
+
+#### ✅ Internationalization Completeness:
+- **13 Language Coverage**: Enhanced YAML locale files for complete text-plain support
+  - English, Spanish, French, German, Portuguese, Russian, Chinese, Japanese
+  - Arabic (RTL), Hindi, Catalan, Galician, Basque
+- **🔄 RTL Compatibility**: Arabic text-plain templates fully supported with proper terminology
+- **📧 Dual Format Excellence**: HTML + plain text versions both professionally internationalized
+
+#### ✅ Code Quality & Maintainability:
+- **🚫 No Hardcoding**: Removed all hardcoded email text from Rust source code
+- **🎯 Proper Separation**: HTML concerns (CSS, buttons) vs plain text concerns cleanly separated
+- **✅ Mailtrap Integration**: Both `html` and `text` fields properly populated for all email clients
+- **🔧 Zero Breaking Changes**: Maintains full backwards compatibility with existing email system
+
+#### 🎯 User Experience Impact:
+- **📱 Email Client Compatibility**: Perfect rendering in both HTML and text-only email clients
+- **🌍 Global Accessibility**: Native language support for plain text email readers
+- **🔒 Security Clarity**: Clear, localized security information without UI confusion
+- **♿ Screen Reader Optimized**: Plain text templates optimized for accessibility tools
+
 ## [Web v0.19.9] - 2025-09-09
 
 ### 🔄 DRY Principle Architecture Refactoring
