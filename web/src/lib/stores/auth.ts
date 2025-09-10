@@ -84,10 +84,11 @@ function clearAuthFromStorage(): void {
 	// Also clear crypto tokens when clearing auth
 	sessionStorage.removeItem('cipher_token');
 	sessionStorage.removeItem('nonce_token');
+	sessionStorage.removeItem('hmac_key');
 }
 
 /**
- * Generate cryptographically secure cipher and nonce tokens
+ * Generate cryptographically secure cipher, nonce and HMAC key tokens
  */
 function generateCryptoTokens(): void {
 	if (typeof window === 'undefined') return;
@@ -96,22 +97,27 @@ function generateCryptoTokens(): void {
 		// Generate 32-byte tokens using Web Crypto API
 		const cipherToken = new Uint8Array(32);
 		const nonceToken = new Uint8Array(32);
+		const hmacToken = new Uint8Array(32);
 		
 		crypto.getRandomValues(cipherToken);
 		crypto.getRandomValues(nonceToken);
+		crypto.getRandomValues(hmacToken);
 
 		// Convert to base64 for storage
 		const cipherB64 = btoa(String.fromCharCode(...cipherToken));
 		const nonceB64 = btoa(String.fromCharCode(...nonceToken));
+		const hmacB64 = btoa(String.fromCharCode(...hmacToken));
 
 		sessionStorage.setItem('cipher_token', cipherB64);
 		sessionStorage.setItem('nonce_token', nonceB64);
+		sessionStorage.setItem('hmac_key', hmacB64);
 
 		// Show tokens in flash messages for debugging
 		import('./flashMessages').then(({ flashMessagesStore }) => {
 			flashMessagesStore.addMessages([
 				`🔐 Cipher Token: ${cipherB64.substring(0, 16)}...${cipherB64.slice(-8)}`,
-				`🎲 Nonce Token: ${nonceB64.substring(0, 16)}...${nonceB64.slice(-8)}`
+				`🎲 Nonce Token: ${nonceB64.substring(0, 16)}...${nonceB64.slice(-8)}`,
+				`🔑 HMAC Key: ${hmacB64.substring(0, 16)}...${hmacB64.slice(-8)}`
 			]);
 		});
 	} catch (error) {
@@ -120,12 +126,12 @@ function generateCryptoTokens(): void {
 }
 
 /**
- * Check if cipher and nonce tokens exist in sessionStorage
+ * Check if cipher, nonce and HMAC key tokens exist in sessionStorage
  */
 function hasCryptoTokens(): boolean {
 	if (typeof window === 'undefined') return false;
 	
-	return !!(sessionStorage.getItem('cipher_token') && sessionStorage.getItem('nonce_token'));
+	return !!(sessionStorage.getItem('cipher_token') && sessionStorage.getItem('nonce_token') && sessionStorage.getItem('hmac_key'));
 }
 
 /**
@@ -211,11 +217,17 @@ export const authStore = {
 				sessionStorage.removeItem('auth_user');
 				sessionStorage.removeItem('cipher_token');
 				sessionStorage.removeItem('nonce_token');
+				sessionStorage.removeItem('hmac_key');
+				sessionStorage.removeItem('hmac_key');
 			} catch (error) {
 				console.warn('Failed to parse user data from sessionStorage:', error);
 				// Clear invalid data and continue to refresh
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('auth_user');
+				sessionStorage.removeItem('cipher_token');
+				sessionStorage.removeItem('nonce_token');
+				sessionStorage.removeItem('hmac_key');
+				sessionStorage.removeItem('hmac_key');
 			}
 		}
 
@@ -380,6 +392,16 @@ export const authStore = {
 	getNonceToken(): string | null {
 		if (typeof window === 'undefined') return null;
 		return sessionStorage.getItem('nonce_token');
+	},
+
+	/**
+	 * Get HMAC key from sessionStorage
+	 *
+	 * @returns string | null
+	 */
+	getHmacKey(): string | null {
+		if (typeof window === 'undefined') return null;
+		return sessionStorage.getItem('hmac_key');
 	},
 
 	/**

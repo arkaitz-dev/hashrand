@@ -38,6 +38,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('cipher_token');
 				sessionStorage.removeItem('nonce_token');
+				sessionStorage.removeItem('hmac_key');
 				return {};
 			}
 		}
@@ -360,7 +361,7 @@ export const api = {
 				authStore.updateTokens(user, data.access_token);
 				
 				// Generate crypto tokens if they don't exist (new tab scenario)
-				if (!sessionStorage.getItem('cipher_token') || !sessionStorage.getItem('nonce_token')) {
+				if (!sessionStorage.getItem('cipher_token') || !sessionStorage.getItem('nonce_token') || !sessionStorage.getItem('hmac_key')) {
 					authStore.generateCryptoTokens();
 				}
 				
