@@ -83,7 +83,7 @@ fn render_html_body(magic_link: &str, language: &str) -> String {
 fn render_text_body(magic_link: &str, language: &str) -> String {
     // Ensure locale is set for this text rendering
     rust_i18n::set_locale(language);
-    
+
     format!(
         r#"{title} - {subtitle}
 {separator}
@@ -109,10 +109,10 @@ fn render_text_body(magic_link: &str, language: &str) -> String {
         separator = "=".repeat(50),
         greeting = t!("email.magic_link.greeting"),
         intro_text = t!("email.magic_link.text_intro"),
-        access_instructions = format!(">> {} <<", t!("email.magic_link.text_access_label")),
+        access_instructions = format_args!(">> {} <<", t!("email.magic_link.text_access_label")),
         security_section = t!("email.magic_link.text_security_section"),
-        security_warning = format!("• {}", t!("email.magic_link.security_warning")),
-        security_notice = format!("• {}", t!("email.magic_link.security_notice")),
+        security_warning = format_args!("• {}", t!("email.magic_link.security_warning")),
+        security_notice = format_args!("• {}", t!("email.magic_link.security_notice")),
         footer_separator = "-".repeat(50),
         footer_text = t!("email.magic_link.footer_text"),
         no_reply_notice = t!("email.magic_link.no_reply_notice"),

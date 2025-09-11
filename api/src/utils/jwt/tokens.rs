@@ -111,7 +111,7 @@ pub fn create_refresh_token(
 /// # Arguments
 /// * `username` - Base58-encoded username (already processed)
 /// * `session_id` - Optional crypto noise ID to preserve. If None, generates new random one
-/// 
+///
 /// # Returns
 /// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
 pub fn create_refresh_token_from_username(

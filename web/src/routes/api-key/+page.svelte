@@ -291,7 +291,9 @@
 							disabled={!formValid || $isLoading || $authStore.isRefreshing}
 							loading={$isLoading || $authStore.isRefreshing}
 							text={$_('apiKey.generateApiKey')}
-							loadingText={$authStore.isRefreshing ? $_('auth.authenticating') : $_('common.loading') + '...'}
+							loadingText={$authStore.isRefreshing
+								? $_('auth.authenticating')
+								: $_('common.loading') + '...'}
 						/>
 
 						<!-- Back to menu button -->

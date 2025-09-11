@@ -79,18 +79,19 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     // REFRESH TOKEN ROTATION: Generate new refresh token preserving crypto noise ID
-    let (new_refresh_token, refresh_expires_at) = match JwtUtils::create_refresh_token_from_username(username, Some(claims.session_id)) {
-        Ok((token, exp)) => (token, exp),
-        Err(e) => {
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: format!("Failed to create refresh token: {}", e),
-                })?)
-                .build());
-        }
-    };
+    let (new_refresh_token, refresh_expires_at) =
+        match JwtUtils::create_refresh_token_from_username(username, Some(claims.session_id)) {
+            Ok((token, exp)) => (token, exp),
+            Err(e) => {
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: format!("Failed to create refresh token: {}", e),
+                    })?)
+                    .build());
+            }
+        };
 
     // Return new access token with same format as login
     let response = serde_json::json!({
@@ -102,12 +103,11 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
     // Calculate refresh token max-age for cookie
     let max_age = refresh_expires_at.timestamp() - chrono::Utc::now().timestamp();
-    
+
     // Set new refresh token as HttpOnly, Secure, SameSite cookie
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-        new_refresh_token,
-        max_age
+        new_refresh_token, max_age
     );
 
     Ok(Response::builder()

@@ -69,7 +69,7 @@
 		// Verify auth is available with automatic refresh if needed
 		const { authStore } = await import('$lib/stores/auth');
 		const isAuthenticated = await authStore.ensureAuthenticated();
-		
+
 		if (!isAuthenticated) {
 			goto('/');
 			return;
@@ -253,7 +253,7 @@
 			default:
 				return endpoint;
 		}
-	};
+	}
 
 	function getEndpointIcon(endpoint: string): string {
 		switch (endpoint) {
@@ -304,28 +304,30 @@
 	});
 
 	// Reactive parameter value translation that updates when language changes
-	let translateParameterValue = $derived((key: string, value: string | number | boolean): string => {
-		if (typeof value === 'boolean') {
-			return value ? $_('common.yes') || 'Yes' : $_('common.no') || 'No';
-		}
+	let translateParameterValue = $derived(
+		(key: string, value: string | number | boolean): string => {
+			if (typeof value === 'boolean') {
+				return value ? $_('common.yes') || 'Yes' : $_('common.no') || 'No';
+			}
 
-		// Translate alphabet types
-		if (key === 'alphabet' && typeof value === 'string') {
-			return $_(`alphabets.${value}`) || value;
-		}
+			// Translate alphabet types
+			if (key === 'alphabet' && typeof value === 'string') {
+				return $_(`alphabets.${value}`) || value;
+			}
 
-		// Translate language values
-		if (key === 'language' && typeof value === 'string') {
-			return $_(`mnemonic.languages.${value}`) || value;
-		}
+			// Translate language values
+			if (key === 'language' && typeof value === 'string') {
+				return $_(`mnemonic.languages.${value}`) || value;
+			}
 
-		// Translate words count with descriptive text
-		if (key === 'words' && typeof value === 'number') {
-			return value === 12 ? $_('mnemonic.words12') : $_('mnemonic.words24');
-		}
+			// Translate words count with descriptive text
+			if (key === 'words' && typeof value === 'number') {
+				return value === 12 ? $_('mnemonic.words12') : $_('mnemonic.words24');
+			}
 
-		return String(value);
-	});
+			return String(value);
+		}
+	);
 
 	async function handleAdjustSettings() {
 		if (!$resultState) {

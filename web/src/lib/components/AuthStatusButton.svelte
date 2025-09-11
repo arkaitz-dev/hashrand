@@ -38,7 +38,7 @@
 		} else {
 			// Try to authenticate with automatic refresh first
 			const isNowAuthenticated = await authStore.ensureAuthenticated();
-			
+
 			if (isNowAuthenticated) {
 				// Refresh succeeded - show dropdown
 				showUserDropdown = true;
@@ -89,14 +89,24 @@
 		class:border-gray-200={showUserDropdown}
 		class:dark:border-gray-700={showUserDropdown}
 		class:scale-105={showUserDropdown}
-		aria-label={$authStore.isRefreshing ? $_('common.loading') : (isAuthenticated ? $_('auth.userMenu') : $_('auth.login'))}
-		title={$authStore.isRefreshing ? $_('common.loading') : (isAuthenticated ? $_('auth.userMenu') : $_('auth.login'))}
+		aria-label={$authStore.isRefreshing
+			? $_('common.loading')
+			: isAuthenticated
+				? $_('auth.userMenu')
+				: $_('auth.login')}
+		title={$authStore.isRefreshing
+			? $_('common.loading')
+			: isAuthenticated
+				? $_('auth.userMenu')
+				: $_('auth.login')}
 		onclick={handleButtonClick}
 	>
 		<div class="text-gray-700 dark:text-gray-300 transition-all duration-150 transform">
 			{#if $authStore.isRefreshing}
 				<!-- Loading spinner - CSS circle -->
-				<div class="w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 dark:border-gray-600 border-t-gray-700 dark:border-t-gray-300 rounded-full animate-spin"></div>
+				<div
+					class="w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 dark:border-gray-600 border-t-gray-700 dark:border-t-gray-300 rounded-full animate-spin"
+				></div>
 			{:else}
 				<Icon name="user" size="w-5 h-5 sm:w-6 sm:h-6" />
 			{/if}

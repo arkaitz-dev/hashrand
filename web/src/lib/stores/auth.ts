@@ -98,7 +98,7 @@ function generateCryptoTokens(): void {
 		const cipherToken = new Uint8Array(32);
 		const nonceToken = new Uint8Array(32);
 		const hmacToken = new Uint8Array(32);
-		
+
 		crypto.getRandomValues(cipherToken);
 		crypto.getRandomValues(nonceToken);
 		crypto.getRandomValues(hmacToken);
@@ -130,8 +130,12 @@ function generateCryptoTokens(): void {
  */
 function hasCryptoTokens(): boolean {
 	if (typeof window === 'undefined') return false;
-	
-	return !!(sessionStorage.getItem('cipher_token') && sessionStorage.getItem('nonce_token') && sessionStorage.getItem('hmac_key'));
+
+	return !!(
+		sessionStorage.getItem('cipher_token') &&
+		sessionStorage.getItem('nonce_token') &&
+		sessionStorage.getItem('hmac_key')
+	);
 }
 
 /**
@@ -144,9 +148,9 @@ async function hasValidRefreshCookie(): Promise<boolean> {
 		// Try to refresh token to see if refresh cookie is valid
 		const response = await fetch('/api/refresh', {
 			method: 'POST',
-			credentials: 'include',
+			credentials: 'include'
 		});
-		
+
 		return response.ok;
 	} catch {
 		return false;
@@ -165,7 +169,7 @@ export const authStore = {
 	async init(): Promise<void> {
 		// Load existing session data
 		loadAuthFromStorage();
-		
+
 		// Only check if we need to refresh session for existing users
 		// but don't generate crypto tokens here
 		await this.checkSessionValidity();
@@ -180,7 +184,7 @@ export const authStore = {
 		if (state.accessToken && !hasCryptoTokens()) {
 			// Check if refresh cookie is still valid
 			const hasValidCookie = await hasValidRefreshCookie();
-			
+
 			if (!hasValidCookie) {
 				// Refresh cookie expired/invalid, clear everything
 				clearAuthFromStorage();
@@ -233,15 +237,15 @@ export const authStore = {
 
 		// No valid access token in sessionStorage, try to refresh using cookie
 		console.log('🔄 No valid access token found, attempting automatic refresh...');
-		
+
 		// Set refreshing state
 		update((state) => ({ ...state, isRefreshing: true }));
-		
+
 		try {
 			// Import api to avoid circular dependencies
 			const { api } = await import('../api');
 			const refreshSuccess = await api.refreshToken();
-			
+
 			if (refreshSuccess) {
 				console.log('✅ Automatic refresh successful');
 				return true;

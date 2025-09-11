@@ -44,10 +44,12 @@ fn create_email_request(
     magic_link: &str,
     language: Option<&str>,
 ) -> Result<Request> {
-    let (subject, html_content, text_content) = render_magic_link_email(magic_link, language.unwrap_or("en"));
+    let (subject, html_content, text_content) =
+        render_magic_link_email(magic_link, language.unwrap_or("en"));
 
     // Generate unique Message-ID to prevent spam warnings
-    let message_id = format!("<{}.{}@mailer.hashrand.com>", 
+    let message_id = format!(
+        "<{}.{}@mailer.hashrand.com>",
         chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0),
         nanoid::nanoid!(8)
     );

@@ -10,18 +10,27 @@ import { rngChacha8, chacha20poly1305 } from '@noble/ciphers/chacha.js';
 
 /**
  * Generic cryptographic hash generator using Blake2b-keyed + ChaCha8RNG
- * 
+ *
  * @param data - Input data (string or Uint8Array)
  * @param key - Key for Blake2b keyed hash (string base64 or Uint8Array)
  * @param outputLength - Desired output length in bytes
  * @returns Generated hash as Uint8Array
  */
-export function cryptoHashGen(data: string | Uint8Array, key: string | Uint8Array, outputLength: number): Uint8Array {
+export function cryptoHashGen(
+	data: string | Uint8Array,
+	key: string | Uint8Array,
+	outputLength: number
+): Uint8Array {
 	// Convert inputs to Uint8Array if needed
 	const dataBytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-	const keyBytes = typeof key === 'string' ? 
-		new Uint8Array(atob(key).split('').map(char => char.charCodeAt(0))) : 
-		key;
+	const keyBytes =
+		typeof key === 'string'
+			? new Uint8Array(
+					atob(key)
+						.split('')
+						.map((char) => char.charCodeAt(0))
+				)
+			: key;
 
 	// Step 1: Blake2b keyed hash (32 bytes seed)
 	const seed = blake2b(dataBytes, {
@@ -37,19 +46,19 @@ export function cryptoHashGen(data: string | Uint8Array, key: string | Uint8Arra
 }
 
 /**
- * Generate a 32-byte prehash from parameters using cryptoHashGen
- * 
- * @param paramsString - Serialized parameters string
+ * Generate a 32-byte prehash from prehash seed using cryptoHashGen
+ *
+ * @param prehashSeed - 32-byte prehash seed
  * @param hmacKey - 32-byte HMAC key from session (base64 encoded)
  * @returns 32-byte prehash as Uint8Array
  */
-export function generatePrehash(paramsString: string, hmacKey: string): Uint8Array {
-	return cryptoHashGen(paramsString, hmacKey, 32);
+export function generatePrehash(prehashSeed: Uint8Array, hmacKey: string): Uint8Array {
+	return cryptoHashGen(prehashSeed, hmacKey, 32);
 }
 
 /**
  * Generate ChaCha-Poly cipher key using session cipher token and prehash
- * 
+ *
  * @param cipherToken - Session cipher token (base64 encoded)
  * @param prehash - 32-byte prehash as key
  * @returns 32-byte cipher key for ChaCha-Poly
@@ -60,7 +69,7 @@ export function generateCipherKey(cipherToken: string, prehash: Uint8Array): Uin
 
 /**
  * Generate ChaCha-Poly nonce using session nonce token and prehash
- * 
+ *
  * @param nonceToken - Session nonce token (base64 encoded)
  * @param prehash - 32-byte prehash as key
  * @returns 12-byte nonce for ChaCha-Poly
@@ -71,7 +80,7 @@ export function generateCipherNonce(nonceToken: string, prehash: Uint8Array): Ui
 
 /**
  * Convert Uint8Array to base64 string for URL-safe transmission
- * 
+ *
  * @param bytes - Uint8Array to convert
  * @returns base64 encoded string
  */
@@ -80,8 +89,21 @@ export function bytesToBase64(bytes: Uint8Array): string {
 }
 
 /**
+ * Convert Uint8Array to base64URL string (URL-safe, no padding)
+ *
+ * @param bytes - Uint8Array to convert
+ * @returns base64URL encoded string
+ */
+export function bytesToBase64Url(bytes: Uint8Array): string {
+	return btoa(String.fromCharCode(...bytes))
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=/g, '');
+}
+
+/**
  * Convert base64 string back to Uint8Array
- * 
+ *
  * @param base64 - base64 encoded string
  * @returns Uint8Array
  */
@@ -89,13 +111,93 @@ export function base64ToBytes(base64: string): Uint8Array {
 	return new Uint8Array(
 		atob(base64)
 			.split('')
-			.map(char => char.charCodeAt(0))
+			.map((char) => char.charCodeAt(0))
 	);
 }
 
 /**
+ * Convert base64URL string back to Uint8Array
+ *
+ * @param base64Url - base64URL encoded string
+ * @returns Uint8Array
+ */
+export function base64UrlToBytes(base64Url: string): Uint8Array {
+	// Add padding if needed
+	let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+	while (base64.length % 4) {
+		base64 += '=';
+	}
+	return base64ToBytes(base64);
+}
+
+/**
+ * Generate cryptographically secure salt (32 bytes)
+ *
+ * @returns 32-byte salt as Uint8Array
+ */
+export function generateCryptoSalt(): Uint8Array {
+	return crypto.getRandomValues(new Uint8Array(32));
+}
+
+/**
+ * Generate cryptographically secure prehash seed (32 bytes)
+ *
+ * @returns 32-byte prehash seed as Uint8Array
+ */
+export function generatePrehashSeed(): Uint8Array {
+	return crypto.getRandomValues(new Uint8Array(32));
+}
+
+/**
+ * Store prehash seed in sessionStorage and return key
+ *
+ * @param seed - 32-byte prehash seed
+ * @param hmacKey - HMAC key for generating unique key
+ * @returns Base64URL key for retrieval
+ */
+export function storePrehashSeed(seed: Uint8Array, hmacKey: string): string {
+	const seedsJson = sessionStorage.getItem('prehashseeds') || '[]';
+	const seeds: { k: string; v: string }[] = JSON.parse(seedsJson);
+
+	// Generate 8-byte key using cryptoHashGen
+	const keyBytes = cryptoHashGen(seed, hmacKey, 8);
+	const key = bytesToBase64Url(keyBytes);
+
+	// Store as KV pair
+	const seedBase64 = bytesToBase64(seed);
+	seeds.push({ k: key, v: seedBase64 });
+
+	// FIFO rotation: Remove oldest if limit exceeded (max 20 KV pairs)
+	if (seeds.length > 20) {
+		seeds.shift(); // Remove first (oldest) element
+	}
+
+	sessionStorage.setItem('prehashseeds', JSON.stringify(seeds));
+
+	return key;
+}
+
+/**
+ * Retrieve prehash seed from sessionStorage by key
+ *
+ * @param key - Base64URL key to find seed
+ * @returns 32-byte prehash seed or null if not found
+ */
+export function getPrehashSeed(key: string): Uint8Array | null {
+	const seedsJson = sessionStorage.getItem('prehashseeds');
+	if (!seedsJson) return null;
+
+	const seeds: { k: string; v: string }[] = JSON.parse(seedsJson);
+	const found = seeds.find((seed) => seed.k === key);
+
+	if (!found) return null;
+
+	return base64ToBytes(found.v);
+}
+
+/**
  * Serialize parameters object to a consistent string representation
- * 
+ *
  * @param params - Parameters object to serialize
  * @returns Consistent string representation
  */
@@ -103,76 +205,112 @@ export function serializeParams(params: Record<string, any>): string {
 	// Sort keys for consistent output
 	const sortedKeys = Object.keys(params).sort();
 	const sortedParams: Record<string, any> = {};
-	
+
 	for (const key of sortedKeys) {
 		sortedParams[key] = params[key];
 	}
-	
+
 	return JSON.stringify(sortedParams);
 }
 
 /**
- * Encrypt parameters for secure URL transmission
- * 
+ * Encrypt parameters for secure URL transmission using prehash seed
+ *
  * @param params - Parameters object to encrypt
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
- * @returns Encrypted parameters as base64 string
+ * @returns Object with encrypted data and prehash seed index
  */
 export function encryptUrlParams(
-	params: Record<string, any>, 
-	cipherToken: string, 
-	nonceToken: string, 
+	params: Record<string, any>,
+	cipherToken: string,
+	nonceToken: string,
 	hmacKey: string
-): string {
-	// 1. Serialize parameters
-	const paramsString = serializeParams(params);
-	
-	// 2. Generate prehash
-	const prehash = generatePrehash(paramsString, hmacKey);
-	
-	// 3. Generate cipher key and nonce for ChaCha20-Poly1305
+): { encrypted: string; idx: string } {
+	// 1. Add crypto salt to parameters for noise
+	const salt = generateCryptoSalt();
+	const saltBase64 = bytesToBase64(salt);
+	const paramsWithSalt = { ...params, _salt: saltBase64 };
+
+	// 2. Generate random prehash seed (independent of content)
+	const prehashSeed = generatePrehashSeed();
+
+	// 3. Store prehash seed and get key
+	const idx = storePrehashSeed(prehashSeed, hmacKey);
+
+	// 4. Generate prehash from seed
+	const prehash = generatePrehash(prehashSeed, hmacKey);
+
+	// 5. Generate cipher key and nonce for ChaCha20-Poly1305
 	const cipherKey = generateCipherKey(cipherToken, prehash);
 	const cipherNonce = generateCipherNonce(nonceToken, prehash);
-	
-	// 4. Encrypt with ChaCha20-Poly1305
+
+	// 6. Encrypt params (with salt) using ChaCha20-Poly1305
+	const paramsString = serializeParams(paramsWithSalt);
 	const cipher = chacha20poly1305(cipherKey, cipherNonce);
 	const plaintext = new TextEncoder().encode(paramsString);
 	const ciphertext = cipher.encrypt(plaintext);
-	
-	// 5. Return as base64
-	return bytesToBase64(ciphertext);
+
+	// 7. Return encrypted data as base64URL and seed key
+	return {
+		encrypted: bytesToBase64Url(ciphertext),
+		idx: idx
+	};
 }
 
 /**
  * Decrypt parameters from secure URL transmission
- * 
- * @param encryptedParams - Encrypted parameters as base64 string
+ *
+ * @param encryptedParams - Encrypted parameters as base64URL string
+ * @param idx - Key of prehash seed in sessionStorage
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
- * @returns Decrypted parameters object
+ * @returns Decrypted parameters object (without salt)
  */
 export function decryptUrlParams(
 	encryptedParams: string,
+	idx: string,
 	cipherToken: string,
 	nonceToken: string,
 	hmacKey: string
 ): Record<string, any> {
-	// We need the original paramsString to generate the same prehash
-	// This function would be used when we know the expected structure
-	// For now, we'll implement a version that works with known context
-	
-	throw new Error('decryptUrlParams requires the original paramsString for prehash generation');
+	// 1. Retrieve prehash seed from sessionStorage
+	const prehashSeed = getPrehashSeed(idx);
+	if (!prehashSeed) {
+		throw new Error(`Prehash seed not found with key ${idx}`);
+	}
+
+	// 2. Regenerate prehash from seed
+	const prehash = generatePrehash(prehashSeed, hmacKey);
+
+	// 3. Regenerate cipher key and nonce
+	const cipherKey = generateCipherKey(cipherToken, prehash);
+	const cipherNonce = generateCipherNonce(nonceToken, prehash);
+
+	// 4. Convert base64URL to bytes
+	const ciphertext = base64UrlToBytes(encryptedParams);
+
+	// 5. Decrypt with ChaCha20-Poly1305
+	const cipher = chacha20poly1305(cipherKey, cipherNonce);
+	const plaintext = cipher.decrypt(ciphertext);
+
+	// 6. Convert to string and parse JSON
+	const paramsString = new TextDecoder().decode(plaintext);
+	const paramsWithSalt = JSON.parse(paramsString);
+
+	// 7. Remove internal salt and return clean params
+	const { _salt, ...params } = paramsWithSalt;
+	return params;
 }
 
 /**
  * Complete URL parameter encryption workflow
- * 
+ *
  * @param params - Parameters to encrypt
  * @param sessionTokens - Session tokens from authStore
- * @returns Object with encrypted data and metadata for URL
+ * @returns Object with encrypted data and seed key for URL
  */
 export function prepareSecureUrlParams(
 	params: Record<string, any>,
@@ -183,20 +321,12 @@ export function prepareSecureUrlParams(
 	}
 ): {
 	encrypted: string;
-	prehash: string; // For verification/reconstruction
+	idx: string;
 } {
-	const paramsString = serializeParams(params);
-	const prehash = generatePrehash(paramsString, sessionTokens.hmacKey);
-	
-	const encrypted = encryptUrlParams(
+	return encryptUrlParams(
 		params,
 		sessionTokens.cipherToken,
 		sessionTokens.nonceToken,
 		sessionTokens.hmacKey
 	);
-	
-	return {
-		encrypted,
-		prehash: bytesToBase64(prehash)
-	};
 }

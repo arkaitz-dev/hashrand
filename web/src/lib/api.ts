@@ -359,12 +359,16 @@ export const api = {
 
 				// Update store and sessionStorage
 				authStore.updateTokens(user, data.access_token);
-				
+
 				// Generate crypto tokens if they don't exist (new tab scenario)
-				if (!sessionStorage.getItem('cipher_token') || !sessionStorage.getItem('nonce_token') || !sessionStorage.getItem('hmac_key')) {
+				if (
+					!sessionStorage.getItem('cipher_token') ||
+					!sessionStorage.getItem('nonce_token') ||
+					!sessionStorage.getItem('hmac_key')
+				) {
 					authStore.generateCryptoTokens();
 				}
-				
+
 				return true;
 			}
 			return false;

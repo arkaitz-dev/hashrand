@@ -54,6 +54,7 @@ just dev
 - **🏗️ Blake2b Unified Stack**: High-performance cryptographic operations
 - **🔐 Argon2id**: Memory-hard user ID derivation following OWASP 2024 standards  
 - **🛡️ ChaCha20 Encryption**: Stream cipher for magic link encryption
+- **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
 - **🧪 Comprehensive Testing**: 64 automated tests covering all functionality
 
 ## 📊 Architecture
@@ -61,7 +62,8 @@ just dev
 ### Technology Stack
 - **Backend**: Rust + Fermyon Spin + WebAssembly + SQLite
 - **Frontend**: SvelteKit + TypeScript + TailwindCSS + Vite
-- **Security**: Blake2b + Argon2id + ChaCha20 + JWT
+- **Security**: Blake2b + Argon2id + ChaCha20-Poly1305 + JWT + URL Encryption
+- **Cryptography**: @noble/hashes + @noble/ciphers (enterprise-grade)
 - **Database**: SQLite with Zero Knowledge schema
 
 ### API Endpoints
@@ -111,6 +113,18 @@ HashRand implements **true Zero Knowledge architecture**:
 - **GDPR/CCPA Compliant**: No personal data to manage or delete
 - **Enterprise Security**: Multi-layer cryptographic protection with industry standards
 - **Audit-Safe**: All logs use Base58 usernames, safe for analysis
+
+### 🛡️ Advanced URL Parameter Encryption
+
+**Complete Privacy Protection**: Revolutionary URL parameter encryption system protects user data even from browser history inspection:
+
+- **🔐 ChaCha20-Poly1305 Encryption**: Enterprise-grade AEAD encryption for all URL parameters
+- **🎲 Random Prehash Seeds**: Content-independent cryptographic keys eliminate pattern analysis
+- **🔑 Triple Token System**: Cipher/nonce/HMAC keys (32 bytes each) for maximum security
+- **📦 Base64URL Encoding**: URL-safe transmission without padding characters
+- **🔄 FIFO Rotation**: Automatic cleanup with 20-seed limit prevents storage bloat
+- **🧂 Crypto Salt**: 32-byte internal noise generation for enhanced security
+- **🏷️ KV Storage**: 8-byte cryptographic keys for efficient sessionStorage management
 
 ## 🚀 Production Deployment
 

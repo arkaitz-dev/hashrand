@@ -27,6 +27,7 @@ export default [
 				document: 'readonly',
 				navigator: 'readonly',
 				localStorage: 'readonly',
+				sessionStorage: 'readonly',
 				setTimeout: 'readonly',
 				clearTimeout: 'readonly',
 				setInterval: 'readonly',
@@ -41,6 +42,8 @@ export default [
 				TextDecoder: 'readonly',
 				RequestInit: 'readonly',
 				crypto: 'readonly',
+				btoa: 'readonly',
+				atob: 'readonly',
 				EventListener: 'readonly'
 			}
 		},
@@ -73,6 +76,7 @@ export default [
 				document: 'readonly',
 				navigator: 'readonly',
 				localStorage: 'readonly',
+				sessionStorage: 'readonly',
 				setTimeout: 'readonly',
 				clearTimeout: 'readonly',
 				setInterval: 'readonly',
@@ -87,6 +91,8 @@ export default [
 				TextDecoder: 'readonly',
 				RequestInit: 'readonly',
 				crypto: 'readonly',
+				btoa: 'readonly',
+				atob: 'readonly',
 				EventListener: 'readonly'
 			}
 		},

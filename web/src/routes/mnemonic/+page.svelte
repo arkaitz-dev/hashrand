@@ -324,7 +324,9 @@
 							disabled={!formValid || $isLoading || $authStore.isRefreshing}
 							loading={$isLoading || $authStore.isRefreshing}
 							text={$_('mnemonic.generateMnemonic')}
-							loadingText={$authStore.isRefreshing ? $_('auth.authenticating') : $_('common.loading') + '...'}
+							loadingText={$authStore.isRefreshing
+								? $_('auth.authenticating')
+								: $_('common.loading') + '...'}
 						/>
 
 						<!-- Back to menu button -->
