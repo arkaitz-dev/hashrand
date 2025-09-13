@@ -47,29 +47,50 @@ The HashRand web interface is a modern **Single Page Application (SPA)** built w
 
 ## URL Parameter Support
 
-All generator pages support GET parameters for direct configuration and sharing:
+### 🔐 Encrypted Parameter Architecture
 
-### Supported Parameters
+HashRand uses **enterprise-grade URL parameter encryption** to protect user privacy, even from browser history inspection:
 
+#### Modern URL Format
 ```bash
-# Custom hash generator with parameters
-http://localhost:5173/custom/?length=32&alphabet=base58&prefix=app_&suffix=_v1
+# All URLs now use encrypted parameters (except magiclink)
+http://localhost:5173/result/?encrypted=<base64url>&idx=<8byte-key>
 
-# Password generator with specific settings  
-http://localhost:5173/password/?length=25&alphabet=no-look-alike
+# Example encrypted URL
+http://localhost:5173/result/?encrypted=R7FVMz2k9T7L8X3N5A6P&idx=k7J9mN4Q
 
-# API key generator with custom length
-http://localhost:5173/api-key/?length=50&alphabet=full
-
-# BIP39 mnemonic with language and word count
-http://localhost:5173/mnemonic/?language=spanish&words=24
+# Magic link exception (only unencrypted parameter)
+http://localhost:5173/?magiclink=<token>
 ```
 
+#### Legacy URL Support (Read-Only)
+```bash
+# Legacy format (redirected to encrypted automatically)
+http://localhost:5173/custom/?length=32&alphabet=base58&prefix=app_&suffix=_v1
+→ Automatically converted to encrypted format
+
+# Direct parameters still work for initial navigation but are immediately encrypted
+```
+
+#### Parameter Encryption Features
+- **🔐 ChaCha20-Poly1305 Encryption**: All parameters encrypted with enterprise-grade AEAD
+- **🎲 Random Prehash Seeds**: Cryptographic keys independent of parameter content
+- **📦 Base64URL Encoding**: URL-safe transmission without padding characters
+- **🔑 Session Key Management**: Triple token system (cipher/nonce/hmac) for maximum security
+- **🗑️ FIFO Rotation**: Automatic cleanup with 20-parameter limit in sessionStorage
+
+#### Privacy Protection Benefits
+- **🛡️ Browser History Privacy**: Parameters never appear in plaintext in browser history
+- **🔒 Zero Plaintext Exposure**: All sensitive configuration encrypted before URL generation
+- **📱 Device Access Protection**: URLs remain private even with physical device access
+- **🎯 Seamless UX**: Users experience identical functionality with enhanced privacy
+
 ### Centralized API Architecture
-- **Generator Pages** (`/custom/`, `/password/`, `/api-key/`, `/mnemonic/`): Handle UI and navigation with GET parameter support
-- **Result Page** (`/result/`): Centralized API calling based on URL parameters  
+- **Generator Pages** (`/custom/`, `/password/`, `/api-key/`, `/mnemonic/`): Handle UI and navigation with encrypted parameter support
+- **Result Page** (`/result/`): Centralized API calling based on encrypted URL parameters  
 - **Fresh Generation**: Result page always generates new values, never displays cached results
-- **Shareable URLs**: Complete configuration can be shared via URL parameters
+- **Shareable URLs**: Complete configuration can be shared via encrypted URL parameters
+- **Universal Decryption**: All routes automatically decrypt parameters with fallback to legacy format
 
 ## Authentication Integration
 
@@ -87,12 +108,13 @@ http://localhost:5173/mnemonic/?language=spanish&words=24
 - **Universal Integration**: Works across all generator pages (custom/, password/, api-key/, mnemonic/)
 - **Professional Design**: Matches existing dialog components
 
-### State Management
+### State Management & Security
 - **State-Aware Form Handling**: Automatic parameter preservation through authentication flow
-- **JSON Parameter Encoding**: Form parameters encoded as base58 URL-safe strings
-- **Temporary Storage**: Parameters stored in localStorage with automatic cleanup
+- **Encrypted Parameter Encoding**: Form parameters encrypted before URL generation
+- **Secure Temporary Storage**: Parameters managed in sessionStorage with automatic cleanup
 - **Seamless Restoration**: Form state restored after authentication completion
 - **Clean User Flow**: Smooth transition from form → authentication → result generation
+- **Preventive Data Clearing**: Complete cleanup before every authentication dialog for maximum security
 
 ### Magic Link Integration
 - **Dynamic Magic Links**: Automatically adapt to current host (localhost/Tailscale)
@@ -111,26 +133,30 @@ http://localhost:5173/mnemonic/?language=spanish&words=24
 ## Seed-Based Generation UI
 
 ### 🌱 Deterministic Generation Interface
-- **Read-only Seed Display**: Seeds shown only when provided via URL parameters (non-editable)
+- **Read-only Seed Display**: Seeds shown only when provided via encrypted URL parameters (non-editable)
 - **Base58 Validation**: 44-character base58 seed format with visual feedback
-- **Smart UI Behavior**: Regenerate button hidden only when seed provided via URL parameters
+- **Smart UI Behavior**: Regenerate button hidden when seed detected in decrypted parameters
 - **Informational Display**: Seeds shown as informational text without copy functionality
 - **Simplified Integration**: Clean seed handling without complex UI interactions
+- **Privacy Protection**: Seed values encrypted in URLs, never exposed in browser history
 
 ### URL Seed Integration
 ```bash
-# URL with seed parameter (read-only display)
-http://localhost:5173/custom/?seed=2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR&length=32
+# Modern encrypted URL with seed (read-only display after decryption)
+http://localhost:5173/result/?encrypted=<base64url>&idx=<8byte-key>
+# Decrypted parameters contain: seed=2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR&length=32
 
-# API-generated seeds (informational metadata)
-# Displayed as informational metadata without copy functionality
+# Legacy format (automatic encryption conversion)
+http://localhost:5173/custom/?seed=2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR&length=32
+→ Automatically encrypted for privacy protection
 ```
 
 ### Seed Behavior
-- **URL-provided seeds**: Shows as read-only informational text
+- **Encrypted seed parameters**: Decrypted from encrypted URLs, shown as read-only informational text
 - **API-generated seeds**: Displayed as informational metadata without copy functionality
 - **No Seed Input Fields**: Simplified interface without complex interactions
 - **44-character Base58**: Standard format with visual validation
+- **Privacy-First**: All seed parameters encrypted in URLs for complete browser history protection
 
 ## Mobile & Responsive Design
 

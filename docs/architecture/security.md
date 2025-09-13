@@ -223,6 +223,91 @@ CHACHA_ENCRYPTION_KEY=<64-char-hex>     # Magic link encryption
 - **Secret Rotation**: Regular rotation procedures for production
 - **Backup Security**: Encrypted backup of production secrets
 
+### Browser Storage Security
+
+#### Multi-Tier Data Cleanup Architecture
+
+HashRand implements a comprehensive three-tier data cleanup system to ensure zero sensitive data persistence:
+
+##### 1. Preventive Defense (`clearPreventiveAuthData()`)
+**Proactive cleanup before authentication dialogs**
+```typescript
+// Executed before EVERY authentication request
+sessionStorage: ALL cleared (auth_user, access_token, crypto tokens, prehashseeds)  
+localStorage: Sensitive only (magiclink_hash, pending_auth_email)
+Preserved: Language preferences, theme settings (UX continuity)
+```
+
+**Use Cases:**
+- User clicks authentication button
+- Automatic refresh fails
+- Generation routes require authentication
+- Any authentication dialog display
+
+##### 2. Selective Cleanup (`clearSensitiveAuthData()`)
+**Targeted cleanup for token errors while preserving active flows**
+```typescript
+// Executed during token expiration/validation errors
+sessionStorage: ALL cleared (auth_user, access_token, crypto tokens, prehashseeds)
+localStorage: Critical only (magiclink_hash)  
+Preserved: pending_auth_email (ongoing magic link flows), user preferences
+```
+
+**Use Cases:**
+- JWT token expiration
+- Token validation failures  
+- Database parsing errors
+- Session corruption recovery
+
+##### 3. Complete Cleanup (`clearAuthFromStorage()`)
+**Maximum security cleanup for explicit logout**
+```typescript
+// Executed during explicit user logout
+sessionStorage: ALL cleared (complete wipe)
+localStorage: ALL cleared (including user preferences)
+Result: Complete fresh state
+```
+
+**Use Cases:**
+- User logout button
+- Security-mandated session termination
+- Administrative logout
+
+#### Sensitive Data Lifecycle Management
+
+##### Immediate Cleanup Strategy
+```typescript
+// pending_auth_email - Minimum retention principle
+1. validateMagicLink() → Success → localStorage.removeItem('pending_auth_email')
+2. updateTokens() → Success → localStorage.removeItem('pending_auth_email')
+Result: Data exists only during authentication flow, never persists
+```
+
+##### Cryptographic Key Persistence
+```typescript  
+// Crypto tokens (cipher/nonce/hmac) - Session continuity optimization
+Generation: ONLY when !hasCryptoTokens() (not every refresh)
+Persistence: Throughout valid session for URL encryption continuity
+Cleanup: Complete removal during authentication errors/logout
+```
+
+#### Storage Security Benefits
+
+| **Security Layer** | **Attack Vector Mitigated** | **Implementation** |
+|-------------------|----------------------------|-------------------|
+| **Preventive Defense** | Residual data from crashes/improper logout | Clean state before auth |
+| **Lifecycle Management** | Data persistence beyond necessity | Immediate post-auth cleanup |
+| **Session Isolation** | Cross-session data leakage | Complete storage separation |
+| **UX Preservation** | Security vs usability balance | Selective preservation |
+
+#### Browser History Protection
+
+##### URL Parameter Encryption Enforcement
+- **Mandatory Encryption**: All routes accept ONLY encrypted parameters  
+- **Zero Fallbacks**: Direct URL parameters completely eliminated (except `magiclink`)
+- **Consistent Architecture**: `encrypted` + `idx` parameters universal across application
+- **Attack Surface Reduction**: No bypass vectors through parameter manipulation
+
 ### Monitoring & Auditing
 
 #### Security Logging
