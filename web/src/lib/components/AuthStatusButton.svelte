@@ -43,6 +43,9 @@
 				// Refresh succeeded - show dropdown
 				showUserDropdown = true;
 			} else {
+				// Clear any residual auth data before asking for email (defensive security)
+				authStore.clearPreventiveAuthData();
+
 				// Only show authentication dialog if refresh failed
 				dialogStore.show('auth');
 			}

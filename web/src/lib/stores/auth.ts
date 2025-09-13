@@ -49,13 +49,13 @@ function loadAuthFromStorage(): void {
 					accessToken: storedToken
 				}));
 			} else {
-				// Token expired, clear storage
-				clearAuthFromStorage();
+				// Token expired, clear sensitive data
+				clearSensitiveAuthData();
 			}
 		}
 	} catch (error) {
 		console.warn('Failed to load auth from storage:', error);
-		clearAuthFromStorage();
+		clearSensitiveAuthData();
 	}
 }
 
@@ -74,17 +74,59 @@ function saveAuthToStorage(user: AuthUser, accessToken: string): void {
 }
 
 /**
- * Clear authentication state from sessionStorage
+ * Clear ALL authentication data preventively (before asking for email)
+ * Preserves only user preferences (language, theme) for UX
+ */
+function clearPreventiveAuthData(): void {
+	if (typeof window === 'undefined') return;
+
+	// Clear ALL sessionStorage - authentication and crypto data
+	sessionStorage.removeItem('auth_user');
+	sessionStorage.removeItem('access_token');
+	sessionStorage.removeItem('cipher_token');
+	sessionStorage.removeItem('nonce_token');
+	sessionStorage.removeItem('hmac_key');
+	sessionStorage.removeItem('prehashseeds');
+
+	// Clear ALL localStorage - including sensitive auth data from previous sessions
+	localStorage.removeItem('magiclink_hash');
+	localStorage.removeItem('pending_auth_email');
+
+	// Preserve user preferences for UX (language and theme are kept)
+}
+
+/**
+ * Clear sensitive authentication data only (for token expiration/errors)
+ */
+function clearSensitiveAuthData(): void {
+	if (typeof window === 'undefined') return;
+
+	// Clear sessionStorage - authentication and crypto data
+	sessionStorage.removeItem('auth_user');
+	sessionStorage.removeItem('access_token');
+	sessionStorage.removeItem('cipher_token');
+	sessionStorage.removeItem('nonce_token');
+	sessionStorage.removeItem('hmac_key');
+	sessionStorage.removeItem('prehashseeds');
+
+	// Clear localStorage - sensitive authentication data
+	localStorage.removeItem('magiclink_hash');
+	// Note: pending_auth_email is cleared immediately on successful auth,
+	// not here, to preserve ongoing magic link flows during token errors
+}
+
+/**
+ * Clear ALL data including user preferences (for explicit logout)
  */
 function clearAuthFromStorage(): void {
 	if (typeof window === 'undefined') return;
 
-	sessionStorage.removeItem('auth_user');
-	sessionStorage.removeItem('access_token');
-	// Also clear crypto tokens when clearing auth
-	sessionStorage.removeItem('cipher_token');
-	sessionStorage.removeItem('nonce_token');
-	sessionStorage.removeItem('hmac_key');
+	// Clear sensitive auth data first
+	clearSensitiveAuthData();
+
+	// Clear user preferences for maximum security on logout
+	localStorage.removeItem('preferred-language');
+	localStorage.removeItem('theme');
 }
 
 /**
@@ -186,8 +228,8 @@ export const authStore = {
 			const hasValidCookie = await hasValidRefreshCookie();
 
 			if (!hasValidCookie) {
-				// Refresh cookie expired/invalid, clear everything
-				clearAuthFromStorage();
+				// Refresh cookie expired/invalid, clear sensitive data
+				clearSensitiveAuthData();
 			}
 			// If valid cookie exists, crypto tokens will be generated on next API call via refresh
 		}
@@ -216,22 +258,12 @@ export const authStore = {
 				if (user.expiresAt && new Date(user.expiresAt) > new Date()) {
 					return true; // Valid session exists - NO refresh needed
 				}
-				// Token expired, clear it and continue to refresh
-				sessionStorage.removeItem('access_token');
-				sessionStorage.removeItem('auth_user');
-				sessionStorage.removeItem('cipher_token');
-				sessionStorage.removeItem('nonce_token');
-				sessionStorage.removeItem('hmac_key');
-				sessionStorage.removeItem('hmac_key');
+				// Token expired, clear sensitive data and continue to refresh
+				clearSensitiveAuthData();
 			} catch (error) {
 				console.warn('Failed to parse user data from sessionStorage:', error);
 				// Clear invalid data and continue to refresh
-				sessionStorage.removeItem('access_token');
-				sessionStorage.removeItem('auth_user');
-				sessionStorage.removeItem('cipher_token');
-				sessionStorage.removeItem('nonce_token');
-				sessionStorage.removeItem('hmac_key');
-				sessionStorage.removeItem('hmac_key');
+				clearSensitiveAuthData();
 			}
 		}
 
@@ -331,8 +363,15 @@ export const authStore = {
 			// Save to sessionStorage
 			saveAuthToStorage(user, loginResponse.access_token);
 
-			// Generate crypto tokens ONLY after successful login
-			generateCryptoTokens();
+			// Generate crypto tokens ONLY if they don't exist yet
+			if (!hasCryptoTokens()) {
+				generateCryptoTokens();
+			}
+
+			// Clear pending auth email - no longer needed after successful authentication
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('pending_auth_email');
+			}
 
 			return loginResponse;
 		} catch (error) {
@@ -439,6 +478,19 @@ export const authStore = {
 		}));
 
 		saveAuthToStorage(user, accessToken);
+
+		// Clear pending auth email - no longer needed after successful token update
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('pending_auth_email');
+		}
+	},
+
+	/**
+	 * Clear all authentication data preventively before showing login dialog
+	 * Ensures clean state regardless of how previous session ended
+	 */
+	clearPreventiveAuthData(): void {
+		clearPreventiveAuthData();
 	}
 };
 

@@ -105,6 +105,10 @@
 				...(params.suffix && { suffix: params.suffix }),
 				...(urlProvidedSeed && { seed: urlProvidedSeed })
 			};
+
+			// Clear any residual auth data before asking for email (defensive security)
+			authStore.clearPreventiveAuthData();
+
 			dialogStore.show('auth', pendingGenerationParams);
 			return;
 		}
@@ -221,20 +225,8 @@
 			}
 		}
 
-		// Fallback to reading direct URL parameters if no encrypted params
-		if (Object.keys(urlParams).length === 0) {
-			const urlLength = searchParams.get('length');
-			const urlAlphabet = searchParams.get('alphabet');
-			const urlPrefix = searchParams.get('prefix');
-			const urlSuffix = searchParams.get('suffix');
-			const urlSeed = searchParams.get('seed');
-
-			if (urlLength) urlParams.length = urlLength;
-			if (urlAlphabet) urlParams.alphabet = urlAlphabet;
-			if (urlPrefix) urlParams.prefix = urlPrefix;
-			if (urlSuffix) urlParams.suffix = urlSuffix;
-			if (urlSeed) urlParams.seed = urlSeed;
-		}
+		// NO fallback to direct URL parameters - only encrypted params are supported
+		// All parameters must come from decrypted data
 
 		// Apply URL parameters to form state
 		if (urlParams.length) {

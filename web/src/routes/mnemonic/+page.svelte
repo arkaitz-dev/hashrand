@@ -133,6 +133,10 @@
 				words: params.words ?? 12,
 				...(urlProvidedSeed && { seed: urlProvidedSeed })
 			};
+
+			// Clear any residual auth data before asking for email (defensive security)
+			authStore.clearPreventiveAuthData();
+
 			dialogStore.show('auth', pendingGenerationParams);
 			return;
 		}
@@ -207,16 +211,8 @@
 			}
 		}
 
-		// Fallback to reading direct URL parameters if no encrypted params
-		if (Object.keys(urlParams).length === 0) {
-			const urlLanguage = searchParams.get('language');
-			const urlWords = searchParams.get('words');
-			const urlSeed = searchParams.get('seed');
-
-			if (urlLanguage) urlParams.language = urlLanguage;
-			if (urlWords) urlParams.words = urlWords;
-			if (urlSeed) urlParams.seed = urlSeed;
-		}
+		// NO fallback to direct URL parameters - only encrypted params are supported
+		// All parameters must come from decrypted data
 
 		// Apply URL parameters to form state
 		if (urlParams.language && isValidMnemonicLanguage(String(urlParams.language))) {

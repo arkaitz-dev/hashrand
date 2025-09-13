@@ -43,7 +43,10 @@
 
 	// Only treat as "provided seed" if seed parameter comes from URL GET parameters
 	// (this controls whether to show the regenerate button)
-	let usedProvidedSeed = $derived(searchParams.has('seed'));
+	// let usedProvidedSeed = $derived(searchParams.has('seed')); // OLD: Check direct URL params
+
+	// NEW: Check if seed exists in decrypted parameters or direct URL params
+	let usedProvidedSeed = $state(false);
 
 	// Handle result state and API calls
 	onMount(async () => {
@@ -91,26 +94,8 @@
 			}
 		}
 
-		// Fallback to reading direct URL parameters if no encrypted params
-		if (Object.keys(urlParams).length === 0) {
-			const endpoint = searchParams.get('endpoint');
-			const length = searchParams.get('length');
-			const alphabet = searchParams.get('alphabet');
-			const prefix = searchParams.get('prefix');
-			const suffix = searchParams.get('suffix');
-			const inputSeed = searchParams.get('seed');
-			const language = searchParams.get('language');
-			const words = searchParams.get('words');
-
-			if (endpoint) urlParams.endpoint = endpoint;
-			if (length) urlParams.length = length;
-			if (alphabet) urlParams.alphabet = alphabet;
-			if (prefix) urlParams.prefix = prefix;
-			if (suffix) urlParams.suffix = suffix;
-			if (inputSeed) urlParams.seed = inputSeed;
-			if (language) urlParams.language = language;
-			if (words) urlParams.words = words;
-		}
+		// NO fallback to direct URL parameters - only encrypted params are supported
+		// All parameters must come from decrypted data
 
 		// Extract and validate endpoint
 		const endpoint = String(urlParams.endpoint || '');
@@ -118,6 +103,10 @@
 			goto('/');
 			return;
 		}
+
+		// Check if we have a provided seed (only from decrypted params)
+		const hasProvidedSeed = Boolean(urlParams.seed);
+		usedProvidedSeed = hasProvidedSeed;
 
 		setLoading(true);
 

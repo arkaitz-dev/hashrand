@@ -96,6 +96,10 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 			const { dialogStore } = await import('./stores/dialog');
 
 			await authStore.logout();
+
+			// Clear any residual auth data before asking for email (defensive security)
+			authStore.clearPreventiveAuthData();
+
 			dialogStore.show('auth');
 		}
 	}
