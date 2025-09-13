@@ -21,6 +21,8 @@
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { dialogStore } from '$lib/stores/dialog';
+	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
+	import { authStore } from '$lib/stores/auth';
 
 	let copySuccess = $state(false);
 	let copyTimeout: ReturnType<typeof setTimeout>;
@@ -60,17 +62,59 @@
 
 	// Function to generate result from URL parameters
 	async function generateFromParams() {
-		const endpoint = searchParams.get('endpoint');
-		if (!endpoint) {
-			goto('/');
-			return;
-		}
-
 		// Verify auth is available with automatic refresh if needed
 		const { authStore } = await import('$lib/stores/auth');
 		const isAuthenticated = await authStore.ensureAuthenticated();
 
 		if (!isAuthenticated) {
+			goto('/');
+			return;
+		}
+
+		// First try to decrypt encrypted parameters
+		let urlParams: Record<string, any> = {};
+
+		// Try to decrypt if encrypted parameters are present
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
+
+		if (cipherToken && nonceToken && hmacKey) {
+			const decryptedParams = decryptPageParams(searchParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+
+			if (decryptedParams) {
+				urlParams = decryptedParams;
+			}
+		}
+
+		// Fallback to reading direct URL parameters if no encrypted params
+		if (Object.keys(urlParams).length === 0) {
+			const endpoint = searchParams.get('endpoint');
+			const length = searchParams.get('length');
+			const alphabet = searchParams.get('alphabet');
+			const prefix = searchParams.get('prefix');
+			const suffix = searchParams.get('suffix');
+			const inputSeed = searchParams.get('seed');
+			const language = searchParams.get('language');
+			const words = searchParams.get('words');
+
+			if (endpoint) urlParams.endpoint = endpoint;
+			if (length) urlParams.length = length;
+			if (alphabet) urlParams.alphabet = alphabet;
+			if (prefix) urlParams.prefix = prefix;
+			if (suffix) urlParams.suffix = suffix;
+			if (inputSeed) urlParams.seed = inputSeed;
+			if (language) urlParams.language = language;
+			if (words) urlParams.words = words;
+		}
+
+		// Extract and validate endpoint
+		const endpoint = String(urlParams.endpoint || '');
+		if (!endpoint) {
 			goto('/');
 			return;
 		}
@@ -83,23 +127,15 @@
 			// Build parameters object
 			const params: Record<string, string | number | boolean> = { raw: true };
 
-			// Get common parameters
-			const length = searchParams.get('length');
-			const alphabet = searchParams.get('alphabet');
-			const prefix = searchParams.get('prefix');
-			const suffix = searchParams.get('suffix');
-			const inputSeed = searchParams.get('seed');
+			// Convert and validate parameters
+			if (urlParams.length) params.length = parseInt(String(urlParams.length));
+			if (urlParams.alphabet) params.alphabet = String(urlParams.alphabet);
+			if (urlParams.prefix) params.prefix = String(urlParams.prefix);
+			if (urlParams.suffix) params.suffix = String(urlParams.suffix);
+			if (urlParams.language) params.language = String(urlParams.language);
+			if (urlParams.words) params.words = parseInt(String(urlParams.words));
 
-			// Get mnemonic-specific parameters
-			const language = searchParams.get('language');
-			const words = searchParams.get('words');
-
-			if (length) params.length = parseInt(length);
-			if (alphabet) params.alphabet = alphabet;
-			if (prefix) params.prefix = prefix;
-			if (suffix) params.suffix = suffix;
-			if (language) params.language = language;
-			if (words) params.words = parseInt(words);
+			const inputSeed = urlParams.seed ? String(urlParams.seed) : null;
 
 			let response: import('$lib/types').CustomHashResponse;
 
@@ -370,42 +406,60 @@
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
 
-		// Add parameters to URL including seed
+		// Build parameters object including seed
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
-			const urlParams = new URLSearchParams();
+			const configParams: Record<string, any> = {};
 
 			// Add common parameters
 			if ($resultState.params.length) {
-				urlParams.set('length', $resultState.params.length.toString());
+				configParams.length = $resultState.params.length;
 			}
 			if ($resultState.params.alphabet) {
-				urlParams.set('alphabet', String($resultState.params.alphabet));
+				configParams.alphabet = String($resultState.params.alphabet);
 			}
 
 			// Add endpoint-specific parameters
 			if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
 				if ($resultState.params.prefix) {
-					urlParams.set('prefix', String($resultState.params.prefix));
+					configParams.prefix = String($resultState.params.prefix);
 				}
 				if ($resultState.params.suffix) {
-					urlParams.set('suffix', String($resultState.params.suffix));
+					configParams.suffix = String($resultState.params.suffix);
 				}
 			} else if ($resultState.endpoint === 'mnemonic') {
 				if ($resultState.params.language) {
-					urlParams.set('language', String($resultState.params.language));
+					configParams.language = String($resultState.params.language);
 				}
 				if ($resultState.params.words) {
-					urlParams.set('words', String($resultState.params.words));
+					configParams.words = $resultState.params.words;
 				}
 			}
 
 			// Add seed if available
 			if ($resultState.seed) {
-				urlParams.set('seed', $resultState.seed);
+				configParams.seed = $resultState.seed;
 			}
 
-			const queryString = urlParams.toString();
-			return queryString ? `${basePath}?${queryString}` : basePath;
+			// Get crypto tokens for parameter encryption
+			const cipherToken = authStore.getCipherToken();
+			const nonceToken = authStore.getNonceToken();
+			const hmacKey = authStore.getHmacKey();
+
+			if (cipherToken && nonceToken && hmacKey && Object.keys(configParams).length > 0) {
+				// Create encrypted URL for privacy
+				return createEncryptedUrl(basePath, configParams, {
+					cipherToken,
+					nonceToken,
+					hmacKey
+				});
+			} else if (Object.keys(configParams).length > 0) {
+				// Fallback: create traditional URL
+				const urlParams = new URLSearchParams();
+				Object.entries(configParams).forEach(([key, value]) => {
+					urlParams.set(key, String(value));
+				});
+				return `${basePath}?${urlParams.toString()}`;
+			}
 		}
 
 		return basePath;
@@ -425,37 +479,55 @@
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
 
-		// Add parameters to URL if they exist
+		// Build parameters object (without seed)
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
-			const urlParams = new URLSearchParams();
+			const configParams: Record<string, any> = {};
 
 			// Add common parameters
 			if ($resultState.params.length) {
-				urlParams.set('length', $resultState.params.length.toString());
+				configParams.length = $resultState.params.length;
 			}
 			if ($resultState.params.alphabet) {
-				urlParams.set('alphabet', String($resultState.params.alphabet));
+				configParams.alphabet = String($resultState.params.alphabet);
 			}
 
 			// Add endpoint-specific parameters
 			if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
 				if ($resultState.params.prefix) {
-					urlParams.set('prefix', String($resultState.params.prefix));
+					configParams.prefix = String($resultState.params.prefix);
 				}
 				if ($resultState.params.suffix) {
-					urlParams.set('suffix', String($resultState.params.suffix));
+					configParams.suffix = String($resultState.params.suffix);
 				}
 			} else if ($resultState.endpoint === 'mnemonic') {
 				if ($resultState.params.language) {
-					urlParams.set('language', String($resultState.params.language));
+					configParams.language = String($resultState.params.language);
 				}
 				if ($resultState.params.words) {
-					urlParams.set('words', String($resultState.params.words));
+					configParams.words = $resultState.params.words;
 				}
 			}
 
-			const queryString = urlParams.toString();
-			return queryString ? `${basePath}?${queryString}` : basePath;
+			// Get crypto tokens for parameter encryption
+			const cipherToken = authStore.getCipherToken();
+			const nonceToken = authStore.getNonceToken();
+			const hmacKey = authStore.getHmacKey();
+
+			if (cipherToken && nonceToken && hmacKey && Object.keys(configParams).length > 0) {
+				// Create encrypted URL for privacy
+				return createEncryptedUrl(basePath, configParams, {
+					cipherToken,
+					nonceToken,
+					hmacKey
+				});
+			} else if (Object.keys(configParams).length > 0) {
+				// Fallback: create traditional URL
+				const urlParams = new URLSearchParams();
+				Object.entries(configParams).forEach(([key, value]) => {
+					urlParams.set(key, String(value));
+				});
+				return `${basePath}?${urlParams.toString()}`;
+			}
 		}
 
 		return basePath;

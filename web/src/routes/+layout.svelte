@@ -13,6 +13,7 @@
 	import { goto } from '$app/navigation';
 	import { dialogStore } from '$lib/stores/dialog';
 	import DialogContainer from '$lib/components/DialogContainer.svelte';
+	import { encryptNextUrl } from '$lib/crypto';
 
 	let { children } = $props();
 
@@ -73,7 +74,23 @@
 
 			// Handle next parameter from response if present
 			if (loginResponse.next) {
-				await goto(loginResponse.next);
+				// Check if we have crypto tokens for parameter encryption
+				const cipherToken = authStore.getCipherToken();
+				const nonceToken = authStore.getNonceToken();
+				const hmacKey = authStore.getHmacKey();
+
+				if (cipherToken && nonceToken && hmacKey) {
+					// Encrypt parameters in next URL for privacy
+					const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
+						cipherToken,
+						nonceToken,
+						hmacKey
+					});
+					await goto(encryptedNextUrl);
+				} else {
+					// No crypto tokens available, navigate to next URL as-is
+					await goto(loginResponse.next);
+				}
 			}
 		} catch {
 			// Clear hash on error

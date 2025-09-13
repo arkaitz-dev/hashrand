@@ -301,6 +301,7 @@ export function decryptUrlParams(
 	const paramsWithSalt = JSON.parse(paramsString);
 
 	// 7. Remove internal salt and return clean params
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { _salt, ...params } = paramsWithSalt;
 	return params;
 }
@@ -329,4 +330,132 @@ export function prepareSecureUrlParams(
 		sessionTokens.nonceToken,
 		sessionTokens.hmacKey
 	);
+}
+
+/**
+ * Extract route and parameters from a URL
+ *
+ * @param url - URL string to parse
+ * @returns Object with basePath and parameters
+ */
+export function parseNextUrl(url: string): {
+	basePath: string;
+	params: Record<string, string>;
+} {
+	try {
+		const urlObj = new globalThis.URL(url, 'http://localhost'); // Use dummy base for relative URLs
+		const params: Record<string, string> = {};
+
+		// Extract all search parameters
+		urlObj.searchParams.forEach((value, key) => {
+			params[key] = value;
+		});
+
+		return {
+			basePath: urlObj.pathname,
+			params
+		};
+	} catch {
+		// If URL parsing fails, treat as a simple path without parameters
+		return {
+			basePath: url,
+			params: {}
+		};
+	}
+}
+
+/**
+ * Encrypt parameters in a next URL and create secure URL
+ *
+ * @param nextUrl - Original next URL from backend
+ * @param sessionTokens - Session tokens for encryption
+ * @returns Encrypted URL with basePath?encrypted=...&idx=...
+ */
+export function encryptNextUrl(
+	nextUrl: string,
+	sessionTokens: {
+		cipherToken: string;
+		nonceToken: string;
+		hmacKey: string;
+	}
+): string {
+	const { basePath, params } = parseNextUrl(nextUrl);
+
+	// If no parameters, return URL as-is
+	if (Object.keys(params).length === 0) {
+		return nextUrl;
+	}
+
+	// Encrypt parameters
+	const { encrypted, idx } = prepareSecureUrlParams(params, sessionTokens);
+
+	// Create new URL with encrypted parameters
+	return `${basePath}?encrypted=${encrypted}&idx=${idx}`;
+}
+
+/**
+ * Decrypt parameters from current page URL if encrypted
+ *
+ * @param searchParams - URLSearchParams from current page
+ * @param sessionTokens - Session tokens for decryption
+ * @returns Decrypted parameters or null if not encrypted/failed
+ */
+export function decryptPageParams(
+	searchParams: URLSearchParams,
+	sessionTokens: {
+		cipherToken: string;
+		nonceToken: string;
+		hmacKey: string;
+	}
+): Record<string, any> | null {
+	const encrypted = searchParams.get('encrypted');
+	const idx = searchParams.get('idx');
+
+	// Return null if not encrypted parameters
+	if (!encrypted || !idx) {
+		return null;
+	}
+
+	try {
+		// Decrypt parameters
+		return decryptUrlParams(
+			encrypted,
+			idx,
+			sessionTokens.cipherToken,
+			sessionTokens.nonceToken,
+			sessionTokens.hmacKey
+		);
+	} catch (error) {
+		console.error('Failed to decrypt URL parameters:', error);
+		return null;
+	}
+}
+
+/**
+ * Create encrypted URL for navigation with parameters
+ *
+ * @param basePath - Base path for the route (e.g., '/result', '/custom')
+ * @param params - Parameters to encrypt and include
+ * @param sessionTokens - Session tokens for encryption
+ * @returns Full encrypted URL
+ */
+export function createEncryptedUrl(
+	basePath: string,
+	params: Record<string, any>,
+	sessionTokens: {
+		cipherToken: string;
+		nonceToken: string;
+		hmacKey: string;
+	}
+): string {
+	// If no parameters, return simple base path
+	if (!params || Object.keys(params).length === 0) {
+		return basePath;
+	}
+
+	// Encrypt parameters
+	const { encrypted, idx } = prepareSecureUrlParams(params, sessionTokens);
+
+	// Create encrypted URL
+	return `${basePath}?encrypted=${encrypted}&idx=${idx}`;
 }

@@ -11,6 +11,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import type { MnemonicParams } from '$lib/types';
+	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 
 	// Default values
 	function getDefaultParams(): MnemonicParams {
@@ -141,20 +142,37 @@
 	}
 
 	function proceedWithGeneration() {
-		// Create URL parameters for result page - result will handle API call
-		const urlParams = new URLSearchParams();
-		urlParams.set('endpoint', 'mnemonic');
-
-		// Add generation parameters
-		urlParams.set('language', params.language ?? 'english');
-		urlParams.set('words', (params.words ?? 12).toString());
+		// Create parameters object for result page
+		const resultParams: Record<string, any> = {
+			endpoint: 'mnemonic',
+			language: params.language ?? 'english',
+			words: params.words ?? 12
+		};
 
 		// Add seed if provided from URL
-		if (urlProvidedSeed) {
-			urlParams.set('seed', urlProvidedSeed);
-		}
+		if (urlProvidedSeed) resultParams.seed = urlProvidedSeed;
 
-		goto(`/result?${urlParams.toString()}`);
+		// Get crypto tokens for parameter encryption
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
+
+		if (cipherToken && nonceToken && hmacKey) {
+			// Create encrypted URL for privacy
+			const encryptedUrl = createEncryptedUrl('/result', resultParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+			goto(encryptedUrl);
+		} else {
+			// Fallback: create traditional URL (should not happen with proper auth)
+			const urlParams = new URLSearchParams();
+			Object.entries(resultParams).forEach(([key, value]) => {
+				urlParams.set(key, String(value));
+			});
+			goto(`/result?${urlParams.toString()}`);
+		}
 	}
 
 	// Initialize params based on navigation source
@@ -169,23 +187,61 @@
 		}
 
 		// Override with URL parameters if present
-		const urlLanguage = searchParams.get('language');
-		const urlWords = searchParams.get('words');
-		const urlSeed = searchParams.get('seed');
+		// First try to decrypt encrypted parameters
+		let urlParams: Record<string, any> = {};
 
-		if (urlLanguage && isValidMnemonicLanguage(urlLanguage)) {
-			params.language = urlLanguage;
-		}
+		// Try to decrypt if encrypted parameters are present
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
 
-		if (urlWords) {
-			const wordsNum = parseInt(urlWords);
-			if (isValidMnemonicWords(wordsNum)) {
-				params.words = wordsNum;
+		if (cipherToken && nonceToken && hmacKey) {
+			const decryptedParams = decryptPageParams(searchParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+
+			if (decryptedParams) {
+				urlParams = decryptedParams;
 			}
 		}
 
-		if (urlSeed) {
-			urlProvidedSeed = urlSeed;
+		// Fallback to reading direct URL parameters if no encrypted params
+		if (Object.keys(urlParams).length === 0) {
+			const urlLanguage = searchParams.get('language');
+			const urlWords = searchParams.get('words');
+			const urlSeed = searchParams.get('seed');
+
+			if (urlLanguage) urlParams.language = urlLanguage;
+			if (urlWords) urlParams.words = urlWords;
+			if (urlSeed) urlParams.seed = urlSeed;
+		}
+
+		// Apply URL parameters to form state
+		if (urlParams.language && isValidMnemonicLanguage(String(urlParams.language))) {
+			params.language = String(urlParams.language) as
+				| 'english'
+				| 'japanese'
+				| 'korean'
+				| 'spanish'
+				| 'chinese_simplified'
+				| 'chinese_traditional'
+				| 'french'
+				| 'italian'
+				| 'czech'
+				| 'portuguese';
+		}
+
+		if (urlParams.words) {
+			const wordsNum = parseInt(String(urlParams.words));
+			if (isValidMnemonicWords(wordsNum)) {
+				params.words = wordsNum as 12 | 24;
+			}
+		}
+
+		if (urlParams.seed) {
+			urlProvidedSeed = String(urlParams.seed);
 		}
 	});
 </script>

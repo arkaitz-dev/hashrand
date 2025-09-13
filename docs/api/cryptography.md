@@ -148,10 +148,136 @@ CREATE TABLE magiclinks (
 - **🛡️ Security**: Maintained or improved cryptographic security properties
 - **🎯 Standards Compliance**: RFC 7693 standardized cryptographic implementation
 
+## URL Parameter Encryption System
+
+### Advanced Privacy Protection Architecture
+
+HashRand implements a revolutionary **URL Parameter Encryption System** that protects user privacy by encrypting all URL parameters using ChaCha20-Poly1305 AEAD encryption. This ensures that sensitive information never appears in browser history, server logs, or network monitoring tools.
+
+### Cryptographic Pipeline
+
+```
+URL Parameters → Crypto Salt → Prehash Seed → Blake2b-keyed → ChaCha20-Poly1305 → Base64URL
+     ↓                ↓              ↓              ↓                ↓              ↓
+Plain JSON → 32-byte salt → 32-byte seed → Cipher/Nonce Keys → AEAD Encryption → Encrypted URL
+```
+
+### Implementation Details
+
+```typescript
+// Complete encryption workflow (web/src/lib/crypto.ts)
+export function encryptUrlParams(
+    params: Record<string, any>,
+    cipherToken: string,
+    nonceToken: string, 
+    hmacKey: string
+): { encrypted: string; idx: string } {
+    // 1. Add 32-byte cryptographic salt for noise generation
+    const salt = generateCryptoSalt();
+    const paramsWithSalt = { ...params, _salt: bytesToBase64(salt) };
+    
+    // 2. Generate random 32-byte prehash seed (content-independent)
+    const prehashSeed = generatePrehashSeed();
+    
+    // 3. Store seed with 8-byte cryptographic key (FIFO rotation)
+    const idx = storePrehashSeed(prehashSeed, hmacKey);
+    
+    // 4. Generate encryption keys from prehash
+    const prehash = generatePrehash(prehashSeed, hmacKey);
+    const cipherKey = generateCipherKey(cipherToken, prehash);
+    const cipherNonce = generateCipherNonce(nonceToken, prehash);
+    
+    // 5. Encrypt with ChaCha20-Poly1305 AEAD
+    const cipher = chacha20poly1305(cipherKey, cipherNonce);
+    const ciphertext = cipher.encrypt(new TextEncoder().encode(JSON.stringify(paramsWithSalt)));
+    
+    return {
+        encrypted: bytesToBase64Url(ciphertext),
+        idx: idx  // 8-byte key for sessionStorage retrieval
+    };
+}
+```
+
+### Security Architecture Features
+
+#### ✅ Triple Token Cryptographic System
+- **Cipher Token**: 32-byte session key for ChaCha20-Poly1305 encryption
+- **Nonce Token**: 32-byte session key for unique nonce generation  
+- **HMAC Key**: 32-byte session key for prehash seed derivation and integrity
+
+#### ✅ Advanced Key Derivation
+- **Blake2b-keyed Prehashing**: Content-independent key generation using Blake2b with HMAC key
+- **ChaCha8RNG Pipeline**: Cryptographically secure key derivation for cipher and nonce generation
+- **Domain Separation**: Cipher and nonce keys derived independently to prevent key reuse
+
+#### ✅ FIFO Storage Management
+- **SessionStorage KV**: Efficient key-value storage with automatic cleanup
+- **20-Seed Rotation**: FIFO (First In, First Out) automatic cleanup prevents memory bloat
+- **8-Byte Cryptographic Keys**: Blake2b-derived identifiers for optimal sessionStorage indexing
+
+### Bidirectional Navigation Flow
+
+#### Backend → Frontend (Next Parameter)
+```typescript
+// Layout interceptor (web/src/routes/+layout.svelte)
+if (loginResponse.next) {
+    const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
+        cipherToken, nonceToken, hmacKey
+    });
+    await goto(encryptedNextUrl);  // /custom?encrypted=...&idx=...
+}
+```
+
+#### Configuration → Result (Generate Buttons)
+```typescript
+// All config routes (custom/, password/, api-key/, mnemonic/)
+const encryptedUrl = createEncryptedUrl('/result', resultParams, {
+    cipherToken, nonceToken, hmacKey
+});
+goto(encryptedUrl);  // /result?encrypted=...&idx=...
+```
+
+#### Universal Route Decryption
+```typescript
+// All target routes automatically decrypt parameters
+const decryptedParams = decryptPageParams(searchParams, {
+    cipherToken, nonceToken, hmacKey
+});
+// Fallback to direct URL parameters if decryption fails
+```
+
+### Privacy Protection Benefits
+
+#### 🛡️ Complete Browser History Privacy
+- **Zero Plaintext Exposure**: Sensitive parameters never visible in browser history
+- **Physical Device Security**: URLs remain private even with device access
+- **Web Analytics Protection**: User data hidden from monitoring and analytics tools
+
+#### 🔒 Advanced Security Properties  
+- **AEAD Security**: ChaCha20-Poly1305 provides both confidentiality and integrity
+- **Content Independence**: Encryption keys completely independent of parameter content
+- **Forward Secrecy**: Each parameter set uses unique cryptographic keys
+- **Replay Protection**: Time-bounded sessionStorage prevents replay attacks
+
+#### ⚡ Performance Optimization
+- **Efficient Storage**: 8-byte keys minimize sessionStorage overhead
+- **Automatic Cleanup**: FIFO rotation prevents storage bloat
+- **Fast Crypto**: ChaCha20-Poly1305 optimized for modern web browsers
+- **Minimal Overhead**: URL encryption adds negligible performance impact
+
+### Backward Compatibility
+
+The system maintains **100% backward compatibility**:
+- Legacy unencrypted URLs continue to work as fallback
+- No breaking changes to existing API or user experience
+- Automatic detection of encrypted vs plain parameters
+- Seamless migration for existing users
+
 ## Implementation Architecture
 
 ### Rust Dependencies
 
+#### Backend (Rust)
 ```toml
 [dependencies]
 blake2 = "0.10"              # Blake2b hashing for unified cryptographic operations
@@ -161,12 +287,32 @@ chacha20poly1305 = "0.10.1" # ChaCha20-Poly1305 AEAD for secure magic link encry
 base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ```
 
+#### Frontend (TypeScript)
+```json
+"dependencies": {
+    "@noble/hashes": "^2.0.0",  // Blake2b and cryptographic hashing
+    "@noble/ciphers": "^2.0.0", // ChaCha20-Poly1305 AEAD encryption
+    "@scure/base": "^2.0.0"     // Base64URL and Base58 encoding utilities
+}
+```
+
 ### Key Implementation Files
 
+#### Backend (Rust/Spin)
 - **api/src/utils/jwt/crypto.rs**: User ID derivation and cryptographic operations
 - **api/src/utils/jwt/magic_links.rs**: Magic link generation and processing
 - **api/src/database/operations/magic_link_ops.rs**: Magic link encryption/decryption
 - **api/src/utils/random_generator.rs**: Seed generation with Blake2b512
+
+#### Frontend (TypeScript/SvelteKit)
+- **web/src/lib/crypto.ts**: Complete URL parameter encryption system
+  - `encryptUrlParams()` / `decryptUrlParams()`: Core AEAD encryption/decryption
+  - `createEncryptedUrl()`: High-level URL generation for navigation
+  - `parseNextUrl()` / `encryptNextUrl()`: Backend response processing
+  - `storePrehashSeed()` / `getPrehashSeed()`: FIFO sessionStorage management
+- **web/src/routes/+layout.svelte**: Magic link next parameter encryption
+- **web/src/routes/{custom,password,api-key,mnemonic}/+page.svelte**: Route-specific encryption/decryption
+- **web/src/routes/result/+page.svelte**: Result page parameter processing and return URL generation
 
 ## Security Considerations
 

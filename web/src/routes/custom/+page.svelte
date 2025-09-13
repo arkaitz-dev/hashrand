@@ -14,6 +14,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
+	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 
 	// Default values
 	function getDefaultParams(): GenerateParams {
@@ -120,22 +121,39 @@
 	}
 
 	function proceedWithGeneration() {
-		// Create URL parameters for result page - result will handle API call
-		const urlParams = new URLSearchParams();
-		urlParams.set('endpoint', 'custom');
+		// Create parameters object for result page
+		const resultParams: Record<string, any> = {
+			endpoint: 'custom',
+			length: params.length ?? 21,
+			alphabet: params.alphabet ?? 'base58'
+		};
 
-		// Add generation parameters
-		urlParams.set('length', (params.length ?? 21).toString());
-		urlParams.set('alphabet', params.alphabet ?? 'base58');
-		if (params.prefix) urlParams.set('prefix', params.prefix);
-		if (params.suffix) urlParams.set('suffix', params.suffix);
+		// Add optional parameters
+		if (params.prefix) resultParams.prefix = params.prefix;
+		if (params.suffix) resultParams.suffix = params.suffix;
+		if (urlProvidedSeed) resultParams.seed = urlProvidedSeed;
 
-		// Add seed if provided from URL
-		if (urlProvidedSeed) {
-			urlParams.set('seed', urlProvidedSeed);
+		// Get crypto tokens for parameter encryption
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
+
+		if (cipherToken && nonceToken && hmacKey) {
+			// Create encrypted URL for privacy
+			const encryptedUrl = createEncryptedUrl('/result', resultParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+			goto(encryptedUrl);
+		} else {
+			// Fallback: create traditional URL (should not happen with proper auth)
+			const urlParams = new URLSearchParams();
+			Object.entries(resultParams).forEach(([key, value]) => {
+				urlParams.set(key, String(value));
+			});
+			goto(`/result?${urlParams.toString()}`);
 		}
-
-		goto(`/result?${urlParams.toString()}`);
 	}
 
 	/**
@@ -183,33 +201,63 @@
 		}
 
 		// Override with URL parameters if present
-		const urlLength = searchParams.get('length');
-		const urlAlphabet = searchParams.get('alphabet');
-		const urlPrefix = searchParams.get('prefix');
-		const urlSuffix = searchParams.get('suffix');
-		const urlSeed = searchParams.get('seed');
+		// First try to decrypt encrypted parameters
+		let urlParams: Record<string, any> = {};
 
-		if (urlLength) {
-			const lengthNum = parseInt(urlLength);
+		// Try to decrypt if encrypted parameters are present
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
+
+		if (cipherToken && nonceToken && hmacKey) {
+			const decryptedParams = decryptPageParams(searchParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+
+			if (decryptedParams) {
+				urlParams = decryptedParams;
+			}
+		}
+
+		// Fallback to reading direct URL parameters if no encrypted params
+		if (Object.keys(urlParams).length === 0) {
+			const urlLength = searchParams.get('length');
+			const urlAlphabet = searchParams.get('alphabet');
+			const urlPrefix = searchParams.get('prefix');
+			const urlSuffix = searchParams.get('suffix');
+			const urlSeed = searchParams.get('seed');
+
+			if (urlLength) urlParams.length = urlLength;
+			if (urlAlphabet) urlParams.alphabet = urlAlphabet;
+			if (urlPrefix) urlParams.prefix = urlPrefix;
+			if (urlSuffix) urlParams.suffix = urlSuffix;
+			if (urlSeed) urlParams.seed = urlSeed;
+		}
+
+		// Apply URL parameters to form state
+		if (urlParams.length) {
+			const lengthNum = parseInt(String(urlParams.length));
 			if (!isNaN(lengthNum) && lengthNum >= 2 && lengthNum <= 128) {
 				params.length = lengthNum;
 			}
 		}
 
-		if (urlAlphabet && isValidAlphabet(urlAlphabet)) {
-			params.alphabet = urlAlphabet;
+		if (urlParams.alphabet && isValidAlphabet(String(urlParams.alphabet))) {
+			params.alphabet = String(urlParams.alphabet) as AlphabetType;
 		}
 
-		if (urlPrefix !== null && urlPrefix.length <= 32) {
-			params.prefix = urlPrefix;
+		if (urlParams.prefix !== undefined && String(urlParams.prefix).length <= 32) {
+			params.prefix = String(urlParams.prefix);
 		}
 
-		if (urlSuffix !== null && urlSuffix.length <= 32) {
-			params.suffix = urlSuffix;
+		if (urlParams.suffix !== undefined && String(urlParams.suffix).length <= 32) {
+			params.suffix = String(urlParams.suffix);
 		}
 
-		if (urlSeed) {
-			urlProvidedSeed = urlSeed;
+		if (urlParams.seed) {
+			urlProvidedSeed = String(urlParams.seed);
 		}
 	});
 </script>
