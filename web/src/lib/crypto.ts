@@ -215,19 +215,20 @@ export function serializeParams(params: Record<string, any>): string {
 
 /**
  * Encrypt parameters for secure URL transmission using prehash seed
+ * Returns single compact parameter 'p' containing idx_bytes + encrypted_bytes
  *
  * @param params - Parameters object to encrypt
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
- * @returns Object with encrypted data and prehash seed index
+ * @returns Single compact parameter 'p' as base64URL string
  */
 export function encryptUrlParams(
 	params: Record<string, any>,
 	cipherToken: string,
 	nonceToken: string,
 	hmacKey: string
-): { encrypted: string; idx: string } {
+): { p: string } {
 	// 1. Add crypto salt to parameters for noise
 	const salt = generateCryptoSalt();
 	const saltBase64 = bytesToBase64(salt);
@@ -236,8 +237,9 @@ export function encryptUrlParams(
 	// 2. Generate random prehash seed (independent of content)
 	const prehashSeed = generatePrehashSeed();
 
-	// 3. Store prehash seed and get key
+	// 3. Store prehash seed and get key (8 bytes)
 	const idx = storePrehashSeed(prehashSeed, hmacKey);
+	const idxBytes = base64UrlToBytes(idx); // Convert idx back to 8 bytes
 
 	// 4. Generate prehash from seed
 	const prehash = generatePrehash(prehashSeed, hmacKey);
@@ -252,55 +254,68 @@ export function encryptUrlParams(
 	const plaintext = new TextEncoder().encode(paramsString);
 	const ciphertext = cipher.encrypt(plaintext);
 
-	// 7. Return encrypted data as base64URL and seed key
+	// 7. Concatenate idx_bytes (8 bytes) + encrypted_bytes and encode as base64URL
+	const combined = new Uint8Array(idxBytes.length + ciphertext.length);
+	combined.set(idxBytes, 0);
+	combined.set(ciphertext, idxBytes.length);
+
 	return {
-		encrypted: bytesToBase64Url(ciphertext),
-		idx: idx
+		p: bytesToBase64Url(combined)
 	};
 }
 
 /**
- * Decrypt parameters from secure URL transmission
+ * Decrypt parameters from secure URL transmission using compact 'p' parameter
+ * Extracts idx (first 8 bytes) and encrypted data (remaining bytes)
  *
- * @param encryptedParams - Encrypted parameters as base64URL string
- * @param idx - Key of prehash seed in sessionStorage
+ * @param compactParam - Compact parameter 'p' containing idx_bytes + encrypted_bytes
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
  * @returns Decrypted parameters object (without salt)
  */
 export function decryptUrlParams(
-	encryptedParams: string,
-	idx: string,
+	compactParam: string,
 	cipherToken: string,
 	nonceToken: string,
 	hmacKey: string
 ): Record<string, any> {
-	// 1. Retrieve prehash seed from sessionStorage
+	// 1. Decode base64URL to get combined bytes
+	const combinedBytes = base64UrlToBytes(compactParam);
+
+	// 2. Extract idx_bytes (first 8 bytes) and encrypted_bytes (remaining)
+	if (combinedBytes.length < 8) {
+		throw new Error('Invalid compact parameter: too short for idx extraction');
+	}
+
+	const idxBytes = combinedBytes.slice(0, 8);
+	const encryptedBytes = combinedBytes.slice(8);
+
+	// 3. Convert idx_bytes back to base64URL string for sessionStorage lookup
+	const idx = bytesToBase64Url(idxBytes);
+
+	// 4. Retrieve prehash seed from sessionStorage
 	const prehashSeed = getPrehashSeed(idx);
 	if (!prehashSeed) {
 		throw new Error(`Prehash seed not found with key ${idx}`);
 	}
 
-	// 2. Regenerate prehash from seed
+	// 5. Regenerate prehash from seed
 	const prehash = generatePrehash(prehashSeed, hmacKey);
 
-	// 3. Regenerate cipher key and nonce
+	// 6. Regenerate cipher key and nonce
 	const cipherKey = generateCipherKey(cipherToken, prehash);
 	const cipherNonce = generateCipherNonce(nonceToken, prehash);
 
-	// 4. Convert base64URL to bytes
-	const ciphertext = base64UrlToBytes(encryptedParams);
-
-	// 5. Decrypt with ChaCha20-Poly1305
+	// 7. Decrypt with ChaCha20-Poly1305
 	const cipher = chacha20poly1305(cipherKey, cipherNonce);
-	const plaintext = cipher.decrypt(ciphertext);
+	const plaintext = cipher.decrypt(encryptedBytes);
 
-	// 6. Convert to string and parse JSON
+	// 8. Convert to string and parse JSON
 	const paramsString = new TextDecoder().decode(plaintext);
 	const paramsWithSalt = JSON.parse(paramsString);
 
-	// 7. Remove internal salt and return clean params
+	// 9. Remove internal salt and return clean params
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { _salt, ...params } = paramsWithSalt;
 	return params;
@@ -311,7 +326,7 @@ export function decryptUrlParams(
  *
  * @param params - Parameters to encrypt
  * @param sessionTokens - Session tokens from authStore
- * @returns Object with encrypted data and seed key for URL
+ * @returns Object with compact parameter 'p' for URL
  */
 export function prepareSecureUrlParams(
 	params: Record<string, any>,
@@ -321,8 +336,7 @@ export function prepareSecureUrlParams(
 		hmacKey: string;
 	}
 ): {
-	encrypted: string;
-	idx: string;
+	p: string;
 } {
 	return encryptUrlParams(
 		params,
@@ -369,7 +383,7 @@ export function parseNextUrl(url: string): {
  *
  * @param nextUrl - Original next URL from backend
  * @param sessionTokens - Session tokens for encryption
- * @returns Encrypted URL with basePath?encrypted=...&idx=...
+ * @returns Encrypted URL with basePath?p=...
  */
 export function encryptNextUrl(
 	nextUrl: string,
@@ -387,10 +401,10 @@ export function encryptNextUrl(
 	}
 
 	// Encrypt parameters
-	const { encrypted, idx } = prepareSecureUrlParams(params, sessionTokens);
+	const { p } = prepareSecureUrlParams(params, sessionTokens);
 
-	// Create new URL with encrypted parameters
-	return `${basePath}?encrypted=${encrypted}&idx=${idx}`;
+	// Create new URL with compact encrypted parameter
+	return `${basePath}?p=${p}`;
 }
 
 /**
@@ -408,19 +422,17 @@ export function decryptPageParams(
 		hmacKey: string;
 	}
 ): Record<string, any> | null {
-	const encrypted = searchParams.get('encrypted');
-	const idx = searchParams.get('idx');
+	const p = searchParams.get('p');
 
 	// Return null if not encrypted parameters
-	if (!encrypted || !idx) {
+	if (!p) {
 		return null;
 	}
 
 	try {
-		// Decrypt parameters
+		// Decrypt parameters using compact parameter
 		return decryptUrlParams(
-			encrypted,
-			idx,
+			p,
 			sessionTokens.cipherToken,
 			sessionTokens.nonceToken,
 			sessionTokens.hmacKey
@@ -454,8 +466,8 @@ export function createEncryptedUrl(
 	}
 
 	// Encrypt parameters
-	const { encrypted, idx } = prepareSecureUrlParams(params, sessionTokens);
+	const { p } = prepareSecureUrlParams(params, sessionTokens);
 
-	// Create encrypted URL
-	return `${basePath}?encrypted=${encrypted}&idx=${idx}`;
+	// Create compact encrypted URL
+	return `${basePath}?p=${p}`;
 }

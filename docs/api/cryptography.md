@@ -171,7 +171,7 @@ export function encryptUrlParams(
     cipherToken: string,
     nonceToken: string, 
     hmacKey: string
-): { encrypted: string; idx: string } {
+): { p: string } {
     // 1. Add 32-byte cryptographic salt for noise generation
     const salt = generateCryptoSalt();
     const paramsWithSalt = { ...params, _salt: bytesToBase64(salt) };
@@ -224,7 +224,7 @@ if (loginResponse.next) {
     const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
         cipherToken, nonceToken, hmacKey
     });
-    await goto(encryptedNextUrl);  // /custom?encrypted=...&idx=...
+    await goto(encryptedNextUrl);  // /custom?p=...
 }
 ```
 
@@ -234,7 +234,7 @@ if (loginResponse.next) {
 const encryptedUrl = createEncryptedUrl('/result', resultParams, {
     cipherToken, nonceToken, hmacKey
 });
-goto(encryptedUrl);  // /result?encrypted=...&idx=...
+goto(encryptedUrl);  // /result?p=...
 ```
 
 #### Universal Route Decryption

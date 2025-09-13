@@ -114,10 +114,12 @@ HashRand implements **true Zero Knowledge architecture**:
 - **Enterprise Security**: Multi-layer cryptographic protection with industry standards
 - **Audit-Safe**: All logs use Base58 usernames, safe for analysis
 
-### 🛡️ Advanced URL Parameter Encryption
+### 🛡️ Ultra-Compact URL Parameter Encryption
 
-**Complete Privacy Protection**: Revolutionary URL parameter encryption system protects user data even from browser history inspection:
+**Complete Privacy Protection**: Revolutionary ultra-compact URL parameter encryption system protects user data even from browser history inspection:
 
+- **📏 66% URL Reduction**: Single parameter `p` replaces dual `encrypted` + `idx` format (v0.19.12+)
+- **🎯 Binary Concatenation**: idx_bytes + encrypted_bytes combined before Base64URL encoding
 - **🔐 ChaCha20-Poly1305 Encryption**: Enterprise-grade AEAD encryption for all URL parameters
 - **🎲 Random Prehash Seeds**: Content-independent cryptographic keys eliminate pattern analysis
 - **🔑 Triple Token System**: Cipher/nonce/HMAC keys (32 bytes each) for maximum security

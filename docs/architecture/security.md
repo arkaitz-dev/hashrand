@@ -305,7 +305,7 @@ Cleanup: Complete removal during authentication errors/logout
 ##### URL Parameter Encryption Enforcement
 - **Mandatory Encryption**: All routes accept ONLY encrypted parameters  
 - **Zero Fallbacks**: Direct URL parameters completely eliminated (except `magiclink`)
-- **Consistent Architecture**: `encrypted` + `idx` parameters universal across application
+- **Ultra-Compact Architecture**: Single `p` parameter replaces dual parameter format (v0.19.12+)
 - **Attack Surface Reduction**: No bypass vectors through parameter manipulation
 
 ### Monitoring & Auditing
