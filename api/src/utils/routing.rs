@@ -32,28 +32,28 @@ pub async fn route_request_with_req(
             } else {
                 handle_custom_request(req)
             }
-        },
+        }
         path if path.ends_with("/api/password") => {
             if requires_authentication(path) {
                 with_auth_and_renewal(req, handle_password_request)
             } else {
                 handle_password_request(req)
             }
-        },
+        }
         path if path.ends_with("/api/api-key") => {
             if requires_authentication(path) {
                 with_auth_and_renewal(req, handle_api_key_request)
             } else {
                 handle_api_key_request(req)
             }
-        },
+        }
         path if path.ends_with("/api/mnemonic") => {
             if requires_authentication(path) {
                 with_auth_and_renewal(req, handle_mnemonic_request)
             } else {
                 handle_mnemonic_request(req)
             }
-        },
+        }
 
         // GET-only endpoints
         path if path.ends_with("/api/generate") => {
@@ -65,7 +65,7 @@ pub async fn route_request_with_req(
                     } else {
                         handle_custom(query_params) // Backward compatibility
                     }
-                },
+                }
                 _ => handle_method_not_allowed(),
             }
         }
@@ -82,7 +82,7 @@ pub async fn route_request_with_req(
                 } else {
                     handle_from_seed(req.body())
                 }
-            },
+            }
             _ => handle_method_not_allowed(),
         },
 
@@ -93,7 +93,7 @@ pub async fn route_request_with_req(
             } else {
                 handle_users(req, path, query_params)
             }
-        },
+        }
 
         // Authentication endpoints (support GET and POST)
         path if path.starts_with("/api/login") => handle_login(req, query_params).await,

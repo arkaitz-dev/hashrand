@@ -61,6 +61,54 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 /**
+ * Check if a 401 response indicates dual token expiry (both access and refresh tokens expired)
+ * @param response - HTTP 401 response to check
+ * @returns Promise<boolean> - true if both tokens have expired
+ */
+async function isDualTokenExpiry(response: Response): Promise<boolean> {
+	if (response.status !== 401) return false;
+
+	try {
+		// Clone response to read body without consuming it
+		const responseClone = response.clone();
+		const errorData = await responseClone.json();
+
+		// Check for dual expiry message from backend
+		return !!(
+			errorData.error && errorData.error.includes('Both access and refresh tokens have expired')
+		);
+	} catch {
+		// If parsing fails, it's not a dual expiry response
+		return false;
+	}
+}
+
+/**
+ * Handle dual token expiry scenario
+ * Clears all authentication data and shows login dialog
+ */
+async function handleDualTokenExpiry(): Promise<void> {
+	console.log('🔄 DUAL EXPIRY detected - clearing all auth data and requesting new login');
+
+	const { authStore } = await import('./stores/auth');
+	const { dialogStore } = await import('./stores/dialog');
+
+	// Complete logout with sessionStorage cleanup
+	await authStore.logout();
+
+	// Clear all crypto tokens and auth data (defensive security)
+	authStore.clearPreventiveAuthData();
+
+	// Clear sessionStorage completely for dual expiry case
+	if (typeof window !== 'undefined') {
+		sessionStorage.clear();
+	}
+
+	// Show auth dialog to request new email authentication
+	dialogStore.show('auth');
+}
+
+/**
  * Handle proactive token renewal from response headers
  * @param response - HTTP response that may contain renewal tokens
  */
@@ -74,7 +122,7 @@ async function handleProactiveTokenRenewal(response: Response): Promise<void> {
 		// Calculate new expiration time
 		const now = Date.now();
 		const expiresInSeconds = parseInt(newExpiresIn, 10);
-		const newExpiresAt = now + (expiresInSeconds * 1000);
+		const newExpiresAt = now + expiresInSeconds * 1000;
 
 		// Update access token and expiration in sessionStorage
 		sessionStorage.setItem('access_token', newAccessToken);
@@ -110,8 +158,17 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 		}
 	});
 
-	// If 401 Unauthorized, try to refresh token
+	// If 401 Unauthorized, check for dual token expiry first
 	if (response.status === 401) {
+		// Check if this is a dual token expiry case
+		const isDualExpiry = await isDualTokenExpiry(response);
+
+		if (isDualExpiry) {
+			console.log('🔄 DUAL EXPIRY detected - both tokens expired, skipping refresh attempt');
+			await handleDualTokenExpiry();
+			return response; // Return original 401 response for caller handling
+		}
+
 		console.log('🔄 Access token expired, attempting refresh...');
 
 		const refreshSuccess = await api.refreshToken();
@@ -393,6 +450,16 @@ export const api = {
 			});
 
 			console.log('📡 Frontend: Refresh response status:', response.status);
+
+			// Check for dual token expiry in refresh response
+			if (response.status === 401) {
+				const isDualExpiry = await isDualTokenExpiry(response);
+				if (isDualExpiry) {
+					console.log('🔄 DUAL EXPIRY detected during refresh - both tokens expired');
+					await handleDualTokenExpiry();
+					return false;
+				}
+			}
 
 			if (response.ok) {
 				const data = await response.json();

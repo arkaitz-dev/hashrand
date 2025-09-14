@@ -4,7 +4,7 @@
 //! endpoints that require authentication.
 
 use crate::utils::JwtUtils;
-use crate::utils::jwt::config::{get_refresh_token_duration_minutes};
+use crate::utils::jwt::config::get_refresh_token_duration_minutes;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use spin_sdk::http::{Request, Response};
@@ -86,7 +86,7 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                 refresh_expires_at,
                 renewed_tokens,
             })
-        },
+        }
         Err(error_msg) => {
             println!("🔍 DEBUG: Token validation failed: {}", error_msg);
 
@@ -103,12 +103,18 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                         println!("🔍 DEBUG: Cookie string: {}", cookie_str);
 
                         if let Some(refresh_token) = refresh_token_option {
-                            println!("🔍 DEBUG: Refresh token extracted: {}...", &refresh_token[..20.min(refresh_token.len())]);
+                            println!(
+                                "🔍 DEBUG: Refresh token extracted: {}...",
+                                &refresh_token[..20.min(refresh_token.len())]
+                            );
 
                             // Validate refresh token
                             match JwtUtils::validate_refresh_token(&refresh_token) {
                                 Ok(refresh_claims) => {
-                                    println!("🔍 DEBUG: Refresh token validated successfully for user: {}", refresh_claims.sub);
+                                    println!(
+                                        "🔍 DEBUG: Refresh token validated successfully for user: {}",
+                                        refresh_claims.sub
+                                    );
 
                                     // SISTEMA 2/3: Calcular tiempo transcurrido desde creación del refresh token
                                     let now = Utc::now();
@@ -119,33 +125,53 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                             9 // Default fallback only if .env fails
                                         }
                                     };
-                                    let refresh_expires_at = match DateTime::from_timestamp(refresh_claims.exp, 0) {
+                                    let refresh_expires_at = match DateTime::from_timestamp(
+                                        refresh_claims.exp,
+                                        0,
+                                    ) {
                                         Some(dt) => dt,
                                         None => {
-                                            println!("🔍 DEBUG: Invalid refresh token expiration timestamp, failing auth");
-                                            return Err(create_auth_error_response("Invalid token timestamp", None));
+                                            println!(
+                                                "🔍 DEBUG: Invalid refresh token expiration timestamp, failing auth"
+                                            );
+                                            return Err(create_auth_error_response(
+                                                "Invalid token timestamp",
+                                                None,
+                                            ));
                                         }
                                     };
-                                    let refresh_created_at = refresh_expires_at - chrono::Duration::minutes(refresh_duration_minutes);
+                                    let refresh_created_at = refresh_expires_at
+                                        - chrono::Duration::minutes(refresh_duration_minutes);
                                     let time_elapsed_duration = now - refresh_created_at;
-                                    let one_third_threshold = chrono::Duration::minutes(refresh_duration_minutes / 3); // 1/3 transcurrido = 2/3 restante
+                                    let one_third_threshold =
+                                        chrono::Duration::seconds((refresh_duration_minutes * 60) / 3); // 1/3 transcurrido = 2/3 restante
 
-                                    // println!("🔍 DEBUG 2/3 System: time_elapsed={:.0}min, 1/3_threshold={:.0}min ({}2/3 remaining)",
-                                    //          time_elapsed_duration.num_minutes(), one_third_threshold.num_minutes(),
-                                    //          if time_elapsed_duration > one_third_threshold { "✅ Activate: " } else { "⏳ Wait: " });
+                                    println!("🔍 DEBUG 2/3 System: time_elapsed={:.0}min, 1/3_threshold={:.0}min ({}2/3 remaining)",
+                                             time_elapsed_duration.num_minutes(), one_third_threshold.num_minutes(),
+                                             if time_elapsed_duration > one_third_threshold { "✅ Activate: " } else { "⏳ Wait: " });
 
                                     // Create new access token (always)
-                                    if let Ok((new_access_token, access_expires)) = JwtUtils::create_access_token(&refresh_claims.sub) {
-                                        println!("🔍 DEBUG: New access token created: {}...", &new_access_token[..20.min(new_access_token.len())]);
+                                    if let Ok((new_access_token, access_expires)) =
+                                        JwtUtils::create_access_token(&refresh_claims.sub)
+                                    {
+                                        println!(
+                                            "🔍 DEBUG: New access token created: {}...",
+                                            &new_access_token[..20.min(new_access_token.len())]
+                                        );
 
                                         let now_timestamp = now.timestamp();
                                         let expires_in = access_expires.timestamp() - now_timestamp;
 
                                         // Check if we need to create new refresh token (2/3 system)
                                         if time_elapsed_duration > one_third_threshold {
-                                            // println!("🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)");
+                                            println!("🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)");
                                             // Beyond 1/3 elapsed (2/3 remaining): Create new refresh token (reset the timer)
-                                            if let Ok((new_refresh_token, _refresh_expires)) = JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, None) {
+                                            if let Ok((new_refresh_token, _refresh_expires)) =
+                                                JwtUtils::create_refresh_token_from_username(
+                                                    &refresh_claims.sub,
+                                                    None,
+                                                )
+                                            {
                                                 let renewed_tokens = Some(RenewedTokens {
                                                     access_token: new_access_token,
                                                     refresh_token: new_refresh_token,
@@ -159,10 +185,12 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                                     renewed_tokens,
                                                 });
                                             } else {
-                                                println!("🔍 DEBUG: Failed to create new refresh token");
+                                                println!(
+                                                    "🔍 DEBUG: Failed to create new refresh token"
+                                                );
                                             }
                                         } else {
-                                            // println!("🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token");
+                                            println!("🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token");
                                             // Within first 1/3 elapsed (more than 2/3 remaining): Keep existing refresh token, only renew access token
                                             let renewed_tokens = Some(RenewedTokens {
                                                 access_token: new_access_token,
@@ -180,9 +208,22 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                     } else {
                                         println!("🔍 DEBUG: Failed to create new access token");
                                     }
-                                },
+                                }
                                 Err(validation_error) => {
-                                    println!("🔍 DEBUG: Refresh token validation failed: {}", validation_error);
+                                    println!(
+                                        "🔍 DEBUG: Refresh token validation failed: {}",
+                                        validation_error
+                                    );
+
+                                    // Check if refresh token expired specifically (dual expiry case)
+                                    if validation_error.contains("expired")
+                                        || validation_error.contains("exp")
+                                    {
+                                        println!(
+                                            "🔍 DEBUG: DUAL EXPIRY detected - both tokens expired, clearing refresh cookie"
+                                        );
+                                        return Err(create_dual_expiry_response());
+                                    }
                                 }
                             }
                         } else {
@@ -237,6 +278,35 @@ fn create_auth_error_response(error: &str, expires_in: Option<String>) -> Respon
         .build()
 }
 
+/// Create specialized response for dual token expiry (both access and refresh tokens expired)
+///
+/// This function handles the special case where both tokens have expired:
+/// - Sets refresh_token cookie with Max-Age=0 (immediate expiry to clear client-side)
+/// - Returns descriptive error message for frontend to handle complete logout
+/// - Signals the frontend to clear sessionStorage and request new email authentication
+fn create_dual_expiry_response() -> Response {
+    let response = AuthErrorResponse {
+        error: "Both access and refresh tokens have expired. Please authenticate again with your email.".to_string(),
+        expires_in: Some("Complete re-authentication required".to_string()),
+    };
+
+    // Create response with immediate cookie expiry to clear client-side refresh token
+    Response::builder()
+        .status(401)
+        .header("content-type", "application/json")
+        .header("www-authenticate", "Bearer")
+        .header(
+            "set-cookie",
+            "refresh_token=expired; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/",
+        )
+        .body(
+            serde_json::to_string(&response).unwrap_or_else(|_| {
+                r#"{"error":"Complete re-authentication required"}"#.to_string()
+            }),
+        )
+        .build()
+}
+
 /// Check if proactive token renewal is needed based on 2/3 threshold
 ///
 /// # Arguments
@@ -249,7 +319,7 @@ fn create_auth_error_response(error: &str, expires_in: Option<String>) -> Respon
 fn check_proactive_renewal(
     username: &str,
     refresh_expires_at: i64,
-    now: i64
+    now: i64,
 ) -> Result<Option<RenewedTokens>, Response> {
     // Get refresh token duration in minutes
     let refresh_duration_minutes = match get_refresh_token_duration_minutes() {
@@ -270,14 +340,19 @@ fn check_proactive_renewal(
     let two_thirds_threshold = (refresh_duration_seconds * 2) / 3;
 
     if time_remaining < two_thirds_threshold as i64 {
-        println!("Proactive renewal triggered: {}s remaining < {}s threshold",
-                time_remaining, two_thirds_threshold);
+        println!(
+            "Proactive renewal triggered: {}s remaining < {}s threshold",
+            time_remaining, two_thirds_threshold
+        );
 
         // Generate new access token
         let (new_access_token, access_expires) = match JwtUtils::create_access_token(username) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                println!("Failed to create new access token during proactive renewal: {}", e);
+                println!(
+                    "Failed to create new access token during proactive renewal: {}",
+                    e
+                );
                 return Err(create_auth_error_response(
                     "Failed to renew access token",
                     None,
@@ -286,16 +361,20 @@ fn check_proactive_renewal(
         };
 
         // Generate new refresh token
-        let (new_refresh_token, _refresh_expires) = match JwtUtils::create_refresh_token_from_username(username, None) {
-            Ok((token, exp)) => (token, exp),
-            Err(e) => {
-                println!("Failed to create new refresh token during proactive renewal: {}", e);
-                return Err(create_auth_error_response(
-                    "Failed to renew refresh token",
-                    None,
-                ));
-            }
-        };
+        let (new_refresh_token, _refresh_expires) =
+            match JwtUtils::create_refresh_token_from_username(username, None) {
+                Ok((token, exp)) => (token, exp),
+                Err(e) => {
+                    println!(
+                        "Failed to create new refresh token during proactive renewal: {}",
+                        e
+                    );
+                    return Err(create_auth_error_response(
+                        "Failed to renew refresh token",
+                        None,
+                    ));
+                }
+            };
 
         let expires_in = access_expires.timestamp() - now;
 

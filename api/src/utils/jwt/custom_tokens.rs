@@ -7,16 +7,15 @@ use blake2::{
     Blake2bMac, Blake2bVar,
     digest::{KeyInit as Blake2KeyInit, Mac, Update, VariableOutput},
 };
-use chacha20::cipher::{KeyIvInit, StreamCipher};
 use chacha20::ChaCha20;
+use chacha20::cipher::{KeyIvInit, StreamCipher};
 use chacha20poly1305::consts::U32;
 use chrono::{DateTime, Duration, Utc};
 
 use super::config::{
-    get_access_token_cipher_key, get_access_token_nonce_key, get_access_token_hmac_key,
-    get_refresh_token_cipher_key, get_refresh_token_nonce_key, get_refresh_token_hmac_key,
-    get_prehash_cipher_key, get_prehash_nonce_key, get_prehash_hmac_key,
-    get_access_token_duration_minutes, get_refresh_token_duration_minutes,
+    get_access_token_cipher_key, get_access_token_duration_minutes, get_access_token_hmac_key,
+    get_access_token_nonce_key, get_prehash_cipher_key, get_prehash_hmac_key,
+    get_prehash_nonce_key, get_refresh_token_duration_minutes,
 };
 use super::crypto::{derive_user_id, user_id_to_username};
 use super::types::AccessTokenClaims;
@@ -137,8 +136,8 @@ impl CustomTokenClaims {
         let hmac_result = keyed_hasher.finalize().into_bytes();
 
         // Compress to 8 bytes using Blake2b variable output
-        let mut compressor = Blake2bVar::new(8)
-            .map_err(|_| "Blake2b initialization failed".to_string())?;
+        let mut compressor =
+            Blake2bVar::new(8).map_err(|_| "Blake2b initialization failed".to_string())?;
         compressor.update(&hmac_result);
         let mut compressed_hmac = [0u8; 8];
         compressor
@@ -179,8 +178,8 @@ impl CustomTokenClaims {
         let hmac_result = keyed_hasher.finalize().into_bytes();
 
         // Compress to 8 bytes using Blake2b variable output
-        let mut compressor = Blake2bVar::new(8)
-            .map_err(|_| "Blake2b initialization failed".to_string())?;
+        let mut compressor =
+            Blake2bVar::new(8).map_err(|_| "Blake2b initialization failed".to_string())?;
         compressor.update(&hmac_result);
         let mut expected_compressed_hmac = [0u8; 8];
         compressor
@@ -269,7 +268,11 @@ pub fn generate_cipher_nonce(base_key: &[u8], prehash: &[u8; 32]) -> Result<[u8;
 }
 
 /// Encrypt payload with ChaCha20 (no Poly1305, just stream cipher)
-pub fn encrypt_payload(payload: &[u8; 32], key: &[u8; 32], nonce: &[u8; 12]) -> Result<[u8; 32], String> {
+pub fn encrypt_payload(
+    payload: &[u8; 32],
+    key: &[u8; 32],
+    nonce: &[u8; 12],
+) -> Result<[u8; 32], String> {
     let mut cipher = ChaCha20::new(key.into(), nonce.into());
     let mut ciphertext = *payload;
     cipher.apply_keystream(&mut ciphertext);
@@ -277,7 +280,11 @@ pub fn encrypt_payload(payload: &[u8; 32], key: &[u8; 32], nonce: &[u8; 12]) -> 
 }
 
 /// Decrypt payload with ChaCha20 (no Poly1305, just stream cipher)
-pub fn decrypt_payload(ciphertext: &[u8; 32], key: &[u8; 32], nonce: &[u8; 12]) -> Result<[u8; 32], String> {
+pub fn decrypt_payload(
+    ciphertext: &[u8; 32],
+    key: &[u8; 32],
+    nonce: &[u8; 12],
+) -> Result<[u8; 32], String> {
     let mut cipher = ChaCha20::new(key.into(), nonce.into());
     let mut plaintext = *ciphertext;
     cipher.apply_keystream(&mut plaintext);
@@ -288,7 +295,9 @@ pub fn decrypt_payload(ciphertext: &[u8; 32], key: &[u8; 32], nonce: &[u8; 12]) 
 type PrehashKeys = (Vec<u8>, Vec<u8>, Vec<u8>);
 
 /// Generate prehash seed encryption keys from encrypted payload (circular interdependence)
-pub fn generate_prehash_encryption_keys(encrypted_payload: &[u8; 32]) -> Result<PrehashKeys, String> {
+pub fn generate_prehash_encryption_keys(
+    encrypted_payload: &[u8; 32],
+) -> Result<PrehashKeys, String> {
     // Get base keys from environment
     let base_cipher_key = get_prehash_cipher_key()?;
     let base_nonce_key = get_prehash_nonce_key()?;
@@ -303,7 +312,10 @@ pub fn generate_prehash_encryption_keys(encrypted_payload: &[u8; 32]) -> Result<
 }
 
 /// Encrypt prehash seed using circular interdependent encryption
-pub fn encrypt_prehash_seed(prehash_seed: &[u8; 32], encrypted_payload: &[u8; 32]) -> Result<[u8; 32], String> {
+pub fn encrypt_prehash_seed(
+    prehash_seed: &[u8; 32],
+    encrypted_payload: &[u8; 32],
+) -> Result<[u8; 32], String> {
     // Generate encryption keys from encrypted_payload (circular dependency)
     let (cipher_key, nonce_key, hmac_key) = generate_prehash_encryption_keys(encrypted_payload)?;
 
@@ -319,7 +331,10 @@ pub fn encrypt_prehash_seed(prehash_seed: &[u8; 32], encrypted_payload: &[u8; 32
 }
 
 /// Decrypt prehash seed using circular interdependent decryption
-pub fn decrypt_prehash_seed(encrypted_prehash_seed: &[u8; 32], encrypted_payload: &[u8; 32]) -> Result<[u8; 32], String> {
+pub fn decrypt_prehash_seed(
+    encrypted_prehash_seed: &[u8; 32],
+    encrypted_payload: &[u8; 32],
+) -> Result<[u8; 32], String> {
     // Generate decryption keys from encrypted_payload (same as encryption)
     let (cipher_key, nonce_key, hmac_key) = generate_prehash_encryption_keys(encrypted_payload)?;
 
@@ -331,7 +346,11 @@ pub fn decrypt_prehash_seed(encrypted_prehash_seed: &[u8; 32], encrypted_payload
     let final_cipher_nonce = generate_cipher_nonce(&nonce_key, &prehash)?;
 
     // Decrypt encrypted_prehash_seed with ChaCha20
-    decrypt_payload(encrypted_prehash_seed, &final_cipher_key, &final_cipher_nonce)
+    decrypt_payload(
+        encrypted_prehash_seed,
+        &final_cipher_key,
+        &final_cipher_nonce,
+    )
 }
 
 /// Generate custom token (access or refresh) with ultra-secure circular encryption
@@ -374,18 +393,30 @@ pub fn generate_custom_token(email: &str, token_type: TokenType) -> Result<Strin
 }
 
 /// Validate custom token (access or refresh) with ultra-secure circular decryption
-pub fn validate_custom_token(token: &str, token_type: TokenType) -> Result<CustomTokenClaims, String> {
-    println!("🔍 DEBUG validate_custom_token: Starting validation for token type: {:?}", token_type);
+pub fn validate_custom_token(
+    token: &str,
+    token_type: TokenType,
+) -> Result<CustomTokenClaims, String> {
+    println!(
+        "🔍 DEBUG validate_custom_token: Starting validation for token type: {:?}",
+        token_type
+    );
 
     // 1. Decode Base58 token
     let combined = bs58::decode(token)
         .into_vec()
         .map_err(|_| "Invalid Base58 token encoding")?;
 
-    println!("🔍 DEBUG validate_custom_token: Token decoded, length: {}", combined.len());
+    println!(
+        "🔍 DEBUG validate_custom_token: Token decoded, length: {}",
+        combined.len()
+    );
 
     if combined.len() != 64 {
-        return Err(format!("Invalid token length: expected 64 bytes, got {}", combined.len()));
+        return Err(format!(
+            "Invalid token length: expected 64 bytes, got {}",
+            combined.len()
+        ));
     }
 
     // 2. Extract encrypted_prehash_seed(32) + encrypted_payload(32)
@@ -403,7 +434,10 @@ pub fn validate_custom_token(token: &str, token_type: TokenType) -> Result<Custo
         TokenType::Access => CustomTokenConfig::access_token()?,
         TokenType::Refresh => CustomTokenConfig::refresh_token()?,
     };
-    println!("🔍 DEBUG validate_custom_token: Got token config for {:?}", token_type);
+    println!(
+        "🔍 DEBUG validate_custom_token: Got token config for {:?}",
+        token_type
+    );
     // println!("🔍 DEBUG validate_custom_token: About to generate prehash and keys");
 
     // 5. Generate prehash from decrypted seed for payload decryption
@@ -424,7 +458,10 @@ pub fn validate_custom_token(token: &str, token_type: TokenType) -> Result<Custo
 
     // 9. Check expiration
     let now = Utc::now();
-    println!("🔍 DEBUG validate_custom_token: Token expires at: {}, now: {}", claims.expires_at, now);
+    println!(
+        "🔍 DEBUG validate_custom_token: Token expires at: {}, now: {}",
+        claims.expires_at, now
+    );
     if now > claims.expires_at {
         // println!("🔍 DEBUG validate_custom_token: Token is expired, returning error");
         return Err("Token has expired".to_string());
@@ -441,10 +478,16 @@ impl CustomTokenClaims {
     pub fn to_access_token_claims(&self) -> AccessTokenClaims {
         let username = user_id_to_username(&self.user_id);
         let exp = self.expires_at.timestamp();
-        let iat = (self.expires_at - match self.token_type {
-            TokenType::Access => Duration::minutes(get_access_token_duration_minutes().unwrap_or(1) as i64),
-            TokenType::Refresh => Duration::minutes(get_refresh_token_duration_minutes().unwrap_or(5) as i64),
-        }).timestamp();
+        let iat = (self.expires_at
+            - match self.token_type {
+                TokenType::Access => {
+                    Duration::minutes(get_access_token_duration_minutes().unwrap_or(1) as i64)
+                }
+                TokenType::Refresh => {
+                    Duration::minutes(get_refresh_token_duration_minutes().unwrap_or(5) as i64)
+                }
+            })
+        .timestamp();
 
         AccessTokenClaims {
             sub: username,
@@ -475,7 +518,9 @@ pub fn create_custom_refresh_token(email: &str) -> Result<(String, DateTime<Utc>
 }
 
 /// Create refresh token from username using custom token system (compatible with existing API)
-pub fn create_custom_refresh_token_from_username(username: &str) -> Result<(String, DateTime<Utc>), String> {
+pub fn create_custom_refresh_token_from_username(
+    username: &str,
+) -> Result<(String, DateTime<Utc>), String> {
     // Convert username back to user_id bytes
     let user_id_bytes = bs58::decode(username)
         .into_vec()
@@ -510,7 +555,9 @@ pub fn create_custom_refresh_token_from_username(username: &str) -> Result<(Stri
 }
 
 /// Create access token from username using custom token system (compatible with existing API)
-pub fn create_custom_access_token_from_username(username: &str) -> Result<(String, DateTime<Utc>), String> {
+pub fn create_custom_access_token_from_username(
+    username: &str,
+) -> Result<(String, DateTime<Utc>), String> {
     // Convert username back to user_id, then derive email (simplified approach)
     // For now, we'll use the username as a pseudo-email since we have the conversion functions
     // This is a temporary bridge - in real implementation, we'd need to store email/username mapping

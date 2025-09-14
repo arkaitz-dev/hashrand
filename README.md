@@ -52,9 +52,10 @@ just dev
 
 ### Enterprise Security
 - **🏗️ Blake2b Unified Stack**: High-performance cryptographic operations
-- **🔐 Argon2id**: Memory-hard user ID derivation following OWASP 2024 standards  
+- **🔐 Argon2id**: Memory-hard user ID derivation following OWASP 2024 standards
 - **🛡️ ChaCha20 Encryption**: Stream cipher for magic link encryption
 - **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
+- **🔄 2/3 Time-Based Token Management**: Intelligent dual-token refresh system with expiration handling
 - **🧪 Comprehensive Testing**: 64 automated tests covering all functionality
 
 ## 📊 Architecture

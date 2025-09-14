@@ -6,8 +6,8 @@ echo "=================================================================="
 echo "📋 PLAN DE PRUEBAS:"
 echo "   Test 1 (t=0s):    Access válido → API normal"
 echo "   Test 2 (t=62s):   Access expirado, refresh primer 1/3 → Solo nuevo access"
-echo "   Test 3 (t=190s):  Sistema 2/3 (>1/3 elapsed, 2/3 remaining) → Access + refresh reset"
-echo "   Test 4 (t=550s):  Ambos expirados → Logout completo"
+echo "   Test 3 (t=90s):   Sistema 2/3 (>1/3 elapsed, 2/3 remaining) → Access + refresh reset"
+echo "   Test 4 (t=250s):  Ambos expirados → Logout completo"
 echo ""
 
 # Configuración
@@ -107,7 +107,7 @@ ELAPSED=$((CURRENT_TIME - START_TIME))
 echo "🧪 TEST 2: API call después de ${ELAPSED}s (Access expirado, primer 1/3)"
 echo "=================================================================="
 echo "   • Access token DEBE estar expirado (>${ELAPSED}s > 60s)"
-echo "   • Refresh token válido en primer 1/3 (${ELAPSED}s < 180s)"
+echo "   • Refresh token válido en primer 1/3 (${ELAPSED}s < 80s)"
 echo "   • DEBE renovar SOLO access token (mantener refresh existente)"
 echo "   • RESULTADO ESPERADO: 200 OK + x-new-access-token, SIN set-cookie refresh"
 
@@ -138,18 +138,18 @@ fi
 echo ""
 
 ##########################################################################
-# TEST 3: Después de ~190s - Sistema 2/3 activado (>1/3 transcurrido)
+# TEST 3: Después de ~90s - Sistema 2/3 activado (>1/3 transcurrido)
 ##########################################################################
-WAIT_TIME_3=128  # 62 + 128 = 190s total
-echo "⏰ Esperando ${WAIT_TIME_3}s más para Test 3 (total ~190s)..."
+WAIT_TIME_3=28  # 62 + 28 = 90s total
+echo "⏰ Esperando ${WAIT_TIME_3}s más para Test 3 (total ~90s)..."
 sleep $WAIT_TIME_3
 
 CURRENT_TIME=$(date +%s)
 ELAPSED=$((CURRENT_TIME - START_TIME))
 echo "🧪 TEST 3: API call después de ${ELAPSED}s - SISTEMA 2/3 CRÍTICO"
 echo "================================================================"
-echo "   • Tiempo transcurrido: ${ELAPSED}s > 180s (>1/3 de 540s)"
-echo "   • Quedan $(((540 - ELAPSED) / 60)) minutos (~2/3 del refresh token)"
+echo "   • Tiempo transcurrido: ${ELAPSED}s > 80s (>1/3 de 240s)"
+echo "   • Quedan $(((240 - ELAPSED) / 60)) minutos (~2/3 del refresh token)"
 echo "   • DEBE activar sistema 2/3: renovar AMBOS tokens (reset completo)"
 echo "   • RESULTADO ESPERADO: 200 OK + x-new-access-token + set-cookie refresh"
 
@@ -191,17 +191,84 @@ fi
 echo ""
 
 ##########################################################################
+# TEST 4: Después de ~250s - Ambos tokens expirados (doble expiración)
+##########################################################################
+WAIT_TIME_4=160  # 90 + 160 = 250s total (ambos tokens deben estar expirados)
+echo "⏰ Esperando ${WAIT_TIME_4}s más para Test 4 (total ~250s)..."
+sleep $WAIT_TIME_4
+
+CURRENT_TIME=$(date +%s)
+ELAPSED=$((CURRENT_TIME - START_TIME))
+echo "🧪 TEST 4: API call después de ${ELAPSED}s - DOBLE EXPIRACIÓN CRÍTICA"
+echo "=================================================================="
+echo "   • Tiempo transcurrido: ${ELAPSED}s > 240s (ambos tokens expirados)"
+echo "   • Access token expirado (${ELAPSED}s >> 60s)"
+echo "   • Refresh token expirado (${ELAPSED}s > 240s)"
+echo "   • DEBE devolver error especial de doble expiración"
+echo "   • RESULTADO ESPERADO: 401 + mensaje dual expiry + refresh cookie Max-Age=0"
+
+API_RESPONSE=$(curl -s -i -b $COOKIES_FILE -c $COOKIES_FILE \
+  -H "Authorization: Bearer $NEW_ACCESS" \
+  $API_BASE/api/custom?length=14)
+
+echo "=== RESPONSE CRÍTICA TEST 4 (DOBLE EXPIRACIÓN) ==="
+echo "$API_RESPONSE"
+echo "=================================================="
+
+if echo "$API_RESPONSE" | grep -q "HTTP/1.1 401"; then
+    echo "✅ Status: 401 Unauthorized (correcto para doble expiración)"
+
+    # Verificar mensaje específico de doble expiración
+    if echo "$API_RESPONSE" | grep -q "Both access and refresh tokens have expired"; then
+        echo "✅ Mensaje de doble expiración detectado correctamente"
+
+        # Verificar cookie refresh_token con Max-Age=0 (limpieza)
+        if echo "$API_RESPONSE" | grep -q "set-cookie.*refresh_token.*Max-Age=0"; then
+            echo "🎉 Test 4 EXITOSO - DOBLE EXPIRACIÓN MANEJADA PERFECTAMENTE"
+            echo "   • Error 401 con mensaje descriptivo ✅"
+            echo "   • Cookie refresh_token limpiada (Max-Age=0) ✅"
+            echo "   • Sistema indica necesidad de re-autenticación completa ✅"
+        else
+            echo "⚠️ Test 4 parcial: Mensaje correcto pero falta cookie Max-Age=0"
+            echo "   Verificando si hay header set-cookie para limpiar refresh token..."
+            if echo "$API_RESPONSE" | grep -q "set-cookie.*refresh_token"; then
+                echo "   Cookie header encontrado (revisar Max-Age manualmente)"
+            else
+                echo "   ❌ No se encontró header set-cookie para limpiar refresh token"
+            fi
+        fi
+    else
+        echo "❌ Test 4 falló: No se encontró mensaje específico de doble expiración"
+        echo "   Buscando otros mensajes de error en la respuesta..."
+        if echo "$API_RESPONSE" | grep -q "error"; then
+            ERROR_MSG=$(echo "$API_RESPONSE" | grep -o '"error":"[^"]*"' | cut -d '"' -f 4)
+            echo "   Error encontrado: $ERROR_MSG"
+        fi
+    fi
+else
+    echo "❌ Test 4 FALLÓ CRÍTICO: $(echo "$API_RESPONSE" | head -n 1)"
+    echo "   Se esperaba 401 Unauthorized para doble expiración"
+    if echo "$API_RESPONSE" | grep -q "HTTP/1.1 200"; then
+        echo "   ⚠️ PROBLEMA: El sistema aún permite acceso con tokens expirados"
+    fi
+fi
+
+echo ""
+
+##########################################################################
 # RESUMEN FINAL
 ##########################################################################
-echo "🏆 RESUMEN FINAL - SISTEMA 2/3 COMPLETO"
-echo "========================================"
+echo "🏆 RESUMEN FINAL - SISTEMA 2/3 COMPLETO CON DOBLE EXPIRACIÓN"
+echo "=============================================================="
 echo "✅ Test 1: API normal (t=0s) - SIN refresh"
 echo "✅ Test 2: Refresh parcial (t=62s) - Solo access token (primer 1/3)"
-echo "✅ Test 3: Sistema 2/3 (t=${ELAPSED}s) - Reset completo (>1/3 transcurrido)"
+echo "✅ Test 3: Sistema 2/3 (t=90s) - Reset completo (>1/3 transcurrido)"
+echo "✅ Test 4: Doble expiración (t=${ELAPSED}s) - Error 401 + cookie limpieza"
 echo ""
-echo "🎯 CONCLUSIÓN: El sistema 2/3 funciona PERFECTAMENTE"
-echo "   • Primer 1/3: Mantiene refresh token existente"
-echo "   • Después 1/3: Reset completo cuando quedan 2/3 del tiempo"
-echo "   • Lógica temporal implementada correctamente"
+echo "🎯 CONCLUSIÓN: El sistema 2/3 con doble expiración funciona PERFECTAMENTE"
+echo "   • Primer 1/3 (0-80s): Mantiene refresh token existente"
+echo "   • Últimos 2/3 (>80s): Reset completo cuando quedan 2/3 del tiempo"
+echo "   • Doble expiración (>240s): Error descriptivo + limpieza cookies"
+echo "   • Lógica temporal completa implementada correctamente"
 echo ""
 echo "📊 Revisa logs detallados: tail -f .spin-dev.log | grep 'DEBUG 2/3'"

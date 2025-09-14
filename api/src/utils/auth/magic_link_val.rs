@@ -168,7 +168,8 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
     }
 
     // Set refresh token as HttpOnly, Secure, SameSite cookie with correct duration
-    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes().unwrap_or(9);
+    let refresh_duration_minutes =
+        crate::utils::jwt::config::get_refresh_token_duration_minutes().unwrap_or(9);
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
         refresh_token,

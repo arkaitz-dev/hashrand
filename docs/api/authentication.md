@@ -52,21 +52,62 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 }
 ```
 
-## JWT Dual Token System
+## JWT Dual Token System with 2/3 Time-Based Refresh Logic
 
-- **Access Token**: 3 minutes validity (development), included in JSON response
-- **Refresh Token**: 15 minutes validity (development), set as HttpOnly, Secure, SameSite=Strict cookie
+- **Access Token**: 1 minute validity (development: testing), 20 minutes (production)
+- **Refresh Token**: 4 minutes validity (development: testing), 240 minutes (production)
+- **HttpOnly Cookie**: Refresh token stored securely with HttpOnly, Secure, SameSite=Strict
 
-### Automatic Token Refresh
+### Enterprise-Grade 2/3 Time-Based Token Management
 
-The client automatically refreshes tokens when the access token expires:
+HashRand implements intelligent token lifecycle management that optimizes security and user experience:
+
+#### **Two-Phase Refresh Strategy:**
+
+1. **First 1/3 of Refresh Token Lifetime (Conservative Phase)**
+   - **Time Window**: 0 → 80 seconds (for 4-minute refresh tokens)
+   - **Behavior**: Only renews access token, preserves existing refresh token
+   - **Rationale**: Minimizes token regeneration overhead while maintaining security
+
+2. **Last 2/3 of Refresh Token Lifetime (Security Reset Phase)**
+   - **Time Window**: 80+ seconds → expiration (for 4-minute refresh tokens)
+   - **Behavior**: Complete token pair reset (both access + refresh renewed)
+   - **Rationale**: Proactive security hardening when approaching expiration
+
+#### **Automatic Token Refresh Flow:**
 
 ```bash
-# Refresh expired access token (automatic - called by frontend)
-curl -X POST "http://localhost:3000/api/refresh" \
-  -H "Cookie: refresh_token=your-httponly-token"
-# Response: {"access_token": "eyJ...", "expires_in": 180, "user_id": "Base58Username", "message": "Token refreshed successfully"}
+# Phase 1: Conservative refresh (first 1/3 - keeps existing refresh token)
+curl -X POST "http://localhost:3000/api/custom?length=8" \
+  -H "Authorization: Bearer expired-access-token" \
+  -H "Cookie: refresh_token=valid-refresh-token"
+# Response: HTTP 200 + x-new-access-token header (no Set-Cookie)
+
+# Phase 2: Security reset (last 2/3 - resets both tokens)
+curl -X POST "http://localhost:3000/api/custom?length=8" \
+  -H "Authorization: Bearer expired-access-token" \
+  -H "Cookie: refresh_token=valid-but-aging-token"
+# Response: HTTP 200 + x-new-access-token + Set-Cookie: refresh_token=new-token
 ```
+
+#### **Dual Token Expiration Handling:**
+
+When both access and refresh tokens expire simultaneously, the system provides comprehensive cleanup:
+
+```bash
+# Both tokens expired scenario
+curl -X POST "http://localhost:3000/api/custom?length=8" \
+  -H "Authorization: Bearer expired-access-token" \
+  -H "Cookie: refresh_token=expired-refresh-token"
+# Response: HTTP 401
+# Body: {"error": "Both access and refresh tokens have expired. Please re-authenticate."}
+# Headers: Set-Cookie: refresh_token=; Max-Age=0; HttpOnly; Secure; SameSite=Strict; Path=/
+```
+
+**Frontend Integration:**
+- **Smart Detection**: `isDualTokenExpiry()` identifies dual expiration scenarios
+- **Automatic Cleanup**: `handleDualTokenExpiry()` clears sessionStorage and triggers re-authentication
+- **Seamless UX**: Users see clean authentication dialog without technical error messages
 
 ### Logout System
 

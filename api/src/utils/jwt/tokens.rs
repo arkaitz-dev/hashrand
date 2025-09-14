@@ -4,7 +4,10 @@
 
 use chrono::{DateTime, Utc};
 
-use super::custom_tokens::{create_custom_access_token, create_custom_access_token_from_username, create_custom_refresh_token, create_custom_refresh_token_from_username, validate_custom_access_token, validate_custom_refresh_token};
+use super::custom_tokens::{
+    create_custom_refresh_token, create_custom_refresh_token_from_username,
+    validate_custom_access_token, validate_custom_refresh_token,
+};
 use super::types::{AccessTokenClaims, RefreshTokenClaims};
 
 /// Create refresh token using custom token system (with proper 9-minute duration)
@@ -24,6 +27,7 @@ pub fn create_refresh_token_from_username(
 }
 
 /// Validate access token using custom token system
+#[allow(dead_code)]
 pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
     validate_custom_access_token(token)
 }

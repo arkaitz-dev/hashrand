@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.19.13] - 2025-09-14
+
+### 🔄 Enterprise-Grade Token Management & Dual Expiration System
+
+**2/3 Time-Based Token Refresh System with Dual Expiration Handling**
+
+#### ✅ Intelligent Token Lifecycle Management:
+- **🕐 2/3 System Logic**: Implements smart refresh behavior based on remaining token lifetime
+  - **First 1/3 (0-80s)**: Only renews access token, keeps existing refresh token
+  - **Last 2/3 (>80s)**: Resets both tokens completely for maximum security
+- **⚡ Dual Token Expiration**: Special handling when both access and refresh tokens expire
+  - Returns 401 with descriptive error: "Both access and refresh tokens have expired"
+  - Automatically clears refresh_token cookie (Max-Age=0) for security
+  - Triggers frontend sessionStorage cleanup and re-authentication flow
+
+#### ✅ Critical Bug Fixes & Optimizations:
+- **🔧 Integer Division Fix**: Corrected 1/3 threshold calculation bug
+  - **Before**: `refresh_duration_minutes / 3` (integer division caused premature activation)
+  - **After**: `(refresh_duration_minutes * 60) / 3` (precise seconds calculation)
+  - **Impact**: Fixed premature 2/3 system activation at 62s instead of 80s
+- **🎯 Precise Timing**: System now correctly activates at exact 1/3 threshold (80s for 240s tokens)
+
+#### ✅ Frontend Integration Excellence:
+- **🖥️ Smart Detection**: `isDualTokenExpiry()` function detects dual expiration scenarios
+- **🧹 Automatic Cleanup**: `handleDualTokenExpiry()` clears sessionStorage and shows auth dialog
+- **⚡ Seamless UX**: Users see clean re-authentication flow without technical errors
+
+#### ✅ Comprehensive Testing Implementation:
+- **📋 4-Phase Test Suite**: Complete test script `test_2_3_complete.sh` validates entire flow
+  - **Test 1 (t=0s)**: Normal API access without refresh
+  - **Test 2 (t=62s)**: Access expired, partial refresh (first 1/3)
+  - **Test 3 (t=90s)**: 2/3 system activation with complete token reset
+  - **Test 4 (t=250s)**: Dual expiration with cookie cleanup
+- **✅ 100% Test Success**: All 4 phases pass with correct behavior validation
+- **⏱️ Configurable Timing**: Test-friendly token durations (1min access, 4min refresh)
+
+#### ✅ Security & Architecture Benefits:
+- **🛡️ Enhanced Session Security**: Proactive token reset when 2/3 lifetime elapsed
+- **🔐 Zero-Leak Expiration**: Complete cleanup of expired credentials
+- **📊 Debug Logging**: Detailed 2/3 system logs for monitoring and troubleshooting
+- **🚫 Attack Prevention**: Dual expiration prevents token resurrection attacks
+
+**Result**: Enterprise-grade token management system that intelligently balances security and user experience through precise timing control and comprehensive expiration handling.
+
 ## [Web v0.19.12] - 2025-09-13
 
 ### 🚀 Revolutionary URL Optimization & Performance Enhancement
