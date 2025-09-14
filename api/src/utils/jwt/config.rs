@@ -56,3 +56,95 @@ pub fn get_chacha_encryption_key() -> Result<Vec<u8>, String> {
     hex::decode(&key_hex)
         .map_err(|_| "CHACHA_ENCRYPTION_KEY must be a valid hex string".to_string())
 }
+
+// Custom Token Security Keys
+
+/// Get access token cipher key from Spin variables as bytes
+pub fn get_access_token_cipher_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("access_token_cipher_key")
+        .map_err(|e| format!("Failed to get access_token_cipher_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_CIPHER_KEY must be a valid hex string".to_string())
+}
+
+/// Get access token nonce key from Spin variables as bytes
+pub fn get_access_token_nonce_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("access_token_nonce_key")
+        .map_err(|e| format!("Failed to get access_token_nonce_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_NONCE_KEY must be a valid hex string".to_string())
+}
+
+/// Get access token HMAC key from Spin variables as bytes
+pub fn get_access_token_hmac_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("access_token_hmac_key")
+        .map_err(|e| format!("Failed to get access_token_hmac_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_HMAC_KEY must be a valid hex string".to_string())
+}
+
+/// Get refresh token cipher key from Spin variables as bytes
+pub fn get_refresh_token_cipher_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("refresh_token_cipher_key")
+        .map_err(|e| format!("Failed to get refresh_token_cipher_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_CIPHER_KEY must be a valid hex string".to_string())
+}
+
+/// Get refresh token nonce key from Spin variables as bytes
+pub fn get_refresh_token_nonce_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("refresh_token_nonce_key")
+        .map_err(|e| format!("Failed to get refresh_token_nonce_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_NONCE_KEY must be a valid hex string".to_string())
+}
+
+/// Get refresh token HMAC key from Spin variables as bytes
+pub fn get_refresh_token_hmac_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("refresh_token_hmac_key")
+        .map_err(|e| format!("Failed to get refresh_token_hmac_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_HMAC_KEY must be a valid hex string".to_string())
+}
+
+/// Get prehash cipher key from Spin variables as bytes
+pub fn get_prehash_cipher_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("prehash_cipher_key")
+        .map_err(|e| format!("Failed to get prehash_cipher_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_CIPHER_KEY must be a valid hex string".to_string())
+}
+
+/// Get prehash nonce key from Spin variables as bytes
+pub fn get_prehash_nonce_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("prehash_nonce_key")
+        .map_err(|e| format!("Failed to get prehash_nonce_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_NONCE_KEY must be a valid hex string".to_string())
+}
+
+/// Get prehash HMAC key from Spin variables as bytes
+pub fn get_prehash_hmac_key() -> Result<Vec<u8>, String> {
+    let key_hex = variables::get("prehash_hmac_key")
+        .map_err(|e| format!("Failed to get prehash_hmac_key variable: {}", e))?;
+    hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_HMAC_KEY must be a valid hex string".to_string())
+}
+
+/// Get access token duration in minutes from Spin variables
+pub fn get_access_token_duration_minutes() -> Result<u64, String> {
+    let duration_str = variables::get("access_token_duration_minutes")
+        .map_err(|e| format!("Failed to get access_token_duration_minutes variable: {}", e))?;
+
+    duration_str.parse::<u64>()
+        .map_err(|_| "ACCESS_TOKEN_DURATION_MINUTES must be a valid number".to_string())
+}
+
+/// Get refresh token duration in minutes from Spin variables
+pub fn get_refresh_token_duration_minutes() -> Result<u64, String> {
+    let duration_str = variables::get("refresh_token_duration_minutes")
+        .map_err(|e| format!("Failed to get refresh_token_duration_minutes variable: {}", e))?;
+
+    duration_str.parse::<u64>()
+        .map_err(|_| "REFRESH_TOKEN_DURATION_MINUTES must be a valid number".to_string())
+}

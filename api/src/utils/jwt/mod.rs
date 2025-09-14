@@ -8,6 +8,7 @@
 
 pub mod config;
 pub mod crypto;
+pub mod custom_tokens;
 pub mod magic_links;
 pub mod tokens;
 pub mod types;

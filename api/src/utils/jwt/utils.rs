@@ -3,7 +3,7 @@
 //! Provides backwards compatibility wrapper for the modularized JWT functionality.
 
 use super::{
-    crypto, magic_links, tokens,
+    crypto, custom_tokens, magic_links, tokens,
     types::{AccessTokenClaims, RefreshTokenClaims},
 };
 
@@ -28,17 +28,17 @@ impl JwtUtils {
         crypto::email_to_username(email)
     }
 
-    // Re-export token functions for backwards compatibility
+    // Custom token functions for backwards compatibility
     pub fn create_access_token(
         email: &str,
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_access_token(email)
+        custom_tokens::create_custom_access_token(email)
     }
 
     pub fn create_access_token_from_username(
         username: &str,
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_access_token_from_username(username)
+        custom_tokens::create_custom_access_token_from_username(username)
     }
 
     pub fn create_refresh_token(
@@ -56,7 +56,7 @@ impl JwtUtils {
     }
 
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
-        tokens::validate_access_token(token)
+        custom_tokens::validate_custom_access_token(token)
     }
 
     pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String> {

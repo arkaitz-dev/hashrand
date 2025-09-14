@@ -158,7 +158,7 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
     let mut auth_response = serde_json::json!({
         "access_token": access_token,
         "token_type": "Bearer",
-        "expires_in": 180, // 3 minutes
+        "expires_in": (_access_expires.timestamp() - chrono::Utc::now().timestamp()),
         "user_id": username
     });
 
@@ -167,11 +167,12 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
         auth_response["next"] = serde_json::Value::String(next);
     }
 
-    // Set refresh token as HttpOnly, Secure, SameSite cookie
+    // Set refresh token as HttpOnly, Secure, SameSite cookie with correct duration
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes().unwrap_or(9);
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
         refresh_token,
-        15 * 60 // 15 minutes in seconds
+        refresh_duration_minutes * 60 // Convert minutes to seconds
     );
 
     Ok(Response::builder()

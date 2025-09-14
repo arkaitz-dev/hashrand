@@ -3,10 +3,9 @@
 
 # Environment file configuration
 set dotenv-load := true
-set dotenv-filename := ".env-dev"
 
 # IMPORTANT: just has native .env file loading capability
-# - Now configured to load .env-dev by default for development
+# - Now configured to load .env by default for development
 # - Variables are available to all recipes without explicit sourcing
 # - Spin reads SPIN_VARIABLE_* variables directly from the loaded environment
 
@@ -17,10 +16,7 @@ default:
 # Build both WebAssembly component and web interface
 build:
     #!/usr/bin/env bash
-    echo "Building WebAssembly component..."
-    spin-cli build -f spin-dev.toml
-    echo "Building web interface..."
-    cd web && npx svelte-kit sync && npm run build
+    source scripts/just-build-part.sh
 
 # Start the application locally
 up:
@@ -29,52 +25,7 @@ up:
 # Stop any running development servers (foreground and background)
 stop: tailscale-stop
     #!/usr/bin/env bash
-    echo "Stopping development servers..."
-    
-    # Kill background server if PID file exists
-    if [ -f .spin-dev.pid ]; then
-        PID=$(cat .spin-dev.pid)
-        if kill -0 $PID 2>/dev/null; then
-            kill $PID 2>/dev/null && echo "✓ Stopped background server (PID: $PID)" || echo "• Failed to stop background server"
-        fi
-        rm -f .spin-dev.pid
-    fi
-    
-    # Kill predeploy server if PID file exists
-    if [ -f .spin-predeploy.pid ]; then
-        PID=$(cat .spin-predeploy.pid)
-        if kill -0 $PID 2>/dev/null; then
-            kill $PID 2>/dev/null && echo "✓ Stopped predeploy server (PID: $PID)" || echo "• Failed to stop predeploy server"
-        fi
-        rm -f .spin-predeploy.pid
-    fi
-    
-    # Kill background npm server if PID file exists
-    if [ -f .npm-dev.pid ]; then
-        PID=$(cat .npm-dev.pid)
-        if kill -0 $PID 2>/dev/null; then
-            kill $PID 2>/dev/null && echo "✓ Stopped npm background server (PID: $PID)" || echo "• Failed to stop npm background server"
-        fi
-        rm -f .npm-dev.pid
-    fi
-    
-    # Kill any running spin-cli watch processes
-    pkill -f "spin-cli watch" 2>/dev/null && echo "✓ Stopped spin-cli watch" || echo "• No spin-cli watch process found"
-    # Kill any processes using port 3000
-    lsof -ti:3000 | xargs kill -9 2>/dev/null && echo "✓ Freed port 3000" || echo "• Port 3000 was free"
-    # Kill any spin-cli processes
-    pkill -f "spin-cli" 2>/dev/null && echo "✓ Stopped other spin-cli processes" || echo "• No other spin-cli processes found"
-    
-    # Kill any npm dev processes and free port 5173
-    pkill -f "npm run dev" 2>/dev/null && echo "✓ Stopped npm run dev" || echo "• No npm run dev process found"
-    lsof -ti:5173 | xargs kill -9 2>/dev/null && echo "✓ Freed port 5173" || echo "• Port 5173 was free"
-    
-    # Clean up log files
-    [ -f .spin-dev.log ] && rm -f .spin-dev.log && echo "✓ Cleaned up spin log file"
-    [ -f .npm-dev.log ] && rm -f .npm-dev.log && echo "✓ Cleaned up npm log file"
-    [ -f .spin-predeploy.log ] && rm -f .spin-predeploy.log && echo "✓ Cleaned up predeploy log file"
-    
-    echo "Development servers stopped."
+    source scripts/just-stop-part.sh
 
 # Check status of development servers (shows background processes and port usage)
 status:
@@ -219,66 +170,7 @@ dev-fg: stop
 # Start complete development environment (both servers in background)
 dev: stop
     #!/usr/bin/env bash
-    echo "Starting complete development environment..."
-    
-    # Start spin-cli watch in background (first - API backend)
-    echo "Starting spin-cli watch in background..."
-    nohup spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml > .spin-dev.log 2>&1 &
-    SPIN_PID=$!
-    echo $SPIN_PID > .spin-dev.pid
-    
-    # Start npm dev server in background (second - web interface)
-    echo "Starting npm run dev in background..."
-    cd web
-    nohup npm run dev > ../.npm-dev.log 2>&1 &
-    NPM_PID=$!
-    echo $NPM_PID > ../.npm-dev.pid
-    cd ..
-    
-    # Wait and verify both services started
-    sleep 3
-    
-    SPIN_SUCCESS=false
-    NPM_SUCCESS=false
-    
-    if kill -0 $SPIN_PID 2>/dev/null; then
-        echo "✓ Spin dev server started in background (PID: $SPIN_PID)"
-        SPIN_SUCCESS=true
-    else
-        echo "✗ Failed to start spin dev server"
-        rm -f .spin-dev.pid
-    fi
-    
-    if kill -0 $NPM_PID 2>/dev/null; then
-        echo "✓ NPM dev server started in background (PID: $NPM_PID)"
-        NPM_SUCCESS=true
-    else
-        echo "✗ Failed to start npm dev server"
-        rm -f .npm-dev.pid
-    fi
-    
-    if [ "$NPM_SUCCESS" = true ] || [ "$SPIN_SUCCESS" = true ]; then
-        echo ""
-        echo "🚀 Development environment ready!"
-        echo "================================="
-        [ "$SPIN_SUCCESS" = true ] && echo "  API: http://localhost:3000"
-        [ "$NPM_SUCCESS" = true ] && echo "  Web: http://localhost:5173"
-        echo ""
-        echo "Management commands:"
-        echo "  Logs: tail -f .spin-dev.log .npm-dev.log"
-        echo "  Stop: just stop"
-        echo "  Status: just status"
-        
-        # Start Tailscale serve for frontend if npm is running
-        if [ "$NPM_SUCCESS" = true ]; then
-            echo ""
-            echo "Starting Tailscale serve for remote access..."
-            just tailscale-front-start
-        fi
-    else
-        echo "✗ Failed to start development servers"
-        exit 1
-    fi
+    source scripts/just-dev-part.sh
 
 # Watch mode: start dev server in background and follow logs (Ctrl+C stops watching only)
 watch: dev
@@ -319,28 +211,7 @@ add crate:
 # Clean build artifacts
 clean:
     #!/usr/bin/env bash
-    echo "Cleaning Rust build artifacts..."
-    cargo clean
-    echo "Cleaning npm artifacts and dist directory..."
-    cd web
-    # Remove build outputs and generated files
-    rm -rf dist build .svelte-kit
-    # Remove npm/pnpm/yarn caches
-    rm -rf node_modules/.cache node_modules/.vite node_modules/.pnpm-state
-    # Remove TypeScript cache
-    rm -rf node_modules/.tsc node_modules/.tsbuildinfo
-    # Remove test coverage and temporary files
-    rm -rf coverage .nyc_output .tmp .temp
-    # Remove Vite cache and temp files
-    rm -rf .vite .vite-cache vite.config.js.timestamp-*
-    # Remove SvelteKit server and client output
-    rm -rf .svelte-kit/output .svelte-kit/generated .svelte-kit/types
-    cd ..
-    # Remove development log files and PID files
-    rm -f .spin-dev.log .npm-dev.log .spin-dev.pid .npm-dev.pid
-    # Remove any temporary files at project root
-    rm -rf .tmp .temp *.tmp *.temp
-    echo "✓ All build artifacts and caches cleaned"
+    source scripts/just-clean-part.sh
 
 # Clean and rebuild everything
 clean-build: clean build
@@ -350,89 +221,15 @@ rebuild: clean build
 
 # Deploy to Fermyon Cloud with secrets
 deploy:
-    set dotenv-filename := ".env"
+    set dotenv-filename := ".env-prod"
     #!/usr/bin/env bash
-    # Read secrets from .env file and deploy to Fermyon Cloud
-    spin-cli deploy --runtime-config-file runtime-config.toml -f spin-prod.toml \
-        --variable jwt_secret="${JWT_SECRET:-${SPIN_VARIABLE_JWT_SECRET}}" \
-        --variable magic_link_hmac_key="${MAGIC_LINK_HMAC_KEY:-${SPIN_VARIABLE_MAGIC_LINK_HMAC_KEY}}" \
-        --variable argon2_salt="${ARGON2_SALT:-${SPIN_VARIABLE_ARGON2_SALT}}"
+    source scripts/just-deploy-part.sh
 
 # Prepare for production deployment (compile web UI, start backend only with static serving, start tailscale)
 predeploy: stop clean
-    set dotenv-filename := ".env"
+    set dotenv-filename := ".env-prod"
     #!/usr/bin/env bash
-    echo "🚀 Preparing for production deployment..."
-    echo "======================================="
-    
-    # Build web interface for production
-    echo "Building web interface for production..."
-    cd web
-    npm run build
-    cd ..
-    
-    # Verify dist directory was created
-    if [ ! -d "web/dist" ]; then
-    echo "Error: web/dist directory not found after build"
-    exit 1
-    fi
-    
-    echo "✓ Web interface built successfully ($(du -sh web/dist | cut -f1) in web/dist/)"
-    
-    # Build WebAssembly component
-    echo "Building WebAssembly backend component..."
-    spin-cli build -f spin-prod.toml
-    
-    # Start backend only (includes static file serving)
-    echo "Starting backend with static file serving..."
-    nohup spin-cli up --runtime-config-file runtime-config.toml -f spin-prod.toml > .spin-predeploy.log 2>&1 &
-    SPIN_PID=$!
-    echo $SPIN_PID > .spin-predeploy.pid
-    
-    # Wait for backend to start
-    sleep 3
-    
-    if kill -0 $SPIN_PID 2>/dev/null; then
-    echo "✓ Backend started (PID: $SPIN_PID)"
-    
-    # Check if port 3000 is responding
-    if curl -s http://localhost:3000/api/version > /dev/null; then
-    echo "Backend API responding on port 3000"
-    else
-    echo "Backend started but API not yet responding (may need more time)"
-    fi
-    
-    # Start Tailscale serve for external access
-    echo "Starting Tailscale serve for external access..."
-    if command -v tailscale &> /dev/null; then
-    tailscale serve --bg 3000
-    echo "Tailscale serve started on port 3000"
-    echo ""
-    echo "Production deployment ready!"
-    echo "==============================="
-    echo "  Local access: http://localhost:3000"
-    echo "  Tailscale access: Check 'tailscale serve status'"
-    echo "  Backend log: tail -f .spin-predeploy.log"
-    echo "  Stop: just stop"
-    echo "  Status: just status"
-    echo ""
-    echo "Note: Both web interface and API are served from port 3000"
-    echo "      Web files: Served statically from /web/dist/"
-    echo "      API endpoints: Available at /api/*"
-    else
-    echo "Tailscale not available, skipping external access setup"
-    echo ""
-    echo "Local production deployment ready!"
-    echo "====================================="
-    echo "  Access: http://localhost:3000"
-    echo "  Log: tail -f .spin-predeploy.log"
-    echo "  Stop: just stop"
-    fi
-    else
-    echo "Failed to start backend"
-    rm -f .spin-predeploy.pid
-    exit 1
-    fi
+    source scripts/just-predeploy-part.sh
 
 # Run development server in background and execute tests
 test-dev:

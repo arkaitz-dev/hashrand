@@ -17,6 +17,29 @@ import type {
 
 const API_BASE = '/api';
 
+// Helper function to check if crypto tokens exist (DRY)
+function hasCryptoTokens(): boolean {
+	if (typeof window === 'undefined') return false;
+
+	// Check for new combined crypto_tokens format
+	const cryptoTokens = sessionStorage.getItem('crypto_tokens');
+	if (cryptoTokens) {
+		try {
+			const tokens = JSON.parse(cryptoTokens);
+			return !!(tokens.cipher && tokens.nonce && tokens.hmacKey);
+		} catch {
+			return false;
+		}
+	}
+
+	// Fallback: check for legacy individual tokens (backward compatibility)
+	return !!(
+		sessionStorage.getItem('cipher_token') &&
+		sessionStorage.getItem('nonce_token') &&
+		sessionStorage.getItem('hmac_key')
+	);
+}
+
 // Helper function to get authentication headers
 async function getAuthHeaders(): Promise<Record<string, string>> {
 	const authStore = sessionStorage.getItem('auth_user');
@@ -27,27 +50,44 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 	}
 
 	try {
-		const user = JSON.parse(authStore);
-
-		// Check if token is expired
-		if (user.expiresAt) {
-			const expiresAt = new Date(user.expiresAt);
-			if (expiresAt <= new Date()) {
-				// Token expired, clear storage and return empty headers
-				sessionStorage.removeItem('auth_user');
-				sessionStorage.removeItem('access_token');
-				sessionStorage.removeItem('cipher_token');
-				sessionStorage.removeItem('nonce_token');
-				sessionStorage.removeItem('hmac_key');
-				return {};
-			}
-		}
+		// NOTE: No time-based validation here - let backend decide and handle 401 with refresh
 
 		return {
 			Authorization: `Bearer ${accessToken}`
 		};
 	} catch {
 		return {};
+	}
+}
+
+/**
+ * Handle proactive token renewal from response headers
+ * @param response - HTTP response that may contain renewal tokens
+ */
+async function handleProactiveTokenRenewal(response: Response): Promise<void> {
+	const newAccessToken = response.headers.get('x-new-access-token');
+	const newExpiresIn = response.headers.get('x-token-expires-in');
+
+	if (newAccessToken && newExpiresIn) {
+		console.log('🔄 Proactive token renewal detected, updating tokens...');
+
+		// Calculate new expiration time
+		const now = Date.now();
+		const expiresInSeconds = parseInt(newExpiresIn, 10);
+		const newExpiresAt = now + (expiresInSeconds * 1000);
+
+		// Update access token and expiration in sessionStorage
+		sessionStorage.setItem('access_token', newAccessToken);
+		sessionStorage.setItem('token_expires_at', newExpiresAt.toString());
+
+		// Update crypto tokens if we have them (they may need regeneration)
+		if (hasCryptoTokens()) {
+			const { authStore } = await import('./stores/auth');
+			// Regenerate crypto tokens to ensure they stay fresh
+			authStore.generateCryptoTokens();
+		}
+
+		console.log('✅ Proactive token renewal completed transparently');
 	}
 }
 
@@ -102,6 +142,11 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 
 			dialogStore.show('auth');
 		}
+	}
+
+	// Check for proactive token renewal headers in successful responses
+	if (response.ok) {
+		await handleProactiveTokenRenewal(response);
 	}
 
 	return response;
@@ -341,13 +386,17 @@ export const api = {
 	 */
 	async refreshToken(): Promise<boolean> {
 		try {
+			console.log('🔄 Frontend: Attempting token refresh...');
 			const response = await fetch(`${API_BASE}/refresh`, {
 				method: 'POST',
 				credentials: 'include' // Include HttpOnly cookies
 			});
 
+			console.log('📡 Frontend: Refresh response status:', response.status);
+
 			if (response.ok) {
 				const data = await response.json();
+				console.log('✅ Frontend: Refresh successful, new expires_in:', data.expires_in);
 
 				// Update auth store with new token
 				const { authStore } = await import('./stores/auth');
@@ -365,11 +414,7 @@ export const api = {
 				authStore.updateTokens(user, data.access_token);
 
 				// Generate crypto tokens if they don't exist (new tab scenario)
-				if (
-					!sessionStorage.getItem('cipher_token') ||
-					!sessionStorage.getItem('nonce_token') ||
-					!sessionStorage.getItem('hmac_key')
-				) {
+				if (!hasCryptoTokens()) {
 					authStore.generateCryptoTokens();
 				}
 

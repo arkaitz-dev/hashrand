@@ -17,6 +17,20 @@ chacha_encryption_key = { required = true, secret = true }
 mlink_content_cipher = { required = true, secret = true }
 mlink_content_nonce = { required = true, secret = true }
 mlink_content_salt = { required = true, secret = true }
+# Custom Token Security Keys
+access_token_cipher_key = { required = true, secret = true }
+access_token_nonce_key = { required = true, secret = true }
+access_token_hmac_key = { required = true, secret = true }
+refresh_token_cipher_key = { required = true, secret = true }
+refresh_token_nonce_key = { required = true, secret = true }
+refresh_token_hmac_key = { required = true, secret = true }
+# Prehash Seed Encryption Keys
+prehash_cipher_key = { required = true, secret = true }
+prehash_nonce_key = { required = true, secret = true }
+prehash_hmac_key = { required = true, secret = true }
+# Token Duration Configuration (in minutes)
+access_token_duration_minutes = { default = "15" }
+refresh_token_duration_minutes = { default = "480" }
 # Email configuration for Mailtrap REST API with custom domain
 mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
@@ -47,6 +61,17 @@ chacha_encryption_key = "{{ chacha_encryption_key }}"
 mlink_content_cipher = "{{ mlink_content_cipher }}"
 mlink_content_nonce = "{{ mlink_content_nonce }}"
 mlink_content_salt = "{{ mlink_content_salt }}"
+access_token_cipher_key = "{{ access_token_cipher_key }}"
+access_token_nonce_key = "{{ access_token_nonce_key }}"
+access_token_hmac_key = "{{ access_token_hmac_key }}"
+refresh_token_cipher_key = "{{ refresh_token_cipher_key }}"
+refresh_token_nonce_key = "{{ refresh_token_nonce_key }}"
+refresh_token_hmac_key = "{{ refresh_token_hmac_key }}"
+prehash_cipher_key = "{{ prehash_cipher_key }}"
+prehash_nonce_key = "{{ prehash_nonce_key }}"
+prehash_hmac_key = "{{ prehash_hmac_key }}"
+access_token_duration_minutes = "{{ access_token_duration_minutes }}"
+refresh_token_duration_minutes = "{{ refresh_token_duration_minutes }}"
 mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"

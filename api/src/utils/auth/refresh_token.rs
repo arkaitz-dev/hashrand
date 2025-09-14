@@ -28,9 +28,19 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     let refresh_token = match req.header("cookie") {
         Some(cookie_header) => {
             let cookie_str = cookie_header.as_str().unwrap_or("");
-            extract_refresh_token_from_cookies(cookie_str)
+            println!("🍪 Refresh: Cookie header received: '{}'", cookie_str);
+            let token = extract_refresh_token_from_cookies(cookie_str);
+            if token.is_some() {
+                println!("✅ Refresh: Successfully extracted refresh token");
+            } else {
+                println!("❌ Refresh: Failed to extract refresh token from cookies");
+            }
+            token
         }
-        None => None,
+        None => {
+            println!("❌ Refresh: No cookie header found in request");
+            None
+        }
     };
 
     let refresh_token = match refresh_token {
@@ -47,9 +57,14 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     // Validate refresh token
+    println!("🔍 Refresh: Attempting to validate refresh token...");
     let claims = match JwtUtils::validate_refresh_token(&refresh_token) {
-        Ok(claims) => claims,
+        Ok(claims) => {
+            println!("✅ Refresh: Token validation successful, user: {}", claims.sub);
+            claims
+        },
         Err(e) => {
+            println!("❌ Refresh: Token validation failed: {}", e);
             return Ok(Response::builder()
                 .status(401)
                 .header("content-type", "application/json")
@@ -65,9 +80,14 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
     // Convert Base58 username back to email for access token creation
     // For simplicity, we'll use the username directly since access tokens use username as subject
+    println!("🎫 Refresh: Creating new access token for user: {}", username);
     let (access_token, expires_at) = match JwtUtils::create_access_token_from_username(username) {
-        Ok((token, exp)) => (token, exp),
+        Ok((token, exp)) => {
+            println!("✅ Refresh: New access token created successfully");
+            (token, exp)
+        },
         Err(e) => {
+            println!("❌ Refresh: Failed to create access token: {}", e);
             return Ok(Response::builder()
                 .status(500)
                 .header("content-type", "application/json")
@@ -109,6 +129,8 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
         new_refresh_token, max_age
     );
+
+    println!("🎉 Refresh: Token refresh completed successfully for user: {}", username);
 
     Ok(Response::builder()
         .status(200)

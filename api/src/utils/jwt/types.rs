@@ -15,6 +15,8 @@ pub struct AccessTokenClaims {
     pub iat: i64,
     /// Token type
     pub token_type: String,
+    /// Refresh token expiration time (unix timestamp) for proactive renewal
+    pub refresh_expires_at: i64,
 }
 
 /// JWT Claims structure for refresh tokens

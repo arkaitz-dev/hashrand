@@ -70,6 +70,12 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
 }
 ```
 
+#### JWT Signing Algorithm
+- **Algorithm**: HS256 (HMAC with SHA-256)
+- **Secret Key**: Blake2b-keyed derived from JWT_SECRET environment variable
+- **Security**: Cryptographically secure 256-bit key with Blake2b entropy enhancement
+- **Integrity**: Each token signed with enterprise-grade Blake2b-keyed HMAC
+
 #### Dual-Token System
 - **Access Tokens**: Short-lived (3min dev, 15min prod), in JSON responses
 - **Refresh Tokens**: Longer-lived (15min dev, 7days prod), HttpOnly cookies

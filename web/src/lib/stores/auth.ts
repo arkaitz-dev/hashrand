@@ -168,11 +168,23 @@ function generateCryptoTokens(): void {
 }
 
 /**
- * Check if cipher, nonce and HMAC key tokens exist in sessionStorage
+ * Check if crypto tokens exist in sessionStorage
  */
 function hasCryptoTokens(): boolean {
 	if (typeof window === 'undefined') return false;
 
+	// Check for new combined crypto_tokens format
+	const cryptoTokens = sessionStorage.getItem('crypto_tokens');
+	if (cryptoTokens) {
+		try {
+			const tokens = JSON.parse(cryptoTokens);
+			return !!(tokens.cipher && tokens.nonce && tokens.hmacKey);
+		} catch {
+			return false;
+		}
+	}
+
+	// Fallback: check for legacy individual tokens (backward compatibility)
 	return !!(
 		sessionStorage.getItem('cipher_token') &&
 		sessionStorage.getItem('nonce_token') &&

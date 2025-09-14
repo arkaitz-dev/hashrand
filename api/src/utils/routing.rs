@@ -4,7 +4,7 @@ use crate::handlers::{
     handle_api_key_request, handle_custom, handle_from_seed, handle_login, handle_mnemonic_request,
     handle_password_request, handle_users, handle_version,
 };
-use crate::utils::jwt_middleware::{requires_authentication, validate_bearer_token};
+use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
@@ -22,28 +22,50 @@ pub async fn route_request_with_req(
     path: &str,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
-    // Check if endpoint requires authentication
-    if requires_authentication(path) {
-        // Validate Bearer token first
-        if let Err(auth_error) = validate_bearer_token(&req) {
-            return Ok(auth_error);
-        }
-    }
-
     let method = req.method();
-    let body = req.body();
 
     match path {
-        // Endpoints that support both GET and POST
-        path if path.ends_with("/api/custom") => handle_custom_request(req),
-        path if path.ends_with("/api/password") => handle_password_request(req),
-        path if path.ends_with("/api/api-key") => handle_api_key_request(req),
-        path if path.ends_with("/api/mnemonic") => handle_mnemonic_request(req),
+        // Protected endpoints with proactive token renewal
+        path if path.ends_with("/api/custom") => {
+            if requires_authentication(path) {
+                with_auth_and_renewal(req, handle_custom_request)
+            } else {
+                handle_custom_request(req)
+            }
+        },
+        path if path.ends_with("/api/password") => {
+            if requires_authentication(path) {
+                with_auth_and_renewal(req, handle_password_request)
+            } else {
+                handle_password_request(req)
+            }
+        },
+        path if path.ends_with("/api/api-key") => {
+            if requires_authentication(path) {
+                with_auth_and_renewal(req, handle_api_key_request)
+            } else {
+                handle_api_key_request(req)
+            }
+        },
+        path if path.ends_with("/api/mnemonic") => {
+            if requires_authentication(path) {
+                with_auth_and_renewal(req, handle_mnemonic_request)
+            } else {
+                handle_mnemonic_request(req)
+            }
+        },
 
         // GET-only endpoints
         path if path.ends_with("/api/generate") => {
             match method {
-                &Method::Get => handle_custom(query_params), // Backward compatibility
+                &Method::Get => {
+                    if requires_authentication(path) {
+                        // Need to wrap for protected endpoint
+                        with_auth_and_renewal(req, |_req| handle_custom(query_params))
+                    } else {
+                        handle_custom(query_params) // Backward compatibility
+                    }
+                },
                 _ => handle_method_not_allowed(),
             }
         }
@@ -54,12 +76,24 @@ pub async fn route_request_with_req(
 
         // POST-only endpoints
         path if path.ends_with("/api/from-seed") => match method {
-            &Method::Post => handle_from_seed(body),
+            &Method::Post => {
+                if requires_authentication(path) {
+                    with_auth_and_renewal(req, |req| handle_from_seed(req.body()))
+                } else {
+                    handle_from_seed(req.body())
+                }
+            },
             _ => handle_method_not_allowed(),
         },
 
         // User management endpoints (support GET, POST, DELETE)
-        path if path.starts_with("/api/users") => handle_users(req, path, query_params),
+        path if path.starts_with("/api/users") => {
+            if requires_authentication(path) {
+                with_auth_and_renewal(req, |req| handle_users(req, path, query_params))
+            } else {
+                handle_users(req, path, query_params)
+            }
+        },
 
         // Authentication endpoints (support GET and POST)
         path if path.starts_with("/api/login") => handle_login(req, query_params).await,

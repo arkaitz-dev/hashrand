@@ -1,197 +1,43 @@
-//! JWT token operations
+//! Custom token operations using Blake2b-keyed system
 //!
-//! Handles creation and validation of access and refresh tokens.
+//! Handles creation and validation of access and refresh tokens using our custom token system.
 
-use chrono::{DateTime, Duration, Utc};
-use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use chrono::{DateTime, Utc};
 
-use super::config::get_jwt_secret;
-use super::crypto::email_to_username;
+use super::custom_tokens::{create_custom_access_token, create_custom_access_token_from_username, create_custom_refresh_token, create_custom_refresh_token_from_username, validate_custom_access_token, validate_custom_refresh_token};
 use super::types::{AccessTokenClaims, RefreshTokenClaims};
 
-/// Create access token with 20 seconds expiration (for testing)
-///
-/// # Arguments
-/// * `email` - User email address (will be converted to user_id)
-///
-/// # Returns
-/// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
-pub fn create_access_token(email: &str) -> Result<(String, DateTime<Utc>), String> {
-    let now = Utc::now();
-    let expires_at = now + Duration::minutes(3); // 3 minutes
-
-    // Derive user_id from email for JWT subject
-    let username = email_to_username(email)?;
-
-    let claims = AccessTokenClaims {
-        sub: username,
-        exp: expires_at.timestamp(),
-        iat: now.timestamp(),
-        token_type: "access".to_string(),
-    };
-
-    let header = Header::new(Algorithm::HS256);
-    let jwt_secret = get_jwt_secret()?;
-    let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
-
-    match encode(&header, &claims, &encoding_key) {
-        Ok(token) => Ok((token, expires_at)),
-        Err(e) => Err(format!("Failed to create access token: {}", e)),
-    }
-}
-
-/// Create access token directly from username (used for refresh)
-///
-/// # Arguments
-/// * `username` - Base58 encoded username
-///
-/// # Returns
-/// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
-pub fn create_access_token_from_username(
-    username: &str,
-) -> Result<(String, DateTime<Utc>), String> {
-    let now = Utc::now();
-    let expires_at = now + Duration::minutes(3); // 3 minutes
-
-    let claims = AccessTokenClaims {
-        sub: username.to_string(),
-        exp: expires_at.timestamp(),
-        iat: now.timestamp(),
-        token_type: "access".to_string(),
-    };
-
-    let header = Header::new(Algorithm::HS256);
-    let jwt_secret = get_jwt_secret()?;
-    let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
-
-    match encode(&header, &claims, &encoding_key) {
-        Ok(token) => Ok((token, expires_at)),
-        Err(e) => Err(format!("Failed to create access token: {}", e)),
-    }
-}
-
-/// Create refresh token with 2 minutes expiration (for testing)
-///
-/// # Arguments
-/// * `email` - User email address (will be converted to user_id)
-/// * `session_id` - Random ID for cryptographic uniqueness (not persisted)
-///
-/// # Returns
-/// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
+/// Create refresh token using custom token system (with proper 9-minute duration)
 pub fn create_refresh_token(
     email: &str,
-    session_id: i64,
+    _session_id: i64, // Ignored - our custom system doesn't need session_id
 ) -> Result<(String, DateTime<Utc>), String> {
-    let now = Utc::now();
-    let expires_at = now + Duration::minutes(15); // 15 minutes
-
-    // Derive user_id from email for JWT subject
-    let username = email_to_username(email)?;
-
-    let claims = RefreshTokenClaims {
-        sub: username,
-        exp: expires_at.timestamp(),
-        iat: now.timestamp(),
-        token_type: "refresh".to_string(),
-        session_id,
-    };
-
-    let header = Header::new(Algorithm::HS256);
-    let jwt_secret = get_jwt_secret()?;
-    let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
-
-    match encode(&header, &claims, &encoding_key) {
-        Ok(token) => Ok((token, expires_at)),
-        Err(e) => Err(format!("Failed to create refresh token: {}", e)),
-    }
+    create_custom_refresh_token(email)
 }
 
-/// Create a new refresh token from username (for token rotation)
-///
-/// # Arguments
-/// * `username` - Base58-encoded username (already processed)
-/// * `session_id` - Optional crypto noise ID to preserve. If None, generates new random one
-///
-/// # Returns
-/// * `Result<(String, DateTime<Utc>), String>` - JWT token and expiration time or error
+/// Create refresh token from username using custom token system (with proper 9-minute duration)
 pub fn create_refresh_token_from_username(
     username: &str,
-    session_id: Option<i64>,
+    _session_id: Option<i64>, // Ignored - our custom system doesn't need session_id
 ) -> Result<(String, DateTime<Utc>), String> {
-    let now = Utc::now();
-    let expires_at = now + Duration::minutes(15); // 15 minutes
-
-    // Use provided crypto noise ID or generate new random one
-    let session_id = match session_id {
-        Some(id) => id,
-        None => {
-            use rand::Rng;
-            rand::rng().random::<i64>()
-        }
-    };
-
-    let claims = RefreshTokenClaims {
-        sub: username.to_string(),
-        exp: expires_at.timestamp(),
-        iat: now.timestamp(),
-        token_type: "refresh".to_string(),
-        session_id,
-    };
-
-    let header = Header::new(Algorithm::HS256);
-    let jwt_secret = get_jwt_secret()?;
-    let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
-
-    match encode(&header, &claims, &encoding_key) {
-        Ok(token) => Ok((token, expires_at)),
-        Err(e) => Err(format!("Failed to create refresh token: {}", e)),
-    }
+    create_custom_refresh_token_from_username(username)
 }
 
-/// Validate and decode access token
-///
-/// # Arguments
-/// * `token` - JWT access token to validate
-///
-/// # Returns
-/// * `Result<AccessTokenClaims, String>` - Decoded claims or validation error
-#[allow(dead_code)]
+/// Validate access token using custom token system
 pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
-    let jwt_secret = get_jwt_secret().map_err(|e| format!("JWT secret error: {}", e))?;
-    let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
-    let validation = Validation::new(Algorithm::HS256);
-
-    match decode::<AccessTokenClaims>(token, &decoding_key, &validation) {
-        Ok(token_data) => {
-            if token_data.claims.token_type != "access" {
-                return Err("Invalid token type".to_string());
-            }
-            Ok(token_data.claims)
-        }
-        Err(e) => Err(format!("Invalid access token: {}", e)),
-    }
+    validate_custom_access_token(token)
 }
 
-/// Validate and decode refresh token
-///
-/// # Arguments
-/// * `token` - JWT refresh token to validate
-///
-/// # Returns
-/// * `Result<RefreshTokenClaims, String>` - Decoded claims or validation error
-#[allow(dead_code)]
+/// Validate refresh token using custom token system (validation logic is same: expiration_timestamp < now)
 pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String> {
-    let jwt_secret = get_jwt_secret().map_err(|e| format!("JWT secret error: {}", e))?;
-    let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
-    let validation = Validation::new(Algorithm::HS256);
+    let access_claims = validate_custom_refresh_token(token)?;
 
-    match decode::<RefreshTokenClaims>(token, &decoding_key, &validation) {
-        Ok(token_data) => {
-            if token_data.claims.token_type != "refresh" {
-                return Err("Invalid token type".to_string());
-            }
-            Ok(token_data.claims)
-        }
-        Err(e) => Err(format!("Invalid refresh token: {}", e)),
-    }
+    // Convert AccessTokenClaims to RefreshTokenClaims (add fake session_id for compatibility)
+    Ok(RefreshTokenClaims {
+        sub: access_claims.sub,
+        exp: access_claims.exp,
+        iat: access_claims.iat,
+        token_type: access_claims.token_type,
+        session_id: 0, // Fake session_id for compatibility - not used anywhere
+    })
 }
