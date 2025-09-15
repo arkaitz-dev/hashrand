@@ -162,11 +162,14 @@ mod tests {
     #[test]
     fn test_email_validation() {
         // Test basic email validation logic
-        assert!("".is_empty() || !"".contains('@'));
         assert!(!"invalid-email".contains('@'));
 
         let valid_email = "valid@example.com";
         assert!(valid_email.contains('@') && !valid_email.is_empty());
+
+        // Test empty string handling
+        let empty_email = "";
+        assert!(empty_email.is_empty());
     }
 
     #[test]
@@ -189,7 +192,7 @@ mod tests {
         if let Ok(req) = request {
             assert_eq!(req.method(), &Method::Post);
             // Test that the request was built successfully
-            assert!(req.body().len() > 0); // Body should contain JSON
+            assert!(!req.body().is_empty()); // Body should contain JSON
         }
     }
 }

@@ -17,7 +17,7 @@ use rand_chacha::{ChaCha8Rng, rand_core::RngCore, rand_core::SeedableRng};
 use spin_sdk::sqlite::{Error as SqliteError, Value};
 
 type MagicLinkKeys = ([u8; 32], [u8; 32], [u8; 32]);
-type ValidationResult = (bool, Option<String>, Option<[u8; 16]>);
+type ValidationResult = (bool, Option<String>, Option<[u8; 16]>, Option<[u8; 32]>);
 
 /// Magic link database operations
 pub struct MagicLinkOperations;
@@ -186,14 +186,14 @@ impl MagicLinkOperations {
         hash
     }
 
-    /// Store encrypted magic token with ChaCha20 encryption data
+    /// Store encrypted magic token with Ed25519 public key
     ///
     /// # Arguments
-    /// * `env` - Database environment to use
     /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
     /// * `encryption_blob` - 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     /// * `expires_at_nanos` - Expiration timestamp in nanoseconds (will be converted to hours for storage)
     /// * `next_param` - Optional next destination parameter
+    /// * `pub_key` - Ed25519 public key as hex string (64 chars)
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
@@ -202,7 +202,7 @@ impl MagicLinkOperations {
         encryption_blob: &[u8; 44],
         expires_at_nanos: i64,
         next_param: Option<&str>,
-        random_hash: Option<&str>,
+        pub_key: &str,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
@@ -220,26 +220,28 @@ impl MagicLinkOperations {
         // Create SHAKE-256 hash of encrypted data for database storage (16 bytes)
         let token_hash = Self::create_encrypted_token_hash(&encrypted_data);
 
-        // Decode random_hash from base58 if provided
-        let random_hash_bytes = if let Some(hash_str) = random_hash {
-            bs58::decode(hash_str)
-                .into_vec()
-                .map_err(|_| SqliteError::Io("Invalid base58 random hash".to_string()))?
-        } else {
-            vec![0u8; 32] // Default to zeros if no hash provided
-        };
-
-        if random_hash_bytes.len() != 32 {
+        // Decode Ed25519 public key from hex (64 chars = 32 bytes)
+        if pub_key.len() != 64 {
             return Err(SqliteError::Io(format!(
-                "Random hash must be 32 bytes, got {}",
-                random_hash_bytes.len()
+                "Ed25519 public key must be 64 hex chars, got {}",
+                pub_key.len()
             )));
         }
 
-        // Create merged payload: encryption_blob[44] + random_hash[32] + next_param_bytes[variable]
+        let auth_data_bytes = hex::decode(pub_key)
+            .map_err(|_| SqliteError::Io("Invalid hex Ed25519 public key".to_string()))?;
+
+        if auth_data_bytes.len() != 32 {
+            return Err(SqliteError::Io(format!(
+                "Ed25519 public key must be 32 bytes, got {}",
+                auth_data_bytes.len()
+            )));
+        }
+
+        // Create merged payload: encryption_blob[44] + auth_data[32] + next_param_bytes[variable]
         let mut payload_plain = Vec::with_capacity(44 + 32 + next_param.map_or(0, |s| s.len()));
         payload_plain.extend_from_slice(encryption_blob);
-        payload_plain.extend_from_slice(&random_hash_bytes);
+        payload_plain.extend_from_slice(&auth_data_bytes);
         if let Some(next) = next_param {
             payload_plain.extend_from_slice(next.as_bytes());
         }
@@ -270,17 +272,15 @@ impl MagicLinkOperations {
         Ok(())
     }
 
-    /// Validate and consume encrypted magic token with ChaCha20 decryption
+    /// Validate and consume encrypted magic token and extract stored Ed25519 public key
     ///
     /// # Arguments
-    /// * `env` - Database environment to use
     /// * `encrypted_token` - The Base58 encoded encrypted magic token to validate
     ///
     /// # Returns
-    /// * `Result<ValidationResult, SqliteError>` - (validation_result, next_param, user_id) or error
+    /// * `Result<ValidationResult, SqliteError>` - (validation_result, next_param, user_id, pub_key) or error
     pub fn validate_and_consume_magic_link_encrypted(
         encrypted_token: &str,
-        provided_hash: Option<&str>,
     ) -> Result<ValidationResult, SqliteError> {
         let connection = get_database_connection()?;
 
@@ -312,7 +312,7 @@ impl MagicLinkOperations {
                 Value::Blob(blob) => blob,
                 _ => {
                     println!("Database: Invalid encrypted_payload type");
-                    return Ok((false, None, None));
+                    return Ok((false, None, None, None));
                 }
             };
 
@@ -328,36 +328,27 @@ impl MagicLinkOperations {
                 Ok(payload) => payload,
                 Err(e) => {
                     println!("Database: Encrypted payload decryption failed: {}", e);
-                    return Ok((false, None, None));
+                    return Ok((false, None, None, None));
                 }
             };
 
-            // Extract encryption_blob, random_hash, and next_param from decrypted payload
+            // Extract encryption_blob, pub_key, and next_param from decrypted payload
             if payload_plain.len() < 76 {
                 // 44 + 32 bytes minimum
                 println!("Database: Invalid decrypted payload length (minimum 76 bytes)");
-                return Ok((false, None, None));
+                return Ok((false, None, None, None));
             }
 
             // Extract encryption_blob (first 44 bytes)
             let mut encryption_blob = [0u8; 44];
             encryption_blob.copy_from_slice(&payload_plain[..44]);
 
-            // Extract stored_hash (next 32 bytes)
-            let stored_hash_bytes = &payload_plain[44..76];
-            let stored_hash_base58 = bs58::encode(stored_hash_bytes).into_string();
+            // Extract stored pub_key (next 32 bytes) - this is the user's Ed25519 public key
+            let stored_pub_key_bytes = &payload_plain[44..76];
+            let mut pub_key_array = [0u8; 32];
+            pub_key_array.copy_from_slice(stored_pub_key_bytes);
 
-            // Verify hash matches the provided hash from frontend
-            if let Some(provided) = provided_hash {
-                if provided != stored_hash_base58 {
-                    println!("Database: Random hash verification failed");
-                    return Ok((false, None, None));
-                }
-            } else {
-                // If no hash provided, reject the magic link
-                println!("Database: No random hash provided for validation");
-                return Ok((false, None, None));
-            }
+            println!("Database: Successfully extracted Ed25519 public key from stored payload");
 
             // Extract next_param (remaining bytes as UTF-8 string if any)
             let next_param = if payload_plain.len() > 76 {
@@ -365,7 +356,7 @@ impl MagicLinkOperations {
                     Ok(s) => Some(s.to_string()),
                     Err(_) => {
                         println!("Database: Invalid UTF-8 in decrypted next_param bytes");
-                        return Ok((false, None, None));
+                        return Ok((false, None, None, None));
                     }
                 }
             } else {
@@ -392,16 +383,16 @@ impl MagicLinkOperations {
                     )?;
 
                     println!("Database: Encrypted magic link validated and consumed");
-                    Ok((true, next_param, Some(user_id)))
+                    Ok((true, next_param, Some(user_id), Some(pub_key_array)))
                 }
                 Err(e) => {
                     println!("Database: Magic link internal validation failed: {}", e);
-                    Ok((false, None, None))
+                    Ok((false, None, None, None))
                 }
             }
         } else {
             println!("Database: Encrypted magic link not found in database");
-            Ok((false, None, None))
+            Ok((false, None, None, None))
         }
     }
 

@@ -43,6 +43,7 @@
 	},
 	"dependencies": {
 		"@noble/ciphers": "^2.0.0",
+		"@noble/curves": "^2.0.0",
 		"@noble/hashes": "^2.0.0",
 		"@scure/base": "^2.0.0",
 		"@sveltejs/adapter-static": "^3.0.9"

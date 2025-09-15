@@ -1,47 +1,51 @@
 #!/usr/bin/env node
 
 /**
- * Generate random 32-byte hash in base58 format
- * Used by final_test.sh for magic link authentication testing
+ * Generate Ed25519 keypair for magic link authentication testing
+ * Used by final_test.sh for Ed25519 signature-based authentication
  */
 
 const crypto = require('crypto');
+const fs = require('fs');
 
 /**
- * Simple base58 encoding (Bitcoin alphabet)
+ * Generate Ed25519 keypair and save private key for later signing
  */
-function base58Encode(bytes) {
-    const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    let result = '';
-    let num = BigInt(0);
+function generateEd25519KeyPair() {
+    try {
+        // Generate Ed25519 keypair using Node.js crypto
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
+            publicKeyEncoding: {
+                type: 'spki',
+                format: 'der'
+            },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'der'
+            }
+        });
 
-    // Convert bytes to BigInt
-    for (let i = 0; i < bytes.length; i++) {
-        num = (num << 8n) + BigInt(bytes[i]);
+        // Extract raw public key bytes (last 32 bytes of DER format)
+        const publicKeyRaw = publicKey.slice(-32);
+
+        // Extract raw private key bytes (last 32 bytes of DER format)
+        const privateKeyRaw = privateKey.slice(-32);
+
+        // Convert to hex strings
+        const publicKeyHex = publicKeyRaw.toString('hex');
+        const privateKeyHex = privateKeyRaw.toString('hex');
+
+        // Store private key for signing
+        fs.writeFileSync('.test-ed25519-private-key', privateKeyHex);
+
+        // Return public key hex (64 chars = 32 bytes)
+        return publicKeyHex;
+    } catch (error) {
+        console.error('Error generating Ed25519 keypair:', error.message);
+        process.exit(1);
     }
-
-    // Convert to base58
-    while (num > 0n) {
-        result = alphabet[Number(num % 58n)] + result;
-        num = num / 58n;
-    }
-
-    // Handle leading zeros
-    for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-        result = '1' + result;
-    }
-
-    return result;
 }
 
-/**
- * Generate random 32-byte hash in base58 format
- */
-function generateRandomHash() {
-    const randomBytes = crypto.randomBytes(32);
-    return base58Encode(randomBytes);
-}
-
-// Generate and output the hash
-const hash = generateRandomHash();
-console.log(hash);
+// Generate keypair and output public key
+const publicKeyHex = generateEd25519KeyPair();
+console.log(publicKeyHex);

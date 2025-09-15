@@ -10,12 +10,13 @@ use super::custom_tokens::{
 };
 use super::types::{AccessTokenClaims, RefreshTokenClaims};
 
-/// Create refresh token using custom token system (with proper 9-minute duration)
+/// Create refresh token using custom token system with Ed25519 public key
 pub fn create_refresh_token(
     email: &str,
     _session_id: i64, // Ignored - our custom system doesn't need session_id
+    pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
-    create_custom_refresh_token(email)
+    create_custom_refresh_token(email, pub_key)
 }
 
 /// Create refresh token from username using custom token system (with proper 9-minute duration)
@@ -23,7 +24,7 @@ pub fn create_refresh_token_from_username(
     username: &str,
     _session_id: Option<i64>, // Ignored - our custom system doesn't need session_id
 ) -> Result<(String, DateTime<Utc>), String> {
-    create_custom_refresh_token_from_username(username)
+    create_custom_refresh_token_from_username(username, None)
 }
 
 /// Validate access token using custom token system
@@ -43,5 +44,6 @@ pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String>
         iat: access_claims.iat,
         token_type: access_claims.token_type,
         session_id: 0, // Fake session_id for compatibility - not used anywhere
+        pub_key: access_claims.pub_key,
     })
 }

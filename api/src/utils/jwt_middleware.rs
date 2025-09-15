@@ -89,12 +89,16 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
         }
         Err(error_msg) => {
             println!("🔍 DEBUG: Token validation failed: {}", error_msg);
+            println!("🔍 DEBUG: Checking if error contains 'expired': {}", error_msg.contains("expired"));
+            println!("🔍 DEBUG: Checking if error contains 'exp': {}", error_msg.contains("exp"));
 
-            // If token is expired, try to refresh using cookies (2/3 system)
-            if error_msg.contains("expired") || error_msg.contains("exp") {
+            // If token validation fails (any reason), try to refresh using cookies (2/3 system)
+            // This covers: expired, corrupted, malformed, wrong keys, etc.
+            {
                 println!("🔍 DEBUG: Token expired, attempting refresh from cookies...");
 
                 // Try to extract refresh token from cookies and validate
+                println!("🔍 DEBUG: Looking for cookie header...");
                 if let Some(cookie_header) = req.header("cookie") {
                     println!("🔍 DEBUG: Cookie header found");
                     if let Some(cookie_str) = cookie_header.as_str() {
@@ -150,9 +154,21 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                              time_elapsed_duration.num_minutes(), one_third_threshold.num_minutes(),
                                              if time_elapsed_duration > one_third_threshold { "✅ Activate: " } else { "⏳ Wait: " });
 
-                                    // Create new access token (always)
+                                    // Create new access token (always) - PRESERVE refresh context for 2/3 system
+                                    let refresh_expires_at = match DateTime::from_timestamp(refresh_claims.exp, 0) {
+                                        Some(dt) => dt,
+                                        None => {
+                                            println!("🔍 DEBUG: Invalid refresh token expiration timestamp");
+                                            return Err(create_auth_error_response(
+                                                "Invalid token timestamp",
+                                                None,
+                                            ));
+                                        }
+                                    };
+                                    // TODO: Extract pub_key from refresh token claims
+                                    let placeholder_pub_key = [0u8; 32];
                                     if let Ok((new_access_token, access_expires)) =
-                                        JwtUtils::create_access_token(&refresh_claims.sub)
+                                        JwtUtils::create_access_token_from_username_with_refresh_context(&refresh_claims.sub, refresh_expires_at, &placeholder_pub_key)
                                     {
                                         println!(
                                             "🔍 DEBUG: New access token created: {}...",
@@ -215,21 +231,22 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                         validation_error
                                     );
 
-                                    // Check if refresh token expired specifically (dual expiry case)
-                                    if validation_error.contains("expired")
-                                        || validation_error.contains("exp")
-                                    {
-                                        println!(
-                                            "🔍 DEBUG: DUAL EXPIRY detected - both tokens expired, clearing refresh cookie"
-                                        );
-                                        return Err(create_dual_expiry_response());
-                                    }
+                                    // DUAL EXPIRY: If refresh token validation fails (any reason),
+                                    // and we're here because access token also failed, this is dual expiry
+                                    println!(
+                                        "🔍 DEBUG: DUAL EXPIRY detected - both access and refresh tokens failed validation"
+                                    );
+                                    return Err(create_dual_expiry_response());
                                 }
                             }
                         } else {
                             println!("🔍 DEBUG: No refresh token found in cookies");
                         }
+                    } else {
+                        println!("🔍 DEBUG: Cookie header exists but couldn't convert to string");
                     }
+                } else {
+                    println!("🔍 DEBUG: NO cookie header found in request");
                 }
             }
 
@@ -345,8 +362,13 @@ fn check_proactive_renewal(
             time_remaining, two_thirds_threshold
         );
 
-        // Generate new access token
-        let (new_access_token, access_expires) = match JwtUtils::create_access_token(username) {
+        // Generate new access token - PRESERVE refresh context for 2/3 system
+        let refresh_expires_datetime = DateTime::from_timestamp(refresh_expires_at, 0)
+            .ok_or("Invalid refresh token expiration timestamp")
+            .map_err(|e| create_auth_error_response(e, None))?;
+        // TODO: Extract pub_key from refresh token claims instead of using placeholder
+        let placeholder_pub_key = [0u8; 32];
+        let (new_access_token, access_expires) = match JwtUtils::create_access_token_from_username_with_refresh_context(username, refresh_expires_datetime, &placeholder_pub_key) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
                 println!(
@@ -466,7 +488,7 @@ fn add_renewed_tokens_to_response(response: Response, renewed_tokens: RenewedTok
     // Set new refresh token cookie ONLY if provided (2/3 system logic)
     if !renewed_tokens.refresh_token.is_empty() {
         // println!("🔍 DEBUG: Setting NEW refresh token cookie (2/3 system reset)");
-        let refresh_duration_minutes = get_refresh_token_duration_minutes().unwrap_or(9);
+        let refresh_duration_minutes = get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
         let refresh_cookie = format!(
             "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
             renewed_tokens.refresh_token,

@@ -11,12 +11,14 @@ DELETE /api/login/       # Clear refresh token cookie (logout)
 POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 ```
 
-## Magic Link Generation
+## Magic Link Generation with Ed25519 Digital Signatures
 
 **POST /api/login/:**
 ```json
 {
   "email": "user@example.com",
+  "pub_key": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+  "signature": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
   "ui_host": "http://localhost:5173",
   "next": "/result?endpoint=mnemonic&language=english&words=12",
   "email_lang": "es"
@@ -25,9 +27,20 @@ POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
 
 **Request Parameters:**
 - `email` (required) - User email address for magic link delivery
+- `pub_key` (required) - Ed25519 public key (64-character hex string, 32 bytes)
+- `signature` (required) - Ed25519 signature of `email + pub_key` message (128-character hex string, 64 bytes)
 - `ui_host` (optional) - Frontend URL for magic link generation
 - `next` (optional) - URL path for post-authentication redirection (e.g., "/result?endpoint=mnemonic&words=12")
 - `email_lang` (optional) - Language code for email template (e.g., "es", "fr", "ar")
+
+**Ed25519 Signature Generation:**
+```bash
+# Message to sign: concatenate email + pub_key (+ next if present)
+message = "user@example.com" + "a1b2c3d4e5f6...67890"
+
+# Sign with Ed25519 private key
+signature = ed25519_sign(private_key, message)
+```
 
 **Response:**
 ```json
@@ -218,29 +231,48 @@ SPIN_VARIABLE_FROM_EMAIL=noreply@hashrand.dev  # Default sender
 ## Usage Examples
 
 ```bash
-# Request magic link
+# Ed25519 Magic Link Authentication Flow
+
+# 1. Generate Ed25519 keypair (using Node.js helper)
+pub_key=$(node ./scripts/generate_hash.js)
+echo "Generated public key: $pub_key"
+
+# 2. Create message to sign (email + pub_key)
+email="user@example.com"
+message="${email}${pub_key}"
+
+# 3. Sign message with Ed25519 private key
+signature=$(node ./scripts/sign_payload.js "$message")
+echo "Generated signature: $signature"
+
+# 4. Request magic link with Ed25519 authentication
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com"}'
+  -d "{\"email\":\"$email\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}"
 
-# Validate magic link (from development log)
+# 5. Validate magic link (from development log)
 curl "http://localhost:3000/api/login/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
 
-# Request magic link in Spanish
+# Request magic link in Spanish with Ed25519
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d '{"email": "usuario@ejemplo.com", "email_lang": "es"}'
+  -d "{\"email\":\"usuario@ejemplo.com\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\",\"email_lang\":\"es\"}"
 
-# Request magic link in Arabic (RTL support)
+# Request magic link in Arabic (RTL support) with Ed25519
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "email_lang": "ar"}'
-
-# Request magic link with fallback to English
-curl -X POST "http://localhost:3000/api/login/" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "email_lang": "unsupported"}'
+  -d "{\"email\":\"user@example.com\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\",\"email_lang\":\"ar\"}"
 ```
+
+### Ed25519 Signature Verification Process
+
+The backend performs comprehensive signature verification:
+
+1. **Parse Request**: Extract `email`, `pub_key`, and `signature` from request
+2. **Validate Format**: Ensure pub_key (64 hex chars) and signature (128 hex chars) are valid
+3. **Recreate Message**: Concatenate `email + pub_key` (+ `next` if present)
+4. **Verify Signature**: Use Ed25519 algorithm to verify signature against public key
+5. **Create Magic Link**: Only proceed if signature verification succeeds
 
 ## Zero Knowledge Architecture Benefits
 

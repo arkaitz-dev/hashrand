@@ -31,21 +31,32 @@ impl JwtUtils {
     // Custom token functions for backwards compatibility
     pub fn create_access_token(
         email: &str,
+        pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token(email)
+        custom_tokens::create_custom_access_token(email, pub_key)
     }
 
     pub fn create_access_token_from_username(
         username: &str,
+        pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token_from_username(username)
+        custom_tokens::create_custom_access_token_from_username(username, pub_key)
+    }
+
+    pub fn create_access_token_from_username_with_refresh_context(
+        username: &str,
+        refresh_expires_at: chrono::DateTime<chrono::Utc>,
+        pub_key: &[u8; 32],
+    ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
+        custom_tokens::create_custom_access_token_from_username_with_refresh_context(username, refresh_expires_at, pub_key)
     }
 
     pub fn create_refresh_token(
         email: &str,
         session_id: i64,
+        pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_refresh_token(email, session_id)
+        tokens::create_refresh_token(email, session_id, pub_key)
     }
 
     pub fn create_refresh_token_from_username(

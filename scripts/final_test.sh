@@ -115,28 +115,66 @@ test_api() {
     ((PASSED++))
 }
 
+# Ed25519 helper functions
+generate_ed25519_payload() {
+    local email="$1"
+
+    # Generate Ed25519 keypair
+    local pub_key=$(node ./scripts/generate_hash.js)
+    if [[ -z "$pub_key" ]]; then
+        echo '{"error":"Failed to generate keypair"}'
+        return 1
+    fi
+
+    # Create message to sign: email + pub_key
+    local sign_message="${email}${pub_key}"
+
+    # Sign the message
+    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    if [[ -z "$signature" ]]; then
+        echo '{"error":"Failed to sign message"}'
+        return 1
+    fi
+
+    # Return JSON payload (without extra quotes)
+    printf '{"email":"%s","pub_key":"%s","signature":"%s"}' "$email" "$pub_key" "$signature"
+}
+
 # Authentication helper functions
 request_magic_link() {
     echo -e "\n${PURPLE}=== Requesting Magic Link ===${NC}"
-    
-    # Generate random hash using Node.js helper
-    local random_hash=$(node ./scripts/generate_hash.js)
-    if [[ -z "$random_hash" ]]; then
-        echo -e "${RED}✗ Failed to generate random hash${NC}"
+
+    # Generate Ed25519 keypair using Node.js helper
+    local pub_key=$(node ./scripts/generate_hash.js)
+    if [[ -z "$pub_key" ]]; then
+        echo -e "${RED}✗ Failed to generate Ed25519 keypair${NC}"
         return 1
     fi
-    
-    echo "Generated random hash: ${random_hash:0:20}..."
-    
-    # Store hash for later validation (simulate localStorage behavior)
-    echo "$random_hash" > .test-magiclink-hash
-    
-    # Include hash in magic link request
-    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"random_hash\":\"$random_hash\"}" "$BASE_URL/api/login/")
+
+    echo "Generated Ed25519 public key: ${pub_key:0:20}..."
+
+    # Create message to sign: email + pub_key + next (if present)
+    local sign_message="${TEST_EMAIL}${pub_key}"
+    echo "Message to sign: ${sign_message:0:40}..."
+
+    # Sign the message with Ed25519 private key
+    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    if [[ -z "$signature" ]]; then
+        echo -e "${RED}✗ Failed to sign message${NC}"
+        return 1
+    fi
+
+    echo "Generated Ed25519 signature: ${signature:0:20}..."
+
+    # Store pub_key for later validation (simulate localStorage behavior)
+    echo "$pub_key" > .test-magiclink-pubkey
+
+    # Include pub_key and signature in magic link request
+    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $response"
-    
+
     if [[ "$response" == *'"status":"OK"'* ]]; then
-        echo -e "${GREEN}✓ Magic link requested successfully with hash validation${NC}"
+        echo -e "${GREEN}✓ Magic link requested successfully with Ed25519 signature validation${NC}"
         return 0
     else
         echo -e "${RED}✗ Failed to request magic link${NC}"
@@ -180,29 +218,42 @@ authenticate() {
     
     # Step 1: Request magic link with fresh start
     echo -e "\n${PURPLE}=== Requesting Fresh Magic Link ===${NC}"
-    
-    # Generate random hash using Node.js helper
-    local random_hash=$(node ./scripts/generate_hash.js)
-    if [[ -z "$random_hash" ]]; then
-        echo -e "${RED}✗ Authentication failed: Could not generate random hash${NC}"
+
+    # Generate Ed25519 keypair using Node.js helper
+    local pub_key=$(node ./scripts/generate_hash.js)
+    if [[ -z "$pub_key" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not generate Ed25519 keypair${NC}"
         return 1
     fi
-    
-    echo "Generated random hash: ${random_hash:0:20}..."
-    
-    # Store hash for later validation (simulate localStorage behavior)
-    echo "$random_hash" > .test-magiclink-hash
-    
-    # Include hash in magic link request
-    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"random_hash\":\"$random_hash\"}" "$BASE_URL/api/login/")
+
+    echo "Generated Ed25519 public key: ${pub_key:0:20}..."
+
+    # Create message to sign: email + pub_key
+    local sign_message="me@arkaitz.dev${pub_key}"
+    echo "Message to sign: ${sign_message:0:40}..."
+
+    # Sign the message with Ed25519 private key
+    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    if [[ -z "$signature" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not sign message${NC}"
+        return 1
+    fi
+
+    echo "Generated Ed25519 signature: ${signature:0:20}..."
+
+    # Store pub_key for later validation (simulate localStorage behavior)
+    echo "$pub_key" > .test-magiclink-pubkey
+
+    # Include pub_key and signature in magic link request
+    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $magic_response"
-    
+
     if [[ "$magic_response" != *'"status":"OK"'* ]]; then
         echo -e "${RED}✗ Authentication failed: Could not request magic link${NC}"
         return 1
     fi
-    
-    echo -e "${GREEN}✓ Magic link requested successfully${NC}"
+
+    echo -e "${GREEN}✓ Magic link requested successfully with Ed25519 signature${NC}"
     
     # Step 2: Wait and extract magic token
     echo -e "\n${PURPLE}=== Extracting Magic Token ===${NC}"
@@ -225,22 +276,23 @@ authenticate() {
     
     # Step 3: Exchange magic token for JWT immediately
     echo -e "\n${PURPLE}=== Converting Magic Token to JWT ===${NC}"
-    
-    # Read the stored hash for validation
-    local stored_hash=$(cat .test-magiclink-hash 2>/dev/null)
-    if [[ -z "$stored_hash" ]]; then
-        echo -e "${RED}✗ Authentication failed: No stored hash found${NC}"
+
+    # Read the stored pub_key for validation
+    local stored_pub_key=$(cat .test-magiclink-pubkey 2>/dev/null)
+    if [[ -z "$stored_pub_key" ]]; then
+        echo -e "${RED}✗ Authentication failed: No stored pub_key found${NC}"
         return 1
     fi
-    
-    echo "Using stored hash: ${stored_hash:0:20}..."
-    
-    # Include hash in JWT conversion request
-    local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token&hash=$stored_hash")
+
+    echo "Using stored pub_key: ${stored_pub_key:0:20}..."
+
+    # Magic link validation no longer requires pub_key parameter
+    # The pub_key is extracted from the encrypted database payload
+    local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token")
     echo "JWT response: $jwt_response"
-    
-    # Clean up the stored hash file
-    rm -f .test-magiclink-hash
+
+    # Clean up the stored pub_key file (no longer needed for validation)
+    rm -f .test-magiclink-pubkey
     
     # Extract JWT token
     JWT_TOKEN=$(echo "$jwt_response" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
@@ -492,34 +544,30 @@ test_api "Request magic link with valid email" \
     "200" \
     "" \
     "POST" \
-    "{\"email\":\"arkaitzmugica@protonmail.com\",\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
+    "$(generate_ed25519_payload \"arkaitzmugica@protonmail.com\")"
 
 test_api "Request magic link with invalid email format" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    "{\"email\":\"invalid-email\",\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
+    "$(generate_ed25519_payload \"invalid-email\")"
 
 test_api "Request magic link with missing email" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    "{\"random_hash\":\"$(node ./scripts/generate_hash.js)\"}"
+    "{\"pub_key\":\"$(node ./scripts/generate_hash.js)\",\"signature\":\"invalid_signature\"}"
 
-test_api "Request magic link with missing random_hash (should fail)" \
+test_api "Request magic link with missing pub_key (should fail)" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    '{"email":"arkaitzmugica@protonmail.com"}'
+    '{"email":"arkaitzmugica@protonmail.com","signature":"invalid_signature"}'
 
 test_api "Invalid magic link (should fail)" \
-    "$BASE_URL/api/login/?magiclink=invalid_token_12345&hash=$(node ./scripts/generate_hash.js)" \
-    "400"
-
-test_api "Magic link without hash parameter (should fail)" \
     "$BASE_URL/api/login/?magiclink=invalid_token_12345" \
     "400"
 
@@ -536,7 +584,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         "true"
     
     # Test with invalid token
-    local old_token="$JWT_TOKEN"
+    old_token="$JWT_TOKEN"
     JWT_TOKEN="invalid_token_123"
     
     test_api "Invalid JWT token (should fail)" \
@@ -581,16 +629,16 @@ fi
 
 # Cleanup temporary files
 echo -e "\n${PURPLE}Cleaning up temporary files...${NC}"
-rm -f .test-magiclink-hash
+rm -f .test-magiclink-pubkey .test-ed25519-private-key
 echo "✓ Temporary files cleaned"
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "\n${GREEN}🎉 ALL TESTS PASSED! 🎉${NC}"
-    echo -e "${GREEN}HashRand Spin API with Zero Knowledge Auth + Dual-Factor Validation is working perfectly!${NC}"
-    echo -e "${GREEN}✓ Authentication flow with random hash validation working${NC}"
+    echo -e "${GREEN}HashRand Spin API with Zero Knowledge Auth + Ed25519 Digital Signatures is working perfectly!${NC}"
+    echo -e "${GREEN}✓ Authentication flow with Ed25519 signature validation working${NC}"
     echo -e "${GREEN}✓ JWT protection active on all endpoints${NC}"
     echo -e "${GREEN}✓ Public endpoints accessible${NC}"
-    echo -e "${GREEN}✓ Dual-factor magic link security active${NC}"
+    echo -e "${GREEN}✓ Ed25519 cryptographic signature security active${NC}"
     echo -e "${GREEN}✓ All endpoint validations correct${NC}"
     exit 0
 else

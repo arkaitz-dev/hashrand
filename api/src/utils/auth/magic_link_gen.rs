@@ -7,6 +7,7 @@ use super::types::{ErrorResponse, MagicLinkRequest};
 use crate::database::operations::MagicLinkOperations;
 use crate::utils::{
     JwtUtils, check_rate_limit, extract_client_ip, send_magic_link_email, validate_email,
+    ed25519::Ed25519Utils,
 };
 
 /// Generate and send magic link for authentication
@@ -44,16 +45,34 @@ pub async fn generate_magic_link(
             .build());
     }
 
-    // Validate random_hash is provided (required for dual-factor authentication)
-    if magic_request.random_hash.is_none() {
+    // Get Ed25519 public key and signature (now required fields)
+    let pub_key_hex = &magic_request.pub_key;
+    let signature_hex = &magic_request.signature;
+
+    println!("🔍 DEBUG Ed25519: Verifying signature for email: {}", magic_request.email);
+    println!("🔍 DEBUG Ed25519: Public key: {}...", &pub_key_hex[..20]);
+    println!("🔍 DEBUG Ed25519: Signature: {}...", &signature_hex[..20]);
+
+    // Verify Ed25519 signature for magic link request
+    let verification_result = Ed25519Utils::verify_magic_link_request(
+        &magic_request.email,
+        pub_key_hex,
+        magic_request.next.as_deref(),
+        signature_hex,
+    );
+
+    if verification_result != crate::utils::ed25519::SignatureVerificationResult::Valid {
+        println!("🔍 DEBUG Ed25519: Signature verification failed: {:?}", verification_result);
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "application/json")
             .body(serde_json::to_string(&ErrorResponse {
-                error: "Missing random_hash: Dual-factor validation hash is required".to_string(),
+                error: "Invalid Ed25519 signature: Authentication failed".to_string(),
             })?)
             .build());
     }
+
+    println!("🔍 DEBUG Ed25519: Signature verification successful!");
 
     // Generate encrypted magic token with ChaCha20 protection (15 minutes)
     let magic_expires_at = Utc::now() + Duration::minutes(15);
@@ -90,13 +109,13 @@ pub async fn generate_magic_link(
     let magic_link = JwtUtils::create_magic_link_url(host_url, &magic_token);
     println!("DEBUG: Generated magic_link = {}", magic_link);
 
-    // Store encrypted magic token in database with ChaCha20 encryption data and random hash
+    // Store encrypted magic token in database with ChaCha20 encryption data and Ed25519 public key
     match MagicLinkOperations::store_magic_link_encrypted(
         &magic_token,
         &encryption_blob,
         expires_at_nanos,
         magic_request.next.as_deref(),
-        magic_request.random_hash.as_deref(),
+        &magic_request.pub_key,
     ) {
         Ok(_) => {
             // Try to send email via Mailtrap, fallback to console logging

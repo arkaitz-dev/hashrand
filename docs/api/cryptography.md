@@ -63,21 +63,62 @@ pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
 - **Enhanced Secrets**: Dedicated Blake2b-keyed key separate from Argon2id salt for additional security layers
 - **Forward Secrecy**: User identity derives from email but email is never stored
 
-## Magic Link Cryptography
+## Magic Link Cryptography with Ed25519 Authentication
+
+### Ed25519 Digital Signature Layer
+
+```
+Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] → Backend_Verification
+                    ↓                                        ↓
+            Pub_Key[32_bytes] → Database_Storage → JWT_Claims[pub_key]
+```
+
+#### Ed25519 Signature Security
+- **Elliptic Curve**: Curve25519 providing 128-bit security level
+- **Signature Size**: 64 bytes (128 hex characters) for compact transmission
+- **Public Key Size**: 32 bytes (64 hex characters) for optimal storage
+- **Verification Speed**: Microsecond-level verification performance
+- **Cryptographic Strength**: Equivalent to 3072-bit RSA
+
+#### Signature Verification Process
+```rust
+// Ed25519 signature verification (api/src/utils/ed25519.rs)
+pub fn verify_magic_link_request(
+    email: &str,
+    public_key_hex: &str,
+    next: Option<&str>,
+    signature_hex: &str,
+) -> SignatureVerificationResult {
+    // 1. Reconstruct signed message
+    let message = match next {
+        Some(next_param) => format!("{}{}{}", email, public_key_hex, next_param),
+        None => format!("{}{}", email, public_key_hex),
+    };
+
+    // 2. Parse Ed25519 components
+    let public_key = PublicKey::from_bytes(&hex::decode(public_key_hex)?)?;
+    let signature = Signature::from_bytes(&hex::decode(signature_hex)?)?;
+
+    // 3. Verify signature
+    public_key.verify_strict(message.as_bytes(), &signature)
+}
+```
 
 ### Encryption & Integrity Flow
 
 ```
-User_ID + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token
-                                                                         ↓
-Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Hash Index
+User_ID + Pub_Key + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token
+                    ↓                                                                    ↓
+            Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Hash Index
 ```
 
-### Security Architecture
+### Enhanced Security Architecture
 
+- **Ed25519 Authentication**: Cryptographic proof of identity before magic link creation
 - **ChaCha20 Encryption**: 32-byte encrypted magic link data using ChaCha20 stream cipher
 - **Blake2b-keyed Integrity**: Prevents modification and tampering of magic links (replaces HMAC)
 - **Blake2b-variable Compression**: Optimal 16-byte hash indexing for database storage
+- **Pub_Key Storage**: Ed25519 public keys stored encrypted in database payloads
 - **Time-Limited**: 5-minute expiration prevents replay attacks (development: 15 minutes)
 - **One-Time Use**: Magic links consumed immediately after validation
 - **Optimized Length**: 44-character Base58 tokens (33% reduction from previous 66-character)
@@ -284,6 +325,7 @@ blake2 = "0.10"              # Blake2b hashing for unified cryptographic operati
 argon2 = "0.5.3"            # Argon2id for secure user ID derivation
 chacha20 = "0.9.1"          # ChaCha20 stream cipher for magic link encryption
 chacha20poly1305 = "0.10.1" # ChaCha20-Poly1305 AEAD for secure magic link encryption
+ed25519-dalek = "2.2.0"     # Ed25519 digital signatures for magic link authentication
 base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ```
 
@@ -299,8 +341,12 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ### Key Implementation Files
 
 #### Backend (Rust/Spin)
+- **api/src/utils/ed25519.rs**: Ed25519 digital signature verification for magic links (NEW)
 - **api/src/utils/jwt/crypto.rs**: User ID derivation and cryptographic operations
 - **api/src/utils/jwt/magic_links.rs**: Magic link generation and processing
+- **api/src/utils/auth/magic_link_gen.rs**: Magic link generation with Ed25519 verification
+- **api/src/utils/auth/magic_link_val.rs**: Magic link validation with pub_key extraction
+- **api/src/utils/jwt/custom_tokens.rs**: JWT token creation with pub_key claims
 - **api/src/database/operations/magic_link_ops.rs**: Magic link encryption/decryption
 - **api/src/utils/random_generator.rs**: Seed generation with Blake2b512
 

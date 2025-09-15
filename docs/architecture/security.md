@@ -30,17 +30,31 @@ HashRand uses **Blake2b** as its unified cryptographic foundation, providing sup
 
 ## Authentication Security
 
-### Magic Link Security Model
+### Magic Link Security Model with Ed25519 Authentication
+
+#### Ed25519 Digital Signature Layer
+```
+Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] → Backend_Verification
+                    ↓                                        ↓
+            Pub_Key[32_bytes] → Database_Storage → JWT_Claims[pub_key]
+```
+
+- **Curve25519 Cryptography**: Industry-standard elliptic curve providing 128-bit security
+- **Signature Verification**: Mathematical proof of authenticity before magic link creation
+- **Non-Repudiation**: Cryptographically binding signatures prevent impersonation
+- **Fast Verification**: Microsecond-level signature verification performance
+- **Compact Format**: 64-byte signatures and 32-byte public keys for efficiency
 
 #### Encryption Layer (ChaCha20)
 ```
-User_ID + Timestamp → ChaCha20(data, key) → Encrypted_Token[32] → Base58[44]
+User_ID + Pub_Key + Timestamp → ChaCha20(data, key) → Encrypted_Token[32] → Base58[44]
 ```
 
 - **ChaCha20 Stream Cipher**: Industry-standard encryption with proven security
 - **256-bit Keys**: Cryptographically secure key generation
 - **Nonce Management**: Unique nonces prevent encryption oracle attacks
 - **Base58 Encoding**: Prevents character confusion and URL-safe transmission
+- **Pub_Key Storage**: Ed25519 public keys encrypted in database payloads
 
 #### Integrity Layer (Blake2b-keyed)
 ```
@@ -63,9 +77,10 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
   },
   "payload": {
     "user_id": "Base58-encoded-16-byte-hash",
+    "pub_key": [13, 37, 42, 128, 255, ...], // Ed25519 public key (32 bytes)
     "exp": 1692815820,
     "iat": 1692815640
-    // No PII - only cryptographic identifiers
+    // No PII - only cryptographic identifiers and Ed25519 public key
   }
 }
 ```
@@ -124,6 +139,13 @@ Argon2id {
 ```
 
 ### Attack Resistance
+
+#### Ed25519 Signature Attack Resistance
+- **Discrete Logarithm Problem**: Ed25519 security based on computationally hard mathematical problem
+- **Curve25519 Strength**: Chosen for resistance to timing attacks and implementation vulnerabilities
+- **Double Spending Prevention**: Each signature tied to specific message content
+- **Signature Malleability Resistance**: Ed25519 prevents signature modification attacks
+- **Quantum Resistance**: While not post-quantum, provides maximum classical security
 
 #### Rainbow Table Resistance
 - **Salted Hashing**: Per-user salts prevent precomputed attacks

@@ -31,16 +31,10 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
 
     println!("Magic token received: '{}'", magic_token);
 
-    // Validate and consume encrypted magic token, get next parameter and user_id
-    // Get random_hash from query params (needed for validation)
-    let random_hash = query_params.get("hash").map(|s| s.as_str());
-
-    let (is_valid, next_param, user_id_bytes) =
-        match MagicLinkOperations::validate_and_consume_magic_link_encrypted(
-            magic_token,
-            random_hash,
-        ) {
-            Ok((valid, next, user_id)) => (valid, next, user_id),
+    // Validate and consume encrypted magic token, extract next parameter, user_id, and Ed25519 pub_key
+    let (is_valid, next_param, user_id_bytes, pub_key_bytes) =
+        match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
+            Ok((valid, next, user_id, pub_key)) => (valid, next, user_id, pub_key),
             Err(error) => {
                 let error_msg = error.to_string();
                 println!("Magic token validation error: {}", error_msg);
@@ -125,8 +119,23 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
     // Ensure user exists in users table
     let _ = MagicLinkOperations::ensure_user_exists(&user_id_array);
 
-    // Generate new access and refresh tokens
-    let (access_token, _access_expires) = match JwtUtils::create_access_token(&username) {
+    // Use Ed25519 public key extracted from the encrypted magic link payload
+    let pub_key_array = match pub_key_bytes {
+        Some(key) => key,
+        None => {
+            println!("No Ed25519 public key found in magic link payload");
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Invalid magic link: missing Ed25519 public key".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    // Generate new access and refresh tokens with extracted Ed25519 public key
+    let (access_token, _access_expires) = match JwtUtils::create_access_token_from_username(&username, &pub_key_array) {
         Ok((token, exp)) => (token, exp),
         Err(e) => {
             println!("Failed to create access token: {}", e);
@@ -169,7 +178,7 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
 
     // Set refresh token as HttpOnly, Secure, SameSite cookie with correct duration
     let refresh_duration_minutes =
-        crate::utils::jwt::config::get_refresh_token_duration_minutes().unwrap_or(9);
+        crate::utils::jwt::config::get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
         refresh_token,

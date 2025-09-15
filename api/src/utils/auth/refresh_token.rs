@@ -87,7 +87,9 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         "🎫 Refresh: Creating new access token for user: {}",
         username
     );
-    let (access_token, expires_at) = match JwtUtils::create_access_token_from_username(username) {
+    // TODO: Extract pub_key from existing refresh token claims instead of using placeholder
+    let placeholder_pub_key = [0u8; 32]; // Temporary until we implement pub_key extraction
+    let (access_token, expires_at) = match JwtUtils::create_access_token_from_username(username, &placeholder_pub_key) {
         Ok((token, exp)) => {
             println!("✅ Refresh: New access token created successfully");
             (token, exp)
@@ -105,7 +107,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     // REFRESH TOKEN ROTATION: Generate new refresh token preserving crypto noise ID
-    let (new_refresh_token, refresh_expires_at) =
+    let (new_refresh_token, _refresh_expires_at) =
         match JwtUtils::create_refresh_token_from_username(username, Some(claims.session_id)) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
@@ -127,13 +129,14 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         "message": "Token refreshed successfully"
     });
 
-    // Calculate refresh token max-age for cookie
-    let max_age = refresh_expires_at.timestamp() - chrono::Utc::now().timestamp();
+    // Get refresh token duration from configuration
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
 
     // Set new refresh token as HttpOnly, Secure, SameSite cookie
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-        new_refresh_token, max_age
+        new_refresh_token,
+        refresh_duration_minutes * 60 // Convert minutes to seconds
     );
 
     println!(
