@@ -9,17 +9,26 @@ echo ""
 API_BASE="http://localhost:3000"
 COOKIES_FILE="cookies_test.txt"
 
-# Paso 1: Generar hash base58 correcto
-echo "🔐 Paso 1: Generando hash base58..."
-RANDOM_HASH=$(node scripts/generate_hash.js)
-echo "✅ Hash generado: $RANDOM_HASH"
+# Paso 1: Generar keypair Ed25519
+echo "🔐 Paso 1: Generando keypair Ed25519..."
+PUB_KEY=$(node scripts/generate_hash.js)
+echo "✅ Public key generada: $PUB_KEY"
 
-# Paso 2: Solicitar magic link
+# Paso 2: Crear firma Ed25519
 echo ""
-echo "📧 Paso 2: Solicitando magic link..."
+echo "🔏 Paso 2: Firmando payload..."
+EMAIL="me@arkaitz.dev"
+# Crear mensaje: email + pub_key (sin next param)
+MESSAGE="${EMAIL}${PUB_KEY}"
+SIGNATURE=$(node scripts/sign_payload.js "$MESSAGE")
+echo "✅ Signature generada: ${SIGNATURE:0:40}..."
+
+# Paso 3: Solicitar magic link con Ed25519
+echo ""
+echo "📧 Paso 3: Solicitando magic link con Ed25519..."
 MAGIC_RESPONSE=$(curl -s -c $COOKIES_FILE -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"me@arkaitz.dev\",\"ui_host\":\"$API_BASE\",\"random_hash\":\"$RANDOM_HASH\"}" \
+  -d "{\"email\":\"$EMAIL\",\"ui_host\":\"$API_BASE\",\"pub_key\":\"$PUB_KEY\",\"signature\":\"$SIGNATURE\"}" \
   $API_BASE/api/login/)
 
 if [ "$MAGIC_RESPONSE" = '{"status":"OK"}' ]; then
@@ -27,7 +36,7 @@ if [ "$MAGIC_RESPONSE" = '{"status":"OK"}' ]; then
 
     # Extraer magic token del último log
     echo ""
-    echo "🔍 Paso 3: Extrayendo magic token del log más reciente..."
+    echo "🔍 Paso 4: Extrayendo magic token del log más reciente..."
 
     # Verificar que el log existe y contiene magic links
     if [ ! -f ".spin-dev.log" ]; then
@@ -45,11 +54,11 @@ if [ "$MAGIC_RESPONSE" = '{"status":"OK"}' ]; then
         echo "✅ Magic token extraído: ${MAGIC_TOKEN:0:40}..."
         echo "   Longitud: ${#MAGIC_TOKEN} caracteres"
 
-        # Paso 4: Validar magic link
+        # Paso 5: Validar magic link (pub_key se extrae automáticamente del payload almacenado)
         echo ""
-        echo "🔑 Paso 4: Validando magic link..."
+        echo "🔑 Paso 5: Validando magic link..."
         LOGIN_RESPONSE=$(curl -s -b $COOKIES_FILE -c $COOKIES_FILE \
-          "$API_BASE/api/login/?magiclink=${MAGIC_TOKEN}&hash=${RANDOM_HASH}")
+          "$API_BASE/api/login/?magiclink=${MAGIC_TOKEN}")
 
         echo "Response: $LOGIN_RESPONSE"
 
