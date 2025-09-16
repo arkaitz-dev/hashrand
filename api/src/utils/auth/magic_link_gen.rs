@@ -128,7 +128,7 @@ pub async fn generate_magic_link(
             match send_magic_link_email(
                 &magic_request.email,
                 &magic_link,
-                magic_request.email_lang.as_deref(),
+                Some(magic_request.email_lang.as_str()),
             )
             .await
             {

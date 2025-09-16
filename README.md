@@ -33,6 +33,7 @@ just dev
 - **🛡️ Complete Privacy**: Server never stores emails or personal information
 - **🔐 Cryptographic User IDs**: Blake2b-based multi-layer security for user identification
 - **🎫 Magic Link Authentication**: Passwordless authentication with cryptographic integrity
+- **✍️ Ed25519 Digital Signatures**: Frontend-backend cryptographic authentication with universal browser compatibility
 - **🔒 JWT Protection**: Bearer token authentication for all sensitive operations
 - **📊 Privacy-Safe Logging**: Base58 usernames enable audit without compromising privacy
 

@@ -10,7 +10,7 @@
 	import { isRTL, textDirection } from '$lib/stores/rtl';
 	import { initializeSpriteLoader } from '$lib/stores/spriteLoader';
 	import { authStore } from '$lib/stores/auth';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { dialogStore } from '$lib/stores/dialog';
 	import DialogContainer from '$lib/components/DialogContainer.svelte';
 	import { encryptNextUrl } from '$lib/crypto';
@@ -51,7 +51,7 @@
 			newUrl.searchParams.delete('magiclink');
 
 			// Update URL without page reload
-			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
+			replaceState(newUrl.toString(), {});
 
 			// Handle next parameter from response if present
 			if (loginResponse.next) {
@@ -77,7 +77,7 @@
 			// Remove failed magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
-			globalThis.window?.history?.replaceState({}, '', newUrl.toString());
+			replaceState(newUrl.toString(), {});
 
 			// Redirect to home page
 			goto('/');

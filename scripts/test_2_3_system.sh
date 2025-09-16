@@ -28,7 +28,7 @@ echo ""
 echo "📧 Paso 3: Solicitando magic link con Ed25519..."
 MAGIC_RESPONSE=$(curl -s -c $COOKIES_FILE -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"$EMAIL\",\"ui_host\":\"$API_BASE\",\"pub_key\":\"$PUB_KEY\",\"signature\":\"$SIGNATURE\"}" \
+  -d "{\"email\":\"$EMAIL\",\"email_lang\":\"en\",\"ui_host\":\"$API_BASE\",\"pub_key\":\"$PUB_KEY\",\"signature\":\"$SIGNATURE\"}" \
   $API_BASE/api/login/)
 
 if [ "$MAGIC_RESPONSE" = '{"status":"OK"}' ]; then

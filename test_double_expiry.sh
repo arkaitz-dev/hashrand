@@ -15,7 +15,7 @@ echo "Hash: $RANDOM_HASH"
 # Solicitar magic link
 MAGIC_RESPONSE=$(curl -s -c $COOKIES_FILE -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"me@arkaitz.dev\",\"ui_host\":\"$API_BASE\",\"random_hash\":\"$RANDOM_HASH\"}" \
+  -d "{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"ui_host\":\"$API_BASE\",\"random_hash\":\"$RANDOM_HASH\"}" \
   $API_BASE/api/login/)
 
 if [ "$MAGIC_RESPONSE" != '{"status":"OK"}' ]; then

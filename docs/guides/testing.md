@@ -72,7 +72,7 @@ scripts/
 
 ```bash
 # Example authentication test sequence
-1. POST /api/login/ → Generate magic link
+1. POST /api/login/ → Generate magic link (email_lang required)
 2. Extract token from server logs
 3. GET /api/login/{token} → Complete authentication
 4. Extract JWT access token
@@ -113,7 +113,7 @@ curl -i "http://localhost:3000/api/version"
 # Request magic link
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}'
+  -d '{"email": "test@example.com", "email_lang": "en"}'
 
 # Complete authentication (get token from server logs)
 curl "http://localhost:3000/api/login/{magic-token}"
@@ -122,6 +122,8 @@ curl "http://localhost:3000/api/login/{magic-token}"
 curl -H "Authorization: Bearer {jwt-token}" \
   "http://localhost:3000/api/custom?length=32&alphabet=alphanumeric"
 ```
+
+> **⚠️ IMPORTANT**: As of the latest version, `email_lang` is **required** for all `/api/login/` requests. All test scripts now include `"email_lang": "en"` for consistency. This ensures emails are always sent in a predictable language during testing.
 
 #### Generation Endpoints
 ```bash

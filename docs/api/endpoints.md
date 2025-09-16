@@ -7,7 +7,7 @@
 | Endpoint | Method | Auth | Description |
 |----------|---------|------|-------------|
 | `/api/version` | GET | No | Get API version |
-| `/api/login/` | POST/GET | No | Magic link auth |
+| `/api/login/` | POST | No | Magic link auth (email_lang required) |
 | `/api/custom` | GET/POST | Yes | Custom hashes |
 | `/api/password` | GET/POST | Yes | Secure passwords |
 | `/api/api-key` | GET/POST | Yes | API keys |

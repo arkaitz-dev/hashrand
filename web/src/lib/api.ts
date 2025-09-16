@@ -369,12 +369,30 @@ export const api = {
 
 		// Create message to sign: email + pub_key
 		const message = email + pubKeyHex;
-		const signature = await signMessage(message, keyPair.privateKey);
+		const signature = await signMessage(message, keyPair);
+
+		// Get current language for email template (REQUIRED)
+		let email_lang: string = 'en'; // Default fallback
+		try {
+			const { currentLanguage } = await import('./stores/i18n');
+			const { get } = await import('svelte/store');
+			email_lang = get(currentLanguage);
+			console.log('🌐 Email language from i18n store:', email_lang);
+		} catch {
+			// Fallback to browser language detection
+			if (typeof navigator !== 'undefined') {
+				email_lang = navigator.language.split('-')[0].toLowerCase();
+				console.log('🌐 Email language from browser fallback:', email_lang);
+			} else {
+				console.log('🌐 Email language using default fallback:', email_lang);
+			}
+		}
 
 		const loginRequest: LoginRequest = {
 			email,
 			ui_host,
 			next,
+			email_lang,
 			pub_key: pubKeyHex,
 			signature
 		};
@@ -400,7 +418,7 @@ export const api = {
 		const keyPair = await getOrCreateKeyPair();
 
 		// Sign the magic link token itself for verification
-		const signature = await signMessage(magicToken, keyPair.privateKey);
+		const signature = await signMessage(magicToken, keyPair);
 
 		// Create request body with magic link and signature
 		const validationRequest = {

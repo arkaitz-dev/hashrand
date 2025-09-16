@@ -17,9 +17,11 @@ const STORE_NAME = 'keypairs';
  * Ed25519 key pair interface
  */
 export interface Ed25519KeyPair {
-	publicKey: CryptoKey;
-	privateKey: CryptoKey;
+	publicKey: CryptoKey | null; // null when using Noble fallback
+	privateKey: CryptoKey | null; // null when using Noble fallback
 	publicKeyBytes: Uint8Array; // 32 bytes for serialization
+	privateKeyBytes?: Uint8Array; // 32 bytes, only for Noble fallback
+	isNoble?: boolean; // true when using Noble curves fallback
 }
 
 /**
@@ -87,31 +89,19 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPair> {
  * Used when WebCrypto doesn't support Ed25519
  */
 async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
+	console.log('🔍 Ed25519: Using Noble curves fallback (WebCrypto not supported)');
+
 	// Generate random private key (32 bytes)
 	const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
 	const publicKeyBytes = ed25519.getPublicKey(privateKeyBytes);
 
-	// Import keys into WebCrypto format for consistent API
-	const publicKey = await crypto.subtle.importKey(
-		'raw',
-		new Uint8Array(publicKeyBytes),
-		{ name: 'Ed25519', namedCurve: 'Ed25519' },
-		true,
-		['verify']
-	);
-
-	const privateKey = await crypto.subtle.importKey(
-		'raw',
-		new Uint8Array(privateKeyBytes),
-		{ name: 'Ed25519', namedCurve: 'Ed25519' },
-		false, // non-extractable
-		['sign']
-	);
-
+	// Return Noble-based keypair (no WebCrypto dependency)
 	return {
-		publicKey,
-		privateKey,
-		publicKeyBytes
+		publicKey: null, // Not using WebCrypto
+		privateKey: null, // Not using WebCrypto
+		publicKeyBytes: new Uint8Array(publicKeyBytes),
+		privateKeyBytes: privateKeyBytes,
+		isNoble: true
 	};
 }
 
@@ -133,6 +123,8 @@ export async function storeKeyPair(
 			publicKey: keyPair.publicKey,
 			privateKey: keyPair.privateKey,
 			publicKeyBytes: Array.from(keyPair.publicKeyBytes), // Convert to plain array for storage
+			privateKeyBytes: keyPair.privateKeyBytes ? Array.from(keyPair.privateKeyBytes) : undefined, // Store Noble private key if exists
+			isNoble: keyPair.isNoble || false,
 			created: Date.now()
 		};
 
@@ -167,7 +159,9 @@ export async function getKeyPair(keyId: string = 'default'): Promise<Ed25519KeyP
 			resolve({
 				publicKey: result.publicKey,
 				privateKey: result.privateKey,
-				publicKeyBytes: new Uint8Array(result.publicKeyBytes)
+				publicKeyBytes: new Uint8Array(result.publicKeyBytes),
+				privateKeyBytes: result.privateKeyBytes ? new Uint8Array(result.privateKeyBytes) : undefined,
+				isNoble: result.isNoble || false
 			});
 		};
 
@@ -183,17 +177,26 @@ export async function getKeyPair(keyId: string = 'default'): Promise<Ed25519KeyP
  */
 export async function signMessage(
 	message: string | Uint8Array,
-	privateKey: CryptoKey
+	keyPair: Ed25519KeyPair
 ): Promise<string> {
 	const messageBytes = typeof message === 'string' ? new TextEncoder().encode(message) : message;
 
-	try {
-		// Try WebCrypto first
-		const signature = await crypto.subtle.sign('Ed25519', privateKey, new Uint8Array(messageBytes));
-		return bytesToHex(new Uint8Array(signature));
-	} catch (error) {
-		// This shouldn't happen with non-extractable keys, but handle gracefully
-		throw new Error(`Signing failed: ${error}`);
+	if (keyPair.isNoble && keyPair.privateKeyBytes) {
+		// Use Noble curves for signing
+		console.log('🔍 Ed25519: Signing with Noble curves');
+		const signature = ed25519.sign(new Uint8Array(messageBytes), keyPair.privateKeyBytes);
+		return bytesToHex(signature);
+	} else if (keyPair.privateKey) {
+		// Use WebCrypto for signing
+		console.log('🔍 Ed25519: Signing with WebCrypto');
+		try {
+			const signature = await crypto.subtle.sign('Ed25519', keyPair.privateKey, new Uint8Array(messageBytes));
+			return bytesToHex(new Uint8Array(signature));
+		} catch (error) {
+			throw new Error(`WebCrypto signing failed: ${error}`);
+		}
+	} else {
+		throw new Error('No valid private key available for signing');
 	}
 }
 

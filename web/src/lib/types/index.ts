@@ -105,6 +105,7 @@ export interface LoginRequest {
 	email: string;
 	ui_host: string; // Frontend URL for magic link generation (REQUIRED)
 	next?: string; // Simple URL path to redirect to after authentication
+	email_lang: string; // Language code for email template (e.g., "es", "en") - REQUIRED, matches user selection
 	pub_key: string; // Ed25519 public key (64-character hex string, 32 bytes) - REQUIRED
 	signature: string; // Ed25519 signature of email + pub_key message (128-character hex string, 64 bytes) - REQUIRED
 }

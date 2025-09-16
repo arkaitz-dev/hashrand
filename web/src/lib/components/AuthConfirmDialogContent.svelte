@@ -26,46 +26,53 @@
 	async function handleCorrect() {
 		isSubmitting = true;
 
-		// Close dialog immediately
-		onClose();
+		try {
+			// Convert next parameters to a simple URL string if they exist
+			let nextParam: string | undefined = undefined;
+			if (next && Object.keys(next).length > 0) {
+				// Build URL path from next object
+				if (next.endpoint) {
+					const params = new URLSearchParams();
+					if (next.length) params.set('length', next.length.toString());
+					if (next.alphabet) params.set('alphabet', next.alphabet.toString());
+					if (next.prefix) params.set('prefix', next.prefix.toString());
+					if (next.suffix) params.set('suffix', next.suffix.toString());
+					if (next.seed) params.set('seed', next.seed.toString());
+					if (next.raw !== undefined) params.set('raw', String(next.raw));
+					if (next.language) params.set('language', next.language.toString());
+					if (next.words) params.set('words', next.words.toString());
 
-		// Add flash message
-		flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
-
-		// Navigate to home
-		goto('/');
-
-		// Send API call in background
-		setTimeout(async () => {
-			try {
-				// Convert next parameters to a simple URL string if they exist
-				let nextParam: string | undefined = undefined;
-				if (next && Object.keys(next).length > 0) {
-					// Build URL path from next object
-					if (next.endpoint) {
-						const params = new URLSearchParams();
-						if (next.length) params.set('length', next.length.toString());
-						if (next.alphabet) params.set('alphabet', next.alphabet.toString());
-						if (next.prefix) params.set('prefix', next.prefix.toString());
-						if (next.suffix) params.set('suffix', next.suffix.toString());
-						if (next.seed) params.set('seed', next.seed.toString());
-						if (next.raw !== undefined) params.set('raw', String(next.raw));
-						if (next.language) params.set('language', next.language.toString());
-						if (next.words) params.set('words', next.words.toString());
-
-						nextParam = `/result?endpoint=${next.endpoint}&${params.toString()}`;
-					}
+					nextParam = `/result?endpoint=${next.endpoint}&${params.toString()}`;
 				}
-
-				// Use new Ed25519-enabled API
-				const { api } = await import('$lib/api');
-				const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
-
-				await api.requestMagicLink(email, ui_host, nextParam);
-			} catch (error) {
-				console.error('Error sending magic link:', error);
 			}
-		}, 100);
+
+			// Use new Ed25519-enabled API
+			const { api } = await import('$lib/api');
+			const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
+
+			console.log('🔍 DEBUG: Attempting requestMagicLink with:', { email, ui_host, nextParam });
+			await api.requestMagicLink(email, ui_host, nextParam);
+
+			console.log('✅ Magic link request successful');
+
+			// Close dialog only on success
+			onClose();
+
+			// Add success flash message
+			flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
+
+			// Navigate to home
+			goto('/');
+
+		} catch (error) {
+			console.error('❌ Error sending magic link:', error);
+
+			// Show error flash message instead of success
+			flashMessagesStore.addMessage($_('auth.magicLinkErrorFlash') || 'Error sending magic link. Please try again.');
+
+			// Reset submitting state so user can try again
+			isSubmitting = false;
+		}
 	}
 
 	/**

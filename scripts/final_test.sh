@@ -137,7 +137,7 @@ generate_ed25519_payload() {
     fi
 
     # Return JSON payload (without extra quotes)
-    printf '{"email":"%s","pub_key":"%s","signature":"%s"}' "$email" "$pub_key" "$signature"
+    printf '{"email":"%s","email_lang":"en","pub_key":"%s","signature":"%s"}' "$email" "$pub_key" "$signature"
 }
 
 # Authentication helper functions
@@ -170,7 +170,7 @@ request_magic_link() {
     echo "$pub_key" > .test-magiclink-pubkey
 
     # Include pub_key and signature in magic link request
-    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
+    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $response"
 
     if [[ "$response" == *'"status":"OK"'* ]]; then
@@ -245,7 +245,7 @@ authenticate() {
     echo "$pub_key" > .test-magiclink-pubkey
 
     # Include pub_key and signature in magic link request
-    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
+    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $magic_response"
 
     if [[ "$magic_response" != *'"status":"OK"'* ]]; then
@@ -569,14 +569,14 @@ test_api "Request magic link with missing email" \
     "400" \
     "" \
     "POST" \
-    "{\"pub_key\":\"$(node ./scripts/generate_hash.js)\",\"signature\":\"invalid_signature\"}"
+    "{\"email_lang\":\"en\",\"pub_key\":\"$(node ./scripts/generate_hash.js)\",\"signature\":\"invalid_signature\"}"
 
 test_api "Request magic link with missing pub_key (should fail)" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    '{"email":"arkaitzmugica@protonmail.com","signature":"invalid_signature"}'
+    '{"email":"arkaitzmugica@protonmail.com","email_lang":"en","signature":"invalid_signature"}'
 
 test_api "Invalid magic link (should fail)" \
     "$BASE_URL/api/login/magiclink/" \
