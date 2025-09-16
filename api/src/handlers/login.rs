@@ -2,7 +2,7 @@
 //!
 //! Handles magic link authentication flow:
 //! 1. POST /api/login/ - Generate magic link and send via email (logged in development)
-//! 2. GET /api/login/?magiclink=... - Validate magic link and return JWT tokens
+//! 2. POST /api/login/magiclink/ - Validate magic link with Ed25519 signature and get JWT tokens
 //! 3. DELETE /api/login/ - Clear refresh token cookie (logout)
 
 use spin_sdk::http::{Method, Request, Response};
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use crate::database::connection::initialize_database;
 use crate::utils::auth::{
     ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token,
-    validate_magic_link, validate_magic_link_secure,
+    validate_magic_link_secure,
 };
 
 /// Handle login authentication requests
@@ -66,7 +66,6 @@ pub async fn handle_login(
     // Handle default login endpoints: /api/login/
     match *req.method() {
         Method::Post => handle_magic_link_generation(req).await,
-        Method::Get => validate_magic_link(query_params),
         Method::Delete => handle_logout(),
         _ => Ok(Response::builder()
             .status(405)

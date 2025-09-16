@@ -162,7 +162,7 @@ Available endpoints:
 - GET /api/mnemonic?language=english&words=12 (BIP39 mnemonic phrases)
 - POST /api/mnemonic (JSON body with seed parameter)
 - POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
-- GET /api/login/?magiclink=TOKEN (Validate magic link and get JWT tokens)
+- POST /api/login/magiclink/ (Validate magic link with Ed25519 signature and get JWT tokens)
 - GET /api/users?limit=10 (List users)
 - GET /api/users/:id (Get specific user)
 - POST /api/users (Create user - JSON: {"user_id": "user", "email": "user@example.com"})

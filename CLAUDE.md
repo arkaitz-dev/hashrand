@@ -42,7 +42,7 @@ just build       # Build API (WASM) + Web (SPA)
 ## Endpoints Clave
 - `POST /api/{custom,password,api-key,mnemonic}` - Generación (JWT protegido)
 - `POST/GET /api/login/` - Auth flow con magic links Zero Knowledge
-- `GET/POST/DELETE /api/users` - Gestión usuarios (JWT protegido)
+- `GET/POST/DELETE /api/users` - Gestión usuarios (JWT protegido) ⚠️ **FUTURO**
 - `GET /api/version` - Público (sin auth)
 
 ## Reglas de Desarrollo

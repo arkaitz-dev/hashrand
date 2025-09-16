@@ -107,16 +107,25 @@ pub async fn store_magic_link(
     insert_magic_link(&token_hash, encryption_blob, expires_at, next_param).await
 }
 
-// Validate and consume magic link
-pub async fn validate_magic_link(token: &[u8]) -> Result<Option<[u8; 16]>, DatabaseError> {
+// Validate and consume magic link with Ed25519 signature verification (v0.19.14+)
+// NOTE: This is pseudo-code - actual implementation in api/src/utils/auth/magic_link_val.rs
+pub async fn validate_magic_link_secure(token: &[u8], signature: &str) -> Result<Option<[u8; 16]>, DatabaseError> {
+    // 1. Decrypt and validate magic link token
     let token_hash = blake2b_variable_hash(token, 16);
     let link_data = get_magic_link(&token_hash).await?;
-    
+
     if let Some(data) = link_data {
         if data.expires_at > current_timestamp() {
-            delete_magic_link(&token_hash).await?;
-            let user_id = chacha20_decrypt(&data.encryption_blob)?;
-            Ok(Some(user_id))
+            // 2. Extract Ed25519 public key from encrypted payload
+            let (user_id, pub_key) = chacha20_decrypt_with_auth_data(&data.encryption_blob)?;
+
+            // 3. Verify Ed25519 signature of the magic link token
+            if ed25519_verify(token, signature, &pub_key) {
+                delete_magic_link(&token_hash).await?;
+                Ok(Some(user_id))
+            } else {
+                Err(DatabaseError::InvalidSignature)
+            }
         } else {
             // Cleanup expired link
             delete_magic_link(&token_hash).await?;

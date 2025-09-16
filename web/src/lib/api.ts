@@ -88,11 +88,6 @@ async function handleDualTokenExpiry(): Promise<void> {
 	// Clear all crypto tokens and auth data (defensive security)
 	await authStore.clearPreventiveAuthData();
 
-	// Clear remaining sessionStorage (if any legacy data exists)
-	if (typeof window !== 'undefined') {
-		sessionStorage.clear();
-	}
-
 	// Show auth dialog to request new email authentication
 	dialogStore.show('auth');
 }

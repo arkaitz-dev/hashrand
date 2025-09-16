@@ -280,7 +280,7 @@ export async function decryptUrlParams(
 	const idxBytes = combinedBytes.slice(0, 8);
 	const encryptedBytes = combinedBytes.slice(8);
 
-	// 3. Convert idx_bytes back to base64URL string for sessionStorage lookup
+	// 3. Convert idx_bytes back to base64URL string for IndexedDB lookup
 	const idx = bytesToBase64Url(idxBytes);
 
 	// 4. Retrieve prehash seed from IndexedDB

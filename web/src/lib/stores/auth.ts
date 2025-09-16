@@ -83,9 +83,9 @@ async function clearPreventiveAuthData(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		// Clear ALL IndexedDB session data
+		// Clear auth data only, PRESERVE user preferences for UX
 		const { sessionManager } = await import('../session-manager');
-		await sessionManager.clearSession();
+		await sessionManager.clearAuthData();
 
 		// Clear cache in store
 		update((state) => ({
@@ -96,10 +96,6 @@ async function clearPreventiveAuthData(): Promise<void> {
 			nonceToken: null,
 			hmacKey: null
 		}));
-
-		// Clear ALL localStorage - including sensitive auth data from previous sessions
-		localStorage.removeItem('magiclink_hash');
-		localStorage.removeItem('pending_auth_email');
 
 		// Preserve user preferences for UX (language and theme are kept)
 	} catch (error) {
@@ -128,8 +124,6 @@ async function clearSensitiveAuthData(): Promise<void> {
 			hmacKey: null
 		}));
 
-		// Clear localStorage - sensitive authentication data
-		localStorage.removeItem('magiclink_hash');
 		// Note: pending_auth_email is cleared immediately on successful auth,
 		// not here, to preserve ongoing magic link flows during token errors
 	} catch (error) {
@@ -138,19 +132,15 @@ async function clearSensitiveAuthData(): Promise<void> {
 }
 
 /**
- * Clear ALL data including user preferences (for explicit logout)
+ * Clear store state (called after IndexedDB cleanup in logout)
  */
 async function clearAuthFromStorage(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
-	// Clear sensitive auth data first
-	await clearSensitiveAuthData();
+	// Note: sessionManager.clearSession() already cleared ALL IndexedDB data
+	// including auth tokens, crypto tokens, and user preferences
 
-	// Clear user preferences for maximum security on logout
-	localStorage.removeItem('preferred-language');
-	localStorage.removeItem('theme');
-
-	// Reset store to initial state
+	// Only need to reset store to initial state
 	set(initialState);
 }
 
@@ -398,8 +388,11 @@ export const authStore = {
 			}
 
 			// Clear pending auth email - no longer needed after successful authentication
-			if (typeof window !== 'undefined') {
-				localStorage.removeItem('pending_auth_email');
+			try {
+				const { sessionManager } = await import('../session-manager');
+				await sessionManager.clearPendingAuthEmail();
+			} catch (error) {
+				console.warn('Failed to clear pending auth email from IndexedDB:', error);
 			}
 
 			return loginResponse;
@@ -522,10 +515,12 @@ export const authStore = {
 			console.warn('Failed to save auth tokens to IndexedDB:', error);
 		});
 
-		// Clear pending auth email - no longer needed after successful token update
-		if (typeof window !== 'undefined') {
-			localStorage.removeItem('pending_auth_email');
-		}
+		// Clear pending auth email - no longer needed after successful token update (fire-and-forget)
+		import('../session-manager')
+			.then(({ sessionManager }) => sessionManager.clearPendingAuthEmail())
+			.catch((error) => {
+				console.warn('Failed to clear pending auth email from IndexedDB:', error);
+			});
 	},
 
 	/**

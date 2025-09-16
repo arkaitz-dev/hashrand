@@ -12,7 +12,7 @@
 | `/api/password` | GET/POST | Yes | Secure passwords |
 | `/api/api-key` | GET/POST | Yes | API keys |
 | `/api/mnemonic` | GET/POST | Yes | BIP39 mnemonics |
-| `/api/users` | GET/POST/DELETE | Yes | User management |
+| `/api/users` | GET/POST/DELETE | Yes | User management ⚠️ **FUTURE** |
 
 ## Generate Custom Hashes
 
@@ -165,18 +165,24 @@ curl -X POST "http://localhost:3000/api/mnemonic" \
 # Response: {"hash":"あいこくしん あいこくしん...","seed":"2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR","otp":"...","timestamp":...}
 ```
 
-## User Management System
+## User Management System ⚠️ **PREPARATORY/FUTURE FUNCTIONALITY**
+
+> **🚨 IMPORTANT**: This is **PREPARATORY CODE** for future use.
+>
+> **CURRENT STATUS:**
+> - ❌ **NOT USED** by frontend (no UI implementation)
+> - ❌ **NOT TESTED** (excluded from test suite)
+> - ❌ **NO ACTUAL FUNCTIONALITY** in production app
+> - ✅ **BACKEND READY** for future development
+>
+> **PURPOSE**: Reserved for potential admin panel or user management features.
 
 ```
-GET /api/users            # List all users  
+GET /api/users            # List all users
 GET /api/users/:id        # Get specific user
 POST /api/users           # Create new user
 DELETE /api/users/:id     # Delete user
 ```
-
-**Environment-Aware Database**: Automatically selects database based on request host:
-- **Development**: `localhost` or `elite.faun-pirate.ts.net` → `hashrand-dev` database
-- **Production**: All other hosts → `hashrand` database
 
 **GET /api/users Parameters:**
 - `limit` (optional) - Maximum number of users to return

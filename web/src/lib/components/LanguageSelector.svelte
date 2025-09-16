@@ -15,12 +15,7 @@
 
 	function selectLanguage(lang: (typeof languages)[0]) {
 		selectedLanguage = lang;
-		currentLanguage.set(lang.code);
-
-		// Persist user preference
-		if (typeof window !== 'undefined') {
-			localStorage.setItem('preferred-language', lang.code);
-		}
+		currentLanguage.set(lang.code); // Automatically persisted to IndexedDB via store subscription
 
 		showDropdown = false;
 	}

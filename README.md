@@ -71,7 +71,7 @@ just dev
 ### API Endpoints
 - **Authentication**: `POST/GET /api/login/*` - Magic link authentication
 - **Generation**: `POST /api/{custom,password,api-key,mnemonic}` - Secure generation (JWT protected)
-- **User Management**: `GET/POST/DELETE /api/users` - User operations (JWT protected)  
+- **User Management**: `GET/POST/DELETE /api/users` - User operations (JWT protected) ⚠️ **FUTURE**  
 - **System**: `GET /api/version` - Public version information
 
 ## 🔧 Development Commands

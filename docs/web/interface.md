@@ -14,7 +14,7 @@ The HashRand web interface is a modern **Single Page Application (SPA)** built w
 ### 🌙 Smart Theme System
 - **Manual Theme Toggle**: Dark/light mode toggle in upper-right corner
 - **System Preference Detection**: Respects system preference on first visit
-- **Persistent User Choice**: Theme preference saved in localStorage
+- **Persistent User Choice**: Theme preference saved in IndexedDB (v0.19.14+)
 - **Smooth Transitions**: Visual feedback and seamless theme switching
 - **Accessible Design**: Proper ARIA labels for theme controls
 

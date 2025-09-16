@@ -11,6 +11,7 @@
 	import { _ } from '../stores/i18n';
 	import type { MagicLinkResponse } from '../types';
 	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { sessionManager } from '../session-manager';
 
 	// Component props
 	export let show = false;
@@ -47,8 +48,8 @@
 		try {
 			const response: MagicLinkResponse = await authStore.requestMagicLink(email);
 
-			// Store email in localStorage for magic link validation
-			localStorage.setItem('pending_auth_email', email);
+			// Store email in IndexedDB for magic link validation
+			await sessionManager.setPendingAuthEmail(email);
 
 			magicLinkSent = true;
 

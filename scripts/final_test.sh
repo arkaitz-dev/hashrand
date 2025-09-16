@@ -286,9 +286,20 @@ authenticate() {
 
     echo "Using stored pub_key: ${stored_pub_key:0:20}..."
 
-    # Magic link validation no longer requires pub_key parameter
-    # The pub_key is extracted from the encrypted database payload
-    local jwt_response=$(curl -s "$BASE_URL/api/login/?magiclink=$magic_token")
+    # Sign the magic token with the private key for Ed25519 validation
+    local magic_signature=$(node ./scripts/sign_payload.js "$magic_token")
+    if [[ -z "$magic_signature" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not sign magic token${NC}"
+        rm -f .test-magiclink-pubkey
+        return 1
+    fi
+
+    echo "Generated magic token signature: ${magic_signature:0:20}..."
+
+    # Magic link validation using POST endpoint with Ed25519 signature
+    local jwt_response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d "{\"magiclink\":\"$magic_token\",\"signature\":\"$magic_signature\"}" \
+        "$BASE_URL/api/login/magiclink/")
     echo "JWT response: $jwt_response"
 
     # Clean up the stored pub_key file (no longer needed for validation)
@@ -568,8 +579,11 @@ test_api "Request magic link with missing pub_key (should fail)" \
     '{"email":"arkaitzmugica@protonmail.com","signature":"invalid_signature"}'
 
 test_api "Invalid magic link (should fail)" \
-    "$BASE_URL/api/login/?magiclink=invalid_token_12345" \
-    "400"
+    "$BASE_URL/api/login/magiclink/" \
+    "400" \
+    "" \
+    "POST" \
+    '{"magiclink":"invalid_token_12345","signature":"invalid_signature_hex_value_123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}'
 
 # Test token expiration (if we have time)
 if [[ -n "$JWT_TOKEN" ]]; then

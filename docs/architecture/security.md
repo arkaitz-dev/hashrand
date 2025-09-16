@@ -260,9 +260,9 @@ HashRand implements a comprehensive three-tier data cleanup system to ensure zer
 ##### 1. Preventive Defense (`clearPreventiveAuthData()`)
 **Proactive cleanup before authentication dialogs**
 ```typescript
-// Executed before EVERY authentication request
-sessionStorage: ALL cleared (auth_user, access_token, crypto tokens, prehashseeds)  
-localStorage: Sensitive only (magiclink_hash, pending_auth_email)
+// Executed before EVERY authentication request (v0.19.14+)
+IndexedDB: ALL auth data cleared (auth_user, access_token, crypto tokens, prehashseeds)
+IndexedDB: Auth flow cleared (pending_auth_email)
 Preserved: Language preferences, theme settings (UX continuity)
 ```
 
@@ -275,9 +275,9 @@ Preserved: Language preferences, theme settings (UX continuity)
 ##### 2. Selective Cleanup (`clearSensitiveAuthData()`)
 **Targeted cleanup for token errors while preserving active flows**
 ```typescript
-// Executed during token expiration/validation errors
-sessionStorage: ALL cleared (auth_user, access_token, crypto tokens, prehashseeds)
-localStorage: Critical only (magiclink_hash)  
+// Executed during token expiration/validation errors (v0.19.14+)
+IndexedDB: ALL auth data cleared (auth_user, access_token, crypto tokens, prehashseeds)
+IndexedDB: Critical auth flow cleared (session reset)
 Preserved: pending_auth_email (ongoing magic link flows), user preferences
 ```
 
@@ -290,9 +290,9 @@ Preserved: pending_auth_email (ongoing magic link flows), user preferences
 ##### 3. Complete Cleanup (`clearAuthFromStorage()`)
 **Maximum security cleanup for explicit logout**
 ```typescript
-// Executed during explicit user logout
-sessionStorage: ALL cleared (complete wipe)
-localStorage: ALL cleared (including user preferences)
+// Executed during explicit user logout (v0.19.14+)
+IndexedDB: ALL session data cleared (complete wipe including user preferences)
+Ed25519: All cryptographic keypairs cleared
 Result: Complete fresh state
 ```
 
@@ -303,11 +303,11 @@ Result: Complete fresh state
 
 #### Sensitive Data Lifecycle Management
 
-##### Immediate Cleanup Strategy
+##### Immediate Cleanup Strategy (v0.19.14+)
 ```typescript
-// pending_auth_email - Minimum retention principle
-1. validateMagicLink() → Success → localStorage.removeItem('pending_auth_email')
-2. updateTokens() → Success → localStorage.removeItem('pending_auth_email')
+// pending_auth_email - Minimum retention principle (IndexedDB)
+1. validateMagicLink() → Success → sessionManager.clearPendingAuthEmail()
+2. updateTokens() → Success → sessionManager.clearPendingAuthEmail()
 Result: Data exists only during authentication flow, never persists
 ```
 

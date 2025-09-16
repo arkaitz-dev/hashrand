@@ -5,11 +5,13 @@ HashRand implements a **true Zero Knowledge architecture** where the server oper
 ## Authentication Flow
 
 ```
-POST /api/login/         # Generate magic link (no email storage)
-GET /api/login/?magiclink=...  # Validate magic link and get JWT tokens
-DELETE /api/login/       # Clear refresh token cookie (logout)
-POST /api/refresh        # Refresh expired access tokens using HttpOnly cookies
+POST /api/login/                # Generate magic link (no email storage)
+POST /api/login/magiclink/      # Validate magic link with Ed25519 signature and get JWT tokens
+DELETE /api/login/              # Clear refresh token cookie (logout)
+POST /api/refresh               # Refresh expired access tokens using HttpOnly cookies
 ```
+
+> **⚠️ IMPORTANT CHANGE (v0.19.14+)**: The GET `/api/login/?magiclink=...` endpoint has been **REMOVED** for security reasons. All magic link validation now requires **POST** requests with **Ed25519 signature verification** for enhanced cryptographic security.
 
 ## Frontend Ed25519 Integration (v0.19.13+)
 
@@ -93,18 +95,28 @@ signature = ed25519_sign(private_key, message)
 
 ## Magic Link Validation
 
-**GET /api/login/?magiclink=TOKEN**
+**POST /api/login/magiclink/** (v0.19.14+)
+
+**Request Body:**
+```json
+{
+  "magiclink": "6EUrV3544PDKVqGKygJ1...",
+  "signature": "2cf3fb2a8d88bdb3339a..."
+}
+```
 
 **Response:**
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "token_type": "Bearer", 
+  "token_type": "Bearer",
   "expires_in": 180,
   "user_id": "HpGAge9YJ7uMvw4QV5qDPk",
   "next": "/result?endpoint=mnemonic&language=english&words=12"
 }
 ```
+
+> **🔐 SECURITY NOTE**: The `signature` field must be an Ed25519 signature of the magic link token itself, created using the same Ed25519 private key that was used during magic link generation.
 
 ## JWT Dual Token System with 2/3 Time-Based Refresh Logic
 
@@ -291,8 +303,13 @@ curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$email\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}"
 
-# 5. Validate magic link (from development log)
-curl "http://localhost:3000/api/login/?magiclink=Ax1wogC82pgTzrfDu8QZhr"
+# 5. Sign magic link token and validate with POST endpoint
+magic_token="Ax1wogC82pgTzrfDu8QZhr"  # From development log
+magic_signature=$(node ./scripts/sign_payload.js "$magic_token")
+
+curl -X POST "http://localhost:3000/api/login/magiclink/" \
+  -H "Content-Type: application/json" \
+  -d "{\"magiclink\":\"$magic_token\",\"signature\":\"$magic_signature\"}"
 
 # Request magic link in Spanish with Ed25519
 curl -X POST "http://localhost:3000/api/login/" \

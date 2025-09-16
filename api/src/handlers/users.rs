@@ -1,7 +1,23 @@
-//! User management API endpoints
+//! User management API endpoints (FUTURE/PREPARATORY)
 //!
-//! Provides REST API endpoints for user CRUD operations with automatic
-//! database environment detection based on request host.
+//! ⚠️ **IMPORTANT**: These endpoints are PREPARATORY/FUTURE functionality.
+//!
+//! **CURRENT STATUS:**
+//! - ❌ NOT USED by frontend (zero references in web/)
+//! - ❌ NOT TESTED in test suite (excluded from final_test.sh)
+//! - ❌ NO UI implementation for user management
+//! - ✅ FULLY IMPLEMENTED backend CRUD operations
+//!
+//! **PURPOSE:**
+//! - Future-proofing: Reserved for potential admin panel or user management features
+//! - API completeness: Provides full REST interface for user operations if needed
+//! - Development placeholder: Ready for future UI implementation
+//!
+//! **AUTH SYSTEM DEPENDENCY:**
+//! The actual auth system only uses `ensure_user_exists()` from MagicLinkOperations,
+//! not these CRUD endpoints. Users are automatically created during magic link validation.
+//!
+//! Provides REST API endpoints for user CRUD operations.
 
 use serde_json;
 use spin_sdk::http::{Method, Request, Response};

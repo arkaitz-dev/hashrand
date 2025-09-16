@@ -137,7 +137,7 @@ curl -X POST "http://localhost:3000/api/login/" \
 ### Frontend i18n System
 - **Svelte Store Integration**: Reactive translation system
 - **Dynamic Language Loading**: Load translations on demand
-- **Persistent Language Selection**: User preference stored in localStorage
+- **Persistent Language Selection**: User preference stored in IndexedDB (v0.19.14+)
 - **URL Parameter Support**: Language can be set via URL parameters
 - **Fallback Handling**: Graceful fallbacks for missing translations
 

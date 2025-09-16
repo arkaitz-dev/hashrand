@@ -1,6 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import type { I18nTexts } from '$lib/types';
 import { getSupportedLanguageCodes } from '$lib/languageConfig';
+import { sessionManager } from '$lib/session-manager';
 
 // Import individual language files
 import { en } from './translations/en';
@@ -43,36 +44,55 @@ function detectBrowserLanguage(): string {
 	return 'en';
 }
 
-// Initialize with detected language or fallback to English
+// Initialize with browser detection (will be updated from IndexedDB async)
 function initializeLanguage(): string {
 	if (typeof window === 'undefined') {
 		return 'en'; // SSR fallback
 	}
 
-	// First check localStorage for user preference
-	const storedLang = localStorage.getItem('preferred-language');
-	if (storedLang && getSupportedLanguageCodes().includes(storedLang)) {
-		return storedLang;
-	}
-
-	// If no stored preference, detect browser language
-	const detectedLang = detectBrowserLanguage();
-
-	// Store the detected language as user preference
-	localStorage.setItem('preferred-language', detectedLang);
-
-	return detectedLang;
+	// Return browser-detected language for immediate initialization
+	// IndexedDB data will be loaded asynchronously and update the store
+	return detectBrowserLanguage();
 }
 
 // Current language store with automatic detection
 export const currentLanguage = writable<string>(initializeLanguage());
 
-// Subscribe to language changes and persist them
-currentLanguage.subscribe((language) => {
+// Load language preference from IndexedDB (async initialization)
+async function loadLanguageFromIndexedDB() {
+	if (typeof window === 'undefined') return;
+
+	try {
+		const preferences = await sessionManager.getUserPreferences();
+		if (preferences.language && getSupportedLanguageCodes().includes(preferences.language)) {
+			// Update store with stored preference
+			currentLanguage.set(preferences.language);
+		} else if (!preferences.language) {
+			// No stored preference, save browser-detected language
+			const currentLang = detectBrowserLanguage();
+			await sessionManager.setLanguagePreference(currentLang);
+			currentLanguage.set(currentLang);
+		}
+	} catch (error) {
+		console.warn('Failed to load language from IndexedDB:', error);
+	}
+}
+
+// Subscribe to language changes and persist them to IndexedDB
+currentLanguage.subscribe(async (language) => {
 	if (typeof window !== 'undefined') {
-		localStorage.setItem('preferred-language', language);
+		try {
+			await sessionManager.setLanguagePreference(language);
+		} catch (error) {
+			console.warn('Failed to save language preference to IndexedDB:', error);
+		}
 	}
 });
+
+// Initialize language from IndexedDB after store creation
+if (typeof window !== 'undefined') {
+	loadLanguageFromIndexedDB();
+}
 
 // Debug functions for browser console (development only)
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -93,11 +113,14 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 			}
 			return null;
 		},
-		getStoredLanguage: () => localStorage.getItem('preferred-language'),
+		getStoredLanguage: async () => {
+			const preferences = await sessionManager.getUserPreferences();
+			return preferences.language;
+		},
 		detectLanguage: () => detectBrowserLanguage(),
 		getSupportedLanguages: () => getSupportedLanguageCodes(),
-		resetLanguage: () => {
-			localStorage.removeItem('preferred-language');
+		resetLanguage: async () => {
+			await sessionManager.setLanguagePreference(null);
 			const detected = detectBrowserLanguage();
 			currentLanguage.set(detected);
 			return detected;

@@ -48,7 +48,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Features**:
   - Manual theme toggle in upper-right corner
   - System preference detection on first visit
-  - Persistent user choice in localStorage
+  - Persistent user choice in IndexedDB (v0.19.14+)
   - Smooth transitions and visual feedback
   - Accessible ARIA labels
 - **State Management**: Integrated with theme store

@@ -1,6 +1,6 @@
 //! Unified Session Manager with IndexedDB
 //!
-//! Migrates ALL session data from sessionStorage to IndexedDB for:
+//! Unified session management with IndexedDB for:
 //! - Cross-tab consistency
 //! - Better UX (no re-auth per tab)
 //! - Unified crypto + auth session management
@@ -18,13 +18,24 @@ export interface AppSessionData {
 		timestamp: number; // Para FIFO rotation
 	}>;
 
-	// Auth tokens
+	// Auth tokens (cleared on auth logout)
 	auth_user: {
 		user_id: string;
 		isAuthenticated: boolean;
 	} | null;
 	access_token: string | null;
 	token_expires_at: number | null;
+
+	// User Preferences (persistent across auth sessions)
+	userPreferences: {
+		language: string | null; // preferred-language (null = auto-detect)
+		theme: 'light' | 'dark' | null; // theme (null = system preference)
+	};
+
+	// Auth Flow Data (temporary, cleared after auth completion)
+	authFlow: {
+		pending_email: string | null; // pending_auth_email
+	};
 
 	// Metadata
 	created: number;
@@ -61,6 +72,9 @@ class SessionManager {
 	 */
 	async getSession(): Promise<AppSessionData> {
 		try {
+			// Check for localStorage migration first
+			await this.checkAndMigrateLocalStorage();
+
 			const db = await this.getDB();
 			const transaction = db.transaction([this.storeName], 'readonly');
 			const store = transaction.objectStore(this.storeName);
@@ -126,13 +140,46 @@ class SessionManager {
 			auth_user: null,
 			access_token: null,
 			token_expires_at: null,
+			userPreferences: {
+				language: null, // Auto-detect browser language
+				theme: null // Use system preference
+			},
+			authFlow: {
+				pending_email: null
+			},
 			created: Date.now(),
 			lastAccessed: Date.now()
 		};
 	}
 
 	/**
-	 * Clear ALL session data (logout + dual expiry)
+	 * Clear auth data only, PRESERVE user preferences (for preventive cleanup)
+	 */
+	async clearAuthData(): Promise<void> {
+		try {
+			const session = await this.getSession();
+
+			// Clear ONLY auth-related data, preserve preferences
+			session.cipher_token = null;
+			session.nonce_token = null;
+			session.hmac_key = null;
+			session.prehashSeeds = [];
+			session.auth_user = null;
+			session.access_token = null;
+			session.token_expires_at = null;
+			session.authFlow.pending_email = null;
+
+			// Keep userPreferences intact for UX
+			await this.saveSession(session);
+			console.log('🧹 Auth data cleared, preferences preserved');
+		} catch (error) {
+			console.warn('Failed to clear auth data from IndexedDB:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Clear ALL session data including preferences (complete logout)
 	 */
 	async clearSession(): Promise<void> {
 		try {
@@ -360,6 +407,164 @@ class SessionManager {
 	async isAuthenticated(): Promise<boolean> {
 		const authData = await this.getAuthData();
 		return !!(authData.user?.isAuthenticated && authData.access_token);
+	}
+
+	// ============================================================================
+	// USER PREFERENCES METHODS (localStorage migration)
+	// ============================================================================
+
+	/**
+	 * Get user preferences from IndexedDB
+	 */
+	async getUserPreferences(): Promise<{ language: string | null; theme: 'light' | 'dark' | null }> {
+		const session = await this.getSession();
+		return session.userPreferences;
+	}
+
+	/**
+	 * Set language preference
+	 */
+	async setLanguagePreference(language: string | null): Promise<void> {
+		const session = await this.getSession();
+		session.userPreferences.language = language;
+		await this.saveSession(session);
+	}
+
+	/**
+	 * Set theme preference
+	 */
+	async setThemePreference(theme: 'light' | 'dark' | null): Promise<void> {
+		const session = await this.getSession();
+		session.userPreferences.theme = theme;
+		await this.saveSession(session);
+	}
+
+	/**
+	 * Set user preferences (batch update)
+	 */
+	async setUserPreferences(preferences: {
+		language?: string | null;
+		theme?: 'light' | 'dark' | null;
+	}): Promise<void> {
+		const session = await this.getSession();
+		if (preferences.language !== undefined) {
+			session.userPreferences.language = preferences.language;
+		}
+		if (preferences.theme !== undefined) {
+			session.userPreferences.theme = preferences.theme;
+		}
+		await this.saveSession(session);
+	}
+
+	// ============================================================================
+	// AUTH FLOW METHODS (temporary data)
+	// ============================================================================
+
+	/**
+	 * Set pending auth email (during magic link flow)
+	 */
+	async setPendingAuthEmail(email: string | null): Promise<void> {
+		const session = await this.getSession();
+		session.authFlow.pending_email = email;
+		await this.saveSession(session);
+	}
+
+	/**
+	 * Get pending auth email
+	 */
+	async getPendingAuthEmail(): Promise<string | null> {
+		const session = await this.getSession();
+		return session.authFlow.pending_email;
+	}
+
+	/**
+	 * Clear pending auth email (after auth completion)
+	 */
+	async clearPendingAuthEmail(): Promise<void> {
+		await this.setPendingAuthEmail(null);
+	}
+
+	// ============================================================================
+	// LOCALSTORAGE MIGRATION (one-time)
+	// ============================================================================
+
+	/**
+	 * Check if localStorage migration is needed
+	 */
+	private hasLocalStorageData(): boolean {
+		if (typeof window === 'undefined') return false;
+
+		return !!(
+			localStorage.getItem('preferred-language') ||
+			localStorage.getItem('theme') ||
+			localStorage.getItem('pending_auth_email') ||
+			localStorage.getItem('magiclink_hash') // legacy cleanup
+		);
+	}
+
+	/**
+	 * Migrate localStorage data to IndexedDB (one-time migration)
+	 */
+	private async migrateFromLocalStorage(): Promise<void> {
+		if (typeof window === 'undefined') return;
+
+		console.log('🔄 Migrating localStorage data to IndexedDB...');
+
+		const session = await this.getSession();
+
+		// Migrate user preferences
+		const preferredLanguage = localStorage.getItem('preferred-language');
+		const theme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+
+		if (preferredLanguage) {
+			session.userPreferences.language = preferredLanguage;
+		}
+		if (theme === 'light' || theme === 'dark') {
+			session.userPreferences.theme = theme;
+		}
+
+		// Migrate auth flow data
+		const pendingEmail = localStorage.getItem('pending_auth_email');
+		if (pendingEmail) {
+			session.authFlow.pending_email = pendingEmail;
+		}
+
+		// Save migrated data
+		await this.saveSession(session);
+
+		// Clear localStorage after successful migration
+		this.clearLocalStorage();
+
+		console.log('✅ Migration from localStorage to IndexedDB completed');
+	}
+
+	/**
+	 * Auto-migration check (called during getSession)
+	 */
+	private async checkAndMigrateLocalStorage(): Promise<void> {
+		// Check if we need to migrate from localStorage
+		if (this.hasLocalStorageData()) {
+			console.log('🔄 Detected localStorage data, performing one-time migration...');
+			await this.migrateFromLocalStorage();
+		}
+	}
+
+	/**
+	 * Clear localStorage (migration cleanup)
+	 */
+	private clearLocalStorage(): void {
+		if (typeof window === 'undefined') return;
+
+		const keysToRemove = [
+			'preferred-language',
+			'theme',
+			'pending_auth_email',
+			'magiclink_hash' // legacy cleanup
+		];
+
+		keysToRemove.forEach((key) => {
+			localStorage.removeItem(key);
+		});
 	}
 }
 

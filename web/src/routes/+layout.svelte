@@ -74,9 +74,6 @@
 				}
 			}
 		} catch {
-			// Clear hash on error
-			localStorage.removeItem('magiclink_hash');
-
 			// Remove failed magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);
 			newUrl.searchParams.delete('magiclink');
