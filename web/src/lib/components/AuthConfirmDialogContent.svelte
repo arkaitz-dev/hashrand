@@ -5,7 +5,7 @@
 	 * Shows email for confirmation before sending magic link
 	 */
 
-	import { _, currentLanguage } from '../stores/i18n';
+	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
 	import { dialogStore } from '../stores/dialog';
 	import { flashMessagesStore } from '../stores/flashMessages';
@@ -21,49 +21,10 @@
 	let isSubmitting = false;
 
 	/**
-	 * Generate random 32-byte hash in base58 format
-	 */
-	function generateRandomHash(): string {
-		const randomBytes = new Uint8Array(32);
-		crypto.getRandomValues(randomBytes);
-		return base58Encode(randomBytes);
-	}
-
-	/**
-	 * Simple base58 encoding (Bitcoin alphabet)
-	 */
-	function base58Encode(bytes: Uint8Array): string {
-		const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-		let result = '';
-		let num = BigInt(0);
-
-		// Convert bytes to BigInt
-		for (let i = 0; i < bytes.length; i++) {
-			num = (num << 8n) + BigInt(bytes[i]);
-		}
-
-		// Convert to base58
-		while (num > 0n) {
-			result = alphabet[Number(num % 58n)] + result;
-			num = num / 58n;
-		}
-
-		// Handle leading zeros
-		for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-			result = '1' + result;
-		}
-
-		return result;
-	}
-
-	/**
 	 * Handle "Es correcto" - send email to API
 	 */
 	async function handleCorrect() {
 		isSubmitting = true;
-
-		// Generate random hash for additional validation
-		const randomHash = generateRandomHash();
 
 		// Close dialog immediately
 		onClose();
@@ -96,22 +57,11 @@
 					}
 				}
 
-				const response = await fetch('/api/login/', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						email,
-						ui_host: typeof window !== 'undefined' ? window.location.origin : undefined,
-						next: nextParam,
-						email_lang: $currentLanguage,
-						random_hash: randomHash
-					})
-				});
+				// Use new Ed25519-enabled API
+				const { api } = await import('$lib/api');
+				const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
 
-				// If request successful, store hash in localStorage
-				if (response.ok) {
-					localStorage.setItem('magiclink_hash', randomHash);
-				}
+				await api.requestMagicLink(email, ui_host, nextParam);
 			} catch (error) {
 				console.error('Error sending magic link:', error);
 			}

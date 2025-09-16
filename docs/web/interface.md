@@ -103,12 +103,28 @@ http://localhost:5173/result/?p=k7J9mN4QR7FVMz2k9T7L8X3N5A6P
 
 ## Authentication Integration
 
-### 🔐 Privacy-First Authentication System
+### 🔐 Privacy-First Authentication System with Ed25519 Digital Signatures (v0.19.13+)
 - **Explore First, Authenticate Later**: All generator pages accessible without login
 - **On-Demand Authentication**: Authentication dialog appears only when clicking "Generate"
 - **Privacy-First Design**: Server never stores or processes email addresses
 - **Dialog-Based Protection**: Modern authentication flow with modal dialogs for all generation routes
 - **Always-Visible Session Button**: User icon (👤) always visible for consistent authentication access
+
+#### Automatic Ed25519 Cryptographic Integration
+**COMPLETE FRONTEND PARTICIPATION**: As of v0.19.13, the frontend automatically handles Ed25519 keypair generation, message signing, and secure storage, eliminating the need for manual cryptographic operations.
+
+The frontend `api.requestMagicLink()` function now automatically:
+1. **Generates Ed25519 Keypair**: Creates cryptographically secure keypair using Web Crypto API
+2. **Signs Authentication Message**: Automatically signs `email + pub_key` combination
+3. **Manages Secure Storage**: Stores keypairs in IndexedDB with non-extractable private keys
+4. **Handles Cleanup**: Automatically clears keypairs on logout for security
+
+**Security Features:**
+- **🔐 Non-extractable Keys**: Private keys stored as non-extractable CryptoKey objects
+- **💾 IndexedDB Storage**: Secure browser database for keypair persistence
+- **🧹 Automatic Cleanup**: Ed25519 keypairs cleared on logout
+- **🔄 Hybrid Architecture**: Web Crypto API primary with @noble/curves fallback
+- **🛡️ Zero Knowledge**: No personal data stored, only cryptographic keys
 
 ### Authentication Dialog System
 - **Unified Experience**: Consistent authentication across all generation pages

@@ -89,22 +89,23 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     );
     // TODO: Extract pub_key from existing refresh token claims instead of using placeholder
     let placeholder_pub_key = [0u8; 32]; // Temporary until we implement pub_key extraction
-    let (access_token, expires_at) = match JwtUtils::create_access_token_from_username(username, &placeholder_pub_key) {
-        Ok((token, exp)) => {
-            println!("✅ Refresh: New access token created successfully");
-            (token, exp)
-        }
-        Err(e) => {
-            println!("❌ Refresh: Failed to create access token: {}", e);
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: format!("Failed to create access token: {}", e),
-                })?)
-                .build());
-        }
-    };
+    let (access_token, expires_at) =
+        match JwtUtils::create_access_token_from_username(username, &placeholder_pub_key) {
+            Ok((token, exp)) => {
+                println!("✅ Refresh: New access token created successfully");
+                (token, exp)
+            }
+            Err(e) => {
+                println!("❌ Refresh: Failed to create access token: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: format!("Failed to create access token: {}", e),
+                    })?)
+                    .build());
+            }
+        };
 
     // REFRESH TOKEN ROTATION: Generate new refresh token preserving crypto noise ID
     let (new_refresh_token, _refresh_expires_at) =
@@ -130,7 +131,8 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     });
 
     // Get refresh token duration from configuration
-    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
+        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
 
     // Set new refresh token as HttpOnly, Secure, SameSite cookie
     let cookie_value = format!(

@@ -42,6 +42,10 @@ export default [
 				TextDecoder: 'readonly',
 				RequestInit: 'readonly',
 				crypto: 'readonly',
+				CryptoKey: 'readonly',
+				indexedDB: 'readonly',
+				IDBDatabase: 'readonly',
+				IDBOpenDBRequest: 'readonly',
 				btoa: 'readonly',
 				atob: 'readonly',
 				EventListener: 'readonly'
@@ -91,6 +95,10 @@ export default [
 				TextDecoder: 'readonly',
 				RequestInit: 'readonly',
 				crypto: 'readonly',
+				CryptoKey: 'readonly',
+				indexedDB: 'readonly',
+				IDBDatabase: 'readonly',
+				IDBOpenDBRequest: 'readonly',
 				btoa: 'readonly',
 				atob: 'readonly',
 				EventListener: 'readonly'

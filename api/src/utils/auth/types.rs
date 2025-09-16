@@ -12,7 +12,7 @@ pub struct MagicLinkRequest {
     pub next: Option<String>, // Base58-encoded parameters for post-auth redirect
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_lang: Option<String>, // Language code for email template (e.g., "es", "en")
-    pub pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes)
+    pub pub_key: String,   // Ed25519 public key (64 hex chars = 32 bytes)
     pub signature: String, // Ed25519 signature (128 hex chars = 64 bytes)
 }
 

@@ -97,16 +97,16 @@ export interface I18nTexts {
 
 // Authentication types
 export interface AuthUser {
-	email: string; // For backward compatibility if needed
 	user_id: string; // Base58 user_id
 	isAuthenticated: boolean;
-	expiresAt?: Date;
 }
 
 export interface LoginRequest {
 	email: string;
-	ui_host?: string; // Frontend URL for magic link generation
+	ui_host: string; // Frontend URL for magic link generation (REQUIRED)
 	next?: string; // Simple URL path to redirect to after authentication
+	pub_key: string; // Ed25519 public key (64-character hex string, 32 bytes) - REQUIRED
+	signature: string; // Ed25519 signature of email + pub_key message (128-character hex string, 64 bytes) - REQUIRED
 }
 
 export interface LoginResponse {

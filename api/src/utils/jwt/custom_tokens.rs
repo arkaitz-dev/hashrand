@@ -95,7 +95,11 @@ impl CustomTokenClaims {
     }
 
     /// Create claims directly from user_id and Ed25519 public key (for username-based token creation)
-    pub fn new_from_user_id(user_id: &[u8; 16], token_type: TokenType, pub_key: &[u8; 32]) -> Result<Self, String> {
+    pub fn new_from_user_id(
+        user_id: &[u8; 16],
+        token_type: TokenType,
+        pub_key: &[u8; 32],
+    ) -> Result<Self, String> {
         let config = match token_type {
             TokenType::Access => CustomTokenConfig::access_token()?,
             TokenType::Refresh => CustomTokenConfig::refresh_token()?,
@@ -262,7 +266,9 @@ pub fn hash_encrypted_payload(encrypted_payload: &[u8; 64]) -> [u8; 32] {
     let mut hasher = Blake2bVar::new(32).expect("Blake2b initialization should not fail");
     hasher.update(encrypted_payload);
     let mut result = [0u8; 32];
-    hasher.finalize_variable(&mut result).expect("Blake2b finalization should not fail");
+    hasher
+        .finalize_variable(&mut result)
+        .expect("Blake2b finalization should not fail");
     result
 }
 
@@ -406,7 +412,11 @@ pub fn decrypt_prehash_seed(
 }
 
 /// Generate custom token (access or refresh) with ultra-secure circular encryption and Ed25519 public key
-pub fn generate_custom_token(email: &str, token_type: TokenType, pub_key: &[u8; 32]) -> Result<String, String> {
+pub fn generate_custom_token(
+    email: &str,
+    token_type: TokenType,
+    pub_key: &[u8; 32],
+) -> Result<String, String> {
     // 1. Create claims with user_id, expiration, and Ed25519 public key
     let claims = CustomTokenClaims::new(email, token_type, pub_key)?;
 
@@ -530,15 +540,16 @@ impl CustomTokenClaims {
     pub fn to_access_token_claims(&self) -> AccessTokenClaims {
         let username = user_id_to_username(&self.user_id);
         let exp = self.expires_at.timestamp();
-        let iat = (self.expires_at
-            - match self.token_type {
-                TokenType::Access => {
-                    Duration::minutes(get_access_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_ACCESS_TOKEN_DURATION_MINUTES must be set in .env") as i64)
-                }
-                TokenType::Refresh => {
-                    Duration::minutes(get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env") as i64)
-                }
-            })
+        let iat = (self.expires_at - match self.token_type {
+            TokenType::Access => {
+                Duration::minutes(get_access_token_duration_minutes().expect(
+                    "CRITICAL: SPIN_VARIABLE_ACCESS_TOKEN_DURATION_MINUTES must be set in .env",
+                ) as i64)
+            }
+            TokenType::Refresh => Duration::minutes(get_refresh_token_duration_minutes().expect(
+                "CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env",
+            ) as i64),
+        })
         .timestamp();
 
         AccessTokenClaims {
@@ -557,14 +568,20 @@ impl CustomTokenClaims {
 
 /// High-level API functions that maintain compatibility with existing JWT system
 /// Create access token using custom token system with Ed25519 public key
-pub fn create_custom_access_token(email: &str, pub_key: &[u8; 32]) -> Result<(String, DateTime<Utc>), String> {
+pub fn create_custom_access_token(
+    email: &str,
+    pub_key: &[u8; 32],
+) -> Result<(String, DateTime<Utc>), String> {
     let token = generate_custom_token(email, TokenType::Access, pub_key)?;
     let claims = CustomTokenClaims::new(email, TokenType::Access, pub_key)?;
     Ok((token, claims.expires_at))
 }
 
 /// Create refresh token using custom token system with Ed25519 public key
-pub fn create_custom_refresh_token(email: &str, pub_key: &[u8; 32]) -> Result<(String, DateTime<Utc>), String> {
+pub fn create_custom_refresh_token(
+    email: &str,
+    pub_key: &[u8; 32],
+) -> Result<(String, DateTime<Utc>), String> {
     let token = generate_custom_token(email, TokenType::Refresh, pub_key)?;
     let claims = CustomTokenClaims::new(email, TokenType::Refresh, pub_key)?;
     Ok((token, claims.expires_at))

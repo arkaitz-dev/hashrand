@@ -14,6 +14,7 @@ import type {
 	MagicLinkResponse,
 	AuthError
 } from './types';
+import { getOrCreateKeyPair, signMessage, publicKeyToHex } from './ed25519';
 
 const API_BASE = '/api';
 
@@ -119,14 +120,8 @@ async function handleProactiveTokenRenewal(response: Response): Promise<void> {
 	if (newAccessToken && newExpiresIn) {
 		console.log('🔄 Proactive token renewal detected, updating tokens...');
 
-		// Calculate new expiration time
-		const now = Date.now();
-		const expiresInSeconds = parseInt(newExpiresIn, 10);
-		const newExpiresAt = now + expiresInSeconds * 1000;
-
-		// Update access token and expiration in sessionStorage
+		// Update access token in sessionStorage
 		sessionStorage.setItem('access_token', newAccessToken);
-		sessionStorage.setItem('token_expires_at', newExpiresAt.toString());
 
 		// Update crypto tokens if we have them (they may need regeneration)
 		if (hasCryptoTokens()) {
@@ -376,7 +371,27 @@ export const api = {
 	},
 
 	// Authentication endpoints
-	async requestMagicLink(loginRequest: LoginRequest): Promise<MagicLinkResponse> {
+	async requestMagicLink(
+		email: string,
+		ui_host: string,
+		next?: string
+	): Promise<MagicLinkResponse> {
+		// Generate or retrieve Ed25519 keypair
+		const keyPair = await getOrCreateKeyPair();
+		const pubKeyHex = publicKeyToHex(keyPair.publicKeyBytes);
+
+		// Create message to sign: email + pub_key
+		const message = email + pubKeyHex;
+		const signature = await signMessage(message, keyPair.privateKey);
+
+		const loginRequest: LoginRequest = {
+			email,
+			ui_host,
+			next,
+			pub_key: pubKeyHex,
+			signature
+		};
+
 		const response = await fetch(`${API_BASE}/login/`, {
 			method: 'POST',
 			headers: {
@@ -393,10 +408,8 @@ export const api = {
 		return response.json() as Promise<MagicLinkResponse>;
 	},
 
-	async validateMagicLink(magicToken: string, randomHash: string): Promise<LoginResponse> {
-		const response = await fetch(
-			`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}&hash=${encodeURIComponent(randomHash)}`
-		);
+	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
+		const response = await fetch(`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}`);
 
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;
@@ -416,10 +429,7 @@ export const api = {
 
 		try {
 			const user = JSON.parse(authStore);
-			if (!user.expiresAt) return false;
-
-			const expiresAt = new Date(user.expiresAt);
-			return expiresAt > new Date();
+			return user.isAuthenticated && !!user.user_id;
 		} catch {
 			return false;
 		}
@@ -467,14 +477,10 @@ export const api = {
 
 				// Update auth store with new token
 				const { authStore } = await import('./stores/auth');
-				const expiresAt = new Date();
-				expiresAt.setSeconds(expiresAt.getSeconds() + data.expires_in);
 
 				const user = {
-					email: '', // Not needed for Zero Knowledge auth
 					user_id: data.user_id,
-					isAuthenticated: true,
-					expiresAt
+					isAuthenticated: true
 				};
 
 				// Update store and sessionStorage

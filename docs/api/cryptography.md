@@ -104,6 +104,50 @@ pub fn verify_magic_link_request(
 }
 ```
 
+### Frontend Ed25519 Implementation (v0.19.13+)
+
+**COMPLETE CRYPTOGRAPHIC INTEGRATION**: The frontend now handles all Ed25519 operations automatically, providing seamless cryptographic security without exposing complexity to developers.
+
+#### Frontend Cryptographic Stack
+
+```typescript
+// Frontend Ed25519 module (web/src/lib/ed25519.ts)
+import { ed25519 } from '@noble/curves/ed25519';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+
+// Hybrid architecture with Web Crypto API primary + Noble fallback
+const keyPair = await generateEd25519KeyPair(); // WebCrypto or Noble
+const signature = await signMessage(message, privateKey); // Auto-signs email + pub_key
+```
+
+#### Automatic Cryptographic Workflow
+
+1. **Keypair Generation**: `getOrCreateKeyPair()` creates Ed25519 keypair with Web Crypto API
+2. **Secure Storage**: Non-extractable private keys stored in IndexedDB
+3. **Message Signing**: Automatic signing of `email + pub_key` combination
+4. **Backend Integration**: Seamless transmission to backend for verification
+5. **Security Cleanup**: Automatic keypair cleanup on logout
+
+#### Security Architecture Features
+
+- **🔐 Non-extractable Keys**: Private keys stored as CryptoKey objects, cannot be extracted
+- **💾 IndexedDB Storage**: Browser-native secure database for keypair persistence
+- **🔄 Hybrid Cryptography**: Web Crypto API primary with @noble/curves fallback
+- **🧹 Automatic Cleanup**: Ed25519 keypairs cleared on logout via `clearAllKeyPairs()`
+- **⚡ Performance**: WebCrypto hardware acceleration when available
+- **🛡️ Zero Knowledge**: No personal data in cryptographic storage
+
+#### Implementation Functions
+
+```typescript
+// Core Ed25519 frontend functions
+export async function getOrCreateKeyPair(): Promise<Ed25519KeyPair>
+export async function signMessage(message: string, privateKey: CryptoKey): Promise<string>
+export async function verifySignature(message: string, signature: string, publicKeyBytes: Uint8Array): Promise<boolean>
+export async function clearAllKeyPairs(): Promise<void>
+export function publicKeyToHex(publicKeyBytes: Uint8Array): string
+```
+
 ### Encryption & Integrity Flow
 
 ```

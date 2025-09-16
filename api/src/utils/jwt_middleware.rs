@@ -89,8 +89,14 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
         }
         Err(error_msg) => {
             println!("🔍 DEBUG: Token validation failed: {}", error_msg);
-            println!("🔍 DEBUG: Checking if error contains 'expired': {}", error_msg.contains("expired"));
-            println!("🔍 DEBUG: Checking if error contains 'exp': {}", error_msg.contains("exp"));
+            println!(
+                "🔍 DEBUG: Checking if error contains 'expired': {}",
+                error_msg.contains("expired")
+            );
+            println!(
+                "🔍 DEBUG: Checking if error contains 'exp': {}",
+                error_msg.contains("exp")
+            );
 
             // If token validation fails (any reason), try to refresh using cookies (2/3 system)
             // This covers: expired, corrupted, malformed, wrong keys, etc.
@@ -147,18 +153,31 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
                                     let refresh_created_at = refresh_expires_at
                                         - chrono::Duration::minutes(refresh_duration_minutes);
                                     let time_elapsed_duration = now - refresh_created_at;
-                                    let one_third_threshold =
-                                        chrono::Duration::seconds((refresh_duration_minutes * 60) / 3); // 1/3 transcurrido = 2/3 restante
+                                    let one_third_threshold = chrono::Duration::seconds(
+                                        (refresh_duration_minutes * 60) / 3,
+                                    ); // 1/3 transcurrido = 2/3 restante
 
-                                    println!("🔍 DEBUG 2/3 System: time_elapsed={:.0}min, 1/3_threshold={:.0}min ({}2/3 remaining)",
-                                             time_elapsed_duration.num_minutes(), one_third_threshold.num_minutes(),
-                                             if time_elapsed_duration > one_third_threshold { "✅ Activate: " } else { "⏳ Wait: " });
+                                    println!(
+                                        "🔍 DEBUG 2/3 System: time_elapsed={:.0}min, 1/3_threshold={:.0}min ({}2/3 remaining)",
+                                        time_elapsed_duration.num_minutes(),
+                                        one_third_threshold.num_minutes(),
+                                        if time_elapsed_duration > one_third_threshold {
+                                            "✅ Activate: "
+                                        } else {
+                                            "⏳ Wait: "
+                                        }
+                                    );
 
                                     // Create new access token (always) - PRESERVE refresh context for 2/3 system
-                                    let refresh_expires_at = match DateTime::from_timestamp(refresh_claims.exp, 0) {
+                                    let refresh_expires_at = match DateTime::from_timestamp(
+                                        refresh_claims.exp,
+                                        0,
+                                    ) {
                                         Some(dt) => dt,
                                         None => {
-                                            println!("🔍 DEBUG: Invalid refresh token expiration timestamp");
+                                            println!(
+                                                "🔍 DEBUG: Invalid refresh token expiration timestamp"
+                                            );
                                             return Err(create_auth_error_response(
                                                 "Invalid token timestamp",
                                                 None,
@@ -368,19 +387,24 @@ fn check_proactive_renewal(
             .map_err(|e| create_auth_error_response(e, None))?;
         // TODO: Extract pub_key from refresh token claims instead of using placeholder
         let placeholder_pub_key = [0u8; 32];
-        let (new_access_token, access_expires) = match JwtUtils::create_access_token_from_username_with_refresh_context(username, refresh_expires_datetime, &placeholder_pub_key) {
-            Ok((token, exp)) => (token, exp),
-            Err(e) => {
-                println!(
-                    "Failed to create new access token during proactive renewal: {}",
-                    e
-                );
-                return Err(create_auth_error_response(
-                    "Failed to renew access token",
-                    None,
-                ));
-            }
-        };
+        let (new_access_token, access_expires) =
+            match JwtUtils::create_access_token_from_username_with_refresh_context(
+                username,
+                refresh_expires_datetime,
+                &placeholder_pub_key,
+            ) {
+                Ok((token, exp)) => (token, exp),
+                Err(e) => {
+                    println!(
+                        "Failed to create new access token during proactive renewal: {}",
+                        e
+                    );
+                    return Err(create_auth_error_response(
+                        "Failed to renew access token",
+                        None,
+                    ));
+                }
+            };
 
         // Generate new refresh token
         let (new_refresh_token, _refresh_expires) =
@@ -488,7 +512,8 @@ fn add_renewed_tokens_to_response(response: Response, renewed_tokens: RenewedTok
     // Set new refresh token cookie ONLY if provided (2/3 system logic)
     if !renewed_tokens.refresh_token.is_empty() {
         // println!("🔍 DEBUG: Setting NEW refresh token cookie (2/3 system reset)");
-        let refresh_duration_minutes = get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+        let refresh_duration_minutes = get_refresh_token_duration_minutes()
+            .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
         let refresh_cookie = format!(
             "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
             renewed_tokens.refresh_token,

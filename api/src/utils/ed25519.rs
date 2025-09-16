@@ -3,7 +3,7 @@
 //! Provides Ed25519 signature verification functionality for magic link authentication.
 //! Uses ed25519-dalek for cryptographically secure signature verification.
 
-use ed25519_dalek::{Signature, VerifyingKey, Verifier};
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use hex;
 use serde::{Deserialize, Serialize};
 
@@ -46,12 +46,18 @@ impl Ed25519Utils {
     ) -> SignatureVerificationResult {
         // Validate input lengths
         if public_key_hex.len() != 64 {
-            println!("🔍 DEBUG Ed25519: Invalid public key hex length: {} (expected 64)", public_key_hex.len());
+            println!(
+                "🔍 DEBUG Ed25519: Invalid public key hex length: {} (expected 64)",
+                public_key_hex.len()
+            );
             return SignatureVerificationResult::MalformedPublicKey;
         }
 
         if signature_hex.len() != 128 {
-            println!("🔍 DEBUG Ed25519: Invalid signature hex length: {} (expected 128)", signature_hex.len());
+            println!(
+                "🔍 DEBUG Ed25519: Invalid signature hex length: {} (expected 128)",
+                signature_hex.len()
+            );
             return SignatureVerificationResult::MalformedSignature;
         }
 
@@ -70,7 +76,10 @@ impl Ed25519Utils {
         };
 
         if public_key_bytes.len() != 32 {
-            println!("🔍 DEBUG Ed25519: Invalid public key byte length: {} (expected 32)", public_key_bytes.len());
+            println!(
+                "🔍 DEBUG Ed25519: Invalid public key byte length: {} (expected 32)",
+                public_key_bytes.len()
+            );
             return SignatureVerificationResult::MalformedPublicKey;
         }
 
@@ -84,7 +93,10 @@ impl Ed25519Utils {
         };
 
         if signature_bytes.len() != 64 {
-            println!("🔍 DEBUG Ed25519: Invalid signature byte length: {} (expected 64)", signature_bytes.len());
+            println!(
+                "🔍 DEBUG Ed25519: Invalid signature byte length: {} (expected 64)",
+                signature_bytes.len()
+            );
             return SignatureVerificationResult::MalformedSignature;
         }
 
@@ -153,14 +165,20 @@ impl Ed25519Utils {
     #[allow(dead_code)]
     pub fn public_key_from_hex(public_key_hex: &str) -> Result<[u8; 32], String> {
         if public_key_hex.len() != 64 {
-            return Err(format!("Invalid public key hex length: {} (expected 64)", public_key_hex.len()));
+            return Err(format!(
+                "Invalid public key hex length: {} (expected 64)",
+                public_key_hex.len()
+            ));
         }
 
         let bytes = hex::decode(public_key_hex)
             .map_err(|e| format!("Failed to decode public key hex: {}", e))?;
 
         if bytes.len() != 32 {
-            return Err(format!("Invalid public key byte length: {} (expected 32)", bytes.len()));
+            return Err(format!(
+                "Invalid public key byte length: {} (expected 32)",
+                bytes.len()
+            ));
         }
 
         let mut public_key_bytes = [0u8; 32];
@@ -179,7 +197,10 @@ impl Ed25519Utils {
     pub fn validate_signature_format(signature_data: &Ed25519SignatureData) -> Result<(), String> {
         // Validate public key format
         if signature_data.public_key.len() != 64 {
-            return Err(format!("Invalid public key length: {} (expected 64)", signature_data.public_key.len()));
+            return Err(format!(
+                "Invalid public key length: {} (expected 64)",
+                signature_data.public_key.len()
+            ));
         }
 
         if hex::decode(&signature_data.public_key).is_err() {
@@ -188,7 +209,10 @@ impl Ed25519Utils {
 
         // Validate signature format
         if signature_data.signature.len() != 128 {
-            return Err(format!("Invalid signature length: {} (expected 128)", signature_data.signature.len()));
+            return Err(format!(
+                "Invalid signature length: {} (expected 128)",
+                signature_data.signature.len()
+            ));
         }
 
         if hex::decode(&signature_data.signature).is_err() {
@@ -232,7 +256,10 @@ impl Ed25519Utils {
         signature_hex: &str,
     ) -> SignatureVerificationResult {
         let message = Self::create_sign_message(email, public_key_hex, next);
-        println!("🔍 DEBUG Ed25519: Verifying magic link request for email: {}", email);
+        println!(
+            "🔍 DEBUG Ed25519: Verifying magic link request for email: {}",
+            email
+        );
         println!("🔍 DEBUG Ed25519: Message to verify: {}", message);
         Self::verify_signature_string(&message, signature_hex, public_key_hex)
     }
@@ -275,7 +302,11 @@ mod tests {
         let message_without_next = Ed25519Utils::create_sign_message(email, &public_key, None);
         assert_eq!(message_without_next, format!("{}{}", email, public_key));
 
-        let message_with_next = Ed25519Utils::create_sign_message(email, &public_key, Some("/dashboard"));
-        assert_eq!(message_with_next, format!("{}{}/dashboard", email, public_key));
+        let message_with_next =
+            Ed25519Utils::create_sign_message(email, &public_key, Some("/dashboard"));
+        assert_eq!(
+            message_with_next,
+            format!("{}{}/dashboard", email, public_key)
+        );
     }
 }

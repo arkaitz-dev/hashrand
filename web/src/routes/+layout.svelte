@@ -43,27 +43,8 @@
 		currentPage: { url: globalThis.URL }
 	) {
 		try {
-			// Get random hash from localStorage (required for validation)
-			const randomHash = localStorage.getItem('magiclink_hash');
-
-			if (!randomHash) {
-				console.error('No random hash found in localStorage for magic link validation');
-
-				// Remove magiclink parameter from URL
-				const newUrl = new globalThis.URL(currentPage.url);
-				newUrl.searchParams.delete('magiclink');
-				globalThis.window?.history?.replaceState({}, '', newUrl.toString());
-
-				// Show magic link error dialog instead of redirecting silently
-				dialogStore.show('magic-link-error');
-				return;
-			}
-
-			// Validate the magic link with the random hash
-			const loginResponse = await authStore.validateMagicLink(magicToken, randomHash);
-
-			// Clear the used hash from localStorage
-			localStorage.removeItem('magiclink_hash');
+			// Validate the magic link (Ed25519 verification by backend)
+			const loginResponse = await authStore.validateMagicLink(magicToken);
 
 			// Remove magiclink parameter from URL
 			const newUrl = new globalThis.URL(currentPage.url);

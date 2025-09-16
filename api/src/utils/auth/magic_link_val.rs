@@ -135,19 +135,20 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
     };
 
     // Generate new access and refresh tokens with extracted Ed25519 public key
-    let (access_token, _access_expires) = match JwtUtils::create_access_token_from_username(&username, &pub_key_array) {
-        Ok((token, exp)) => (token, exp),
-        Err(e) => {
-            println!("Failed to create access token: {}", e);
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: "Failed to create access token".to_string(),
-                })?)
-                .build());
-        }
-    };
+    let (access_token, _access_expires) =
+        match JwtUtils::create_access_token_from_username(&username, &pub_key_array) {
+            Ok((token, exp)) => (token, exp),
+            Err(e) => {
+                println!("Failed to create access token: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Failed to create access token".to_string(),
+                    })?)
+                    .build());
+            }
+        };
 
     let (refresh_token, _) = match JwtUtils::create_refresh_token_from_username(&username, None) {
         Ok((token, exp)) => (token, exp),
@@ -177,8 +178,8 @@ pub fn validate_magic_link(query_params: HashMap<String, String>) -> anyhow::Res
     }
 
     // Set refresh token as HttpOnly, Secure, SameSite cookie with correct duration
-    let refresh_duration_minutes =
-        crate::utils::jwt::config::get_refresh_token_duration_minutes().expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
+        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
     let cookie_value = format!(
         "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
         refresh_token,

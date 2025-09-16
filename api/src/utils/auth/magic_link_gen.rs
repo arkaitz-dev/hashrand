@@ -6,8 +6,8 @@ use spin_sdk::http::{Request, Response};
 use super::types::{ErrorResponse, MagicLinkRequest};
 use crate::database::operations::MagicLinkOperations;
 use crate::utils::{
-    JwtUtils, check_rate_limit, extract_client_ip, send_magic_link_email, validate_email,
-    ed25519::Ed25519Utils,
+    JwtUtils, check_rate_limit, ed25519::Ed25519Utils, extract_client_ip, send_magic_link_email,
+    validate_email,
 };
 
 /// Generate and send magic link for authentication
@@ -49,7 +49,10 @@ pub async fn generate_magic_link(
     let pub_key_hex = &magic_request.pub_key;
     let signature_hex = &magic_request.signature;
 
-    println!("🔍 DEBUG Ed25519: Verifying signature for email: {}", magic_request.email);
+    println!(
+        "🔍 DEBUG Ed25519: Verifying signature for email: {}",
+        magic_request.email
+    );
     println!("🔍 DEBUG Ed25519: Public key: {}...", &pub_key_hex[..20]);
     println!("🔍 DEBUG Ed25519: Signature: {}...", &signature_hex[..20]);
 
@@ -62,7 +65,10 @@ pub async fn generate_magic_link(
     );
 
     if verification_result != crate::utils::ed25519::SignatureVerificationResult::Valid {
-        println!("🔍 DEBUG Ed25519: Signature verification failed: {:?}", verification_result);
+        println!(
+            "🔍 DEBUG Ed25519: Signature verification failed: {:?}",
+            verification_result
+        );
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "application/json")

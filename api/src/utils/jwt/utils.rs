@@ -48,7 +48,11 @@ impl JwtUtils {
         refresh_expires_at: chrono::DateTime<chrono::Utc>,
         pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token_from_username_with_refresh_context(username, refresh_expires_at, pub_key)
+        custom_tokens::create_custom_access_token_from_username_with_refresh_context(
+            username,
+            refresh_expires_at,
+            pub_key,
+        )
     }
 
     pub fn create_refresh_token(

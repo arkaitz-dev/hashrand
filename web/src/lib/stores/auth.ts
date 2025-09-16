@@ -41,17 +41,12 @@ function loadAuthFromStorage(): void {
 		if (storedAuth && storedToken) {
 			const user = JSON.parse(storedAuth);
 
-			// Check if token is still valid
-			if (user.expiresAt && new Date(user.expiresAt) > new Date()) {
-				update((state) => ({
-					...state,
-					user,
-					accessToken: storedToken
-				}));
-			} else {
-				// Token expired, clear sensitive data
-				clearSensitiveAuthData();
-			}
+			// Load user without expiration check (backend handles expiration)
+			update((state) => ({
+				...state,
+				user,
+				accessToken: storedToken
+			}));
 		}
 	} catch (error) {
 		console.warn('Failed to load auth from storage:', error);
@@ -264,14 +259,12 @@ export const authStore = {
 		const hasUser = typeof window !== 'undefined' && sessionStorage.getItem('auth_user');
 
 		if (hasToken && hasUser) {
-			// We have tokens, verify they're not expired
+			// We have tokens - backend will validate expiration
 			try {
 				const user = JSON.parse(hasUser);
-				if (user.expiresAt && new Date(user.expiresAt) > new Date()) {
+				if (user.isAuthenticated && user.user_id) {
 					return true; // Valid session exists - NO refresh needed
 				}
-				// Token expired, clear sensitive data and continue to refresh
-				clearSensitiveAuthData();
 			} catch (error) {
 				console.warn('Failed to parse user data from sessionStorage:', error);
 				// Clear invalid data and continue to refresh
@@ -318,13 +311,13 @@ export const authStore = {
 
 		try {
 			// Capture current UI host for magic link generation
-			const ui_host = typeof window !== 'undefined' ? window.location.origin : undefined;
+			const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
 
-			const response = await api.requestMagicLink({
-				email,
-				ui_host,
-				next
-			});
+			if (!ui_host) {
+				throw new Error('UI host is required for magic link generation');
+			}
+
+			const response = await api.requestMagicLink(email, ui_host, next);
 
 			update((state) => ({ ...state, isLoading: false }));
 			return response;
@@ -342,25 +335,18 @@ export const authStore = {
 	/**
 	 * Validate magic link and complete authentication
 	 *
-	 * @param magicToken - Magic link token from URL parameter
-	 * @param randomHash - Random hash from localStorage for additional validation
+	 * @param magicToken - Magic link token from URL parameter (Ed25519 verified by backend)
 	 * @returns Promise<LoginResponse>
 	 */
-	async validateMagicLink(magicToken: string, randomHash: string): Promise<LoginResponse> {
+	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
-			const loginResponse = await api.validateMagicLink(magicToken, randomHash);
-
-			// Calculate token expiration (15 minutes from now)
-			const expiresAt = new Date();
-			expiresAt.setSeconds(expiresAt.getSeconds() + loginResponse.expires_in);
+			const loginResponse = await api.validateMagicLink(magicToken);
 
 			const user: AuthUser = {
-				email: '', // Not needed for Zero Knowledge auth
 				user_id: loginResponse.user_id, // Base58 user_id
-				isAuthenticated: true,
-				expiresAt
+				isAuthenticated: true
 			};
 
 			// Update store state
@@ -410,12 +396,7 @@ export const authStore = {
 			return false;
 		}
 
-		// Check token expiration
-		if (state.user.expiresAt && new Date(state.user.expiresAt) <= new Date()) {
-			// Token expired, logout
-			this.logout();
-			return false;
-		}
+		// Backend handles token expiration
 		return true;
 	},
 
@@ -465,6 +446,14 @@ export const authStore = {
 	async logout(): Promise<void> {
 		// Call API logout to clear server-side session and refresh token cookie
 		await api.logout();
+
+		// Clear Ed25519 keypairs for security
+		try {
+			const { clearAllKeyPairs } = await import('../ed25519');
+			await clearAllKeyPairs();
+		} catch (error) {
+			console.warn('Failed to clear Ed25519 keypairs:', error);
+		}
 
 		// Clear local state and storage
 		set(initialState);

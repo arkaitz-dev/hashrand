@@ -6,7 +6,7 @@
  */
 
 import { ed25519 } from '@noble/curves/ed25519';
-import { bytesToHex, hexToBytes } from '@scure/base';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 // Database configuration for IndexedDB
 const DB_NAME = 'hashrand-ed25519';
@@ -75,7 +75,7 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPair> {
 			privateKey: keyPair.privateKey,
 			publicKeyBytes
 		};
-	} catch (error) {
+	} catch {
 		// Fallback to Noble curves if WebCrypto Ed25519 not supported
 		console.warn('WebCrypto Ed25519 not supported, falling back to Noble curves');
 		return generateEd25519KeyPairFallback();
@@ -94,7 +94,7 @@ async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
 	// Import keys into WebCrypto format for consistent API
 	const publicKey = await crypto.subtle.importKey(
 		'raw',
-		publicKeyBytes,
+		publicKeyBytes.buffer,
 		{ name: 'Ed25519', namedCurve: 'Ed25519' },
 		true,
 		['verify']
@@ -102,7 +102,7 @@ async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
 
 	const privateKey = await crypto.subtle.importKey(
 		'raw',
-		privateKeyBytes,
+		privateKeyBytes.buffer,
 		{ name: 'Ed25519', namedCurve: 'Ed25519' },
 		false, // non-extractable
 		['sign']
@@ -118,7 +118,10 @@ async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
 /**
  * Store Ed25519 key pair in IndexedDB
  */
-export async function storeKeyPair(keyPair: Ed25519KeyPair, keyId: string = 'default'): Promise<void> {
+export async function storeKeyPair(
+	keyPair: Ed25519KeyPair,
+	keyId: string = 'default'
+): Promise<void> {
 	const db = await openKeyDatabase();
 
 	return new Promise((resolve, reject) => {
@@ -182,13 +185,11 @@ export async function signMessage(
 	message: string | Uint8Array,
 	privateKey: CryptoKey
 ): Promise<string> {
-	const messageBytes = typeof message === 'string'
-		? new TextEncoder().encode(message)
-		: message;
+	const messageBytes = typeof message === 'string' ? new TextEncoder().encode(message) : message;
 
 	try {
 		// Try WebCrypto first
-		const signature = await crypto.subtle.sign('Ed25519', privateKey, messageBytes);
+		const signature = await crypto.subtle.sign('Ed25519', privateKey, messageBytes.buffer);
 		return bytesToHex(new Uint8Array(signature));
 	} catch (error) {
 		// This shouldn't happen with non-extractable keys, but handle gracefully
@@ -212,9 +213,7 @@ export async function verifySignature(
 		throw new Error(`Invalid Ed25519 public key length: ${publicKeyBytes.length}, expected 32`);
 	}
 
-	const messageBytes = typeof message === 'string'
-		? new TextEncoder().encode(message)
-		: message;
+	const messageBytes = typeof message === 'string' ? new TextEncoder().encode(message) : message;
 
 	const signatureBytes = hexToBytes(signature);
 
@@ -226,14 +225,19 @@ export async function verifySignature(
 		// Try WebCrypto verification first
 		const publicKey = await crypto.subtle.importKey(
 			'raw',
-			publicKeyBytes,
+			publicKeyBytes.buffer,
 			{ name: 'Ed25519', namedCurve: 'Ed25519' },
 			false,
 			['verify']
 		);
 
-		return await crypto.subtle.verify('Ed25519', publicKey, signatureBytes, messageBytes);
-	} catch (error) {
+		return await crypto.subtle.verify(
+			'Ed25519',
+			publicKey,
+			signatureBytes.buffer,
+			messageBytes.buffer
+		);
+	} catch {
 		// Fallback to Noble curves
 		console.warn('WebCrypto verification failed, using Noble curves fallback');
 		return ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
