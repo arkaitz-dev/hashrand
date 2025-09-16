@@ -149,50 +149,39 @@ export function generatePrehashSeed(): Uint8Array {
 }
 
 /**
- * Store prehash seed in sessionStorage and return key
+ * Store prehash seed in IndexedDB and return key
  *
  * @param seed - 32-byte prehash seed
  * @param hmacKey - HMAC key for generating unique key
- * @returns Base64URL key for retrieval
+ * @returns Promise<Base64URL key for retrieval>
  */
-export function storePrehashSeed(seed: Uint8Array, hmacKey: string): string {
-	const seedsJson = sessionStorage.getItem('prehashseeds') || '[]';
-	const seeds: { k: string; v: string }[] = JSON.parse(seedsJson);
+export async function storePrehashSeed(seed: Uint8Array, hmacKey: string): Promise<string> {
+	const { sessionManager } = await import('./session-manager');
 
 	// Generate 8-byte key using cryptoHashGen
 	const keyBytes = cryptoHashGen(seed, hmacKey, 8);
 	const key = bytesToBase64Url(keyBytes);
 
-	// Store as KV pair
+	// Store in IndexedDB with FIFO management (max 20)
 	const seedBase64 = bytesToBase64(seed);
-	seeds.push({ k: key, v: seedBase64 });
-
-	// FIFO rotation: Remove oldest if limit exceeded (max 20 KV pairs)
-	if (seeds.length > 20) {
-		seeds.shift(); // Remove first (oldest) element
-	}
-
-	sessionStorage.setItem('prehashseeds', JSON.stringify(seeds));
+	await sessionManager.addPrehashSeed(key, seedBase64);
 
 	return key;
 }
 
 /**
- * Retrieve prehash seed from sessionStorage by key
+ * Retrieve prehash seed from IndexedDB by key
  *
  * @param key - Base64URL key to find seed
- * @returns 32-byte prehash seed or null if not found
+ * @returns Promise<32-byte prehash seed or null if not found>
  */
-export function getPrehashSeed(key: string): Uint8Array | null {
-	const seedsJson = sessionStorage.getItem('prehashseeds');
-	if (!seedsJson) return null;
+export async function getPrehashSeed(key: string): Promise<Uint8Array | null> {
+	const { sessionManager } = await import('./session-manager');
 
-	const seeds: { k: string; v: string }[] = JSON.parse(seedsJson);
-	const found = seeds.find((seed) => seed.k === key);
+	const seedBase64 = await sessionManager.getPrehashSeed(key);
+	if (!seedBase64) return null;
 
-	if (!found) return null;
-
-	return base64ToBytes(found.v);
+	return base64ToBytes(seedBase64);
 }
 
 /**
@@ -221,14 +210,14 @@ export function serializeParams(params: Record<string, any>): string {
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
- * @returns Single compact parameter 'p' as base64URL string
+ * @returns Promise<Single compact parameter 'p' as base64URL string>
  */
-export function encryptUrlParams(
+export async function encryptUrlParams(
 	params: Record<string, any>,
 	cipherToken: string,
 	nonceToken: string,
 	hmacKey: string
-): { p: string } {
+): Promise<{ p: string }> {
 	// 1. Add crypto salt to parameters for noise
 	const salt = generateCryptoSalt();
 	const saltBase64 = bytesToBase64(salt);
@@ -238,7 +227,7 @@ export function encryptUrlParams(
 	const prehashSeed = generatePrehashSeed();
 
 	// 3. Store prehash seed and get key (8 bytes)
-	const idx = storePrehashSeed(prehashSeed, hmacKey);
+	const idx = await storePrehashSeed(prehashSeed, hmacKey);
 	const idxBytes = base64UrlToBytes(idx); // Convert idx back to 8 bytes
 
 	// 4. Generate prehash from seed
@@ -272,14 +261,14 @@ export function encryptUrlParams(
  * @param cipherToken - Session cipher token (base64)
  * @param nonceToken - Session nonce token (base64)
  * @param hmacKey - Session HMAC key (base64)
- * @returns Decrypted parameters object (without salt)
+ * @returns Promise<Decrypted parameters object (without salt)>
  */
-export function decryptUrlParams(
+export async function decryptUrlParams(
 	compactParam: string,
 	cipherToken: string,
 	nonceToken: string,
 	hmacKey: string
-): Record<string, any> {
+): Promise<Record<string, any>> {
 	// 1. Decode base64URL to get combined bytes
 	const combinedBytes = base64UrlToBytes(compactParam);
 
@@ -294,8 +283,8 @@ export function decryptUrlParams(
 	// 3. Convert idx_bytes back to base64URL string for sessionStorage lookup
 	const idx = bytesToBase64Url(idxBytes);
 
-	// 4. Retrieve prehash seed from sessionStorage
-	const prehashSeed = getPrehashSeed(idx);
+	// 4. Retrieve prehash seed from IndexedDB
+	const prehashSeed = await getPrehashSeed(idx);
 	if (!prehashSeed) {
 		throw new Error(`Prehash seed not found with key ${idx}`);
 	}
@@ -326,19 +315,19 @@ export function decryptUrlParams(
  *
  * @param params - Parameters to encrypt
  * @param sessionTokens - Session tokens from authStore
- * @returns Object with compact parameter 'p' for URL
+ * @returns Promise<Object with compact parameter 'p' for URL>
  */
-export function prepareSecureUrlParams(
+export async function prepareSecureUrlParams(
 	params: Record<string, any>,
 	sessionTokens: {
 		cipherToken: string;
 		nonceToken: string;
 		hmacKey: string;
 	}
-): {
+): Promise<{
 	p: string;
-} {
-	return encryptUrlParams(
+}> {
+	return await encryptUrlParams(
 		params,
 		sessionTokens.cipherToken,
 		sessionTokens.nonceToken,
@@ -383,16 +372,16 @@ export function parseNextUrl(url: string): {
  *
  * @param nextUrl - Original next URL from backend
  * @param sessionTokens - Session tokens for encryption
- * @returns Encrypted URL with basePath?p=...
+ * @returns Promise<Encrypted URL with basePath?p=...>
  */
-export function encryptNextUrl(
+export async function encryptNextUrl(
 	nextUrl: string,
 	sessionTokens: {
 		cipherToken: string;
 		nonceToken: string;
 		hmacKey: string;
 	}
-): string {
+): Promise<string> {
 	const { basePath, params } = parseNextUrl(nextUrl);
 
 	// If no parameters, return URL as-is
@@ -401,7 +390,7 @@ export function encryptNextUrl(
 	}
 
 	// Encrypt parameters
-	const { p } = prepareSecureUrlParams(params, sessionTokens);
+	const { p } = await prepareSecureUrlParams(params, sessionTokens);
 
 	// Create new URL with compact encrypted parameter
 	return `${basePath}?p=${p}`;
@@ -412,16 +401,16 @@ export function encryptNextUrl(
  *
  * @param searchParams - URLSearchParams from current page
  * @param sessionTokens - Session tokens for decryption
- * @returns Decrypted parameters or null if not encrypted/failed
+ * @returns Promise<Decrypted parameters or null if not encrypted/failed>
  */
-export function decryptPageParams(
+export async function decryptPageParams(
 	searchParams: URLSearchParams,
 	sessionTokens: {
 		cipherToken: string;
 		nonceToken: string;
 		hmacKey: string;
 	}
-): Record<string, any> | null {
+): Promise<Record<string, any> | null> {
 	const p = searchParams.get('p');
 
 	// Return null if not encrypted parameters
@@ -431,7 +420,7 @@ export function decryptPageParams(
 
 	try {
 		// Decrypt parameters using compact parameter
-		return decryptUrlParams(
+		return await decryptUrlParams(
 			p,
 			sessionTokens.cipherToken,
 			sessionTokens.nonceToken,
@@ -449,9 +438,9 @@ export function decryptPageParams(
  * @param basePath - Base path for the route (e.g., '/result', '/custom')
  * @param params - Parameters to encrypt and include
  * @param sessionTokens - Session tokens for encryption
- * @returns Full encrypted URL
+ * @returns Promise<Full encrypted URL>
  */
-export function createEncryptedUrl(
+export async function createEncryptedUrl(
 	basePath: string,
 	params: Record<string, any>,
 	sessionTokens: {
@@ -459,14 +448,14 @@ export function createEncryptedUrl(
 		nonceToken: string;
 		hmacKey: string;
 	}
-): string {
+): Promise<string> {
 	// If no parameters, return simple base path
 	if (!params || Object.keys(params).length === 0) {
 		return basePath;
 	}
 
 	// Encrypt parameters
-	const { p } = prepareSecureUrlParams(params, sessionTokens);
+	const { p } = await prepareSecureUrlParams(params, sessionTokens);
 
 	// Create compact encrypted URL
 	return `${basePath}?p=${p}`;

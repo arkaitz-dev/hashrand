@@ -25,6 +25,13 @@ pub struct MagicLinkResponse {
     pub dev_magic_link: Option<String>,
 }
 
+/// Request body for secure magic link validation with Ed25519 verification
+#[derive(Deserialize)]
+pub struct MagicLinkValidationRequest {
+    pub magiclink: String, // Magic link token
+    pub signature: String, // Ed25519 signature of the magic link token (128 hex chars = 64 bytes)
+}
+
 /// Error response structure
 #[derive(Serialize)]
 pub struct ErrorResponse {

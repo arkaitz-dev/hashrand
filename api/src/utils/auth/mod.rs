@@ -15,5 +15,5 @@ pub use types::{ErrorResponse, MagicLinkRequest};
 
 // Re-export main functions
 pub use magic_link_gen::generate_magic_link;
-pub use magic_link_val::validate_magic_link;
+pub use magic_link_val::{validate_magic_link, validate_magic_link_secure};
 pub use refresh_token::handle_refresh_token;

@@ -10,7 +10,8 @@ use std::collections::HashMap;
 
 use crate::database::connection::initialize_database;
 use crate::utils::auth::{
-    ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token, validate_magic_link,
+    ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token,
+    validate_magic_link, validate_magic_link_secure,
 };
 
 /// Handle login authentication requests
@@ -25,6 +26,21 @@ pub async fn handle_login(
     req: Request,
     query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
+    // Extract the full path from the request to handle specific endpoints
+    let full_url = req
+        .header("spin-full-url")
+        .and_then(|h| h.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    // Parse path from URL
+    let url_parts: Vec<&str> = full_url.split('?').collect();
+    let full_path = url_parts.first().unwrap_or(&"");
+    let path = if let Some(path_start) = full_path.find("/api") {
+        &full_path[path_start..]
+    } else {
+        full_path
+    };
     // Determine database environment
     // For now use Development since we don't have access to IncomingRequest
     // Initialize database to ensure auth_sessions table exists
@@ -41,6 +57,13 @@ pub async fn handle_login(
     }
     println!("Database initialized successfully");
 
+    // Handle specific endpoint: POST /api/login/magiclink/ (secure validation with Ed25519)
+    if path == "/api/login/magiclink/" && *req.method() == Method::Post {
+        println!("🔐 Handling secure magic link validation with Ed25519 verification");
+        return validate_magic_link_secure(req.body());
+    }
+
+    // Handle default login endpoints: /api/login/
     match *req.method() {
         Method::Post => handle_magic_link_generation(req).await,
         Method::Get => validate_magic_link(query_params),

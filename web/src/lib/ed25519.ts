@@ -94,7 +94,7 @@ async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
 	// Import keys into WebCrypto format for consistent API
 	const publicKey = await crypto.subtle.importKey(
 		'raw',
-		publicKeyBytes.buffer,
+		new Uint8Array(publicKeyBytes),
 		{ name: 'Ed25519', namedCurve: 'Ed25519' },
 		true,
 		['verify']
@@ -102,7 +102,7 @@ async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
 
 	const privateKey = await crypto.subtle.importKey(
 		'raw',
-		privateKeyBytes.buffer,
+		new Uint8Array(privateKeyBytes),
 		{ name: 'Ed25519', namedCurve: 'Ed25519' },
 		false, // non-extractable
 		['sign']
@@ -189,7 +189,7 @@ export async function signMessage(
 
 	try {
 		// Try WebCrypto first
-		const signature = await crypto.subtle.sign('Ed25519', privateKey, messageBytes.buffer);
+		const signature = await crypto.subtle.sign('Ed25519', privateKey, new Uint8Array(messageBytes));
 		return bytesToHex(new Uint8Array(signature));
 	} catch (error) {
 		// This shouldn't happen with non-extractable keys, but handle gracefully
@@ -225,7 +225,7 @@ export async function verifySignature(
 		// Try WebCrypto verification first
 		const publicKey = await crypto.subtle.importKey(
 			'raw',
-			publicKeyBytes.buffer,
+			new Uint8Array(publicKeyBytes),
 			{ name: 'Ed25519', namedCurve: 'Ed25519' },
 			false,
 			['verify']
@@ -234,8 +234,8 @@ export async function verifySignature(
 		return await crypto.subtle.verify(
 			'Ed25519',
 			publicKey,
-			signatureBytes.buffer,
-			messageBytes.buffer
+			new Uint8Array(signatureBytes),
+			new Uint8Array(messageBytes)
 		);
 	} catch {
 		// Fallback to Noble curves

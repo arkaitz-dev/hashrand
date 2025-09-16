@@ -45,7 +45,7 @@ component = "hashrand-spin"
 
 [component.hashrand-spin]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
-allowed_outbound_hosts = ["https://sandbox.api.mailtrap.io"]
+allowed_outbound_hosts = ["https://send.api.mailtrap.io", "https://sandbox.api.mailtrap.io"]
 sqlite_databases = ["hashrand-dev"]
 # Reference application variables in component variables
 [component.hashrand-spin.variables]

@@ -86,7 +86,7 @@ http://localhost:5173/result/?p=k7J9mN4QR7FVMz2k9T7L8X3N5A6P
 - **🎲 Random Prehash Seeds**: Cryptographic keys independent of parameter content
 - **📦 Base64URL Encoding**: URL-safe transmission without padding characters
 - **🔑 Session Key Management**: Triple token system (cipher/nonce/hmac) for maximum security
-- **🗑️ FIFO Rotation**: Automatic cleanup with 20-parameter limit in sessionStorage
+- **🗑️ FIFO Rotation**: Automatic cleanup with 20-parameter limit in IndexedDB
 
 #### Privacy Protection Benefits
 - **🛡️ Browser History Privacy**: Parameters never appear in plaintext in browser history
@@ -136,7 +136,7 @@ The frontend `api.requestMagicLink()` function now automatically:
 ### State Management & Security
 - **State-Aware Form Handling**: Automatic parameter preservation through authentication flow
 - **Encrypted Parameter Encoding**: Form parameters encrypted before URL generation
-- **Secure Temporary Storage**: Parameters managed in sessionStorage with automatic cleanup
+- **Secure Persistent Storage**: Parameters managed in IndexedDB with cross-tab synchronization and automatic cleanup
 - **Seamless Restoration**: Form state restored after authentication completion
 - **Clean User Flow**: Smooth transition from form → authentication → result generation
 - **Preventive Data Clearing**: Complete cleanup before every authentication dialog for maximum security
@@ -209,9 +209,10 @@ http://localhost:5173/custom/?seed=2R7KDyMvBTv3WLAY8AAiBNFgBkv7zHvjpTp6U2eWMGfR&
 
 ### State Management
 - **Svelte Stores**: Reactive state management for auth, i18n, theme
-- **LocalStorage Integration**: Persistent storage for user preferences
-- **URL State Sync**: Parameters synchronized with browser URL
-- **Form State Persistence**: Automatic form state preservation
+- **IndexedDB Session Management**: Enterprise-grade session storage with cross-tab synchronization
+- **LocalStorage Integration**: Persistent storage for user preferences (theme, language)
+- **URL State Sync**: Parameters synchronized with browser URL via encryption
+- **Form State Persistence**: Automatic form state preservation across browser sessions
 
 ### Build & Deployment
 - **SPA Build**: Static build for deployment to any static hosting

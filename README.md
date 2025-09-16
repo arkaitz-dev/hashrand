@@ -63,8 +63,9 @@ just dev
 ### Technology Stack
 - **Backend**: Rust + Fermyon Spin + WebAssembly + SQLite
 - **Frontend**: SvelteKit + TypeScript + TailwindCSS + Vite
-- **Security**: Blake2b + Argon2id + ChaCha20-Poly1305 + JWT + URL Encryption
+- **Security**: Blake2b + Argon2id + ChaCha20-Poly1305 + JWT + URL Encryption + Ed25519
 - **Cryptography**: @noble/hashes + @noble/ciphers (enterprise-grade)
+- **Session Management**: IndexedDB with cross-tab synchronization
 - **Database**: SQLite with Zero Knowledge schema
 
 ### API Endpoints
@@ -127,7 +128,20 @@ HashRand implements **true Zero Knowledge architecture**:
 - **📦 Base64URL Encoding**: URL-safe transmission without padding characters
 - **🔄 FIFO Rotation**: Automatic cleanup with 20-seed limit prevents storage bloat
 - **🧂 Crypto Salt**: 32-byte internal noise generation for enhanced security
-- **🏷️ KV Storage**: 8-byte cryptographic keys for efficient sessionStorage management
+- **🏷️ KV Storage**: 8-byte cryptographic keys for efficient IndexedDB management
+
+### 🗄️ Enterprise-Grade Session Management
+
+**IndexedDB Cross-Tab Architecture**: Advanced session management system providing persistent, synchronized sessions across browser tabs with enhanced security and performance:
+
+- **📊 Unified SessionManager**: Single IndexedDB database managing all application data (`hashrand-sessions`)
+- **🔄 Cross-Tab Synchronization**: Authentication and encryption keys automatically shared across all browser tabs
+- **💾 Persistent Sessions**: Sessions survive browser restart and tab closure while maintaining proper security
+- **🔒 Complete Security Cleanup**: Logout clears ALL data from IndexedDB including auth tokens, crypto keys, and prehashseeds
+- **⏰ Intelligent Expiry**: Dual token expiry triggers complete IndexedDB reset for maximum security
+- **🎯 Hybrid Architecture**: Maintains synchronous auth store interface while using async IndexedDB for storage
+- **🛡️ Enhanced Privacy**: Better data isolation and encryption key management compared to sessionStorage
+- **⚡ Optimized Performance**: Efficient queries with automatic FIFO rotation and cleanup mechanisms
 
 ## 🚀 Production Deployment
 

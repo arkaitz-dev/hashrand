@@ -296,9 +296,10 @@ export function encryptUrlParams(
 - **Domain Separation**: Cipher and nonce keys derived independently to prevent key reuse
 
 #### ✅ FIFO Storage Management
-- **SessionStorage KV**: Efficient key-value storage with automatic cleanup
+- **IndexedDB Enterprise Storage**: High-performance browser database with cross-tab synchronization
 - **20-Seed Rotation**: FIFO (First In, First Out) automatic cleanup prevents memory bloat
-- **8-Byte Cryptographic Keys**: Blake2b-derived identifiers for optimal sessionStorage indexing
+- **8-Byte Cryptographic Keys**: Blake2b-derived identifiers for optimal IndexedDB indexing
+- **Cross-Tab Consistency**: Shared encryption keys and prehashseeds across all browser tabs
 
 ### Bidirectional Navigation Flow
 
@@ -342,12 +343,13 @@ const decryptedParams = decryptPageParams(searchParams, {
 - **AEAD Security**: ChaCha20-Poly1305 provides both confidentiality and integrity
 - **Content Independence**: Encryption keys completely independent of parameter content
 - **Forward Secrecy**: Each parameter set uses unique cryptographic keys
-- **Replay Protection**: Time-bounded sessionStorage prevents replay attacks
+- **Replay Protection**: Time-bounded IndexedDB storage prevents replay attacks
 
 #### ⚡ Performance Optimization
-- **Efficient Storage**: 8-byte keys minimize sessionStorage overhead
-- **Automatic Cleanup**: FIFO rotation prevents storage bloat
+- **Efficient Storage**: 8-byte keys minimize IndexedDB overhead with optimal indexing
+- **Automatic Cleanup**: FIFO rotation prevents storage bloat across sessions
 - **Fast Crypto**: ChaCha20-Poly1305 optimized for modern web browsers
+- **Cross-Tab Performance**: Shared IndexedDB eliminates duplicate storage overhead
 - **Minimal Overhead**: URL encryption adds negligible performance impact
 
 ### Backward Compatibility
@@ -399,7 +401,12 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
   - `encryptUrlParams()` / `decryptUrlParams()`: Core AEAD encryption/decryption
   - `createEncryptedUrl()`: High-level URL generation for navigation
   - `parseNextUrl()` / `encryptNextUrl()`: Backend response processing
-  - `storePrehashSeed()` / `getPrehashSeed()`: FIFO sessionStorage management
+  - `storePrehashSeed()` / `getPrehashSeed()`: FIFO IndexedDB management
+- **web/src/lib/session-manager.ts**: Unified IndexedDB session management (NEW)
+  - `SessionManager`: Enterprise-grade session storage with cross-tab synchronization
+  - `addPrehashSeed()` / `getPrehashSeed()`: FIFO prehashseed management
+  - `storeAuthTokens()` / `getAuthTokens()`: Secure auth token persistence
+  - `storeCryptoTokens()` / `getCryptoTokens()`: Crypto key management
 - **web/src/routes/+layout.svelte**: Magic link next parameter encryption
 - **web/src/routes/{custom,password,api-key,mnemonic}/+page.svelte**: Route-specific encryption/decryption
 - **web/src/routes/result/+page.svelte**: Result page parameter processing and return URL generation

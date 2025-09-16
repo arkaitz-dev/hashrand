@@ -544,14 +544,14 @@ test_api "Request magic link with valid email" \
     "200" \
     "" \
     "POST" \
-    "$(generate_ed25519_payload \"arkaitzmugica@protonmail.com\")"
+    "$(generate_ed25519_payload "arkaitzmugica@protonmail.com")"
 
 test_api "Request magic link with invalid email format" \
     "$BASE_URL/api/login/" \
     "400" \
     "" \
     "POST" \
-    "$(generate_ed25519_payload \"invalid-email\")"
+    "$(generate_ed25519_payload "invalid-email")"
 
 test_api "Request magic link with missing email" \
     "$BASE_URL/api/login/" \

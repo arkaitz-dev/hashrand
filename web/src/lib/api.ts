@@ -18,43 +18,31 @@ import { getOrCreateKeyPair, signMessage, publicKeyToHex } from './ed25519';
 
 const API_BASE = '/api';
 
-// Helper function to check if crypto tokens exist (DRY)
-function hasCryptoTokens(): boolean {
+// Helper function to check if crypto tokens exist in IndexedDB (DRY)
+async function hasCryptoTokens(): Promise<boolean> {
 	if (typeof window === 'undefined') return false;
 
-	// Check for new combined crypto_tokens format
-	const cryptoTokens = sessionStorage.getItem('crypto_tokens');
-	if (cryptoTokens) {
-		try {
-			const tokens = JSON.parse(cryptoTokens);
-			return !!(tokens.cipher && tokens.nonce && tokens.hmacKey);
-		} catch {
-			return false;
-		}
+	try {
+		const { sessionManager } = await import('./session-manager');
+		return await sessionManager.hasCryptoTokens();
+	} catch {
+		return false;
 	}
-
-	// Fallback: check for legacy individual tokens (backward compatibility)
-	return !!(
-		sessionStorage.getItem('cipher_token') &&
-		sessionStorage.getItem('nonce_token') &&
-		sessionStorage.getItem('hmac_key')
-	);
 }
 
 // Helper function to get authentication headers
 async function getAuthHeaders(): Promise<Record<string, string>> {
-	const authStore = sessionStorage.getItem('auth_user');
-	const accessToken = sessionStorage.getItem('access_token');
-
-	if (!authStore || !accessToken) {
-		return {};
-	}
-
 	try {
-		// NOTE: No time-based validation here - let backend decide and handle 401 with refresh
+		const { sessionManager } = await import('./session-manager');
+		const authData = await sessionManager.getAuthData();
 
+		if (!authData.user || !authData.access_token) {
+			return {};
+		}
+
+		// NOTE: No time-based validation here - let backend decide and handle 401 with refresh
 		return {
-			Authorization: `Bearer ${accessToken}`
+			Authorization: `Bearer ${authData.access_token}`
 		};
 	} catch {
 		return {};
@@ -94,13 +82,13 @@ async function handleDualTokenExpiry(): Promise<void> {
 	const { authStore } = await import('./stores/auth');
 	const { dialogStore } = await import('./stores/dialog');
 
-	// Complete logout with sessionStorage cleanup
+	// Complete logout with ALL IndexedDB cleanup
 	await authStore.logout();
 
 	// Clear all crypto tokens and auth data (defensive security)
-	authStore.clearPreventiveAuthData();
+	await authStore.clearPreventiveAuthData();
 
-	// Clear sessionStorage completely for dual expiry case
+	// Clear remaining sessionStorage (if any legacy data exists)
 	if (typeof window !== 'undefined') {
 		sessionStorage.clear();
 	}
@@ -120,15 +108,19 @@ async function handleProactiveTokenRenewal(response: Response): Promise<void> {
 	if (newAccessToken && newExpiresIn) {
 		console.log('🔄 Proactive token renewal detected, updating tokens...');
 
-		// Update access token in sessionStorage
-		sessionStorage.setItem('access_token', newAccessToken);
-
-		// Update crypto tokens if we have them (they may need regeneration)
-		if (hasCryptoTokens()) {
-			const { authStore } = await import('./stores/auth');
-			// Regenerate crypto tokens to ensure they stay fresh
-			authStore.generateCryptoTokens();
+		// Update access token in IndexedDB
+		try {
+			const { sessionManager } = await import('./session-manager');
+			const authData = await sessionManager.getAuthData();
+			if (authData.user) {
+				await sessionManager.setAuthData(authData.user, newAccessToken);
+			}
+		} catch (error) {
+			console.warn('Failed to update access token during proactive renewal:', error);
 		}
+
+		// NOTE: Crypto tokens are NOT regenerated during proactive renewal
+		// They remain stable throughout the session for URL parameter encryption consistency
 
 		console.log('✅ Proactive token renewal completed transparently');
 	}
@@ -409,7 +401,25 @@ export const api = {
 	},
 
 	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
-		const response = await fetch(`${API_BASE}/login/?magiclink=${encodeURIComponent(magicToken)}`);
+		// Generate or retrieve Ed25519 keypair
+		const keyPair = await getOrCreateKeyPair();
+
+		// Sign the magic link token itself for verification
+		const signature = await signMessage(magicToken, keyPair.privateKey);
+
+		// Create request body with magic link and signature
+		const validationRequest = {
+			magiclink: magicToken,
+			signature
+		};
+
+		const response = await fetch(`${API_BASE}/login/magiclink/`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(validationRequest)
+		});
 
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;
@@ -421,15 +431,14 @@ export const api = {
 	},
 
 	async checkAuthStatus(): Promise<boolean> {
-		// Check if we have both user info and access token in sessionStorage
-		const authStore = sessionStorage.getItem('auth_user');
-		const accessToken = sessionStorage.getItem('access_token');
-
-		if (!authStore || !accessToken) return false;
-
+		// Check if we have both user info and access token in IndexedDB
 		try {
-			const user = JSON.parse(authStore);
-			return user.isAuthenticated && !!user.user_id;
+			const { sessionManager } = await import('./session-manager');
+			const authData = await sessionManager.getAuthData();
+
+			if (!authData.user || !authData.access_token) return false;
+
+			return authData.user.isAuthenticated && !!authData.user.user_id;
 		} catch {
 			return false;
 		}
@@ -483,11 +492,11 @@ export const api = {
 					isAuthenticated: true
 				};
 
-				// Update store and sessionStorage
+				// Update store and IndexedDB
 				authStore.updateTokens(user, data.access_token);
 
 				// Generate crypto tokens if they don't exist (new tab scenario)
-				if (!hasCryptoTokens()) {
+				if (!(await hasCryptoTokens())) {
 					authStore.generateCryptoTokens();
 				}
 

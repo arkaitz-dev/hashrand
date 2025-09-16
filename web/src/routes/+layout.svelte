@@ -62,7 +62,7 @@
 
 				if (cipherToken && nonceToken && hmacKey) {
 					// Encrypt parameters in next URL for privacy
-					const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
+					const encryptedNextUrl = await encryptNextUrl(loginResponse.next, {
 						cipherToken,
 						nonceToken,
 						hmacKey

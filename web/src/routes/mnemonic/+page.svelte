@@ -145,7 +145,7 @@
 		proceedWithGeneration();
 	}
 
-	function proceedWithGeneration() {
+	async function proceedWithGeneration() {
 		// Create parameters object for result page
 		const resultParams: Record<string, any> = {
 			endpoint: 'mnemonic',
@@ -163,7 +163,7 @@
 
 		if (cipherToken && nonceToken && hmacKey) {
 			// Create encrypted URL for privacy
-			const encryptedUrl = createEncryptedUrl('/result', resultParams, {
+			const encryptedUrl = await createEncryptedUrl('/result', resultParams, {
 				cipherToken,
 				nonceToken,
 				hmacKey

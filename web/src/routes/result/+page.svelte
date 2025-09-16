@@ -362,7 +362,7 @@
 
 		// If there's no seed, go directly without dialog
 		if (!$resultState.seed) {
-			goto(getPreviousPath());
+			goto(await getPreviousPath());
 			return;
 		}
 
@@ -370,18 +370,18 @@
 		dialogStore.show('seed', { onSeedChoice: handleSeedChoice });
 	}
 
-	function handleSeedChoice(reuseExistingSeed: boolean) {
+	async function handleSeedChoice(reuseExistingSeed: boolean) {
 		dialogStore.close();
 		if (reuseExistingSeed) {
 			// Include seed in the URL parameters
-			goto(getPreviousPathWithSeed());
+			goto(await getPreviousPathWithSeed());
 		} else {
 			// Don't include seed in URL parameters
-			goto(getPreviousPath());
+			goto(await getPreviousPath());
 		}
 	}
 
-	function getPreviousPathWithSeed(): string {
+	async function getPreviousPathWithSeed(): Promise<string> {
 		if (!$resultState) return '/';
 
 		// Map endpoint names to actual route paths
@@ -436,7 +436,7 @@
 
 			if (cipherToken && nonceToken && hmacKey && Object.keys(configParams).length > 0) {
 				// Create encrypted URL for privacy
-				return createEncryptedUrl(basePath, configParams, {
+				return await createEncryptedUrl(basePath, configParams, {
 					cipherToken,
 					nonceToken,
 					hmacKey
@@ -454,7 +454,7 @@
 		return basePath;
 	}
 
-	function getPreviousPath(): string {
+	async function getPreviousPath(): Promise<string> {
 		if (!$resultState) return '/';
 
 		// Map endpoint names to actual route paths
@@ -504,7 +504,7 @@
 
 			if (cipherToken && nonceToken && hmacKey && Object.keys(configParams).length > 0) {
 				// Create encrypted URL for privacy
-				return createEncryptedUrl(basePath, configParams, {
+				return await createEncryptedUrl(basePath, configParams, {
 					cipherToken,
 					nonceToken,
 					hmacKey

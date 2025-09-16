@@ -15,6 +15,10 @@ interface AuthState {
 	isRefreshing: boolean;
 	error: string | null;
 	accessToken: string | null;
+	// Cache for crypto tokens (synced with IndexedDB)
+	cipherToken: string | null;
+	nonceToken: string | null;
+	hmacKey: string | null;
 }
 
 const initialState: AuthState = {
@@ -22,49 +26,52 @@ const initialState: AuthState = {
 	isLoading: false,
 	isRefreshing: false,
 	error: null,
-	accessToken: null
+	accessToken: null,
+	cipherToken: null,
+	nonceToken: null,
+	hmacKey: null
 };
 
 // Create the main auth store
 const { subscribe, set, update } = writable<AuthState>(initialState);
 
 /**
- * Load authentication state from sessionStorage on initialization
+ * Load authentication state from IndexedDB on initialization
  */
-function loadAuthFromStorage(): void {
+async function loadAuthFromStorage(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		const storedAuth = sessionStorage.getItem('auth_user');
-		const storedToken = sessionStorage.getItem('access_token');
+		const { sessionManager } = await import('../session-manager');
+		const authData = await sessionManager.getAuthData();
+		const cryptoTokens = await sessionManager.getCryptoTokens();
 
-		if (storedAuth && storedToken) {
-			const user = JSON.parse(storedAuth);
-
-			// Load user without expiration check (backend handles expiration)
-			update((state) => ({
-				...state,
-				user,
-				accessToken: storedToken
-			}));
-		}
+		// Update store with all data from IndexedDB
+		update((state) => ({
+			...state,
+			user: authData.user,
+			accessToken: authData.access_token,
+			cipherToken: cryptoTokens.cipher,
+			nonceToken: cryptoTokens.nonce,
+			hmacKey: cryptoTokens.hmac
+		}));
 	} catch (error) {
-		console.warn('Failed to load auth from storage:', error);
-		clearSensitiveAuthData();
+		console.warn('Failed to load auth from IndexedDB:', error);
+		await clearSensitiveAuthData();
 	}
 }
 
 /**
- * Save authentication state to sessionStorage
+ * Save authentication state to IndexedDB
  */
-function saveAuthToStorage(user: AuthUser, accessToken: string): void {
+async function saveAuthToStorage(user: AuthUser, accessToken: string): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		sessionStorage.setItem('auth_user', JSON.stringify(user));
-		sessionStorage.setItem('access_token', accessToken);
+		const { sessionManager } = await import('../session-manager');
+		await sessionManager.setAuthData(user, accessToken);
 	} catch (error) {
-		console.warn('Failed to save auth to storage:', error);
+		console.warn('Failed to save auth to IndexedDB:', error);
 	}
 }
 
@@ -72,62 +79,85 @@ function saveAuthToStorage(user: AuthUser, accessToken: string): void {
  * Clear ALL authentication data preventively (before asking for email)
  * Preserves only user preferences (language, theme) for UX
  */
-function clearPreventiveAuthData(): void {
+async function clearPreventiveAuthData(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
-	// Clear ALL sessionStorage - authentication and crypto data
-	sessionStorage.removeItem('auth_user');
-	sessionStorage.removeItem('access_token');
-	sessionStorage.removeItem('cipher_token');
-	sessionStorage.removeItem('nonce_token');
-	sessionStorage.removeItem('hmac_key');
-	sessionStorage.removeItem('prehashseeds');
+	try {
+		// Clear ALL IndexedDB session data
+		const { sessionManager } = await import('../session-manager');
+		await sessionManager.clearSession();
 
-	// Clear ALL localStorage - including sensitive auth data from previous sessions
-	localStorage.removeItem('magiclink_hash');
-	localStorage.removeItem('pending_auth_email');
+		// Clear cache in store
+		update((state) => ({
+			...state,
+			user: null,
+			accessToken: null,
+			cipherToken: null,
+			nonceToken: null,
+			hmacKey: null
+		}));
 
-	// Preserve user preferences for UX (language and theme are kept)
+		// Clear ALL localStorage - including sensitive auth data from previous sessions
+		localStorage.removeItem('magiclink_hash');
+		localStorage.removeItem('pending_auth_email');
+
+		// Preserve user preferences for UX (language and theme are kept)
+	} catch (error) {
+		console.warn('Failed to clear preventive auth data from IndexedDB:', error);
+	}
 }
 
 /**
  * Clear sensitive authentication data only (for token expiration/errors)
  */
-function clearSensitiveAuthData(): void {
+async function clearSensitiveAuthData(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
-	// Clear sessionStorage - authentication and crypto data
-	sessionStorage.removeItem('auth_user');
-	sessionStorage.removeItem('access_token');
-	sessionStorage.removeItem('cipher_token');
-	sessionStorage.removeItem('nonce_token');
-	sessionStorage.removeItem('hmac_key');
-	sessionStorage.removeItem('prehashseeds');
+	try {
+		// Clear IndexedDB session data
+		const { sessionManager } = await import('../session-manager');
+		await sessionManager.clearSession();
 
-	// Clear localStorage - sensitive authentication data
-	localStorage.removeItem('magiclink_hash');
-	// Note: pending_auth_email is cleared immediately on successful auth,
-	// not here, to preserve ongoing magic link flows during token errors
+		// Clear cache in store
+		update((state) => ({
+			...state,
+			user: null,
+			accessToken: null,
+			cipherToken: null,
+			nonceToken: null,
+			hmacKey: null
+		}));
+
+		// Clear localStorage - sensitive authentication data
+		localStorage.removeItem('magiclink_hash');
+		// Note: pending_auth_email is cleared immediately on successful auth,
+		// not here, to preserve ongoing magic link flows during token errors
+	} catch (error) {
+		console.warn('Failed to clear sensitive auth data from IndexedDB:', error);
+	}
 }
 
 /**
  * Clear ALL data including user preferences (for explicit logout)
  */
-function clearAuthFromStorage(): void {
+async function clearAuthFromStorage(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	// Clear sensitive auth data first
-	clearSensitiveAuthData();
+	await clearSensitiveAuthData();
 
 	// Clear user preferences for maximum security on logout
 	localStorage.removeItem('preferred-language');
 	localStorage.removeItem('theme');
+
+	// Reset store to initial state
+	set(initialState);
 }
 
 /**
  * Generate cryptographically secure cipher, nonce and HMAC key tokens
  */
-function generateCryptoTokens(): void {
+async function generateCryptoTokens(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
@@ -145,9 +175,17 @@ function generateCryptoTokens(): void {
 		const nonceB64 = btoa(String.fromCharCode(...nonceToken));
 		const hmacB64 = btoa(String.fromCharCode(...hmacToken));
 
-		sessionStorage.setItem('cipher_token', cipherB64);
-		sessionStorage.setItem('nonce_token', nonceB64);
-		sessionStorage.setItem('hmac_key', hmacB64);
+		// Store in IndexedDB
+		const { sessionManager } = await import('../session-manager');
+		await sessionManager.setCryptoTokens(cipherB64, nonceB64, hmacB64);
+
+		// Update cache in store
+		update((state) => ({
+			...state,
+			cipherToken: cipherB64,
+			nonceToken: nonceB64,
+			hmacKey: hmacB64
+		}));
 
 		// Show tokens in flash messages for debugging
 		import('./flashMessages').then(({ flashMessagesStore }) => {
@@ -163,28 +201,18 @@ function generateCryptoTokens(): void {
 }
 
 /**
- * Check if crypto tokens exist in sessionStorage
+ * Check if crypto tokens exist in IndexedDB
  */
-function hasCryptoTokens(): boolean {
+async function hasCryptoTokens(): Promise<boolean> {
 	if (typeof window === 'undefined') return false;
 
-	// Check for new combined crypto_tokens format
-	const cryptoTokens = sessionStorage.getItem('crypto_tokens');
-	if (cryptoTokens) {
-		try {
-			const tokens = JSON.parse(cryptoTokens);
-			return !!(tokens.cipher && tokens.nonce && tokens.hmacKey);
-		} catch {
-			return false;
-		}
+	try {
+		const { sessionManager } = await import('../session-manager');
+		return await sessionManager.hasCryptoTokens();
+	} catch (error) {
+		console.warn('Failed to check crypto tokens in IndexedDB:', error);
+		return false;
 	}
-
-	// Fallback: check for legacy individual tokens (backward compatibility)
-	return !!(
-		sessionStorage.getItem('cipher_token') &&
-		sessionStorage.getItem('nonce_token') &&
-		sessionStorage.getItem('hmac_key')
-	);
 }
 
 /**
@@ -213,11 +241,15 @@ export const authStore = {
 	subscribe,
 
 	/**
-	 * Initialize the auth store by loading from sessionStorage
+	 * Initialize the auth store by loading from IndexedDB
 	 */
 	async init(): Promise<void> {
+		// Initialize SessionManager (with automatic migration from sessionStorage)
+		const { sessionManager } = await import('../session-manager');
+		await sessionManager.init();
+
 		// Load existing session data
-		loadAuthFromStorage();
+		await loadAuthFromStorage();
 
 		// Only check if we need to refresh session for existing users
 		// but don't generate crypto tokens here
@@ -230,13 +262,13 @@ export const authStore = {
 	async checkSessionValidity(): Promise<void> {
 		// If we have access token but no crypto tokens, something might be wrong
 		const state = get(authStore);
-		if (state.accessToken && !hasCryptoTokens()) {
+		if (state.accessToken && !(await hasCryptoTokens())) {
 			// Check if refresh cookie is still valid
 			const hasValidCookie = await hasValidRefreshCookie();
 
 			if (!hasValidCookie) {
 				// Refresh cookie expired/invalid, clear sensitive data
-				clearSensitiveAuthData();
+				await clearSensitiveAuthData();
 			}
 			// If valid cookie exists, crypto tokens will be generated on next API call via refresh
 		}
@@ -245,8 +277,8 @@ export const authStore = {
 	/**
 	 * Generate crypto tokens - only called after successful login/refresh
 	 */
-	generateCryptoTokens(): void {
-		generateCryptoTokens();
+	async generateCryptoTokens(): Promise<void> {
+		await generateCryptoTokens();
 	},
 
 	/**
@@ -254,22 +286,21 @@ export const authStore = {
 	 * Returns true if authenticated (or after successful refresh), false if needs login
 	 */
 	async ensureAuthenticated(): Promise<boolean> {
-		// Check if we already have access token in sessionStorage
-		const hasToken = typeof window !== 'undefined' && sessionStorage.getItem('access_token');
-		const hasUser = typeof window !== 'undefined' && sessionStorage.getItem('auth_user');
+		// Check if we already have access token in IndexedDB
+		try {
+			const { sessionManager } = await import('../session-manager');
+			const authData = await sessionManager.getAuthData();
 
-		if (hasToken && hasUser) {
-			// We have tokens - backend will validate expiration
-			try {
-				const user = JSON.parse(hasUser);
-				if (user.isAuthenticated && user.user_id) {
+			if (authData.access_token && authData.user) {
+				// We have tokens - backend will validate expiration
+				if (authData.user.isAuthenticated && authData.user.user_id) {
 					return true; // Valid session exists - NO refresh needed
 				}
-			} catch (error) {
-				console.warn('Failed to parse user data from sessionStorage:', error);
-				// Clear invalid data and continue to refresh
-				clearSensitiveAuthData();
 			}
+		} catch (error) {
+			console.warn('Failed to load auth data from IndexedDB:', error);
+			// Clear invalid data and continue to refresh
+			await clearSensitiveAuthData();
 		}
 
 		// No valid access token in sessionStorage, try to refresh using cookie
@@ -358,8 +389,8 @@ export const authStore = {
 				error: null
 			}));
 
-			// Save to sessionStorage
-			saveAuthToStorage(user, loginResponse.access_token);
+			// Save to IndexedDB
+			await saveAuthToStorage(user, loginResponse.access_token);
 
 			// Generate crypto tokens ONLY if they don't exist yet
 			if (!hasCryptoTokens()) {
@@ -411,33 +442,33 @@ export const authStore = {
 	},
 
 	/**
-	 * Get cipher token from sessionStorage
+	 * Get cipher token from cache (synced with IndexedDB)
 	 *
 	 * @returns string | null
 	 */
 	getCipherToken(): string | null {
-		if (typeof window === 'undefined') return null;
-		return sessionStorage.getItem('cipher_token');
+		const state = get(authStore);
+		return state.cipherToken;
 	},
 
 	/**
-	 * Get nonce token from sessionStorage
+	 * Get nonce token from cache (synced with IndexedDB)
 	 *
 	 * @returns string | null
 	 */
 	getNonceToken(): string | null {
-		if (typeof window === 'undefined') return null;
-		return sessionStorage.getItem('nonce_token');
+		const state = get(authStore);
+		return state.nonceToken;
 	},
 
 	/**
-	 * Get HMAC key from sessionStorage
+	 * Get HMAC key from cache (synced with IndexedDB)
 	 *
 	 * @returns string | null
 	 */
 	getHmacKey(): string | null {
-		if (typeof window === 'undefined') return null;
-		return sessionStorage.getItem('hmac_key');
+		const state = get(authStore);
+		return state.hmacKey;
 	},
 
 	/**
@@ -455,9 +486,17 @@ export const authStore = {
 			console.warn('Failed to clear Ed25519 keypairs:', error);
 		}
 
-		// Clear local state and storage
+		// Clear ALL IndexedDB session data
+		try {
+			const { sessionManager } = await import('../session-manager');
+			await sessionManager.clearSession();
+		} catch (error) {
+			console.warn('Failed to clear IndexedDB session:', error);
+		}
+
+		// Clear local state and remaining storage
 		set(initialState);
-		clearAuthFromStorage();
+		await clearAuthFromStorage();
 	},
 
 	/**
@@ -478,7 +517,10 @@ export const authStore = {
 			error: null
 		}));
 
-		saveAuthToStorage(user, accessToken);
+		// Save to IndexedDB asynchronously (no await to maintain sync interface)
+		saveAuthToStorage(user, accessToken).catch((error) => {
+			console.warn('Failed to save auth tokens to IndexedDB:', error);
+		});
 
 		// Clear pending auth email - no longer needed after successful token update
 		if (typeof window !== 'undefined') {
@@ -490,8 +532,8 @@ export const authStore = {
 	 * Clear all authentication data preventively before showing login dialog
 	 * Ensures clean state regardless of how previous session ended
 	 */
-	clearPreventiveAuthData(): void {
-		clearPreventiveAuthData();
+	async clearPreventiveAuthData(): Promise<void> {
+		await clearPreventiveAuthData();
 	}
 };
 
