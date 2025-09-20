@@ -4,6 +4,7 @@ pub mod from_seed;
 pub mod login;
 pub mod mnemonic;
 pub mod password;
+pub mod payloads;
 pub mod users;
 pub mod version;
 
@@ -13,5 +14,6 @@ pub use from_seed::handle_from_seed;
 pub use login::handle_login;
 pub use mnemonic::handle_mnemonic_request;
 pub use password::handle_password_request;
+pub use payloads::{CustomPayload, PasswordPayload, ApiKeyPayload, MnemonicPayload, FromSeedPayload};
 pub use users::handle_users;
 pub use version::handle_version;

@@ -2,7 +2,10 @@ use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
     validate_length, validate_prefix_suffix, validate_seed_string,
+    ProtectedEndpointMiddleware, ProtectedEndpointResult,
 };
+use crate::utils::protected_endpoint_middleware::{payload_to_params, extract_seed_from_payload};
+use crate::utils::auth::ErrorResponse;
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -49,10 +52,10 @@ fn generate_avoiding_unwanted_patterns(
 }
 
 /// Handles the /api/custom endpoint for customizable hash generation
-pub fn handle_custom_request(req: Request) -> anyhow::Result<Response> {
+pub async fn handle_custom_request(req: Request) -> anyhow::Result<Response> {
     match req.method() {
         Method::Get => handle_custom_get(req),
-        Method::Post => handle_custom_post(req),
+        Method::Post => handle_custom_post_signed(req).await,
         _ => Ok(Response::builder()
             .status(405)
             .header("content-type", "text/plain")
@@ -83,6 +86,39 @@ pub fn handle_custom_get(req: Request) -> anyhow::Result<Response> {
         .collect();
 
     handle_custom_with_params(params, None)
+}
+
+/// Handle POST requests with signed request validation (UNIVERSAL)
+pub async fn handle_custom_post_signed(req: Request) -> anyhow::Result<Response> {
+    let body_bytes = req.body();
+
+    // Validate signed request and extract payload (UNIVERSAL)
+    let result: ProtectedEndpointResult<serde_json::Value> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+        Ok(result) => result,
+        Err(error_response) => return Ok(error_response),
+    };
+
+    println!("✅ Custom endpoint: validated signed request for user {}", result.user_id);
+
+    // Convert payload to parameter map using UNIVERSAL function
+    let params = payload_to_params(&result.payload);
+
+    // Extract seed using UNIVERSAL function
+    let provided_seed = match extract_seed_from_payload(&result.payload) {
+        Ok(seed) => seed,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: e,
+                })?)
+                .build());
+        }
+    };
+
+    // Use existing business logic
+    handle_custom_with_params(params, provided_seed)
 }
 
 /// Handle POST requests (use provided seed)

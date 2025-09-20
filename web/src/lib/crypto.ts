@@ -218,6 +218,8 @@ export async function encryptUrlParams(
 	nonceToken: string,
 	hmacKey: string
 ): Promise<{ p: string }> {
+	// Starting URL parameter encryption
+
 	// 1. Add crypto salt to parameters for noise
 	const salt = generateCryptoSalt();
 	const saltBase64 = bytesToBase64(salt);
@@ -248,9 +250,13 @@ export async function encryptUrlParams(
 	combined.set(idxBytes, 0);
 	combined.set(ciphertext, idxBytes.length);
 
-	return {
+	const result = {
 		p: bytesToBase64Url(combined)
 	};
+
+	// Parameter "p" generated successfully
+
+	return result;
 }
 
 /**
@@ -427,7 +433,7 @@ export async function decryptPageParams(
 			sessionTokens.hmacKey
 		);
 	} catch (error) {
-		console.error('Failed to decrypt URL parameters:', error);
+		// Failed to decrypt URL parameters
 		return null;
 	}
 }
@@ -449,8 +455,11 @@ export async function createEncryptedUrl(
 		hmacKey: string;
 	}
 ): Promise<string> {
+	// Processing crypto parameters
+
 	// If no parameters, return simple base path
 	if (!params || Object.keys(params).length === 0) {
+		// No parameters to encrypt
 		return basePath;
 	}
 

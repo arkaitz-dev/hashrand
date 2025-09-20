@@ -66,7 +66,18 @@ export const ja: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'セッションが期限切れになりました。',
 		close: '閉じる',
-		understand: '理解しました'
+		understand: '理解しました',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'マジックリンクの検証に失敗しました',
+		parameterDecryptionFailed: 'パラメータの復号化ができません',
+		parameterDecryptionError: 'パラメータ復号化エラー',
+		generationError: '生成エラー',
+		regenerationError: '再生成エラー',
+		pageNotFound: 'ページが見つかりません (404)',
+		serverError: 'サーバーエラー (500)',
+		clientError: 'クライアントエラー ({status})',
+		genericError: 'エラー ({status})',
+		redirectingToHome: 'ホームにリダイレクト中...'
 	},
 	menu: {
 		title: 'ハッシュ生成器',
@@ -182,6 +193,7 @@ export const ja: I18nTexts = {
 		magicLinkInstructions: 'メールをチェックして、認証用のマジックリンクをクリックしてください。',
 		magicLinkSentFlash:
 			'マジックリンクが送信されました。メールをチェックして、リンクをクリックして続行してください。',
+		magicLinkErrorFlash: 'マジックリンクの送信エラー。もう一度お試しください。',
 		developmentMode: '開発モード：',
 		testMagicLink: 'マジックリンクをテストするにはここをクリック',
 		authenticationFailed: '認証に失敗しました',

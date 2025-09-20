@@ -5,6 +5,8 @@ pub mod ed25519;
 pub mod email;
 pub mod jwt;
 pub mod jwt_middleware;
+pub mod signed_request;
+pub mod protected_endpoint_middleware;
 pub mod query;
 pub mod random_generator;
 pub mod rate_limiter;
@@ -20,6 +22,8 @@ pub use random_generator::{
 };
 pub use rate_limiter::{check_rate_limit, extract_client_ip, init_rate_limiter};
 pub use routing::route_request_with_req;
+pub use signed_request::{SignedRequest, SignedRequestValidator, PublicKeyExtractor, PayloadPublicKeyExtractor};
+pub use protected_endpoint_middleware::{ProtectedEndpointMiddleware, ProtectedSignedRequest, ProtectedEndpointResult};
 pub use validation::{
     validate_email, validate_length, validate_prefix_suffix, validate_seed_string,
 };

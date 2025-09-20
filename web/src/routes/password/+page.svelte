@@ -78,7 +78,13 @@
 			// Clear any residual auth data before asking for email (defensive security)
 			authStore.clearPreventiveAuthData();
 
-			dialogStore.show('auth', pendingGenerationParams);
+			const authConfig = {
+				destination: {
+					route: '/result',
+					params: pendingGenerationParams
+				}
+			};
+			dialogStore.show('auth', authConfig);
 			return;
 		}
 
@@ -103,20 +109,23 @@
 		const hmacKey = authStore.getHmacKey();
 
 		if (cipherToken && nonceToken && hmacKey) {
+			// Creating secure URL and navigating to result
+
 			// Create encrypted URL for privacy
 			const encryptedUrl = await createEncryptedUrl('/result', resultParams, {
 				cipherToken,
 				nonceToken,
 				hmacKey
 			});
+
+			// Navigating to result page with encrypted parameters
+
 			goto(encryptedUrl);
 		} else {
-			// Fallback: create traditional URL (should not happen with proper auth)
-			const urlParams = new URLSearchParams();
-			Object.entries(resultParams).forEach(([key, value]) => {
-				urlParams.set(key, String(value));
-			});
-			goto(`/result?${urlParams.toString()}`);
+			// ERROR: Crypto tokens required for secure navigation
+			// Missing crypto tokens - cannot create secure URL
+
+			goto('/'); // Return to home instead of unsecure URL
 		}
 	}
 

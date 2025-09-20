@@ -66,7 +66,18 @@ export const pt: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'Sua sessão expirou.',
 		close: 'Fechar',
-		understand: 'Eu entendo'
+		understand: 'Eu entendo',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Falha na validação do link mágico',
+		parameterDecryptionFailed: 'Não é possível descriptografar os parâmetros',
+		parameterDecryptionError: 'Erro de descriptografia de parâmetros',
+		generationError: 'Erro de geração',
+		regenerationError: 'Erro de regeneração',
+		pageNotFound: 'Página não encontrada (404)',
+		serverError: 'Erro do servidor (500)',
+		clientError: 'Erro do cliente ({status})',
+		genericError: 'Erro ({status})',
+		redirectingToHome: 'Redirecionando para o início...'
 	},
 	menu: {
 		title: 'Gerador de Hash',
@@ -178,6 +189,7 @@ export const pt: I18nTexts = {
 		magicLinkSent: 'Link Enviado!',
 		magicLinkInstructions: 'Verifique seu email e clique no link mágico para se autenticar.',
 		magicLinkSentFlash: 'Link mágico enviado. Verifique seu email e clique no link para continuar.',
+		magicLinkErrorFlash: 'Erro ao enviar link mágico. Por favor, tente novamente.',
 		developmentMode: 'Modo Desenvolvimento:',
 		testMagicLink: 'Clique aqui para testar o link mágico',
 		authenticationFailed: 'Falha na autenticação',

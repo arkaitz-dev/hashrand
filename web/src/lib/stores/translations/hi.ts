@@ -66,7 +66,18 @@ export const hi: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'आपका सत्र समाप्त हो गया है।',
 		close: 'बंद करें',
-		understand: 'मैं समझ गया'
+		understand: 'मैं समझ गया',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'मैजिक लिंक सत्यापन नहीं हुआ',
+		parameterDecryptionFailed: 'पैरामीटर डिक्रिप्ट नहीं हो सके',
+		parameterDecryptionError: 'पैरामीटर डिक्रिप्शन एरर',
+		generationError: 'जनरेशन एरर',
+		regenerationError: 'री-जनरेशन एरर',
+		pageNotFound: 'पेज नहीं मिला (404)',
+		serverError: 'सर्वर एरर (500)',
+		clientError: 'क्लाइंट एरर ({status})',
+		genericError: 'एरर ({status})',
+		redirectingToHome: 'होम पर रिडायरेक्ट हो रहे हैं...'
 	},
 	menu: {
 		title: 'हैश जनरेटर',
@@ -181,6 +192,7 @@ export const hi: I18nTexts = {
 		magicLinkInstructions: 'अपना ईमेल चेक करें और प्रमाणीकरण के लिए मैजिक लिंक पर क्लिक करें।',
 		magicLinkSentFlash:
 			'मैजिक लिंक भेजा गया। अपना ईमेल चेक करें और जारी रखने के लिए लिंक पर क्लिक करें।',
+		magicLinkErrorFlash: 'मैजिक लिंक भेजने में त्रुटि। कृपया पुनः प्रयास करें।',
 		developmentMode: 'डेवलपमेंट मोड:',
 		testMagicLink: 'मैजिक लिंक टेस्ट करने के लिए यहां क्लिक करें',
 		authenticationFailed: 'प्रमाणीकरण फेल हो गया',

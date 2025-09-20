@@ -66,7 +66,18 @@ export const en: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'Your session has expired.',
 		close: 'Close',
-		understand: 'I understand'
+		understand: 'I understand',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Magic link validation failed',
+		parameterDecryptionFailed: 'Unable to decrypt parameters',
+		parameterDecryptionError: 'Parameter decryption error',
+		generationError: 'Generation error',
+		regenerationError: 'Regeneration error',
+		pageNotFound: 'Page not found (404)',
+		serverError: 'Server error (500)',
+		clientError: 'Client error ({status})',
+		genericError: 'Error ({status})',
+		redirectingToHome: 'Redirecting to home...'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -180,6 +191,7 @@ export const en: I18nTexts = {
 		magicLinkSent: 'Link Sent!',
 		magicLinkInstructions: 'Check your email and click the magic link to authenticate.',
 		magicLinkSentFlash: 'Magic link sent. Check your email and click the link to continue.',
+		magicLinkErrorFlash: 'Error sending magic link. Please try again.',
 		developmentMode: 'Development Mode:',
 		testMagicLink: 'Click here to test magic link',
 		authenticationFailed: 'Authentication failed',

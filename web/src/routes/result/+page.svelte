@@ -50,6 +50,8 @@
 
 	// Handle result state and API calls
 	onMount(async () => {
+		// Component initialization
+
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
 		if (searchParams.size > 0) {
 			await generateFromParams();
@@ -58,18 +60,24 @@
 
 		// If no URL parameters and no result state, redirect to home
 		if (!$resultState) {
+			// Redirect to home silently
 			goto('/');
 			return;
 		}
+
+		// Using existing result state
 	});
 
 	// Function to generate result from URL parameters
 	async function generateFromParams() {
+
 		// Verify auth is available with automatic refresh if needed
 		const { authStore } = await import('$lib/stores/auth');
 		const isAuthenticated = await authStore.ensureAuthenticated();
 
+
 		if (!isAuthenticated) {
+			// Not authenticated, redirecting to home
 			goto('/');
 			return;
 		}
@@ -82,15 +90,28 @@
 		const nonceToken = authStore.getNonceToken();
 		const hmacKey = authStore.getHmacKey();
 
-		if (cipherToken && nonceToken && hmacKey) {
-			const decryptedParams = decryptPageParams(searchParams, {
-				cipherToken,
-				nonceToken,
-				hmacKey
-			});
+		// Check crypto token availability
 
-			if (decryptedParams) {
-				urlParams = decryptedParams;
+		if (cipherToken && nonceToken && hmacKey) {
+			try {
+				const decryptedParams = await decryptPageParams(searchParams, {
+					cipherToken,
+					nonceToken,
+					hmacKey
+				});
+
+
+				if (decryptedParams) {
+					urlParams = decryptedParams;
+				} else {
+					// Failed to decrypt parameters - redirect to home
+					goto('/');
+					return;
+				}
+			} catch (decryptError) {
+				// Error during decryption - redirect to home
+				goto('/');
+				return;
 			}
 		}
 
@@ -99,7 +120,9 @@
 
 		// Extract and validate endpoint
 		const endpoint = String(urlParams.endpoint || '');
+
 		if (!endpoint) {
+			// No valid endpoint, redirecting to home
 			goto('/');
 			return;
 		}
@@ -213,17 +236,14 @@
 				timestamp: responseTimestamp
 			});
 		} catch (error) {
-			// Check if it's a session expiration (401 Unauthorized)
-			if (error instanceof Error && error.message.includes('401')) {
-				// Session expired - redirect to home with flash message
-				flashMessagesStore.addMessage($_('common.sessionExpired'));
-				await goto('/');
-				return;
-			}
-
+			// For ANY error, redirect to home with flash message as requested
 			const errorMsg = error instanceof Error ? error.message : $_('common.failedToGenerate');
-			flashMessagesStore.addMessage(`❌ Error en generación: ${errorMsg}`);
-			setError(errorMsg);
+
+			// Handle API generation errors
+
+			// Always redirect to home on errors
+			await goto('/');
+			return;
 		} finally {
 			setLoading(false);
 		}
@@ -242,7 +262,6 @@
 				copySuccess = false;
 			}, 2000);
 		} catch (err) {
-			console.error('Failed to copy:', err);
 			// Fallback for older browsers
 			try {
 				const textArea = document.createElement('textarea');
@@ -257,7 +276,6 @@
 					copySuccess = false;
 				}, 2000);
 			} catch (fallbackErr) {
-				console.error('Fallback copy failed:', fallbackErr);
 			}
 		}
 	}
@@ -395,7 +413,7 @@
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
 
-		// Build parameters object including seed
+
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
 			const configParams: Record<string, any> = {};
 
@@ -429,6 +447,7 @@
 				configParams.seed = $resultState.seed;
 			}
 
+
 			// Get crypto tokens for parameter encryption
 			const cipherToken = authStore.getCipherToken();
 			const nonceToken = authStore.getNonceToken();
@@ -436,11 +455,13 @@
 
 			if (cipherToken && nonceToken && hmacKey && Object.keys(configParams).length > 0) {
 				// Create encrypted URL for privacy
-				return await createEncryptedUrl(basePath, configParams, {
+				const encryptedUrl = await createEncryptedUrl(basePath, configParams, {
 					cipherToken,
 					nonceToken,
 					hmacKey
 				});
+
+				return encryptedUrl;
 			} else if (Object.keys(configParams).length > 0) {
 				// Fallback: create traditional URL
 				const urlParams = new URLSearchParams();
@@ -575,15 +596,14 @@
 			// Reset copy success state
 			copySuccess = false;
 		} catch (error) {
-			// Check if it's a session expiration (401 Unauthorized)
-			if (error instanceof Error && error.message.includes('401')) {
-				// Session expired - redirect to home with flash message
-				flashMessagesStore.addMessage($_('common.sessionExpired'));
-				await goto('/');
-				return;
-			}
+			// For ANY error, redirect to home with flash message as requested
+			const errorMsg = error instanceof Error ? error.message : $_('common.failedToRegenerate');
 
-			setError(error instanceof Error ? error.message : $_('common.failedToRegenerate'));
+			// Handle API regeneration errors
+
+			// Always redirect to home on errors
+			await goto('/');
+			return;
 		} finally {
 			setLoading(false);
 		}

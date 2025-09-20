@@ -65,7 +65,18 @@ export const zh: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: '您的会话已过期。',
 		close: '关闭',
-		understand: '我明白了'
+		understand: '我明白了',
+		// Error messages for user notifications
+		magicLinkValidationFailed: '魔术链接验证失败',
+		parameterDecryptionFailed: '无法解密参数',
+		parameterDecryptionError: '参数解密错误',
+		generationError: '生成错误',
+		regenerationError: '重新生成错误',
+		pageNotFound: '页面未找到 (404)',
+		serverError: '服务器错误 (500)',
+		clientError: '客户端错误 ({status})',
+		genericError: '错误 ({status})',
+		redirectingToHome: '正在重定向到主页...'
 	},
 	menu: {
 		title: '哈希生成器',
@@ -173,6 +184,7 @@ export const zh: I18nTexts = {
 		magicLinkSent: '链接已发送！',
 		magicLinkInstructions: '检查您的邮箱并点击魔法链接进行身份验证。',
 		magicLinkSentFlash: '已发送魔法链接。请检查您的邮件并点击链接以继续。',
+		magicLinkErrorFlash: '发送魔法链接时出错。请重试。',
 		developmentMode: '开发模式：',
 		testMagicLink: '点击这里测试魔法链接',
 		authenticationFailed: '身份验证失败',

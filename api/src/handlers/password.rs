@@ -2,7 +2,10 @@ use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
     validate_length, validate_seed_string,
+    ProtectedEndpointMiddleware, ProtectedEndpointResult,
 };
+use crate::utils::auth::ErrorResponse;
+use crate::utils::protected_endpoint_middleware::{payload_to_params, extract_seed_from_payload};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -13,10 +16,10 @@ fn contains_unwanted_patterns(s: &str) -> bool {
 }
 
 /// Handle password requests (both GET and POST)
-pub fn handle_password_request(req: Request) -> anyhow::Result<Response> {
+pub async fn handle_password_request(req: Request) -> anyhow::Result<Response> {
     match req.method() {
         Method::Get => handle_password_get(req),
-        Method::Post => handle_password_post(req),
+        Method::Post => handle_password_post_signed(req).await,
         _ => Ok(Response::builder()
             .status(405)
             .header("content-type", "text/plain")
@@ -33,7 +36,40 @@ fn handle_password_get(req: Request) -> anyhow::Result<Response> {
     handle_password(params)
 }
 
-/// Handle POST request for password generation with seed
+/// Handle POST requests with signed request validation (UNIVERSAL)
+pub async fn handle_password_post_signed(req: Request) -> anyhow::Result<Response> {
+    let body_bytes = req.body();
+
+    // Validate signed request and extract payload (UNIVERSAL)
+    let result: ProtectedEndpointResult<serde_json::Value> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+        Ok(result) => result,
+        Err(error_response) => return Ok(error_response),
+    };
+
+    println!("✅ Password endpoint: validated signed request for user {}", result.user_id);
+
+    // Convert payload to parameter map using UNIVERSAL function
+    let params = payload_to_params(&result.payload);
+
+    // Extract seed using UNIVERSAL function
+    let provided_seed = match extract_seed_from_payload(&result.payload) {
+        Ok(seed) => seed,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: e,
+                })?)
+                .build());
+        }
+    };
+
+    // Use existing business logic
+    handle_password_with_params(params, provided_seed)
+}
+
+/// Handle POST request for password generation with seed (LEGACY)
 fn handle_password_post(req: Request) -> anyhow::Result<Response> {
     let body = req.body();
     let json_str = String::from_utf8(body.to_vec())
@@ -60,20 +96,20 @@ fn handle_password_post(req: Request) -> anyhow::Result<Response> {
         params.insert("alphabet".to_string(), alphabet.to_string());
     }
 
-    handle_password_with_seed(params, seed_32)
+    handle_password_with_params(params, Some(seed_32))
 }
 
 /// Handles the /api/password endpoint for secure password generation
 fn handle_password(params: HashMap<String, String>) -> anyhow::Result<Response> {
     // Generate random 32-byte seed
     let seed_32 = generate_random_seed();
-    handle_password_with_seed(params, seed_32)
+    handle_password_with_params(params, Some(seed_32))
 }
 
-/// Handle password generation with provided seed
-fn handle_password_with_seed(
+/// Core logic for handling password generation
+fn handle_password_with_params(
     params: HashMap<String, String>,
-    seed_32: [u8; 32],
+    provided_seed: Option<[u8; 32]>,
 ) -> anyhow::Result<Response> {
     let alphabet_type = params
         .get("alphabet")
@@ -106,6 +142,8 @@ fn handle_password_with_seed(
             .build());
     }
 
+    // Use provided seed or generate random one
+    let seed_32 = provided_seed.unwrap_or_else(generate_random_seed);
     let seed_base58 = seed_to_base58(&seed_32);
 
     // Generate password using seeded generator with unwanted pattern avoidance

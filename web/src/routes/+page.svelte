@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { navigationItems } from '$lib/stores/navigation';
 	import { clearResult } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
@@ -12,6 +13,25 @@
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
+
+		// Validate that home route only accepts 'magiclink' parameter
+		const searchParams = $page.url.searchParams;
+		const allowedParams = ['magiclink'];
+
+		// Check for any unauthorized parameters
+		for (const [key] of searchParams) {
+			if (!allowedParams.includes(key)) {
+				console.warn(`Unauthorized parameter '${key}' detected on home route, redirecting`);
+				// Remove unauthorized parameter and redirect
+				const cleanUrl = new globalThis.URL($page.url);
+				cleanUrl.search = '';
+				if (searchParams.has('magiclink')) {
+					cleanUrl.searchParams.set('magiclink', searchParams.get('magiclink')!);
+				}
+				goto(cleanUrl.pathname + cleanUrl.search, { replaceState: true });
+				break;
+			}
+		}
 	});
 
 	// Effect to watch for user_id changes (only on this page)

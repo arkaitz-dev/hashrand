@@ -28,31 +28,23 @@ pub async fn route_request_with_req(
         // Protected endpoints with proactive token renewal
         path if path.ends_with("/api/custom") => {
             if requires_authentication(path) {
-                with_auth_and_renewal(req, handle_custom_request)
+                // Use new signed request handler for authenticated requests
+                handle_custom_request(req).await
             } else {
-                handle_custom_request(req)
+                handle_custom_request(req).await
             }
         }
         path if path.ends_with("/api/password") => {
-            if requires_authentication(path) {
-                with_auth_and_renewal(req, handle_password_request)
-            } else {
-                handle_password_request(req)
-            }
+            // SignedRequest endpoints handle JWT validation internally
+            handle_password_request(req).await
         }
         path if path.ends_with("/api/api-key") => {
-            if requires_authentication(path) {
-                with_auth_and_renewal(req, handle_api_key_request)
-            } else {
-                handle_api_key_request(req)
-            }
+            // SignedRequest endpoints handle JWT validation internally
+            handle_api_key_request(req).await
         }
         path if path.ends_with("/api/mnemonic") => {
-            if requires_authentication(path) {
-                with_auth_and_renewal(req, handle_mnemonic_request)
-            } else {
-                handle_mnemonic_request(req)
-            }
+            // SignedRequest endpoints handle JWT validation internally
+            handle_mnemonic_request(req).await
         }
 
         // GET-only endpoints

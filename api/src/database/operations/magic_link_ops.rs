@@ -192,7 +192,7 @@ impl MagicLinkOperations {
     /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
     /// * `encryption_blob` - 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     /// * `expires_at_nanos` - Expiration timestamp in nanoseconds (will be converted to hours for storage)
-    /// * `next_param` - Optional next destination parameter
+    /// * `next_param` - Next destination parameter (always provided, "/" for login)
     /// * `pub_key` - Ed25519 public key as hex string (64 chars)
     ///
     /// # Returns
@@ -201,7 +201,7 @@ impl MagicLinkOperations {
         encrypted_token: &str,
         encryption_blob: &[u8; 44],
         expires_at_nanos: i64,
-        next_param: Option<&str>,
+        next_param: &str,
         pub_key: &str,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
@@ -239,12 +239,10 @@ impl MagicLinkOperations {
         }
 
         // Create merged payload: encryption_blob[44] + auth_data[32] + next_param_bytes[variable]
-        let mut payload_plain = Vec::with_capacity(44 + 32 + next_param.map_or(0, |s| s.len()));
+        let mut payload_plain = Vec::with_capacity(44 + 32 + next_param.len());
         payload_plain.extend_from_slice(encryption_blob);
         payload_plain.extend_from_slice(&auth_data_bytes);
-        if let Some(next) = next_param {
-            payload_plain.extend_from_slice(next.as_bytes());
-        }
+        payload_plain.extend_from_slice(next_param.as_bytes());
 
         // Convert encrypted_data to [u8; 32] for encryption function
         let mut encrypted_data_array = [0u8; 32];
@@ -351,17 +349,23 @@ impl MagicLinkOperations {
             println!("Database: Successfully extracted Ed25519 public key from stored payload");
 
             // Extract next_param (remaining bytes as UTF-8 string if any)
+            println!("🔍 DEBUG EXTRACT: payload_plain.len() = {}", payload_plain.len());
             let next_param = if payload_plain.len() > 76 {
                 match std::str::from_utf8(&payload_plain[76..]) {
-                    Ok(s) => Some(s.to_string()),
+                    Ok(s) => {
+                        println!("🔍 DEBUG EXTRACT: Extracted next_param: '{}'", s);
+                        Some(s.to_string())
+                    },
                     Err(_) => {
                         println!("Database: Invalid UTF-8 in decrypted next_param bytes");
                         return Ok((false, None, None, None));
                     }
                 }
             } else {
+                println!("🔍 DEBUG EXTRACT: payload <= 76 bytes, next_param = None");
                 None
             };
+            println!("🔍 DEBUG EXTRACT: Final next_param: {:?}", next_param);
 
             // Extract nonce and secret_key from encryption_blob
             let mut nonce = [0u8; 12];

@@ -91,7 +91,7 @@ class SessionManager {
 				};
 			});
 		} catch (error) {
-			console.warn('Failed to get session from IndexedDB:', error);
+			// Failed to get session from IndexedDB
 			return this.createEmptySession();
 		}
 	}
@@ -114,7 +114,7 @@ class SessionManager {
 				request.onsuccess = () => resolve();
 			});
 		} catch (error) {
-			console.warn('Failed to save session to IndexedDB:', error);
+			// Failed to save session to IndexedDB
 			throw error;
 		}
 	}
@@ -171,9 +171,9 @@ class SessionManager {
 
 			// Keep userPreferences intact for UX
 			await this.saveSession(session);
-			console.log('🧹 Auth data cleared, preferences preserved');
+			// Auth data cleared, preferences preserved
 		} catch (error) {
-			console.warn('Failed to clear auth data from IndexedDB:', error);
+			// Failed to clear auth data from IndexedDB
 			throw error;
 		}
 	}
@@ -192,12 +192,12 @@ class SessionManager {
 
 				request.onerror = () => reject(request.error);
 				request.onsuccess = () => {
-					console.log('🧹 IndexedDB session cleared completely');
+					// IndexedDB session cleared completely
 					resolve();
 				};
 			});
 		} catch (error) {
-			console.warn('Failed to clear session from IndexedDB:', error);
+			// Failed to clear session from IndexedDB
 			throw error;
 		}
 	}

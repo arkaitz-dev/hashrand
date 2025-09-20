@@ -222,21 +222,17 @@ impl Ed25519Utils {
         Ok(())
     }
 
-    /// Create message for signing: email + public_key + next (if present)
+    /// Create message for signing: email + public_key + next
     ///
     /// # Arguments
     /// * `email` - User email
     /// * `public_key_hex` - Ed25519 public key as hex string
-    /// * `next` - Optional next parameter
+    /// * `next` - Next parameter (always present, "/" for default)
     ///
     /// # Returns
     /// * `String` - Message to be signed
-    pub fn create_sign_message(email: &str, public_key_hex: &str, next: Option<&str>) -> String {
-        if let Some(next_param) = next {
-            format!("{}{}{}", email, public_key_hex, next_param)
-        } else {
-            format!("{}{}", email, public_key_hex)
-        }
+    pub fn create_sign_message(email: &str, public_key_hex: &str, next: &str) -> String {
+        format!("{}{}{}", email, public_key_hex, next)
     }
 
     /// Verify complete magic link request signature
@@ -244,7 +240,7 @@ impl Ed25519Utils {
     /// # Arguments
     /// * `email` - User email from request
     /// * `public_key_hex` - Ed25519 public key as hex string
-    /// * `next` - Optional next parameter
+    /// * `next` - Next parameter (always present, "/" for default)
     /// * `signature_hex` - Ed25519 signature as hex string
     ///
     /// # Returns
@@ -252,7 +248,7 @@ impl Ed25519Utils {
     pub fn verify_magic_link_request(
         email: &str,
         public_key_hex: &str,
-        next: Option<&str>,
+        next: &str,
         signature_hex: &str,
     ) -> SignatureVerificationResult {
         let message = Self::create_sign_message(email, public_key_hex, next);
@@ -299,11 +295,11 @@ mod tests {
         let email = "test@example.com";
         let public_key = "a".repeat(64);
 
-        let message_without_next = Ed25519Utils::create_sign_message(email, &public_key, None);
-        assert_eq!(message_without_next, format!("{}{}", email, public_key));
+        let message_with_default = Ed25519Utils::create_sign_message(email, &public_key, "/");
+        assert_eq!(message_with_default, format!("{}{}/", email, public_key));
 
         let message_with_next =
-            Ed25519Utils::create_sign_message(email, &public_key, Some("/dashboard"));
+            Ed25519Utils::create_sign_message(email, &public_key, "/dashboard");
         assert_eq!(
             message_with_next,
             format!("{}{}/dashboard", email, public_key)

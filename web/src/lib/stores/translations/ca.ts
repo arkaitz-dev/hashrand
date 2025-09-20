@@ -67,7 +67,18 @@ export const ca: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'La vostra sessió ha caducat.',
 		close: 'Tancar',
-		understand: 'Ho entenc'
+		understand: 'Ho entenc',
+		// Error messages for user notifications
+		magicLinkValidationFailed: "Ha fallat la validació de l'enllaç màgic",
+		parameterDecryptionFailed: 'No es poden desxifrar els paràmetres',
+		parameterDecryptionError: 'Error de desxifratge de paràmetres',
+		generationError: 'Error de generació',
+		regenerationError: 'Error de regeneració',
+		pageNotFound: 'Pàgina no trobada (404)',
+		serverError: 'Error del servidor (500)',
+		clientError: 'Error del client ({status})',
+		genericError: 'Error ({status})',
+		redirectingToHome: "Redirigint a l'inici..."
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -183,6 +194,7 @@ export const ca: I18nTexts = {
 			"Reviseu el vostre correu electrònic i feu clic a l'enllaç màgic per autenticar-vos.",
 		magicLinkSentFlash:
 			"Enllaç màgic enviat. Revisa el teu email i fes clic a l'enllaç per continuar.",
+		magicLinkErrorFlash: "Error enviant l'enllaç màgic. Si us plau, intenteu-ho de nou.",
 		developmentMode: 'Mode desenvolupament:',
 		testMagicLink: "Feu clic aquí per provar l'enllaç màgic",
 		authenticationFailed: "Ha fallat l'autenticació",

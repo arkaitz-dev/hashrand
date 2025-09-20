@@ -56,7 +56,7 @@ async function loadAuthFromStorage(): Promise<void> {
 			hmacKey: cryptoTokens.hmac
 		}));
 	} catch (error) {
-		console.warn('Failed to load auth from IndexedDB:', error);
+		// Failed to load auth from IndexedDB
 		await clearSensitiveAuthData();
 	}
 }
@@ -71,7 +71,7 @@ async function saveAuthToStorage(user: AuthUser, accessToken: string): Promise<v
 		const { sessionManager } = await import('../session-manager');
 		await sessionManager.setAuthData(user, accessToken);
 	} catch (error) {
-		console.warn('Failed to save auth to IndexedDB:', error);
+		// Failed to save auth to IndexedDB
 	}
 }
 
@@ -99,7 +99,7 @@ async function clearPreventiveAuthData(): Promise<void> {
 
 		// Preserve user preferences for UX (language and theme are kept)
 	} catch (error) {
-		console.warn('Failed to clear preventive auth data from IndexedDB:', error);
+		// Failed to clear preventive auth data from IndexedDB
 	}
 }
 
@@ -127,7 +127,7 @@ async function clearSensitiveAuthData(): Promise<void> {
 		// Note: pending_auth_email is cleared immediately on successful auth,
 		// not here, to preserve ongoing magic link flows during token errors
 	} catch (error) {
-		console.warn('Failed to clear sensitive auth data from IndexedDB:', error);
+		// Failed to clear sensitive auth data from IndexedDB
 	}
 }
 
@@ -148,9 +148,34 @@ async function clearAuthFromStorage(): Promise<void> {
  * Generate cryptographically secure cipher, nonce and HMAC key tokens
  */
 async function generateCryptoTokens(): Promise<void> {
-	if (typeof window === 'undefined') return;
+	if (typeof window === 'undefined') {
+		// generateCryptoTokens() skipped - not in browser environment
+		return;
+	}
+
+	// Starting crypto tokens generation
+
+	// Starting crypto tokens generation
+
+	// Check if tokens already exist
+	try {
+		const { sessionManager } = await import('../session-manager');
+		const existingTokens = await sessionManager.getCryptoTokens();
+		if (existingTokens.cipher && existingTokens.nonce && existingTokens.hmac) {
+				// Crypto tokens already exist, skipping generation
+
+			// Crypto tokens already exist, skipping generation
+			return;
+		}
+	} catch (error) {
+			// Failed to check existing crypto tokens, proceeding with generation
+
+		// Error checking existing tokens, continuing
+	}
 
 	try {
+			// Generating new 32-byte crypto tokens
+
 		// Generate 32-byte tokens using Web Crypto API
 		const cipherToken = new Uint8Array(32);
 		const nonceToken = new Uint8Array(32);
@@ -160,6 +185,7 @@ async function generateCryptoTokens(): Promise<void> {
 		crypto.getRandomValues(nonceToken);
 		crypto.getRandomValues(hmacToken);
 
+		// Converting tokens to base64
 		// Convert to base64 for storage
 		const cipherB64 = btoa(String.fromCharCode(...cipherToken));
 		const nonceB64 = btoa(String.fromCharCode(...nonceToken));
@@ -177,16 +203,9 @@ async function generateCryptoTokens(): Promise<void> {
 			hmacKey: hmacB64
 		}));
 
-		// Show tokens in flash messages for debugging
-		import('./flashMessages').then(({ flashMessagesStore }) => {
-			flashMessagesStore.addMessages([
-				`🔐 Cipher Token: ${cipherB64.substring(0, 16)}...${cipherB64.slice(-8)}`,
-				`🎲 Nonce Token: ${nonceB64.substring(0, 16)}...${nonceB64.slice(-8)}`,
-				`🔑 HMAC Key: ${hmacB64.substring(0, 16)}...${hmacB64.slice(-8)}`
-			]);
-		});
+		// Crypto tokens generated successfully
 	} catch (error) {
-		console.warn('Failed to generate crypto tokens:', error);
+		// Failed to generate crypto tokens
 	}
 }
 
@@ -200,7 +219,7 @@ async function hasCryptoTokens(): Promise<boolean> {
 		const { sessionManager } = await import('../session-manager');
 		return await sessionManager.hasCryptoTokens();
 	} catch (error) {
-		console.warn('Failed to check crypto tokens in IndexedDB:', error);
+		// Failed to check crypto tokens in IndexedDB
 		return false;
 	}
 }
@@ -288,13 +307,13 @@ export const authStore = {
 				}
 			}
 		} catch (error) {
-			console.warn('Failed to load auth data from IndexedDB:', error);
+			// Failed to load auth data from IndexedDB
 			// Clear invalid data and continue to refresh
 			await clearSensitiveAuthData();
 		}
 
 		// No valid access token in sessionStorage, try to refresh using cookie
-		console.log('🔄 No valid access token found, attempting automatic refresh...');
+		// No valid access token found, attempting automatic refresh
 
 		// Set refreshing state
 		update((state) => ({ ...state, isRefreshing: true }));
@@ -305,14 +324,14 @@ export const authStore = {
 			const refreshSuccess = await api.refreshToken();
 
 			if (refreshSuccess) {
-				console.log('✅ Automatic refresh successful');
+				// Automatic refresh successful
 				return true;
 			} else {
-				console.log('❌ Automatic refresh failed - login required');
+				// Automatic refresh failed - login required
 				return false;
 			}
 		} catch (error) {
-			console.warn('Refresh attempt failed:', error);
+			// Refresh attempt failed
 			return false;
 		} finally {
 			// Always clear refreshing state
@@ -327,7 +346,7 @@ export const authStore = {
 	 * @param next - Optional Base58-encoded parameters to include in magic link URL
 	 * @returns Promise<MagicLinkResponse>
 	 */
-	async requestMagicLink(email: string, next?: string): Promise<MagicLinkResponse> {
+	async requestMagicLink(email: string, next: string = "/"): Promise<MagicLinkResponse> {
 		update((state) => ({ ...state, isLoading: true, error: null }));
 
 		try {
@@ -382,9 +401,21 @@ export const authStore = {
 			// Save to IndexedDB
 			await saveAuthToStorage(user, loginResponse.access_token);
 
+			// Show flash message for successful magic link validation
+			try {
+				const { flashMessagesStore } = await import('../stores/flashMessages');
+				flashMessagesStore.addMessage('✅ Magic link validado exitosamente!');
+			} catch (flashError) {
+				// Failed to show magic link success flash message
+			}
+
 			// Generate crypto tokens ONLY if they don't exist yet
-			if (!hasCryptoTokens()) {
-				generateCryptoTokens();
+			const tokensExist = await hasCryptoTokens();
+			if (!tokensExist) {
+				// Magic link: No crypto tokens found, generating
+				await generateCryptoTokens();
+			} else {
+				// Magic link: Crypto tokens already exist
 			}
 
 			// Clear pending auth email - no longer needed after successful authentication
@@ -392,7 +423,7 @@ export const authStore = {
 				const { sessionManager } = await import('../session-manager');
 				await sessionManager.clearPendingAuthEmail();
 			} catch (error) {
-				console.warn('Failed to clear pending auth email from IndexedDB:', error);
+				// Failed to clear pending auth email from IndexedDB
 			}
 
 			return loginResponse;
@@ -476,7 +507,7 @@ export const authStore = {
 			const { clearAllKeyPairs } = await import('../ed25519');
 			await clearAllKeyPairs();
 		} catch (error) {
-			console.warn('Failed to clear Ed25519 keypairs:', error);
+			// Failed to clear Ed25519 keypairs
 		}
 
 		// Clear ALL IndexedDB session data
@@ -484,7 +515,7 @@ export const authStore = {
 			const { sessionManager } = await import('../session-manager');
 			await sessionManager.clearSession();
 		} catch (error) {
-			console.warn('Failed to clear IndexedDB session:', error);
+			// Failed to clear IndexedDB session
 		}
 
 		// Clear local state and remaining storage
@@ -512,14 +543,25 @@ export const authStore = {
 
 		// Save to IndexedDB asynchronously (no await to maintain sync interface)
 		saveAuthToStorage(user, accessToken).catch((error) => {
-			console.warn('Failed to save auth tokens to IndexedDB:', error);
+			// Failed to save auth tokens to IndexedDB
 		});
+
+		// Note: Crypto tokens are NOT regenerated during refresh
+		// They persist throughout the session for URL parameter encryption consistency
+		// updateTokens() - preserving existing crypto tokens during refresh
+
+		// Show flash message that tokens were refreshed (but crypto tokens preserved)
+		import('../stores/flashMessages')
+			.then(() => {
+				// Access token updated (crypto tokens preserved)
+			})
+			.catch(() => {});
 
 		// Clear pending auth email - no longer needed after successful token update (fire-and-forget)
 		import('../session-manager')
 			.then(({ sessionManager }) => sessionManager.clearPendingAuthEmail())
 			.catch((error) => {
-				console.warn('Failed to clear pending auth email from IndexedDB:', error);
+				// Failed to clear pending auth email from IndexedDB
 			});
 	},
 
@@ -535,6 +577,6 @@ export const authStore = {
 // Initialize the store when module loads
 if (typeof window !== 'undefined') {
 	authStore.init().catch((error) => {
-		console.warn('Failed to initialize auth store:', error);
+		// Failed to initialize auth store
 	});
 }

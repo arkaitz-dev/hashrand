@@ -66,7 +66,18 @@ export const ar: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'انتهت صلاحية الجلسة.',
 		close: 'إغلاق',
-		understand: 'أفهم'
+		understand: 'أفهم',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'فشل في التحقق من الرابط السحري',
+		parameterDecryptionFailed: 'لا يمكن فك تشفير المعاملات',
+		parameterDecryptionError: 'خطأ في فك تشفير المعاملات',
+		generationError: 'خطأ في التوليد',
+		regenerationError: 'خطأ في إعادة التوليد',
+		pageNotFound: 'الصفحة غير موجودة (404)',
+		serverError: 'خطأ الخادم (500)',
+		clientError: 'خطأ العميل ({status})',
+		genericError: 'خطأ ({status})',
+		redirectingToHome: 'جاري التوجيه إلى الصفحة الرئيسية...'
 	},
 	menu: {
 		title: 'مولد الهاش',
@@ -180,6 +191,7 @@ export const ar: I18nTexts = {
 		magicLinkInstructions: 'تحقق من بريدك الإلكتروني وانقر على الرابط السحري للمصادقة.',
 		magicLinkSentFlash:
 			'تم إرسال الرابط السحري. تحقق من بريدك الإلكتروني وانقر على الرابط للمتابعة.',
+		magicLinkErrorFlash: 'خطأ في إرسال الرابط السحري. يرجى المحاولة مرة أخرى.',
 		developmentMode: 'وضع التطوير:',
 		testMagicLink: 'انقر هنا لاختبار الرابط السحري',
 		authenticationFailed: 'فشل في المصادقة',

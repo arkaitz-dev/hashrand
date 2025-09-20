@@ -23,7 +23,7 @@ function createDialogStore() {
 		show: (type: DialogData['type'], props?: Record<string, unknown>) => {
 			const dialog: DialogData = {
 				type,
-				props: props || {},
+				props: props || undefined, // Use undefined instead of {} to preserve null semantics
 				id: globalThis.crypto?.randomUUID() || Math.random().toString(36).substring(2, 15)
 			};
 			set(dialog);

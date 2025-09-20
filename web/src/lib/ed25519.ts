@@ -79,7 +79,6 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPair> {
 		};
 	} catch {
 		// Fallback to Noble curves if WebCrypto Ed25519 not supported
-		console.warn('WebCrypto Ed25519 not supported, falling back to Noble curves');
 		return generateEd25519KeyPairFallback();
 	}
 }
@@ -89,7 +88,7 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPair> {
  * Used when WebCrypto doesn't support Ed25519
  */
 async function generateEd25519KeyPairFallback(): Promise<Ed25519KeyPair> {
-	console.log('🔍 Ed25519: Using Noble curves fallback (WebCrypto not supported)');
+	// Using Noble curves fallback (WebCrypto not supported)
 
 	// Generate random private key (32 bytes)
 	const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
@@ -160,7 +159,9 @@ export async function getKeyPair(keyId: string = 'default'): Promise<Ed25519KeyP
 				publicKey: result.publicKey,
 				privateKey: result.privateKey,
 				publicKeyBytes: new Uint8Array(result.publicKeyBytes),
-				privateKeyBytes: result.privateKeyBytes ? new Uint8Array(result.privateKeyBytes) : undefined,
+				privateKeyBytes: result.privateKeyBytes
+					? new Uint8Array(result.privateKeyBytes)
+					: undefined,
 				isNoble: result.isNoble || false
 			});
 		};
@@ -183,14 +184,18 @@ export async function signMessage(
 
 	if (keyPair.isNoble && keyPair.privateKeyBytes) {
 		// Use Noble curves for signing
-		console.log('🔍 Ed25519: Signing with Noble curves');
+		// Signing with Noble curves
 		const signature = ed25519.sign(new Uint8Array(messageBytes), keyPair.privateKeyBytes);
 		return bytesToHex(signature);
 	} else if (keyPair.privateKey) {
 		// Use WebCrypto for signing
-		console.log('🔍 Ed25519: Signing with WebCrypto');
+		// Signing with WebCrypto
 		try {
-			const signature = await crypto.subtle.sign('Ed25519', keyPair.privateKey, new Uint8Array(messageBytes));
+			const signature = await crypto.subtle.sign(
+				'Ed25519',
+				keyPair.privateKey,
+				new Uint8Array(messageBytes)
+			);
 			return bytesToHex(new Uint8Array(signature));
 		} catch (error) {
 			throw new Error(`WebCrypto signing failed: ${error}`);
@@ -242,7 +247,6 @@ export async function verifySignature(
 		);
 	} catch {
 		// Fallback to Noble curves
-		console.warn('WebCrypto verification failed, using Noble curves fallback');
 		return ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
 	}
 }
@@ -262,7 +266,7 @@ export async function getOrCreateKeyPair(): Promise<Ed25519KeyPair> {
 	const newKeyPair = await generateEd25519KeyPair();
 	await storeKeyPair(newKeyPair);
 
-	console.log('Generated new Ed25519 key pair for magic link authentication');
+	// Generated new Ed25519 key pair for magic link authentication
 	return newKeyPair;
 }
 

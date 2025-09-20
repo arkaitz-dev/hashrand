@@ -67,7 +67,18 @@ export const de: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'Ihre Sitzung ist abgelaufen.',
 		close: 'Schließen',
-		understand: 'Ich verstehe'
+		understand: 'Ich verstehe',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Magic-Link-Validierung fehlgeschlagen',
+		parameterDecryptionFailed: 'Parameter können nicht entschlüsselt werden',
+		parameterDecryptionError: 'Parameter-Entschlüsselungsfehler',
+		generationError: 'Generierungsfehler',
+		regenerationError: 'Neugenerierungsfehler',
+		pageNotFound: 'Seite nicht gefunden (404)',
+		serverError: 'Serverfehler (500)',
+		clientError: 'Client-Fehler ({status})',
+		genericError: 'Fehler ({status})',
+		redirectingToHome: 'Weiterleitung zur Startseite...'
 	},
 	menu: {
 		title: 'Hash-Generator',
@@ -182,6 +193,7 @@ export const de: I18nTexts = {
 			'Überprüfen Sie Ihre E-Mail und klicken Sie auf den magischen Link zur Authentifizierung.',
 		magicLinkSentFlash:
 			'Magic-Link gesendet. Überprüfen Sie Ihre E-Mail und klicken Sie auf den Link, um fortzufahren.',
+		magicLinkErrorFlash: 'Fehler beim Senden des Magic-Links. Bitte versuchen Sie es erneut.',
 		developmentMode: 'Entwicklungsmodus:',
 		testMagicLink: 'Hier klicken, um den magischen Link zu testen',
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',

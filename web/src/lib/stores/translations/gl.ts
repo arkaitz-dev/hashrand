@@ -66,7 +66,18 @@ export const gl: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'A túa sesión caducou.',
 		close: 'Pechar',
-		understand: 'Entendo'
+		understand: 'Entendo',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Fallou a validación da ligazón máxica',
+		parameterDecryptionFailed: 'Non se poden descifrar os parámetros',
+		parameterDecryptionError: 'Erro de descifrado de parámetros',
+		generationError: 'Erro de xeración',
+		regenerationError: 'Erro de rexeración',
+		pageNotFound: 'Páxina non atopada (404)',
+		serverError: 'Erro do servidor (500)',
+		clientError: 'Erro do cliente ({status})',
+		genericError: 'Erro ({status})',
+		redirectingToHome: 'Redirixindo ao inicio...'
 	},
 	menu: {
 		title: 'Xerador de Hash',
@@ -181,6 +192,7 @@ export const gl: I18nTexts = {
 		magicLinkInstructions: 'Revisa o teu email e fai clic na ligazón máxica para autenticarte.',
 		magicLinkSentFlash:
 			'Enlace máxico enviado. Revisa o teu email e fai clic no enlace para continuar.',
+		magicLinkErrorFlash: 'Erro enviando o enlace máxico. Por favor, téntao de novo.',
 		developmentMode: 'Modo desenvolvemento:',
 		testMagicLink: 'Fai clic aquí para probar a ligazón máxica',
 		authenticationFailed: 'Fallou a autenticación',

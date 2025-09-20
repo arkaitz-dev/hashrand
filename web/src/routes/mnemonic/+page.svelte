@@ -137,7 +137,13 @@
 			// Clear any residual auth data before asking for email (defensive security)
 			authStore.clearPreventiveAuthData();
 
-			dialogStore.show('auth', pendingGenerationParams);
+			const authConfig = {
+				destination: {
+					route: '/result',
+					params: pendingGenerationParams
+				}
+			};
+			dialogStore.show('auth', authConfig);
 			return;
 		}
 
@@ -162,25 +168,28 @@
 		const hmacKey = authStore.getHmacKey();
 
 		if (cipherToken && nonceToken && hmacKey) {
+			// Creating secure URL and navigating to result
+
 			// Create encrypted URL for privacy
 			const encryptedUrl = await createEncryptedUrl('/result', resultParams, {
 				cipherToken,
 				nonceToken,
 				hmacKey
 			});
+
+			// Navigating to result page with encrypted parameters
+
 			goto(encryptedUrl);
 		} else {
-			// Fallback: create traditional URL (should not happen with proper auth)
-			const urlParams = new URLSearchParams();
-			Object.entries(resultParams).forEach(([key, value]) => {
-				urlParams.set(key, String(value));
-			});
-			goto(`/result?${urlParams.toString()}`);
+			// ERROR: Crypto tokens required for secure navigation
+			// Missing crypto tokens - cannot create secure URL
+
+			goto('/'); // Return to home instead of unsecure URL
 		}
 	}
 
 	// Initialize params based on navigation source
-	onMount(() => {
+	onMount(async () => {
 		// Check if we're coming from result page with existing params
 		if ($resultState && $resultState.endpoint === 'mnemonic' && $resultState.params) {
 			// Coming from result page - use existing params
@@ -200,14 +209,18 @@
 		const hmacKey = authStore.getHmacKey();
 
 		if (cipherToken && nonceToken && hmacKey) {
-			const decryptedParams = decryptPageParams(searchParams, {
-				cipherToken,
-				nonceToken,
-				hmacKey
-			});
+			try {
+				const decryptedParams = await decryptPageParams(searchParams, {
+					cipherToken,
+					nonceToken,
+					hmacKey
+				});
 
-			if (decryptedParams) {
-				urlParams = decryptedParams;
+				if (decryptedParams) {
+					urlParams = decryptedParams;
+				}
+			} catch (error) {
+				// Ignore decryption errors silently
 			}
 		}
 
@@ -335,6 +348,7 @@
 							</div>
 						</div>
 					</div>
+
 
 					<!-- Seed (only show if provided via URL) -->
 					{#if urlProvidedSeed}

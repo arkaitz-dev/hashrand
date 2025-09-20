@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 use crate::database::connection::initialize_database;
 use crate::utils::auth::{
-    ErrorResponse, MagicLinkRequest, generate_magic_link, handle_refresh_token,
+    ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest, generate_magic_link, generate_magic_link_signed, handle_refresh_token,
     validate_magic_link_secure,
 };
 
@@ -24,7 +24,7 @@ use crate::utils::auth::{
 /// * `Result<Response, anyhow::Error>` - HTTP response
 pub async fn handle_login(
     req: Request,
-    query_params: HashMap<String, String>,
+    _query_params: HashMap<String, String>,
 ) -> anyhow::Result<Response> {
     // Extract the full path from the request to handle specific endpoints
     let full_url = req
@@ -78,6 +78,9 @@ pub async fn handle_login(
 }
 
 /// Handle POST /api/login/ - Generate magic link (HTTP routing wrapper)
+///
+/// Supports both new SignedRequest structure and legacy MagicLinkRequest
+/// for backward compatibility during transition
 async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> {
     // Parse request body
     let body_bytes = req.body();
@@ -86,9 +89,26 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
         std::str::from_utf8(body_bytes)
     );
 
+    // Try to parse as new SignedRequest structure first
+    if let Ok(signed_request) = serde_json::from_slice::<MagicLinkSignedRequest>(body_bytes) {
+        println!("🔐 DEBUG: Received new SignedRequest structure");
+        println!("DEBUG: Payload - Email: {}, UI Host: {:?}, Email Lang: {:?}",
+            signed_request.payload.email, signed_request.payload.ui_host, signed_request.payload.email_lang
+        );
+        println!("🔍 DEBUG NEXT: Original next field: {:?}", signed_request.payload.next);
+        println!("🔍 DEBUG NEXT: Next as str: {:?}", signed_request.payload.next.as_str());
+        println!("🔍 DEBUG NEXT: Next is_empty(): {}", signed_request.payload.next.is_empty());
+        println!("🔍 DEBUG NEXT: Next equals \"/\": {}", signed_request.payload.next == "/");
+
+        // Use new signed request handler
+        return generate_magic_link_signed(&req, &signed_request).await;
+    }
+
+    // Fallback to legacy MagicLinkRequest parsing
     let magic_request: MagicLinkRequest =
         match serde_json::from_slice::<MagicLinkRequest>(body_bytes) {
             Ok(req) => {
+                println!("⚠️ DEBUG: Using legacy MagicLinkRequest structure (deprecated)");
                 println!(
                     "DEBUG: Parsed request - Email: {}, UI Host: {:?}, Email Lang: {:?}",
                     req.email, req.ui_host, req.email_lang
@@ -96,18 +116,18 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
                 req
             }
             Err(e) => {
-                println!("DEBUG: JSON parse error: {}", e);
+                println!("DEBUG: JSON parse error for both SignedRequest and MagicLinkRequest: {}", e);
                 return Ok(Response::builder()
                     .status(400)
                     .header("content-type", "application/json")
                     .body(serde_json::to_string(&ErrorResponse {
-                        error: "Invalid JSON body".to_string(),
+                        error: "Invalid JSON body - must be SignedRequest or legacy MagicLinkRequest".to_string(),
                     })?)
                     .build());
             }
         };
 
-    // Delegate to business logic
+    // Use legacy handler (deprecated)
     generate_magic_link(&req, &magic_request).await
 }
 

@@ -30,7 +30,7 @@
 				goto('/');
 			}, 1500);
 		} catch (error) {
-			console.error('Error during logout:', error);
+			// Error during logout
 			flashMessagesStore.addMessage(
 				$currentLanguage === 'es' ? '❌ Error al cerrar sesión' : '❌ Error during logout'
 			);

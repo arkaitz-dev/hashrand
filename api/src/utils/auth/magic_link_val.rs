@@ -2,7 +2,6 @@
 
 use hex;
 use spin_sdk::http::Response;
-use std::collections::HashMap;
 
 use super::types::{ErrorResponse, MagicLinkValidationRequest};
 use crate::database::operations::MagicLinkOperations;

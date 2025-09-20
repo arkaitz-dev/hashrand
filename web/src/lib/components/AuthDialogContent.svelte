@@ -9,13 +9,14 @@
 	import { isRTL } from '../stores/rtl';
 	import { dialogStore } from '../stores/dialog';
 	import { onMount } from 'svelte';
+	import type { AuthDialogConfig } from '$lib/utils/navigation';
 
-	// Props
+	// Props - Universal architecture
 	export let onClose: () => void;
-	export let next: Record<string, unknown> | null = null;
+	export let config: AuthDialogConfig | null = null;
 
 	// Component state
-	let email = (next?.email as string) || '';
+	let email = config?.email || '';
 	let emailInput: HTMLInputElement;
 
 	/**
@@ -30,18 +31,13 @@
 			return;
 		}
 
-		// Filter out email from next parameters
-		const nextWithoutEmail = next ? { ...next } : {};
-		if (nextWithoutEmail.email) {
-			delete nextWithoutEmail.email;
-		}
-
-		// Show confirmation dialog with email and next parameters
-		// This will automatically replace the current dialog
-		dialogStore.show('auth-confirm', {
+		// Create config with entered email for confirmation dialog
+		const confirmConfig: AuthDialogConfig = {
 			email,
-			...(Object.keys(nextWithoutEmail).length > 0 ? nextWithoutEmail : {})
-		});
+			destination: config?.destination || { route: '/' }
+		};
+
+		dialogStore.show('auth-confirm', confirmConfig);
 	}
 
 	/**

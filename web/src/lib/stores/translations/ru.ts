@@ -67,7 +67,18 @@ export const ru: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'Ваша сессия истекла.',
 		close: 'Закрыть',
-		understand: 'Я понимаю'
+		understand: 'Я понимаю',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Ошибка проверки магической ссылки',
+		parameterDecryptionFailed: 'Не удается расшифровать параметры',
+		parameterDecryptionError: 'Ошибка расшифровки параметров',
+		generationError: 'Ошибка генерации',
+		regenerationError: 'Ошибка повторной генерации',
+		pageNotFound: 'Страница не найдена (404)',
+		serverError: 'Ошибка сервера (500)',
+		clientError: 'Ошибка клиента ({status})',
+		genericError: 'Ошибка ({status})',
+		redirectingToHome: 'Перенаправление на главную...'
 	},
 	menu: {
 		title: 'Генератор хешей',
@@ -180,6 +191,7 @@ export const ru: I18nTexts = {
 		magicLinkInstructions: 'Проверьте ваш email и нажмите на магическую ссылку для аутентификации.',
 		magicLinkSentFlash:
 			'Магическая ссылка отправлена. Проверьте электронную почту и нажмите на ссылку для продолжения.',
+		magicLinkErrorFlash: 'Ошибка отправки магической ссылки. Пожалуйста, попробуйте снова.',
 		developmentMode: 'Режим разработки:',
 		testMagicLink: 'Нажмите здесь для тестирования магической ссылки',
 		authenticationFailed: 'Аутентификация не удалась',

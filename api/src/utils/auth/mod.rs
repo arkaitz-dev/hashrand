@@ -11,9 +11,9 @@ pub mod refresh_token;
 pub mod types;
 
 // Re-export commonly used types
-pub use types::{ErrorResponse, MagicLinkRequest};
+pub use types::{ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest};
 
 // Re-export main functions
-pub use magic_link_gen::generate_magic_link;
+pub use magic_link_gen::{generate_magic_link, generate_magic_link_signed};
 pub use magic_link_val::validate_magic_link_secure;
 pub use refresh_token::handle_refresh_token;

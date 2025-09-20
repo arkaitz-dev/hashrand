@@ -66,7 +66,18 @@ export const eu: I18nTexts = {
 		otp: 'OTP',
 		sessionExpired: 'Zure saioa bukatu da.',
 		close: 'Itxi',
-		understand: 'Ulertzen dut'
+		understand: 'Ulertzen dut',
+		// Error messages for user notifications
+		magicLinkValidationFailed: 'Esteka magikoaren balioztapenak huts egin du',
+		parameterDecryptionFailed: 'Parametroak deszifratu ezin dira',
+		parameterDecryptionError: 'Parametroen deszifratze errorea',
+		generationError: 'Sortze errorea',
+		regenerationError: 'Berriz sortze errorea',
+		pageNotFound: 'Orria ez da aurkitu (404)',
+		serverError: 'Zerbitzariaren errorea (500)',
+		clientError: 'Bezeroaren errorea ({status})',
+		genericError: 'Errorea ({status})',
+		redirectingToHome: 'Hasierara bideratzen...'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',
@@ -179,6 +190,7 @@ export const eu: I18nTexts = {
 		magicLinkInstructions: 'Egiaztatu zure emaila eta klikatu esteka magikoan autentifikatzeko.',
 		magicLinkSentFlash:
 			'Esteka magikoa bidali da. Egiaztatu zure emaila eta klikatu estekan jarraitzeko.',
+		magicLinkErrorFlash: 'Esteka magikoa bidaltzerakoan errorea. Saiatu berriro.',
 		developmentMode: 'Garapen Modua:',
 		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
 		authenticationFailed: 'Autentifikazioak huts egin du',

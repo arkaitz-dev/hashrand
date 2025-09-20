@@ -47,7 +47,10 @@
 				authStore.clearPreventiveAuthData();
 
 				// Only show authentication dialog if refresh failed
-				dialogStore.show('auth');
+				const authConfig = {
+					destination: { route: '/' }
+				};
+				dialogStore.show('auth', authConfig);
 			}
 		}
 	}

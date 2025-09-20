@@ -44,11 +44,10 @@
 		>
 			<!-- Render different dialog types -->
 			{#if $dialogStore.type === 'auth'}
-				<AuthDialogContent next={$dialogStore.props} onClose={closeDialog} />
+				<AuthDialogContent config={$dialogStore.props || { destination: { route: '/' } }} onClose={closeDialog} />
 			{:else if $dialogStore.type === 'auth-confirm'}
 				<AuthConfirmDialogContent
-					email={(($dialogStore.props as any)?.email || '') as string}
-					next={$dialogStore.props}
+					config={$dialogStore.props || { destination: { route: '/' } }}
 					onClose={closeDialog}
 				/>
 			{:else if $dialogStore.type === 'seed'}

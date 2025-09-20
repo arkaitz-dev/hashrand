@@ -9,12 +9,12 @@ import type {
 	SeedPasswordRequest,
 	SeedApiKeyRequest,
 	SeedMnemonicRequest,
-	LoginRequest,
 	LoginResponse,
 	MagicLinkResponse,
 	AuthError
 } from './types';
 import { getOrCreateKeyPair, signMessage, publicKeyToHex } from './ed25519';
+import { createSignedRequest } from './signedRequest';
 
 const API_BASE = '/api';
 
@@ -77,7 +77,7 @@ async function isDualTokenExpiry(response: Response): Promise<boolean> {
  * Clears all authentication data and shows login dialog
  */
 async function handleDualTokenExpiry(): Promise<void> {
-	console.log('🔄 DUAL EXPIRY detected - clearing all auth data and requesting new login');
+	// DUAL EXPIRY detected - clearing all auth data and requesting new login
 
 	const { authStore } = await import('./stores/auth');
 	const { dialogStore } = await import('./stores/dialog');
@@ -89,7 +89,10 @@ async function handleDualTokenExpiry(): Promise<void> {
 	await authStore.clearPreventiveAuthData();
 
 	// Show auth dialog to request new email authentication
-	dialogStore.show('auth');
+	const authConfig = {
+		destination: { route: '/' }
+	};
+	dialogStore.show('auth', authConfig);
 }
 
 /**
@@ -101,7 +104,7 @@ async function handleProactiveTokenRenewal(response: Response): Promise<void> {
 	const newExpiresIn = response.headers.get('x-token-expires-in');
 
 	if (newAccessToken && newExpiresIn) {
-		console.log('🔄 Proactive token renewal detected, updating tokens...');
+		// Proactive token renewal detected, updating tokens
 
 		// Update access token in IndexedDB
 		try {
@@ -111,13 +114,13 @@ async function handleProactiveTokenRenewal(response: Response): Promise<void> {
 				await sessionManager.setAuthData(authData.user, newAccessToken);
 			}
 		} catch (error) {
-			console.warn('Failed to update access token during proactive renewal:', error);
+			// Failed to update access token during proactive renewal
 		}
 
 		// NOTE: Crypto tokens are NOT regenerated during proactive renewal
 		// They remain stable throughout the session for URL parameter encryption consistency
 
-		console.log('✅ Proactive token renewal completed transparently');
+		// Proactive token renewal completed transparently
 	}
 }
 
@@ -146,17 +149,17 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 		const isDualExpiry = await isDualTokenExpiry(response);
 
 		if (isDualExpiry) {
-			console.log('🔄 DUAL EXPIRY detected - both tokens expired, skipping refresh attempt');
+			// DUAL EXPIRY detected - both tokens expired, skipping refresh attempt
 			await handleDualTokenExpiry();
 			return response; // Return original 401 response for caller handling
 		}
 
-		console.log('🔄 Access token expired, attempting refresh...');
+		// Access token expired, attempting refresh
 
 		const refreshSuccess = await api.refreshToken();
 
 		if (refreshSuccess) {
-			console.log('✅ Token refresh successful, retrying request...');
+			// Token refresh successful, retrying request
 
 			// Get updated auth headers and retry request
 			const newAuthHeaders = await getAuthHeaders();
@@ -168,7 +171,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 				}
 			});
 		} else {
-			console.log('❌ Token refresh failed, forcing logout...');
+			// Token refresh failed, forcing logout
 
 			// Refresh failed, force logout and show login dialog
 			const { authStore } = await import('./stores/auth');
@@ -179,7 +182,10 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 			// Clear any residual auth data before asking for email (defensive security)
 			authStore.clearPreventiveAuthData();
 
-			dialogStore.show('auth');
+			const authConfig = {
+				destination: { route: '/' }
+			};
+			dialogStore.show('auth', authConfig);
 		}
 	}
 
@@ -361,15 +367,11 @@ export const api = {
 	async requestMagicLink(
 		email: string,
 		ui_host: string,
-		next?: string
+		next: string = "/"
 	): Promise<MagicLinkResponse> {
 		// Generate or retrieve Ed25519 keypair
 		const keyPair = await getOrCreateKeyPair();
 		const pubKeyHex = publicKeyToHex(keyPair.publicKeyBytes);
-
-		// Create message to sign: email + pub_key
-		const message = email + pubKeyHex;
-		const signature = await signMessage(message, keyPair);
 
 		// Get current language for email template (REQUIRED)
 		let email_lang: string = 'en'; // Default fallback
@@ -377,32 +379,37 @@ export const api = {
 			const { currentLanguage } = await import('./stores/i18n');
 			const { get } = await import('svelte/store');
 			email_lang = get(currentLanguage);
-			console.log('🌐 Email language from i18n store:', email_lang);
+			// Email language from i18n store
 		} catch {
 			// Fallback to browser language detection
 			if (typeof navigator !== 'undefined') {
 				email_lang = navigator.language.split('-')[0].toLowerCase();
-				console.log('🌐 Email language from browser fallback:', email_lang);
+				// Email language from browser fallback
 			} else {
-				console.log('🌐 Email language using default fallback:', email_lang);
+				// Email language using default fallback
 			}
 		}
 
-		const loginRequest: LoginRequest = {
+		// Create payload for SignedRequest
+		const payload = {
 			email,
 			ui_host,
 			next,
 			email_lang,
-			pub_key: pubKeyHex,
-			signature
+			pub_key: pubKeyHex
 		};
+
+		// Create signed request with universal signature
+		const signedRequest = await createSignedRequest(payload);
+
+		// Created signed magic link request
 
 		const response = await fetch(`${API_BASE}/login/`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify(loginRequest)
+			body: JSON.stringify(signedRequest)
 		});
 
 		if (!response.ok) {
@@ -414,11 +421,14 @@ export const api = {
 	},
 
 	async validateMagicLink(magicToken: string): Promise<LoginResponse> {
+		// Initiating validateMagicLink
 		// Generate or retrieve Ed25519 keypair
 		const keyPair = await getOrCreateKeyPair();
+		// KeyPair obtained
 
 		// Sign the magic link token itself for verification
 		const signature = await signMessage(magicToken, keyPair);
+		// Signature generated
 
 		// Create request body with magic link and signature
 		const validationRequest = {
@@ -426,6 +436,7 @@ export const api = {
 			signature
 		};
 
+		// Sending request to backend
 		const response = await fetch(`${API_BASE}/login/magiclink/`, {
 			method: 'POST',
 			headers: {
@@ -434,13 +445,18 @@ export const api = {
 			body: JSON.stringify(validationRequest)
 		});
 
+		// Backend response received
+
 		if (!response.ok) {
 			const errorData = (await response.json()) as AuthError;
+			// Backend error occurred
 			throw new ApiError(errorData.error || `HTTP ${response.status}`, response.status);
 		}
 
 		// The refresh token will be set as HttpOnly cookie by the server
-		return response.json() as Promise<LoginResponse>;
+		const result = await response.json() as LoginResponse;
+		// LoginResponse successful
+		return result;
 	},
 
 	async checkAuthStatus(): Promise<boolean> {
@@ -461,10 +477,11 @@ export const api = {
 		// Call backend to clear HttpOnly refresh token cookie
 		try {
 			await fetch(`${API_BASE}/login`, {
-				method: 'DELETE'
+				method: 'DELETE',
+				credentials: 'include' // Include HttpOnly cookies for deletion
 			});
 		} catch (error) {
-			console.warn('Failed to clear refresh token cookie:', error);
+			// Failed to clear refresh token cookie
 			// Continue with logout even if cookie clearing fails
 		}
 	},
@@ -475,19 +492,19 @@ export const api = {
 	 */
 	async refreshToken(): Promise<boolean> {
 		try {
-			console.log('🔄 Frontend: Attempting token refresh...');
+			// Frontend: Attempting token refresh
 			const response = await fetch(`${API_BASE}/refresh`, {
 				method: 'POST',
 				credentials: 'include' // Include HttpOnly cookies
 			});
 
-			console.log('📡 Frontend: Refresh response status:', response.status);
+			// Frontend: Refresh response status received
 
 			// Check for dual token expiry in refresh response
 			if (response.status === 401) {
 				const isDualExpiry = await isDualTokenExpiry(response);
 				if (isDualExpiry) {
-					console.log('🔄 DUAL EXPIRY detected during refresh - both tokens expired');
+					// DUAL EXPIRY detected during refresh - both tokens expired
 					await handleDualTokenExpiry();
 					return false;
 				}
@@ -495,7 +512,7 @@ export const api = {
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log('✅ Frontend: Refresh successful, new expires_in:', data.expires_in);
+				// Frontend: Refresh successful
 
 				// Update auth store with new token
 				const { authStore } = await import('./stores/auth');
@@ -508,16 +525,19 @@ export const api = {
 				// Update store and IndexedDB
 				authStore.updateTokens(user, data.access_token);
 
-				// Generate crypto tokens if they don't exist (new tab scenario)
-				if (!(await hasCryptoTokens())) {
-					authStore.generateCryptoTokens();
+				// Note: Crypto tokens are NOT generated during refresh
+				// They are only generated during initial login (magic link validation)
+				// If tokens are missing, it means session is corrupted and should restart
+				const tokensExist = await hasCryptoTokens();
+				if (!tokensExist) {
+					// Crypto tokens missing after refresh - session may be corrupted
 				}
 
 				return true;
 			}
 			return false;
 		} catch (error) {
-			console.warn('Token refresh failed:', error);
+			// Token refresh failed
 			return false;
 		}
 	}
