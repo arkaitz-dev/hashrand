@@ -10,7 +10,7 @@ import { getOrCreateKeyPair, signMessage } from './ed25519';
 /**
  * Universal signed request structure
  */
-export interface SignedRequest<T = any> {
+export interface SignedRequest<T = unknown> {
 	payload: T;
 	signature: string;
 }
@@ -19,7 +19,7 @@ export interface SignedRequest<T = any> {
  * Deterministic JSON serialization for consistent signing
  * Ensures frontend and backend serialize identically
  */
-export function serializePayload(payload: any): string {
+export function serializePayload(payload: unknown): string {
 	// Sort object keys recursively for deterministic serialization
 	const sortedPayload = sortObjectKeys(payload);
 	return JSON.stringify(sortedPayload);
@@ -28,7 +28,7 @@ export function serializePayload(payload: any): string {
 /**
  * Recursively sort object keys for deterministic serialization
  */
-function sortObjectKeys(obj: any): any {
+function sortObjectKeys(obj: unknown): unknown {
 	if (obj === null || typeof obj !== 'object') {
 		return obj;
 	}
@@ -37,11 +37,11 @@ function sortObjectKeys(obj: any): any {
 		return obj.map(sortObjectKeys);
 	}
 
-	const sorted: any = {};
+	const sorted: Record<string, unknown> = {};
 	const keys = Object.keys(obj).sort();
 
 	for (const key of keys) {
-		sorted[key] = sortObjectKeys(obj[key]);
+		sorted[key] = sortObjectKeys((obj as any)[key]);
 	}
 
 	return sorted;
@@ -74,12 +74,12 @@ export async function createSignedRequest<T>(payload: T): Promise<SignedRequest<
 /**
  * Verify signed request structure (client-side validation)
  */
-export function isSignedRequest(obj: any): obj is SignedRequest {
+export function isSignedRequest(obj: unknown): obj is SignedRequest {
 	return (
-		obj &&
+		obj !== null &&
 		typeof obj === 'object' &&
 		'payload' in obj &&
 		'signature' in obj &&
-		typeof obj.signature === 'string'
+		typeof (obj as any).signature === 'string'
 	);
 }

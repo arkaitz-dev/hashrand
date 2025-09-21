@@ -2,8 +2,6 @@
  * Navigation utilities for handling Next parameter structure with DRY principles
  */
 
-import { encryptNextUrl } from '$lib/crypto';
-
 /**
  * Structure for Next parameter - used consistently across all components
  */
@@ -22,7 +20,9 @@ export interface NextParameterStructure {
  * @param nextJsonString - JSON string from backend (or null)
  * @returns Navigation URL: "/" | "/route" | "/route?p=encrypted"
  */
-export async function parseNextParameterJson(nextJsonString: string | null | undefined): Promise<string> {
+export async function parseNextParameterJson(
+	nextJsonString: string | null | undefined
+): Promise<string> {
 	// Handle null/undefined/empty cases
 	if (!nextJsonString || nextJsonString.trim() === '') {
 		return '/';
@@ -56,16 +56,20 @@ export async function parseNextParameterJson(nextJsonString: string | null | und
 
 			if (cipherToken && nonceToken && hmacKey) {
 				const { encryptUrlParams } = await import('../crypto');
-				const result = await encryptUrlParams(nextStructure.params, cipherToken, nonceToken, hmacKey);
+				const result = await encryptUrlParams(
+					nextStructure.params,
+					cipherToken,
+					nonceToken,
+					hmacKey
+				);
 				return `${cleanRoute}?p=${result.p}`;
 			} else {
 				return cleanRoute;
 			}
-		} catch (error) {
+		} catch {
 			return cleanRoute;
 		}
-
-	} catch (error) {
+	} catch {
 		return '/';
 	}
 }
@@ -103,7 +107,10 @@ export function createSimpleRouteNextParameter(route: string): string {
 /**
  * Helper: Create next parameter for route with parameters
  */
-export function createRouteWithParamsNextParameter(route: string, params: Record<string, string>): string {
+export function createRouteWithParamsNextParameter(
+	route: string,
+	params: Record<string, string>
+): string {
 	return createNextParameterJson(route, params);
 }
 
@@ -112,10 +119,10 @@ export function createRouteWithParamsNextParameter(route: string, params: Record
  * Eliminates the need for context detection and hardcoded logic
  */
 export interface AuthDialogConfig {
-	email?: string;           // Optional prefilled email
+	email?: string; // Optional prefilled email
 	destination: {
-		route: string;        // Explicit destination route: '/', '/result', etc.
-		params?: Record<string, any>; // Optional parameters for destination
+		route: string; // Explicit destination route: '/', '/result', etc.
+		params?: Record<string, unknown>; // Optional parameters for destination
 	};
 }
 
@@ -139,11 +146,14 @@ export function buildNextParameterFromConfig(config: AuthDialogConfig): string {
 	// Filter out email from params (security: never include email in next params)
 	const filteredParams = destination.params
 		? Object.entries(destination.params)
-			.filter(([key]) => key !== 'email') // CRITICAL: Never include email
-			.reduce((acc, [key, value]) => {
-				acc[key] = String(value);
-				return acc;
-			}, {} as Record<string, string>)
+				.filter(([key]) => key !== 'email') // CRITICAL: Never include email
+				.reduce(
+					(acc, [key, value]) => {
+						acc[key] = String(value);
+						return acc;
+					},
+					{} as Record<string, string>
+				)
 		: undefined;
 
 	// Build nextParam using existing DRY helpers

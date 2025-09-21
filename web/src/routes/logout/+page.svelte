@@ -29,7 +29,7 @@
 			setTimeout(() => {
 				goto('/');
 			}, 1500);
-		} catch (error) {
+		} catch {
 			// Error during logout
 			flashMessagesStore.addMessage(
 				$currentLanguage === 'es' ? '❌ Error al cerrar sesión' : '❌ Error during logout'

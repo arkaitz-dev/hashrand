@@ -8,18 +8,10 @@
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
 	import DateTimeLocalized from '$lib/components/DateTimeLocalized.svelte';
-	import {
-		resultState,
-		error,
-		setResult,
-		setLoading,
-		setError,
-		isLoading
-	} from '$lib/stores/result';
+	import { resultState, error, setResult, setLoading, isLoading } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { dialogStore } from '$lib/stores/dialog';
 	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 	import { authStore } from '$lib/stores/auth';
@@ -70,11 +62,9 @@
 
 	// Function to generate result from URL parameters
 	async function generateFromParams() {
-
 		// Verify auth is available with automatic refresh if needed
 		const { authStore } = await import('$lib/stores/auth');
 		const isAuthenticated = await authStore.ensureAuthenticated();
-
 
 		if (!isAuthenticated) {
 			// Not authenticated, redirecting to home
@@ -83,7 +73,7 @@
 		}
 
 		// First try to decrypt encrypted parameters
-		let urlParams: Record<string, any> = {};
+		let urlParams: Record<string, unknown> = {};
 
 		// Try to decrypt if encrypted parameters are present
 		const cipherToken = authStore.getCipherToken();
@@ -100,7 +90,6 @@
 					hmacKey
 				});
 
-
 				if (decryptedParams) {
 					urlParams = decryptedParams;
 				} else {
@@ -108,7 +97,7 @@
 					goto('/');
 					return;
 				}
-			} catch (decryptError) {
+			} catch {
 				// Error during decryption - redirect to home
 				goto('/');
 				return;
@@ -235,9 +224,8 @@
 				endpoint,
 				timestamp: responseTimestamp
 			});
-		} catch (error) {
+		} catch {
 			// For ANY error, redirect to home with flash message as requested
-			const errorMsg = error instanceof Error ? error.message : $_('common.failedToGenerate');
 
 			// Handle API generation errors
 
@@ -261,7 +249,7 @@
 			copyTimeout = setTimeout(() => {
 				copySuccess = false;
 			}, 2000);
-		} catch (err) {
+		} catch {
 			// Fallback for older browsers
 			try {
 				const textArea = document.createElement('textarea');
@@ -275,7 +263,8 @@
 				copyTimeout = setTimeout(() => {
 					copySuccess = false;
 				}, 2000);
-			} catch (fallbackErr) {
+			} catch {
+				// Fallback copy failed - ignore error
 			}
 		}
 	}
@@ -413,9 +402,8 @@
 
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
 
-
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
-			const configParams: Record<string, any> = {};
+			const configParams: Record<string, unknown> = {};
 
 			// Add common parameters
 			if ($resultState.params.length) {
@@ -446,7 +434,6 @@
 			if ($resultState.seed) {
 				configParams.seed = $resultState.seed;
 			}
-
 
 			// Get crypto tokens for parameter encryption
 			const cipherToken = authStore.getCipherToken();
@@ -491,7 +478,7 @@
 
 		// Build parameters object (without seed)
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
-			const configParams: Record<string, any> = {};
+			const configParams: Record<string, unknown> = {};
 
 			// Add common parameters
 			if ($resultState.params.length) {
@@ -595,9 +582,8 @@
 
 			// Reset copy success state
 			copySuccess = false;
-		} catch (error) {
+		} catch {
 			// For ANY error, redirect to home with flash message as requested
-			const errorMsg = error instanceof Error ? error.message : $_('common.failedToRegenerate');
 
 			// Handle API regeneration errors
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	// import { goto } from '$app/navigation'; // REPLACED by useGenerationWorkflow
+	// import { onMount } from 'svelte'; // REPLACED by useFormParams
+	// import { page } from '$app/stores'; // REPLACED by useFormParams
 	import Footer from '$lib/components/Footer.svelte';
 	// import Button from '$lib/components/Button.svelte';
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
@@ -9,12 +9,16 @@
 	import AlphabetSelector from '$lib/components/AlphabetSelector.svelte';
 	import TextInput from '$lib/components/TextInput.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { dialogStore } from '$lib/stores/dialog';
-	import { isLoading, resultState } from '$lib/stores/result';
+	// import { dialogStore } from '$lib/stores/dialog'; // REPLACED by useGenerationWorkflow
+	import { isLoading } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import type { GenerateParams, AlphabetType } from '$lib/types';
-	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
+	// import { decryptPageParams, createEncryptedUrl } from '$lib/crypto'; // REPLACED by composables
+
+	// NEW: Enterprise-grade composables for SOLID/DRY architecture
+	import { useGenerationWorkflow } from '$lib/composables/useGenerationWorkflow';
+	import { useFormParams } from '$lib/composables/useFormParams';
 
 	// Default values
 	function getDefaultParams(): GenerateParams {
@@ -27,14 +31,52 @@
 		};
 	}
 
-	// Form state - will be initialized in onMount
-	let params: GenerateParams = $state(getDefaultParams());
-	let urlProvidedSeed: string = $state(''); // Seed from URL parameters (read-only)
+	// Custom-specific parameter validation and application
+	function validateAndApplyCustomParams(
+		urlParams: Record<string, unknown>,
+		currentParams: GenerateParams
+	): GenerateParams {
+		let newParams = { ...currentParams };
 
-	// Clean initialization without debug messages
+		// Validate and apply length
+		if (urlParams.length) {
+			const lengthNum = parseInt(String(urlParams.length));
+			if (!isNaN(lengthNum) && lengthNum >= 2 && lengthNum <= 128) {
+				newParams.length = lengthNum;
+			}
+		}
 
-	// Get URL parameters reactively
-	let searchParams = $derived($page.url.searchParams);
+		// Validate and apply alphabet
+		if (urlParams.alphabet && isValidAlphabet(String(urlParams.alphabet))) {
+			newParams.alphabet = String(urlParams.alphabet) as AlphabetType;
+		}
+
+		// Validate and apply prefix
+		if (urlParams.prefix !== undefined && String(urlParams.prefix).length <= 32) {
+			newParams.prefix = String(urlParams.prefix);
+		}
+
+		// Validate and apply suffix
+		if (urlParams.suffix !== undefined && String(urlParams.suffix).length <= 32) {
+			newParams.suffix = String(urlParams.suffix);
+		}
+
+		return newParams;
+	}
+
+	// ENTERPRISE ARCHITECTURE: Using composables for SOLID/DRY principles
+	const formParamsManager = useFormParams({
+		endpoint: 'custom',
+		getDefaultParams,
+		validateAndApplyParams: validateAndApplyCustomParams
+	});
+
+	// Form state managed by composable
+	let params = $derived(formParamsManager.params.value);
+	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// REMOVED: URL parameters now handled by useFormParams composable
+	// let searchParams = $derived($page.url.searchParams);
 
 	// Function to validate alphabet parameter
 	function isValidAlphabet(value: string): value is AlphabetType {
@@ -83,184 +125,52 @@
 	let suffixValid = $derived(!params.suffix || params.suffix.length <= 32);
 	let formValid = $derived(lengthValid && prefixValid && suffixValid);
 
+	// ENTERPRISE ARCHITECTURE: Generation workflow composable
+	const generationWorkflow = useGenerationWorkflow({
+		endpoint: 'custom',
+		get formValid() {
+			return Boolean(formValid);
+		},
+		getParams: () => ({
+			length: params.length ?? 21,
+			alphabet: params.alphabet ?? 'base58',
+			...(params.prefix && { prefix: params.prefix }),
+			...(params.suffix && { suffix: params.suffix })
+		}),
+		get urlProvidedSeed() {
+			return urlProvidedSeed;
+		}
+	});
+
+	// REPLACED: All generation logic now handled by useGenerationWorkflow composable
+	// This eliminates ~150 lines of duplicated code per route
+	/*
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	async function handleGenerate(event: Event) {
-		event.preventDefault();
-
-		if (!formValid) {
-			return;
-		}
-
-		// Verify authentication with automatic refresh
-		const isAuthenticated = await authStore.ensureAuthenticated();
-
-		if (!isAuthenticated) {
-			// No se pudo autenticar - mostrar diálogo de autenticación
-			pendingGenerationParams = {
-				endpoint: 'custom',
-				length: params.length ?? 21,
-				alphabet: params.alphabet ?? 'base58',
-				...(params.prefix && { prefix: params.prefix }),
-				...(params.suffix && { suffix: params.suffix }),
-				...(urlProvidedSeed && { seed: urlProvidedSeed })
-			};
-
-			// Clear any residual auth data before asking for email (defensive security)
-			authStore.clearPreventiveAuthData();
-
-			const authConfig = {
-				destination: {
-					route: '/result',
-					params: pendingGenerationParams
-				}
-			};
-			dialogStore.show('auth', authConfig);
-			return;
-		}
-
-		// User authenticated - proceed with generation
-		await performGeneration();
+		// ... 150+ lines of duplicated generation logic ...
 	}
 
-	/**
-	 * Perform the actual generation (separated for reuse after auth)
-	 */
 	async function performGeneration() {
-		proceedWithGeneration();
+		// ... duplicated logic ...
 	}
 
 	async function proceedWithGeneration() {
-		// Create parameters object for result page
-		const resultParams: Record<string, any> = {
-			endpoint: 'custom',
-			length: params.length ?? 21,
-			alphabet: params.alphabet ?? 'base58'
-		};
-
-		// Add optional parameters
-		if (params.prefix) resultParams.prefix = params.prefix;
-		if (params.suffix) resultParams.suffix = params.suffix;
-		if (urlProvidedSeed) resultParams.seed = urlProvidedSeed;
-
-		// Get crypto tokens for parameter encryption
-		const cipherToken = authStore.getCipherToken();
-		const nonceToken = authStore.getNonceToken();
-		const hmacKey = authStore.getHmacKey();
-
-		if (cipherToken && nonceToken && hmacKey) {
-			// Creating secure URL and navigating to result
-
-			// Create encrypted URL for privacy
-			const encryptedUrl = await createEncryptedUrl('/result', resultParams, {
-				cipherToken,
-				nonceToken,
-				hmacKey
-			});
-
-			// Navigating to result page with encrypted parameters
-
-			goto(encryptedUrl);
-		} else {
-			// ERROR: Crypto tokens required for secure navigation
-			// Missing crypto tokens - cannot create secure URL
-
-			goto('/'); // Return to home instead of unsecure URL
-		}
+		// ... duplicated logic ...
 	}
 
-	/**
-	 * Handle successful authentication
-	 */
-	// Listen for authentication success event from DialogContainer
 	function handleAuthenticated() {
-		// Authentication data is handled by the auth system automatically
-
-		// Perform the generation with the pending parameters
-		if (pendingGenerationParams) {
-			// Update params with pending values if they exist
-			if (pendingGenerationParams.length) params.length = Number(pendingGenerationParams.length);
-			if (pendingGenerationParams.alphabet)
-				params.alphabet = String(pendingGenerationParams.alphabet) as AlphabetType;
-			if (pendingGenerationParams.prefix) params.prefix = String(pendingGenerationParams.prefix);
-			if (pendingGenerationParams.suffix) params.suffix = String(pendingGenerationParams.suffix);
-			if (pendingGenerationParams.seed) urlProvidedSeed = String(pendingGenerationParams.seed);
-
-			pendingGenerationParams = null;
-
-			// Perform generation
-			performGeneration();
-		}
+		// ... duplicated logic ...
 	}
+	*/
 
-	// Add event listener for authentication
-	if (typeof globalThis.window !== 'undefined') {
-		globalThis.window.addEventListener('authenticated', handleAuthenticated as EventListener);
-	}
-
-	// Initialize params based on navigation source
+	// REPLACED: All parameter initialization now handled by useFormParams composable
+	// This eliminates ~60 lines of duplicated URL parameter handling per route
+	/*
 	onMount(() => {
-		// Check if we're coming from result page with existing params
-		if (
-			$resultState &&
-			($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') &&
-			$resultState.params
-		) {
-			// Coming from result page - use existing params
-			params = { ...$resultState.params } as GenerateParams;
-		} else {
-			// Coming from menu or fresh load - use defaults
-			params = getDefaultParams();
-		}
-
-		// Override with URL parameters if present
-		// First try to decrypt encrypted parameters
-		let urlParams: Record<string, any> = {};
-
-		// Try to decrypt if encrypted parameters are present
-		const cipherToken = authStore.getCipherToken();
-		const nonceToken = authStore.getNonceToken();
-		const hmacKey = authStore.getHmacKey();
-
-		if (cipherToken && nonceToken && hmacKey) {
-			const decryptedParams = decryptPageParams(searchParams, {
-				cipherToken,
-				nonceToken,
-				hmacKey
-			});
-
-			if (decryptedParams) {
-				urlParams = decryptedParams;
-			}
-		}
-
-		// NO fallback to direct URL parameters - only encrypted params are supported
-		// All parameters must come from decrypted data
-
-		// Apply URL parameters to form state
-		if (urlParams.length) {
-			const lengthNum = parseInt(String(urlParams.length));
-			if (!isNaN(lengthNum) && lengthNum >= 2 && lengthNum <= 128) {
-				params.length = lengthNum;
-			}
-		}
-
-		if (urlParams.alphabet && isValidAlphabet(String(urlParams.alphabet))) {
-			params.alphabet = String(urlParams.alphabet) as AlphabetType;
-		}
-
-		if (urlParams.prefix !== undefined && String(urlParams.prefix).length <= 32) {
-			params.prefix = String(urlParams.prefix);
-		}
-
-		if (urlParams.suffix !== undefined && String(urlParams.suffix).length <= 32) {
-			params.suffix = String(urlParams.suffix);
-		}
-
-		if (urlParams.seed) {
-			urlProvidedSeed = String(urlParams.seed);
-		}
+		// ... 60+ lines of duplicated parameter initialization logic ...
 	});
+	*/
 </script>
 
 <svelte:head>
@@ -297,7 +207,7 @@
 			<div
 				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
 			>
-				<form onsubmit={handleGenerate} class="space-y-6">
+				<form onsubmit={generationWorkflow.handleGenerate} class="space-y-6">
 					<!-- Length -->
 					<div>
 						<label
@@ -310,7 +220,7 @@
 							<input
 								type="range"
 								id="length"
-								bind:value={params.length}
+								bind:value={formParamsManager.params.value.length}
 								min="2"
 								max="128"
 								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
@@ -327,7 +237,7 @@
 
 					<!-- Alphabet -->
 					<AlphabetSelector
-						bind:value={params.alphabet}
+						bind:value={formParamsManager.params.value.alphabet}
 						options={alphabetOptions}
 						label={$_('custom.alphabet')}
 						id="alphabet"
@@ -342,7 +252,7 @@
 							' 32 ' +
 							$_('common.characters') +
 							')'}
-						bind:value={params.prefix}
+						bind:value={formParamsManager.params.value.prefix}
 						placeholder={$_('common.optionalPrefix')}
 						maxlength={32}
 						isValid={prefixValid}
@@ -358,7 +268,7 @@
 							' 32 ' +
 							$_('common.characters') +
 							')'}
-						bind:value={params.suffix}
+						bind:value={formParamsManager.params.value.suffix}
 						placeholder={$_('common.optionalSuffix')}
 						maxlength={32}
 						isValid={suffixValid}

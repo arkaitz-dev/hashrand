@@ -1,17 +1,21 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	// import { goto } from '$app/navigation'; // REPLACED by useGenerationWorkflow
+	// import { onMount } from 'svelte'; // REPLACED by useFormParams
+	// import { page } from '$app/stores'; // REPLACED by useFormParams
 	import Footer from '$lib/components/Footer.svelte';
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { dialogStore } from '$lib/stores/dialog';
-	import { isLoading, resultState } from '$lib/stores/result';
+	// import { dialogStore } from '$lib/stores/dialog'; // REPLACED by useGenerationWorkflow
+	import { isLoading } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import type { MnemonicParams } from '$lib/types';
-	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
+	// import { decryptPageParams, createEncryptedUrl } from '$lib/crypto'; // REPLACED by composables
+
+	// NEW: Enterprise-grade composables for SOLID/DRY architecture
+	import { useGenerationWorkflow } from '$lib/composables/useGenerationWorkflow';
+	import { useFormParams } from '$lib/composables/useFormParams';
 
 	// Default values
 	function getDefaultParams(): MnemonicParams {
@@ -22,12 +26,52 @@
 		};
 	}
 
-	// Form state - will be initialized in onMount
-	let params: MnemonicParams = $state(getDefaultParams());
-	let urlProvidedSeed: string = $state(''); // Seed from URL parameters (read-only)
+	// Mnemonic-specific parameter validation and application
+	function validateAndApplyMnemonicParams(
+		urlParams: Record<string, unknown>,
+		currentParams: MnemonicParams
+	): MnemonicParams {
+		let newParams = { ...currentParams };
 
-	// Get URL parameters reactively
-	let searchParams = $derived($page.url.searchParams);
+		// Validate and apply language
+		if (urlParams.language && isValidMnemonicLanguage(String(urlParams.language))) {
+			newParams.language = String(urlParams.language) as
+				| 'english'
+				| 'japanese'
+				| 'korean'
+				| 'spanish'
+				| 'chinese_simplified'
+				| 'chinese_traditional'
+				| 'french'
+				| 'italian'
+				| 'czech'
+				| 'portuguese';
+		}
+
+		// Validate and apply words
+		if (urlParams.words) {
+			const wordsNum = parseInt(String(urlParams.words));
+			if (isValidMnemonicWords(wordsNum)) {
+				newParams.words = wordsNum as 12 | 24;
+			}
+		}
+
+		return newParams;
+	}
+
+	// ENTERPRISE ARCHITECTURE: Using composables for SOLID/DRY principles
+	const formParamsManager = useFormParams({
+		endpoint: 'mnemonic',
+		getDefaultParams,
+		validateAndApplyParams: validateAndApplyMnemonicParams
+	});
+
+	// Form state managed by composable
+	let params = $derived(formParamsManager.params.value);
+	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// REMOVED: URL parameters now handled by useFormParams composable
+	// let searchParams = $derived($page.url.searchParams);
 
 	// Function to validate language parameter
 	function isValidMnemonicLanguage(value: string): boolean {
@@ -114,145 +158,42 @@
 	let wordsValid = $derived(params.words && isValidMnemonicWords(params.words));
 	let formValid = $derived(languageValid && wordsValid);
 
+	// ENTERPRISE ARCHITECTURE: Generation workflow composable
+	const generationWorkflow = useGenerationWorkflow({
+		endpoint: 'mnemonic',
+		get formValid() {
+			return Boolean(formValid);
+		},
+		getParams: () => ({
+			language: params.language ?? 'english',
+			words: params.words ?? 12
+		}),
+		get urlProvidedSeed() {
+			return urlProvidedSeed;
+		}
+	});
+
+	// REPLACED: All generation logic now handled by useGenerationWorkflow composable
+	// This eliminates ~90 lines of duplicated code per route
+	/*
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	async function handleGenerate(event: Event) {
-		event.preventDefault();
-		if (!formValid) {
-			return;
-		}
-
-		// Verify authentication with automatic refresh
-		const isAuthenticated = await authStore.ensureAuthenticated();
-
-		if (!isAuthenticated) {
-			// No se pudo autenticar - mostrar diálogo de autenticación
-			pendingGenerationParams = {
-				endpoint: 'mnemonic',
-				language: params.language ?? 'english',
-				words: params.words ?? 12,
-				...(urlProvidedSeed && { seed: urlProvidedSeed })
-			};
-
-			// Clear any residual auth data before asking for email (defensive security)
-			authStore.clearPreventiveAuthData();
-
-			const authConfig = {
-				destination: {
-					route: '/result',
-					params: pendingGenerationParams
-				}
-			};
-			dialogStore.show('auth', authConfig);
-			return;
-		}
-
-		// User authenticated - proceed with generation
-		proceedWithGeneration();
+		// ... 90+ lines of duplicated generation logic ...
 	}
 
 	async function proceedWithGeneration() {
-		// Create parameters object for result page
-		const resultParams: Record<string, any> = {
-			endpoint: 'mnemonic',
-			language: params.language ?? 'english',
-			words: params.words ?? 12
-		};
-
-		// Add seed if provided from URL
-		if (urlProvidedSeed) resultParams.seed = urlProvidedSeed;
-
-		// Get crypto tokens for parameter encryption
-		const cipherToken = authStore.getCipherToken();
-		const nonceToken = authStore.getNonceToken();
-		const hmacKey = authStore.getHmacKey();
-
-		if (cipherToken && nonceToken && hmacKey) {
-			// Creating secure URL and navigating to result
-
-			// Create encrypted URL for privacy
-			const encryptedUrl = await createEncryptedUrl('/result', resultParams, {
-				cipherToken,
-				nonceToken,
-				hmacKey
-			});
-
-			// Navigating to result page with encrypted parameters
-
-			goto(encryptedUrl);
-		} else {
-			// ERROR: Crypto tokens required for secure navigation
-			// Missing crypto tokens - cannot create secure URL
-
-			goto('/'); // Return to home instead of unsecure URL
-		}
+		// ... duplicated logic ...
 	}
+	*/
 
-	// Initialize params based on navigation source
+	// REPLACED: All parameter initialization now handled by useFormParams composable
+	// This eliminates ~60 lines of duplicated URL parameter handling per route
+	/*
 	onMount(async () => {
-		// Check if we're coming from result page with existing params
-		if ($resultState && $resultState.endpoint === 'mnemonic' && $resultState.params) {
-			// Coming from result page - use existing params
-			params = { ...$resultState.params } as MnemonicParams;
-		} else {
-			// Coming from menu or fresh load - use defaults
-			params = getDefaultParams();
-		}
-
-		// Override with URL parameters if present
-		// First try to decrypt encrypted parameters
-		let urlParams: Record<string, any> = {};
-
-		// Try to decrypt if encrypted parameters are present
-		const cipherToken = authStore.getCipherToken();
-		const nonceToken = authStore.getNonceToken();
-		const hmacKey = authStore.getHmacKey();
-
-		if (cipherToken && nonceToken && hmacKey) {
-			try {
-				const decryptedParams = await decryptPageParams(searchParams, {
-					cipherToken,
-					nonceToken,
-					hmacKey
-				});
-
-				if (decryptedParams) {
-					urlParams = decryptedParams;
-				}
-			} catch (error) {
-				// Ignore decryption errors silently
-			}
-		}
-
-		// NO fallback to direct URL parameters - only encrypted params are supported
-		// All parameters must come from decrypted data
-
-		// Apply URL parameters to form state
-		if (urlParams.language && isValidMnemonicLanguage(String(urlParams.language))) {
-			params.language = String(urlParams.language) as
-				| 'english'
-				| 'japanese'
-				| 'korean'
-				| 'spanish'
-				| 'chinese_simplified'
-				| 'chinese_traditional'
-				| 'french'
-				| 'italian'
-				| 'czech'
-				| 'portuguese';
-		}
-
-		if (urlParams.words) {
-			const wordsNum = parseInt(String(urlParams.words));
-			if (isValidMnemonicWords(wordsNum)) {
-				params.words = wordsNum as 12 | 24;
-			}
-		}
-
-		if (urlParams.seed) {
-			urlProvidedSeed = String(urlParams.seed);
-		}
+		// ... 60+ lines of duplicated parameter initialization logic ...
 	});
+	*/
 </script>
 
 <svelte:head>
@@ -289,7 +230,7 @@
 			<div
 				class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
 			>
-				<form onsubmit={handleGenerate} class="space-y-6">
+				<form onsubmit={generationWorkflow.handleGenerate} class="space-y-6">
 					<!-- Language -->
 					<div>
 						<label
@@ -300,7 +241,7 @@
 						</label>
 						<select
 							id="language"
-							bind:value={params.language}
+							bind:value={formParamsManager.params.value.language}
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
 						>
 							{#each languageOptions as option}
@@ -322,7 +263,7 @@
 						</label>
 						<select
 							id="words"
-							bind:value={params.words}
+							bind:value={formParamsManager.params.value.words}
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
 						>
 							{#each wordOptions as option}
@@ -348,7 +289,6 @@
 							</div>
 						</div>
 					</div>
-
 
 					<!-- Seed (only show if provided via URL) -->
 					{#if urlProvidedSeed}

@@ -38,7 +38,7 @@
 
 			// Add success flash message
 			flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
-		} catch (error) {
+		} catch {
 			// Error sending magic link
 		} finally {
 			// ALWAYS close dialog and navigate to / regardless of success or error
@@ -57,7 +57,7 @@
 			// Don't prefill email - let user edit it
 			destination: config.destination
 		};
-		dialogStore.show('auth', editConfig);
+		dialogStore.show('auth', editConfig as unknown as Record<string, unknown>);
 	}
 </script>
 

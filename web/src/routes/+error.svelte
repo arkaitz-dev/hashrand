@@ -46,10 +46,14 @@
 	<title>Error - {$_('menu.brandName')}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
+<div
+	class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4"
+>
 	<div class="text-center">
 		<div class="mb-8">
-			<div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full mb-4">
+			<div
+				class="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full mb-4"
+			>
 				<span class="text-2xl">❌</span>
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -58,9 +62,7 @@
 			<p class="text-gray-600 dark:text-gray-300 mb-4">
 				{$page.status === 404 ? 'Page not found' : 'Something went wrong'}
 			</p>
-			<p class="text-sm text-gray-500 dark:text-gray-400">
-				Redirecting to home page...
-			</p>
+			<p class="text-sm text-gray-500 dark:text-gray-400">Redirecting to home page...</p>
 		</div>
 
 		<div class="flex items-center justify-center">

@@ -37,7 +37,7 @@
 			destination: config?.destination || { route: '/' }
 		};
 
-		dialogStore.show('auth-confirm', confirmConfig);
+		dialogStore.show('auth-confirm', confirmConfig as unknown as Record<string, unknown>);
 	}
 
 	/**

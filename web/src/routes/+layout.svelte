@@ -56,19 +56,13 @@
 				// Parse next parameter JSON and create navigation URL
 				const navigationUrl = await parseNextParameterJson(loginResponse.next);
 
-				if (navigationUrl !== "/") {
+				if (navigationUrl !== '/') {
 					const { goto } = await import('$app/navigation');
 					await goto(navigationUrl);
 				}
 			}
-
-		} catch (error) {
+		} catch {
 			try {
-				const { flashMessagesStore } = await import('$lib/stores/flashMessages');
-				const { get } = await import('svelte/store');
-				const { _ } = await import('$lib/stores/i18n');
-				const errorMessage = error instanceof Error ? error.message : String(error);
-
 				// Magic link validation failed
 
 				const { goto } = await import('$app/navigation');
@@ -85,15 +79,12 @@
 		}
 	}
 
-
 	// CRITICAL: Force client-side execution immediately when browser loads
 	if (typeof window !== 'undefined') {
-
 		// Check if we have a magic link in URL
 		const urlParams = new URLSearchParams(window.location.search);
 		const magicToken = urlParams.get('magiclink');
 		if (magicToken && window.location.pathname === '/') {
-
 			// FORCE execution immediately - SvelteKit hydration issue workaround
 			setTimeout(async () => {
 				try {
@@ -107,14 +98,12 @@
 	}
 
 	onMount(() => {
-
 		const unsubscribe = page.subscribe(($page) => {
 			currentRoute.set($page.url.pathname);
 
 			// Check for magic link parameter - only process on root page to avoid interference
 			const magicToken = $page.url.searchParams.get('magiclink');
 			const isRootPage = $page.url.pathname === '/';
-
 
 			// Only process magic links on root page to prevent navigation interference
 			if (magicToken && isRootPage) {
@@ -145,8 +134,6 @@
 		return unsubscribe;
 	});
 
-
-
 	/**
 	 * Handle magic link validation when present in URL
 	 */
@@ -161,13 +148,8 @@
 			// Validate the magic link (Ed25519 verification by backend)
 			loginResponse = await authStore.validateMagicLink(magicToken);
 			validationSuccessful = true;
-		} catch (error) {
+		} catch {
 			// Show error and redirect to home page (URL already cleaned)
-			const { flashMessagesStore } = await import('$lib/stores/flashMessages');
-			const { get } = await import('svelte/store');
-			const { _ } = await import('$lib/stores/i18n');
-			const errorMessage = error instanceof Error ? error.message : String(error);
-
 			// Magic link validation failed
 			goto('/');
 			return;
@@ -201,7 +183,7 @@
 						if (cipherToken && nonceToken && hmacKey) {
 							tokensReady = true;
 						} else {
-							await new Promise(resolve => setTimeout(resolve, 100));
+							await new Promise((resolve) => setTimeout(resolve, 100));
 							attempts++;
 						}
 					}
@@ -213,10 +195,10 @@
 					// Parse next parameter JSON and create navigation URL
 					const navigationUrl = await parseNextParameterJson(loginResponse.next);
 
-					if (navigationUrl !== "/") {
+					if (navigationUrl !== '/') {
 						await goto(navigationUrl);
 					}
-				} catch (error) {
+				} catch {
 					// Don't prevent successful authentication, just stay on current page
 				}
 			}
@@ -245,7 +227,6 @@
 <main class="min-h-screen relative">
 	<!-- Top Controls Container -->
 	<TopControls />
-
 
 	{@render children?.()}
 </main>
