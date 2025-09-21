@@ -1,8 +1,9 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_custom, handle_from_seed, handle_login, handle_mnemonic_request,
-    handle_password_request, handle_users, handle_version,
+    handle_api_key, handle_api_key_request, handle_custom, handle_from_seed, handle_login,
+    handle_mnemonic_request, handle_mnemonic_with_params, handle_password, handle_password_request,
+    handle_users, handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
@@ -27,30 +28,103 @@ pub async fn route_request_with_req(
     match path {
         // Protected endpoints with proactive token renewal
         path if path.ends_with("/api/custom") => {
-            if requires_authentication(path) {
-                // Use new signed request handler for authenticated requests
-                handle_custom_request(req).await
-            } else {
-                handle_custom_request(req).await
+            match *method {
+                Method::Get => {
+                    if requires_authentication(path) {
+                        // GET requests require JWT validation
+                        with_auth_and_renewal(req, |req| {
+                            let uri_str = req.uri().to_string();
+                            let query = if let Some(idx) = uri_str.find('?') {
+                                &uri_str[idx + 1..]
+                            } else {
+                                ""
+                            };
+                            let params = crate::utils::query::parse_query_params(query);
+                            handle_custom(params)
+                        })
+                    } else {
+                        // Fallback for non-auth case (shouldn't happen for /api/custom)
+                        handle_custom_request(req).await
+                    }
+                }
+                Method::Post => {
+                    // POST requests use SignedRequest validation internally
+                    handle_custom_request(req).await
+                }
+                _ => handle_method_not_allowed(),
             }
         }
         path if path.ends_with("/api/password") => {
-            // SignedRequest endpoints handle JWT validation internally
-            handle_password_request(req).await
+            match *method {
+                Method::Get => {
+                    if requires_authentication(path) {
+                        // GET requests require JWT validation
+                        with_auth_and_renewal(req, |req| {
+                            let uri_str = req.uri().to_string();
+                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
+                            let params = crate::utils::query::parse_query_params(query_string);
+                            handle_password(params)
+                        })
+                    } else {
+                        handle_password_request(req).await
+                    }
+                }
+                Method::Post => {
+                    // POST requests use SignedRequest validation internally
+                    handle_password_request(req).await
+                }
+                _ => handle_method_not_allowed(),
+            }
         }
         path if path.ends_with("/api/api-key") => {
-            // SignedRequest endpoints handle JWT validation internally
-            handle_api_key_request(req).await
+            match *method {
+                Method::Get => {
+                    if requires_authentication(path) {
+                        // GET requests require JWT validation
+                        with_auth_and_renewal(req, |req| {
+                            let uri_str = req.uri().to_string();
+                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
+                            let params = crate::utils::query::parse_query_params(query_string);
+                            handle_api_key(params)
+                        })
+                    } else {
+                        handle_api_key_request(req).await
+                    }
+                }
+                Method::Post => {
+                    // POST requests use SignedRequest validation internally
+                    handle_api_key_request(req).await
+                }
+                _ => handle_method_not_allowed(),
+            }
         }
         path if path.ends_with("/api/mnemonic") => {
-            // SignedRequest endpoints handle JWT validation internally
-            handle_mnemonic_request(req).await
+            match *method {
+                Method::Get => {
+                    if requires_authentication(path) {
+                        // GET requests require JWT validation
+                        with_auth_and_renewal(req, |req| {
+                            let uri_str = req.uri().to_string();
+                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
+                            let params = crate::utils::query::parse_query_params(query_string);
+                            handle_mnemonic_with_params(params, None)
+                        })
+                    } else {
+                        handle_mnemonic_request(req).await
+                    }
+                }
+                Method::Post => {
+                    // POST requests use SignedRequest validation internally
+                    handle_mnemonic_request(req).await
+                }
+                _ => handle_method_not_allowed(),
+            }
         }
 
         // GET-only endpoints
         path if path.ends_with("/api/generate") => {
-            match method {
-                &Method::Get => {
+            match *method {
+                Method::Get => {
                     if requires_authentication(path) {
                         // Need to wrap for protected endpoint
                         with_auth_and_renewal(req, |_req| handle_custom(query_params))
@@ -61,14 +135,14 @@ pub async fn route_request_with_req(
                 _ => handle_method_not_allowed(),
             }
         }
-        path if path.ends_with("/api/version") => match method {
-            &Method::Get => handle_version(),
+        path if path.ends_with("/api/version") => match *method {
+            Method::Get => handle_version(),
             _ => handle_method_not_allowed(),
         },
 
         // POST-only endpoints
-        path if path.ends_with("/api/from-seed") => match method {
-            &Method::Post => {
+        path if path.ends_with("/api/from-seed") => match *method {
+            Method::Post => {
                 if requires_authentication(path) {
                     with_auth_and_renewal(req, |req| handle_from_seed(req.body()))
                 } else {

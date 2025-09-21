@@ -7,31 +7,16 @@ use serde::{Deserialize, Serialize};
 use spin_sdk::http::{Request, Response};
 use std::collections::HashMap;
 
-use super::{
-    SignedRequest, SignedRequestValidator, PublicKeyExtractor,
-};
-use super::signed_request::SignedRequestError;
+use super::{SignedRequest, SignedRequestValidator};
 use crate::utils::auth::ErrorResponse;
 
 /// Universal payload wrapper for protected endpoints
 pub type ProtectedSignedRequest<T> = SignedRequest<T>;
 
-/// Extract public key from JWT token for protected endpoints
-pub struct JwtPublicKeyExtractor {
-    pub public_key: String,
-}
-
-impl PublicKeyExtractor for JwtPublicKeyExtractor {
-    fn extract_public_key(&self) -> Result<String, SignedRequestError> {
-        Ok(self.public_key.clone())
-    }
-}
-
 /// Protected endpoint middleware result
 pub struct ProtectedEndpointResult<T> {
     pub payload: T,
     pub user_id: String, // Base58-encoded user_id
-    pub pub_key_hex: String, // Ed25519 public key as hex
 }
 
 /// Protected endpoint middleware
@@ -134,12 +119,14 @@ impl ProtectedEndpointMiddleware {
                 .build());
         }
 
-        println!("✅ Protected endpoint validation successful for user: {}", user_id);
+        println!(
+            "✅ Protected endpoint validation successful for user: {}",
+            user_id
+        );
 
         Ok(ProtectedEndpointResult {
             payload: signed_request.payload,
             user_id,
-            pub_key_hex,
         })
     }
 
@@ -163,20 +150,18 @@ impl ProtectedEndpointMiddleware {
             })?;
 
         // Extract Bearer token
-        let token = auth_header
-            .strip_prefix("Bearer ")
-            .ok_or_else(|| {
-                Response::builder()
-                    .status(401)
-                    .header("content-type", "application/json")
-                    .body(
-                        serde_json::to_string(&ErrorResponse {
-                            error: "Invalid Authorization header format".to_string(),
-                        })
-                        .unwrap_or_default(),
-                    )
-                    .build()
-            })?;
+        let token = auth_header.strip_prefix("Bearer ").ok_or_else(|| {
+            Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(
+                    serde_json::to_string(&ErrorResponse {
+                        error: "Invalid Authorization header format".to_string(),
+                    })
+                    .unwrap_or_default(),
+                )
+                .build()
+        })?;
 
         // Validate JWT token and extract claims
         let claims = crate::utils::JwtUtils::validate_access_token(token).map_err(|e| {
@@ -215,17 +200,25 @@ impl ProtectedEndpointMiddleware {
 #[macro_export]
 macro_rules! protected_endpoint_handler {
     ($handler_name:ident, $payload_type:ty, $logic:expr) => {
-        pub async fn $handler_name(req: spin_sdk::http::Request) -> anyhow::Result<spin_sdk::http::Response> {
-            use crate::utils::protected_endpoint_middleware::{ProtectedEndpointMiddleware, ProtectedEndpointResult};
+        pub async fn $handler_name(
+            req: spin_sdk::http::Request,
+        ) -> anyhow::Result<spin_sdk::http::Response> {
+            use $crate::utils::protected_endpoint_middleware::{
+                ProtectedEndpointMiddleware, ProtectedEndpointResult,
+            };
 
             let body_bytes = req.body();
 
-            let result: ProtectedEndpointResult<$payload_type> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
-                Ok(result) => result,
-                Err(error_response) => return Ok(error_response),
-            };
+            let result: ProtectedEndpointResult<$payload_type> =
+                match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+                    Ok(result) => result,
+                    Err(error_response) => return Ok(error_response),
+                };
 
-            let logic_fn: fn(ProtectedEndpointResult<$payload_type>, &spin_sdk::http::Request) -> anyhow::Result<spin_sdk::http::Response> = $logic;
+            let logic_fn: fn(
+                ProtectedEndpointResult<$payload_type>,
+                &spin_sdk::http::Request,
+            ) -> anyhow::Result<spin_sdk::http::Response> = $logic;
             logic_fn(result, &req)
         }
     };

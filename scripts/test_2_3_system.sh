@@ -18,8 +18,8 @@ echo "✅ Public key generada: $PUB_KEY"
 echo ""
 echo "🔏 Paso 2: Firmando payload..."
 EMAIL="me@arkaitz.dev"
-# Crear mensaje: email + pub_key (sin next param)
-MESSAGE="${EMAIL}${PUB_KEY}"
+# Crear mensaje: email + pub_key + next (next defaults to "/")
+MESSAGE="${EMAIL}${PUB_KEY}/"
 SIGNATURE=$(node scripts/sign_payload.js "$MESSAGE")
 echo "✅ Signature generada: ${SIGNATURE:0:40}..."
 

@@ -55,7 +55,7 @@ export function buildSearchParams(params: Record<string, unknown>): URLSearchPar
 }
 
 /**
- * Generic GET request handler (DRY for generation endpoints)
+ * Generic GET request handler with Ed25519 signature validation
  */
 export async function handleGetRequest<T>(
 	endpoint: string,
@@ -63,8 +63,30 @@ export async function handleGetRequest<T>(
 	// eslint-disable-next-line no-unused-vars
 	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
 ): Promise<T> {
-	const searchParams = buildSearchParams(params);
-	const url = searchParams.toString() ? `${endpoint}?${searchParams}` : endpoint;
+	// Convert parameters to string format for signing
+	const stringParams: Record<string, string> = {};
+	Object.entries(params).forEach(([key, value]) => {
+		if (value !== undefined && value !== null) {
+			if (typeof value === 'boolean') {
+				stringParams[key] = value.toString();
+			} else if (typeof value === 'number') {
+				stringParams[key] = value.toString();
+			} else if (typeof value === 'string') {
+				stringParams[key] = value;
+			}
+		}
+	});
+
+	// Generate Ed25519 signature for query parameters
+	const { signQueryParams } = await import('../signedRequest');
+	const signature = await signQueryParams(stringParams);
+
+	// Add signature to parameters
+	const signedParams = { ...stringParams, signature };
+
+	// Build final URL with all parameters including signature
+	const searchParams = new URLSearchParams(signedParams);
+	const url = `${endpoint}?${searchParams}`;
 
 	const response = await authenticatedFetch(url);
 	return await handleJsonResponse<T>(response);

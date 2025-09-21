@@ -1,14 +1,16 @@
 use crate::types::{AlphabetType, CustomHashResponse};
-use crate::utils::{
-    base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
-    validate_length, validate_seed_string,
-    ProtectedEndpointMiddleware, ProtectedEndpointResult,
-};
 use crate::utils::auth::ErrorResponse;
-use crate::utils::protected_endpoint_middleware::{payload_to_params, extract_seed_from_payload};
+use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
+use crate::utils::{
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator, generate_otp,
+    generate_random_seed, generate_with_seed, seed_to_base58, validate_length,
+};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+// External crates
+extern crate hex;
 
 /// Helper function to check if a string contains unwanted patterns
 fn contains_unwanted_patterns(s: &str) -> bool {
@@ -28,11 +30,72 @@ pub async fn handle_password_request(req: Request) -> anyhow::Result<Response> {
     }
 }
 
-/// Handle GET request for password generation
+/// Handle GET request for password generation with Ed25519 signature validation
 fn handle_password_get(req: Request) -> anyhow::Result<Response> {
+    // Extract and validate Bearer token to get public key
+    let auth_header = req
+        .header("authorization")
+        .and_then(|h| h.as_str())
+        .unwrap_or("");
+
+    if !auth_header.starts_with("Bearer ") {
+        return Ok(Response::builder()
+            .status(401)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Missing or invalid Authorization header".to_string(),
+            })?)
+            .build());
+    }
+
+    let access_token = &auth_header[7..]; // Remove "Bearer " prefix
+    let claims = match crate::utils::jwt::tokens::validate_access_token(access_token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Invalid access token: {}", e),
+                })?)
+                .build());
+        }
+    };
+
+    // Convert public key to hex string for signature validation
+    let public_key_hex = hex::encode(claims.pub_key);
+
+    // Extract query parameters from request URI
     let uri_string = req.uri().to_string();
     let query_string = uri_string.split('?').nth(1).unwrap_or("");
-    let params = crate::utils::query::parse_query_params(query_string);
+
+    let mut params: HashMap<String, String> = query_string
+        .split('&')
+        .filter_map(|pair| {
+            let mut parts = pair.split('=');
+            match (parts.next(), parts.next()) {
+                (Some(key), Some(value)) => Some((key.to_string(), value.to_string())),
+                _ => None,
+            }
+        })
+        .collect();
+
+    // Validate Ed25519 signature
+    if let Err(e) = SignedRequestValidator::validate_query_params(&mut params, &public_key_hex) {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: format!("Signature validation failed: {}", e),
+            })?)
+            .build());
+    }
+
+    println!(
+        "✅ Password GET: Ed25519 signature validated for user {}",
+        claims.sub
+    );
+
     handle_password(params)
 }
 
@@ -41,12 +104,16 @@ pub async fn handle_password_post_signed(req: Request) -> anyhow::Result<Respons
     let body_bytes = req.body();
 
     // Validate signed request and extract payload (UNIVERSAL)
-    let result: ProtectedEndpointResult<serde_json::Value> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
-        Ok(result) => result,
-        Err(error_response) => return Ok(error_response),
-    };
+    let result: ProtectedEndpointResult<serde_json::Value> =
+        match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+            Ok(result) => result,
+            Err(error_response) => return Ok(error_response),
+        };
 
-    println!("✅ Password endpoint: validated signed request for user {}", result.user_id);
+    println!(
+        "✅ Password endpoint: validated signed request for user {}",
+        result.user_id
+    );
 
     // Convert payload to parameter map using UNIVERSAL function
     let params = payload_to_params(&result.payload);
@@ -58,9 +125,7 @@ pub async fn handle_password_post_signed(req: Request) -> anyhow::Result<Respons
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: e,
-                })?)
+                .body(serde_json::to_string(&ErrorResponse { error: e })?)
                 .build());
         }
     };
@@ -69,38 +134,8 @@ pub async fn handle_password_post_signed(req: Request) -> anyhow::Result<Respons
     handle_password_with_params(params, provided_seed)
 }
 
-/// Handle POST request for password generation with seed (LEGACY)
-fn handle_password_post(req: Request) -> anyhow::Result<Response> {
-    let body = req.body();
-    let json_str = String::from_utf8(body.to_vec())
-        .map_err(|_| anyhow::anyhow!("Invalid UTF-8 in request body"))?;
-
-    let json_value: serde_json::Value = serde_json::from_str(&json_str)
-        .map_err(|_| anyhow::anyhow!("Invalid JSON in request body"))?;
-
-    let seed_str = json_value
-        .get("seed")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| anyhow::anyhow!("Missing 'seed' field in JSON body"))?;
-
-    // Validate seed string format first
-    validate_seed_string(seed_str)?;
-    let seed_32 = base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!("Invalid seed: {}", e))?;
-
-    // Extract other parameters from JSON
-    let mut params = HashMap::new();
-    if let Some(length) = json_value.get("length").and_then(|v| v.as_u64()) {
-        params.insert("length".to_string(), length.to_string());
-    }
-    if let Some(alphabet) = json_value.get("alphabet").and_then(|v| v.as_str()) {
-        params.insert("alphabet".to_string(), alphabet.to_string());
-    }
-
-    handle_password_with_params(params, Some(seed_32))
-}
-
 /// Handles the /api/password endpoint for secure password generation
-fn handle_password(params: HashMap<String, String>) -> anyhow::Result<Response> {
+pub fn handle_password(params: HashMap<String, String>) -> anyhow::Result<Response> {
     // Generate random 32-byte seed
     let seed_32 = generate_random_seed();
     handle_password_with_params(params, Some(seed_32))

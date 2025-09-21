@@ -72,6 +72,35 @@ export async function createSignedRequest<T>(payload: T): Promise<SignedRequest<
 }
 
 /**
+ * Serialize query parameters deterministically for Ed25519 signing
+ *
+ * Converts query parameters to a deterministic JSON string matching
+ * the backend's serialize_query_params_deterministic function
+ */
+export function serializeQueryParams(params: Record<string, string>): string {
+	// Convert to object and apply same sorting logic as payload serialization
+	const sortedParams = sortObjectKeys(params);
+	return JSON.stringify(sortedParams);
+}
+
+/**
+ * Create Ed25519 signature for GET request query parameters
+ *
+ * @param params - Query parameters to sign
+ * @returns Signature string for the serialized parameters
+ */
+export async function signQueryParams(params: Record<string, string>): Promise<string> {
+	// Get or generate Ed25519 keypair
+	const keyPair = await getOrCreateKeyPair();
+
+	// Serialize parameters deterministically (matching backend)
+	const serializedParams = serializeQueryParams(params);
+
+	// Sign serialized parameters
+	return await signMessage(serializedParams, keyPair);
+}
+
+/**
  * Verify signed request structure (client-side validation)
  */
 export function isSignedRequest(obj: unknown): obj is SignedRequest {

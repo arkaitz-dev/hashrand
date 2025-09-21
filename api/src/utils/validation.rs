@@ -87,31 +87,3 @@ pub fn validate_prefix_suffix(text: &str, field_name: &str) -> Result<()> {
 
     Ok(())
 }
-
-/// Validate seed string format (Base58)
-pub fn validate_seed_string(seed_str: &str) -> Result<()> {
-    if seed_str.is_empty() {
-        return Err(anyhow::anyhow!("Seed cannot be empty"));
-    }
-
-    // Base58 has specific character set
-    const BASE58_CHARS: &str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
-    for c in seed_str.chars() {
-        if !BASE58_CHARS.contains(c) {
-            return Err(anyhow::anyhow!(
-                "Seed contains invalid Base58 character: {}",
-                c
-            ));
-        }
-    }
-
-    // Reasonable length limits for Base58 seed
-    if seed_str.len() < 32 || seed_str.len() > 64 {
-        return Err(anyhow::anyhow!(
-            "Seed length invalid (expected 32-64 characters)"
-        ));
-    }
-
-    Ok(())
-}

@@ -4,7 +4,7 @@
 
 use chrono::{DateTime, Utc};
 
-use super::custom_tokens::{
+use super::custom_token_api::{
     create_custom_refresh_token, create_custom_refresh_token_from_username,
     validate_custom_access_token, validate_custom_refresh_token,
 };

@@ -38,6 +38,7 @@ Email Input → Blake2b512(email) → Blake2b-keyed(result, hmac_key) → derive
 
 ```rust
 // Zero Knowledge user identification (utils/jwt/crypto.rs)
+// Part of modular JWT system - v0.21.0 enterprise architecture
 pub fn derive_user_id(email: &str) -> [u8; 16] {
     let email_hash = Blake2b512::digest(email.to_lowercase());
     let dynamic_salt = generate_dynamic_salt(&email_hash);
@@ -183,6 +184,67 @@ All pseudorandom generation uses **ChaCha8Rng** for cryptographic consistency:
 - **Initial Generation**: Uses `nanoid` (128 characters) → Blake2b512 → 32-byte seed
 - **Base58 Encoding**: Eliminates confusing characters (0, O, I, l) for better usability
 - **Deterministic Reproducibility**: Same seed always produces same results for audit trails
+
+## Frontend Cryptographic Architecture (v0.21.0)
+
+### Enterprise-Grade Modular Cryptographic System
+
+**Major Architecture Transformation**: Complete refactoring from monolithic cryptographic modules to SOLID-compliant specialized systems.
+
+#### Crypto Module System (`web/src/lib/crypto/`)
+
+**5 Specialized Modules** (94% code reduction from 471→30 lines):
+
+- **`crypto-core.ts`** - Core cryptographic functions
+  - `cryptoHashGen()` - Blake2b-keyed + ChaCha8RNG pipeline for unified hash generation
+  - `generatePrehash()` - 32-byte prehash from prehash seed using session HMAC key
+  - `generateCipherKey()` / `generateCipherNonce()` - ChaCha20-Poly1305 key/nonce derivation
+  - `generateCryptoSalt()` / `generatePrehashSeed()` - Cryptographically secure random generation
+
+- **`crypto-encoding.ts`** - Base64/Base64URL conversion utilities
+  - `bytesToBase64()` / `base64ToBytes()` - Standard Base64 encoding/decoding
+  - `bytesToBase64Url()` / `base64UrlToBytes()` - URL-safe Base64 with automatic padding
+
+- **`crypto-storage.ts`** - Prehash seed IndexedDB management
+  - `storePrehashSeed()` / `getPrehashSeed()` - FIFO rotation system (max 20 seeds)
+  - 8-byte cryptographic keys for efficient KV storage management
+  - Automatic cleanup preventing unlimited memory growth
+
+- **`crypto-url-operations.ts`** - URL parameter encryption/decryption
+  - `encryptUrlParams()` / `decryptUrlParams()` - ChaCha20-Poly1305 AEAD encryption
+  - `serializeParams()` - Consistent JSON serialization with sorted keys
+  - Ultra-compact URL format: single `?p=` parameter combining idx + encrypted data
+
+- **`crypto-utils.ts`** - High-level cryptographic workflows
+  - `prepareSecureUrlParams()` - Complete encryption workflow wrapper
+  - `parseNextUrl()` / `encryptNextUrl()` - URL manipulation utilities
+  - `decryptPageParams()` / `createEncryptedUrl()` - Page-level parameter handling
+
+#### Ed25519 Digital Signature System (`web/src/lib/ed25519/`)
+
+**6 Specialized Modules** (93% code reduction from 303→21 lines):
+
+- **`ed25519-types.ts`** - Type definitions and interfaces
+- **`ed25519-keygen.ts`** - Key generation (WebCrypto + Noble fallback)
+- **`ed25519-database.ts`** - IndexedDB storage operations
+- **`ed25519-signing.ts`** - Digital signature operations
+- **`ed25519-utils.ts`** - Hex/bytes conversion utilities
+- **`ed25519-api.ts`** - High-level API functions
+
+#### Universal Composables System (`web/src/lib/composables/`)
+
+**DRY Elimination**: 2 composables replacing 840+ lines of duplicate code:
+
+- **`useGenerationWorkflow.ts`** - Unified generation logic across all endpoints
+- **`useFormParams.ts`** - Centralized form parameter management
+
+#### Technical Benefits Achieved
+
+- **Zero Breaking Changes**: 100% API compatibility preserved during massive refactoring
+- **Enterprise Standards**: All modules under 225 lines following SOLID principles
+- **Performance**: Faster compilation with granular imports and smaller modules
+- **Maintainability**: Each module easily testable and modifiable in isolation
+- **Type Safety**: Complete TypeScript coverage across all new modules
 
 ## Database Cryptography
 

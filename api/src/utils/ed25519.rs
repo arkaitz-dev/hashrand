@@ -298,8 +298,7 @@ mod tests {
         let message_with_default = Ed25519Utils::create_sign_message(email, &public_key, "/");
         assert_eq!(message_with_default, format!("{}{}/", email, public_key));
 
-        let message_with_next =
-            Ed25519Utils::create_sign_message(email, &public_key, "/dashboard");
+        let message_with_next = Ed25519Utils::create_sign_message(email, &public_key, "/dashboard");
         assert_eq!(
             message_with_next,
             format!("{}{}/dashboard", email, public_key)

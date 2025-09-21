@@ -1,14 +1,17 @@
 use crate::types::CustomHashResponse;
-use crate::utils::{
-    base58_to_seed, generate_otp, generate_random_seed, query::parse_query_params, seed_to_base58,
-    ProtectedEndpointMiddleware, ProtectedEndpointResult,
-};
 use crate::utils::auth::ErrorResponse;
-use crate::utils::protected_endpoint_middleware::{payload_to_params, extract_seed_from_payload};
+use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
+use crate::utils::{
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator, generate_otp,
+    generate_random_seed, seed_to_base58,
+};
 use bip39::{Language, Mnemonic};
 use spin_sdk::http::{Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+// External crates
+extern crate hex;
 
 /// Handle mnemonic requests (GET and POST)
 pub async fn handle_mnemonic_request(req: Request) -> anyhow::Result<Response> {
@@ -23,12 +26,71 @@ pub async fn handle_mnemonic_request(req: Request) -> anyhow::Result<Response> {
     }
 }
 
-/// Handle GET request for mnemonic generation
+/// Handle GET request for mnemonic generation with Ed25519 signature validation
 fn handle_mnemonic_get(req: Request) -> anyhow::Result<Response> {
-    // Parse query parameters
+    // Extract and validate Bearer token to get public key
+    let auth_header = req
+        .header("authorization")
+        .and_then(|h| h.as_str())
+        .unwrap_or("");
+
+    if !auth_header.starts_with("Bearer ") {
+        return Ok(Response::builder()
+            .status(401)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Missing or invalid Authorization header".to_string(),
+            })?)
+            .build());
+    }
+
+    let access_token = &auth_header[7..]; // Remove "Bearer " prefix
+    let claims = match crate::utils::jwt::tokens::validate_access_token(access_token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Invalid access token: {}", e),
+                })?)
+                .build());
+        }
+    };
+
+    // Convert public key to hex string for signature validation
+    let public_key_hex = hex::encode(claims.pub_key);
+
+    // Extract query parameters from request URI
     let uri_string = req.uri().to_string();
     let query_string = uri_string.split('?').nth(1).unwrap_or("");
-    let params = parse_query_params(query_string);
+
+    let mut params: HashMap<String, String> = query_string
+        .split('&')
+        .filter_map(|pair| {
+            let mut parts = pair.split('=');
+            match (parts.next(), parts.next()) {
+                (Some(key), Some(value)) => Some((key.to_string(), value.to_string())),
+                _ => None,
+            }
+        })
+        .collect();
+
+    // Validate Ed25519 signature
+    if let Err(e) = SignedRequestValidator::validate_query_params(&mut params, &public_key_hex) {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: format!("Signature validation failed: {}", e),
+            })?)
+            .build());
+    }
+
+    println!(
+        "✅ Mnemonic GET: Ed25519 signature validated for user {}",
+        claims.sub
+    );
 
     // Use shared logic with no provided seed (will generate random seed)
     handle_mnemonic_with_params(params, None)
@@ -39,12 +101,16 @@ pub async fn handle_mnemonic_post_signed(req: Request) -> anyhow::Result<Respons
     let body_bytes = req.body();
 
     // Validate signed request and extract payload (UNIVERSAL)
-    let result: ProtectedEndpointResult<serde_json::Value> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
-        Ok(result) => result,
-        Err(error_response) => return Ok(error_response),
-    };
+    let result: ProtectedEndpointResult<serde_json::Value> =
+        match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+            Ok(result) => result,
+            Err(error_response) => return Ok(error_response),
+        };
 
-    println!("✅ Mnemonic endpoint: validated signed request for user {}", result.user_id);
+    println!(
+        "✅ Mnemonic endpoint: validated signed request for user {}",
+        result.user_id
+    );
 
     // Convert payload to parameter map using UNIVERSAL function
     let params = payload_to_params(&result.payload);
@@ -56,9 +122,7 @@ pub async fn handle_mnemonic_post_signed(req: Request) -> anyhow::Result<Respons
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: e,
-                })?)
+                .body(serde_json::to_string(&ErrorResponse { error: e })?)
                 .build());
         }
     };
@@ -67,69 +131,8 @@ pub async fn handle_mnemonic_post_signed(req: Request) -> anyhow::Result<Respons
     handle_mnemonic_with_params(params, provided_seed)
 }
 
-/// Handle POST request for mnemonic generation with seed (LEGACY)
-fn handle_mnemonic_post(req: Request) -> anyhow::Result<Response> {
-    let body = req.body();
-    let json_str = match String::from_utf8(body.to_vec()) {
-        Ok(s) => s,
-        Err(_) => {
-            return Ok(Response::builder()
-                .status(400)
-                .header("content-type", "text/plain")
-                .body("Invalid UTF-8 in request body")
-                .build());
-        }
-    };
-
-    let json_value: serde_json::Value = match serde_json::from_str(&json_str) {
-        Ok(json) => json,
-        Err(_) => {
-            return Ok(Response::builder()
-                .status(400)
-                .header("content-type", "text/plain")
-                .body("Invalid JSON in request body")
-                .build());
-        }
-    };
-
-    // Extract required seed parameter
-    let seed_str = match json_value.get("seed").and_then(|v| v.as_str()) {
-        Some(seed) => seed,
-        None => {
-            return Ok(Response::builder()
-                .status(400)
-                .header("content-type", "text/plain")
-                .body("Missing 'seed' field in JSON body")
-                .build());
-        }
-    };
-
-    // Validate and convert seed from base58
-    let seed_32 = match base58_to_seed(seed_str) {
-        Ok(seed) => seed,
-        Err(e) => {
-            return Ok(Response::builder()
-                .status(400)
-                .header("content-type", "text/plain")
-                .body(format!("Invalid seed: {}", e))
-                .build());
-        }
-    };
-
-    // Extract optional parameters from JSON
-    let mut params = HashMap::new();
-    if let Some(language) = json_value.get("language").and_then(|v| v.as_str()) {
-        params.insert("language".to_string(), language.to_string());
-    }
-    if let Some(words) = json_value.get("words").and_then(|v| v.as_u64()) {
-        params.insert("words".to_string(), words.to_string());
-    }
-
-    handle_mnemonic_with_params(params, Some(seed_32))
-}
-
 /// Core logic for handling mnemonic generation
-fn handle_mnemonic_with_params(
+pub fn handle_mnemonic_with_params(
     params: HashMap<String, String>,
     provided_seed: Option<[u8; 32]>,
 ) -> anyhow::Result<Response> {

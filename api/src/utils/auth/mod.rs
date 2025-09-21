@@ -7,6 +7,10 @@
 
 pub mod magic_link_gen;
 pub mod magic_link_val;
+pub mod magic_link_request_validation;
+pub mod magic_link_token_gen;
+pub mod magic_link_email_delivery;
+pub mod magic_link_response_builder;
 pub mod refresh_token;
 pub mod types;
 

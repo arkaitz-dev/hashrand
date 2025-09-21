@@ -10,8 +10,8 @@ use std::collections::HashMap;
 
 use crate::database::connection::initialize_database;
 use crate::utils::auth::{
-    ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest, generate_magic_link, generate_magic_link_signed, handle_refresh_token,
-    validate_magic_link_secure,
+    ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest, generate_magic_link,
+    generate_magic_link_signed, handle_refresh_token, validate_magic_link_secure,
 };
 
 /// Handle login authentication requests
@@ -92,13 +92,28 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
     // Try to parse as new SignedRequest structure first
     if let Ok(signed_request) = serde_json::from_slice::<MagicLinkSignedRequest>(body_bytes) {
         println!("🔐 DEBUG: Received new SignedRequest structure");
-        println!("DEBUG: Payload - Email: {}, UI Host: {:?}, Email Lang: {:?}",
-            signed_request.payload.email, signed_request.payload.ui_host, signed_request.payload.email_lang
+        println!(
+            "DEBUG: Payload - Email: {}, UI Host: {:?}, Email Lang: {:?}",
+            signed_request.payload.email,
+            signed_request.payload.ui_host,
+            signed_request.payload.email_lang
         );
-        println!("🔍 DEBUG NEXT: Original next field: {:?}", signed_request.payload.next);
-        println!("🔍 DEBUG NEXT: Next as str: {:?}", signed_request.payload.next.as_str());
-        println!("🔍 DEBUG NEXT: Next is_empty(): {}", signed_request.payload.next.is_empty());
-        println!("🔍 DEBUG NEXT: Next equals \"/\": {}", signed_request.payload.next == "/");
+        println!(
+            "🔍 DEBUG NEXT: Original next field: {:?}",
+            signed_request.payload.next
+        );
+        println!(
+            "🔍 DEBUG NEXT: Next as str: {:?}",
+            signed_request.payload.next.as_str()
+        );
+        println!(
+            "🔍 DEBUG NEXT: Next is_empty(): {}",
+            signed_request.payload.next.is_empty()
+        );
+        println!(
+            "🔍 DEBUG NEXT: Next equals \"/\": {}",
+            signed_request.payload.next == "/"
+        );
 
         // Use new signed request handler
         return generate_magic_link_signed(&req, &signed_request).await;
@@ -116,12 +131,17 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
                 req
             }
             Err(e) => {
-                println!("DEBUG: JSON parse error for both SignedRequest and MagicLinkRequest: {}", e);
+                println!(
+                    "DEBUG: JSON parse error for both SignedRequest and MagicLinkRequest: {}",
+                    e
+                );
                 return Ok(Response::builder()
                     .status(400)
                     .header("content-type", "application/json")
                     .body(serde_json::to_string(&ErrorResponse {
-                        error: "Invalid JSON body - must be SignedRequest or legacy MagicLinkRequest".to_string(),
+                        error:
+                            "Invalid JSON body - must be SignedRequest or legacy MagicLinkRequest"
+                                .to_string(),
                     })?)
                     .build());
             }

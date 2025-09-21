@@ -28,7 +28,7 @@ impl RateLimiter {
         let now = Instant::now();
 
         // Clean up expired entries periodically (every 100 checks)
-        if self.requests.len() % 100 == 0 {
+        if self.requests.len().is_multiple_of(100) {
             self.cleanup_expired_entries(now);
         }
 

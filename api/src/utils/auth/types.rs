@@ -1,7 +1,7 @@
 //! Authentication types and structures
 
-use serde::{Deserialize, Serialize};
 use crate::utils::SignedRequest;
+use serde::{Deserialize, Serialize};
 
 /// Payload for magic link generation (wrapped in SignedRequest)
 #[derive(Deserialize, Serialize)]

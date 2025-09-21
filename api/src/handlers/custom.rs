@@ -1,14 +1,17 @@
 use crate::types::{AlphabetType, CustomHashResponse};
-use crate::utils::{
-    base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
-    validate_length, validate_prefix_suffix, validate_seed_string,
-    ProtectedEndpointMiddleware, ProtectedEndpointResult,
-};
-use crate::utils::protected_endpoint_middleware::{payload_to_params, extract_seed_from_payload};
 use crate::utils::auth::ErrorResponse;
+use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
+use crate::utils::{
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator, generate_otp,
+    generate_random_seed, generate_with_seed, seed_to_base58, validate_length,
+    validate_prefix_suffix,
+};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+// External crates
+extern crate hex;
 
 /// Helper function to check if a string contains unwanted patterns
 fn contains_unwanted_patterns(s: &str) -> bool {
@@ -64,8 +67,41 @@ pub async fn handle_custom_request(req: Request) -> anyhow::Result<Response> {
     }
 }
 
-/// Handle GET requests (generate seed automatically)
+/// Handle GET requests with Ed25519 signature validation
 pub fn handle_custom_get(req: Request) -> anyhow::Result<Response> {
+    // Extract and validate Bearer token to get public key
+    let auth_header = req
+        .header("authorization")
+        .and_then(|h| h.as_str())
+        .unwrap_or("");
+
+    if !auth_header.starts_with("Bearer ") {
+        return Ok(Response::builder()
+            .status(401)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Missing or invalid Authorization header".to_string(),
+            })?)
+            .build());
+    }
+
+    let access_token = &auth_header[7..]; // Remove "Bearer " prefix
+    let claims = match crate::utils::jwt::tokens::validate_access_token(access_token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            return Ok(Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Invalid access token: {}", e),
+                })?)
+                .build());
+        }
+    };
+
+    // Convert public key to hex string for signature validation
+    let public_key_hex = hex::encode(claims.pub_key);
+
     // Extract query parameters from request URI
     let uri_str = req.uri().to_string();
     let query = if let Some(idx) = uri_str.find('?') {
@@ -74,7 +110,7 @@ pub fn handle_custom_get(req: Request) -> anyhow::Result<Response> {
         ""
     };
 
-    let params: HashMap<String, String> = query
+    let mut params: HashMap<String, String> = query
         .split('&')
         .filter_map(|pair| {
             let mut parts = pair.split('=');
@@ -85,6 +121,22 @@ pub fn handle_custom_get(req: Request) -> anyhow::Result<Response> {
         })
         .collect();
 
+    // Validate Ed25519 signature
+    if let Err(e) = SignedRequestValidator::validate_query_params(&mut params, &public_key_hex) {
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: format!("Signature validation failed: {}", e),
+            })?)
+            .build());
+    }
+
+    println!(
+        "✅ Custom GET: Ed25519 signature validated for user {}",
+        claims.sub
+    );
+
     handle_custom_with_params(params, None)
 }
 
@@ -93,12 +145,16 @@ pub async fn handle_custom_post_signed(req: Request) -> anyhow::Result<Response>
     let body_bytes = req.body();
 
     // Validate signed request and extract payload (UNIVERSAL)
-    let result: ProtectedEndpointResult<serde_json::Value> = match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
-        Ok(result) => result,
-        Err(error_response) => return Ok(error_response),
-    };
+    let result: ProtectedEndpointResult<serde_json::Value> =
+        match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
+            Ok(result) => result,
+            Err(error_response) => return Ok(error_response),
+        };
 
-    println!("✅ Custom endpoint: validated signed request for user {}", result.user_id);
+    println!(
+        "✅ Custom endpoint: validated signed request for user {}",
+        result.user_id
+    );
 
     // Convert payload to parameter map using UNIVERSAL function
     let params = payload_to_params(&result.payload);
@@ -110,65 +166,13 @@ pub async fn handle_custom_post_signed(req: Request) -> anyhow::Result<Response>
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: e,
-                })?)
+                .body(serde_json::to_string(&ErrorResponse { error: e })?)
                 .build());
         }
     };
 
     // Use existing business logic
     handle_custom_with_params(params, provided_seed)
-}
-
-/// Handle POST requests (use provided seed)
-pub fn handle_custom_post(req: Request) -> anyhow::Result<Response> {
-    // Parse JSON body
-    let body = req.body();
-    let json_str = std::str::from_utf8(body)?;
-    let json_data: serde_json::Value = serde_json::from_str(json_str)?;
-
-    // Extract parameters from JSON
-    let mut params = HashMap::new();
-
-    if let Some(length) = json_data.get("length")
-        && let Some(n) = length.as_u64()
-    {
-        params.insert("length".to_string(), n.to_string());
-    }
-
-    if let Some(alphabet) = json_data.get("alphabet")
-        && let Some(s) = alphabet.as_str()
-    {
-        params.insert("alphabet".to_string(), s.to_string());
-    }
-
-    if let Some(prefix) = json_data.get("prefix")
-        && let Some(s) = prefix.as_str()
-    {
-        params.insert("prefix".to_string(), s.to_string());
-    }
-
-    if let Some(suffix) = json_data.get("suffix")
-        && let Some(s) = suffix.as_str()
-    {
-        params.insert("suffix".to_string(), s.to_string());
-    }
-
-    // Extract seed
-    let seed_opt = if let Some(seed_val) = json_data.get("seed") {
-        if let Some(seed_str) = seed_val.as_str() {
-            // Validate seed string format first
-            validate_seed_string(seed_str)?;
-            Some(base58_to_seed(seed_str).map_err(|e| anyhow::anyhow!(e))?)
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-
-    handle_custom_with_params(params, seed_opt)
 }
 
 /// Core logic for handling custom hash generation

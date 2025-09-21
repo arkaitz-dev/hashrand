@@ -126,8 +126,8 @@ generate_ed25519_payload() {
         return 1
     fi
 
-    # Create message to sign: email + pub_key
-    local sign_message="${email}${pub_key}"
+    # Create message to sign: email + pub_key + next (next defaults to "/")
+    local sign_message="${email}${pub_key}/"
 
     # Sign the message
     local signature=$(node ./scripts/sign_payload.js "$sign_message")
@@ -153,8 +153,8 @@ request_magic_link() {
 
     echo "Generated Ed25519 public key: ${pub_key:0:20}..."
 
-    # Create message to sign: email + pub_key + next (if present)
-    local sign_message="${TEST_EMAIL}${pub_key}"
+    # Create message to sign: email + pub_key + next (next defaults to "/")
+    local sign_message="${TEST_EMAIL}${pub_key}/"
     echo "Message to sign: ${sign_message:0:40}..."
 
     # Sign the message with Ed25519 private key
@@ -228,8 +228,8 @@ authenticate() {
 
     echo "Generated Ed25519 public key: ${pub_key:0:20}..."
 
-    # Create message to sign: email + pub_key
-    local sign_message="me@arkaitz.dev${pub_key}"
+    # Create message to sign: email + pub_key + next (next defaults to "/")
+    local sign_message="me@arkaitz.dev${pub_key}/"
     echo "Message to sign: ${sign_message:0:40}..."
 
     # Sign the message with Ed25519 private key

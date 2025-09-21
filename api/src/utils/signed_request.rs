@@ -22,7 +22,6 @@ pub enum SignedRequestError {
     InvalidSignature(String),
     MissingPublicKey(String),
     SerializationError(String),
-    Ed25519Error(String),
 }
 
 impl fmt::Display for SignedRequestError {
@@ -30,8 +29,9 @@ impl fmt::Display for SignedRequestError {
         match self {
             SignedRequestError::InvalidSignature(msg) => write!(f, "Invalid signature: {}", msg),
             SignedRequestError::MissingPublicKey(msg) => write!(f, "Missing public key: {}", msg),
-            SignedRequestError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
-            SignedRequestError::Ed25519Error(msg) => write!(f, "Ed25519 validation failed: {}", msg),
+            SignedRequestError::SerializationError(msg) => {
+                write!(f, "Serialization error: {}", msg)
+            }
         }
     }
 }
@@ -49,7 +49,7 @@ impl SignedRequestValidator {
     /// * `public_key_hex` - Ed25519 public key as hex string
     ///
     /// # Returns
-    /// * `Result<T, SignedRequestError>` - Validated payload or error
+    /// * `Result<(), SignedRequestError>` - Success or error
     pub fn validate<T>(
         signed_request: &SignedRequest<T>,
         public_key_hex: &str,
@@ -61,30 +61,52 @@ impl SignedRequestValidator {
         let serialized_payload = Self::serialize_payload_deterministic(&signed_request.payload)
             .map_err(|e| SignedRequestError::SerializationError(e.to_string()))?;
 
-        println!(
-            "🔍 Validating signed request - Payload size: {}, Signature: {}...",
-            serialized_payload.len(),
-            &signed_request.signature[..20.min(signed_request.signature.len())]
-        );
-
-        // Verify Ed25519 signature
-        let verification_result = Ed25519Utils::verify_signature_string(
+        // Use DRY function for validation
+        Self::validate_signature_string(
             &serialized_payload,
             &signed_request.signature,
             public_key_hex,
+        )
+    }
+
+    /// DRY function: Validate Ed25519 signature for any serialized string
+    ///
+    /// Can be used by both GET (query params) and POST (JSON payload) endpoints
+    pub fn validate_signature_string(
+        serialized_data: &str,
+        signature: &str,
+        public_key_hex: &str,
+    ) -> Result<(), SignedRequestError> {
+        println!(
+            "🔍 Validating Ed25519 signature - Data size: {}, Signature: {}...",
+            serialized_data.len(),
+            &signature[..20.min(signature.len())]
         );
 
+        // Verify Ed25519 signature
+        let verification_result =
+            Ed25519Utils::verify_signature_string(serialized_data, signature, public_key_hex);
+
+        Self::verify_ed25519_signature_result(verification_result)
+    }
+
+    /// DRY function: Process Ed25519 signature verification result
+    fn verify_ed25519_signature_result(
+        verification_result: SignatureVerificationResult,
+    ) -> Result<(), SignedRequestError> {
         match verification_result {
             SignatureVerificationResult::Valid => {
-                println!("✅ Signed request signature validation successful");
+                println!("✅ Ed25519 signature validation successful");
                 Ok(())
             }
-            SignatureVerificationResult::Invalid => Err(
-                SignedRequestError::InvalidSignature("Ed25519 signature verification failed".to_string()),
-            ),
-            SignatureVerificationResult::MalformedPublicKey => Err(
-                SignedRequestError::InvalidSignature("Invalid Ed25519 public key format".to_string()),
-            ),
+            SignatureVerificationResult::Invalid => Err(SignedRequestError::InvalidSignature(
+                "Ed25519 signature verification failed".to_string(),
+            )),
+            SignatureVerificationResult::MalformedPublicKey => {
+                Err(SignedRequestError::InvalidSignature(
+                    "Invalid Ed25519 public key format".to_string(),
+                ))
+            }
             SignatureVerificationResult::MalformedSignature => Err(
                 SignedRequestError::InvalidSignature("Invalid signature format".to_string()),
             ),
@@ -92,6 +114,44 @@ impl SignedRequestValidator {
                 SignedRequestError::InvalidSignature("Invalid message format".to_string()),
             ),
         }
+    }
+
+    /// Validate GET request with query parameters + signature
+    ///
+    /// Query parameters are serialized deterministically and validated with Ed25519
+    pub fn validate_query_params(
+        query_params: &mut std::collections::HashMap<String, String>,
+        public_key_hex: &str,
+    ) -> Result<(), SignedRequestError> {
+        // Extract signature from query parameters
+        let signature = query_params.remove("signature").ok_or_else(|| {
+            SignedRequestError::MissingPublicKey("Missing 'signature' query parameter".to_string())
+        })?;
+
+        // Serialize remaining query parameters deterministically
+        let serialized_params = Self::serialize_query_params_deterministic(query_params)
+            .map_err(|e| SignedRequestError::SerializationError(e.to_string()))?;
+
+        // Validate signature using DRY function
+        Self::validate_signature_string(&serialized_params, &signature, public_key_hex)
+    }
+
+    /// Deterministic query parameters serialization
+    ///
+    /// Converts HashMap to sorted JSON string for consistent signing
+    fn serialize_query_params_deterministic(
+        params: &std::collections::HashMap<String, String>,
+    ) -> Result<String, serde_json::Error> {
+        // Convert HashMap to JSON Value
+        let mut json_map = serde_json::Map::new();
+        for (key, value) in params {
+            json_map.insert(key.clone(), serde_json::Value::String(value.clone()));
+        }
+        let value = serde_json::Value::Object(json_map);
+
+        // Sort keys recursively and serialize
+        let sorted_value = Self::sort_json_keys(value);
+        serde_json::to_string(&sorted_value)
     }
 
     /// Deterministic JSON serialization (matching frontend sortObjectKeys)
@@ -159,17 +219,6 @@ impl<'a> PublicKeyExtractor for PayloadPublicKeyExtractor<'a> {
             .ok_or_else(|| {
                 SignedRequestError::MissingPublicKey("pub_key not found in payload".to_string())
             })
-    }
-}
-
-/// Extract public key from JWT token (for protected endpoints)
-pub struct TokenPublicKeyExtractor {
-    pub public_key: String,
-}
-
-impl PublicKeyExtractor for TokenPublicKeyExtractor {
-    fn extract_public_key(&self) -> Result<String, SignedRequestError> {
-        Ok(self.public_key.clone())
     }
 }
 

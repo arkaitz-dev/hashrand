@@ -3,7 +3,7 @@
 //! Provides backwards compatibility wrapper for the modularized JWT functionality.
 
 use super::{
-    crypto, custom_tokens, magic_links, tokens,
+    crypto, custom_token_api, magic_links, tokens,
     types::{AccessTokenClaims, RefreshTokenClaims},
 };
 
@@ -33,14 +33,14 @@ impl JwtUtils {
         email: &str,
         pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token(email, pub_key)
+        custom_token_api::create_custom_access_token(email, pub_key)
     }
 
     pub fn create_access_token_from_username(
         username: &str,
         pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token_from_username(username, pub_key)
+        custom_token_api::create_custom_access_token_from_username(username, pub_key)
     }
 
     pub fn create_access_token_from_username_with_refresh_context(
@@ -48,7 +48,7 @@ impl JwtUtils {
         refresh_expires_at: chrono::DateTime<chrono::Utc>,
         pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_tokens::create_custom_access_token_from_username_with_refresh_context(
+        custom_token_api::create_custom_access_token_from_username_with_refresh_context(
             username,
             refresh_expires_at,
             pub_key,
@@ -71,7 +71,7 @@ impl JwtUtils {
     }
 
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {
-        custom_tokens::validate_custom_access_token(token)
+        custom_token_api::validate_custom_access_token(token)
     }
 
     pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String> {

@@ -51,6 +51,19 @@ just build       # Build API (WASM) + Web (SPA)
 - **ALWAYS use justfile**: Check for justfile existence first. If exists, USE IT instead of manual commands. Run `just` to see tasks.
 - **Code Changes**: Comment lines before changing (not MD files). Ask for approval. If liked, erase comments; if not, restore original.
 - **Be Surgical**: Modify only necessary code. Write meaningful comments. Follow DRY and KISS principles.
+
+## SOLID & DRY Architecture Standards - CRITICAL RULE
+**🏗️ MANDATORY: Follow enterprise-grade architecture principles in ALL code creation and modification:**
+- **ALWAYS apply SOLID and DRY principles** - Every time code is created or modified, observe possibility of making it more universal and reusable
+- **225-line module limit** - If any file exceeds 225 lines, study modularization possibilities
+- **Mandatory size check** - Check file sizes after EVERY coding task completion (creation/editing)
+- **Modular thinking** - Consider Single Responsibility Principle for every function and class
+- **Universal patterns** - Create reusable composables/modules to eliminate code duplication
+- **Active code scanning** - Each time you edit or create new code, try to remember if there are other points in the project where similar or identical operations are being performed, to try to apply DRY, SOLID and KISS whenever possible
+- **Pattern recognition enforcement** - Each time you edit or create new code, try to remember if there are other points in the project where similar or identical operations are being performed, to try to apply DRY, SOLID and KISS whenever possible
+- **Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
+- **This applies to ALL programming languages** - TypeScript, Rust, Python, JavaScript, etc.
+- **Enterprise standard compliance** - All modules must be easily testable and modifiable in isolation
 - **Styling**: DO NOT CHANGE existing CSS/TailwindCSS unless EXPLICITLY requested. New components must follow existing project styling.
 - **Versioning**: CHANGELOG changes must be reflected in config files (package.json, Cargo.toml).
 - **Spin Projects**: Use `spin-cli` not `cargo`. Only `cargo add/update/fmt/clippy` allowed.
