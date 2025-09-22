@@ -197,6 +197,7 @@ export const ar: I18nTexts = {
 		authenticationFailed: 'فشل في المصادقة',
 		tokenExpired: 'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.',
 		accessDenied: 'تم رفض الوصول. مطلوب مصادقة.',
+		sessionDataCleared: '⚠️ تم مسح بيانات الجلسة لأغراض الأمان',
 		userMenu: 'قائمة المستخدم',
 		login: 'تسجيل الدخول',
 		authenticatedAs: 'مصادق عليه كـ:',

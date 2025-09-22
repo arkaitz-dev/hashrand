@@ -197,6 +197,7 @@ export const en: I18nTexts = {
 		authenticationFailed: 'Authentication failed',
 		tokenExpired: 'Your session has expired. Please log in again.',
 		accessDenied: 'Access denied. Authentication required.',
+		sessionDataCleared: '⚠️ Session data cleared for security',
 		userMenu: 'User menu',
 		login: 'Log in',
 		authenticating: 'Authenticating...',

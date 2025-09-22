@@ -10,7 +10,7 @@
 //! - magic_link_validation: Validation and consumption logic
 
 // Re-export types and constants
-pub use super::magic_link_types::{ValidationResult, MagicLinkOperations};
+pub use super::magic_link_types::{MagicLinkOperations, ValidationResult};
 
 // Re-export storage functions
 pub use super::magic_link_storage::MagicLinkStorage;

@@ -12,7 +12,11 @@ export { loadAuthFromStorage, saveAuthToStorage, clearAuthFromStorage } from './
 export { generateCryptoTokens, hasCryptoTokens, hasValidRefreshCookie } from './auth-crypto-tokens';
 
 // Data cleanup operations
-export { clearPreventiveAuthData, clearSensitiveAuthData } from './auth-cleanup';
+export {
+	clearPreventiveAuthData,
+	clearSensitiveAuthData,
+	clearSensitiveAuthDataWithMessage
+} from './auth-cleanup';
 
 // Session validation
 export { checkSessionValidity, ensureAuthenticated } from './auth-session';

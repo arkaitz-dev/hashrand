@@ -64,11 +64,156 @@ pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
 - **Enhanced Secrets**: Dedicated Blake2b-keyed key separate from Argon2id salt for additional security layers
 - **Forward Secrecy**: User identity derives from email but email is never stored
 
+## SignedRequest Universal Cryptographic Architecture (v1.6.10+)
+
+### Universal SignedRequest Structure
+
+**ENTERPRISE CRYPTOGRAPHIC SECURITY**: All API endpoints implement the **universal SignedRequest structure** with **strict authentication method separation** for maximum security and consistency.
+
+```json
+{
+  "payload": {
+    // Endpoint-specific data (deterministically serialized)
+  },
+  "signature": "ed25519_signature_128_hex_chars"
+}
+```
+
+#### Deterministic JSON Serialization
+
+Critical for signature consistency across frontend and backend:
+
+```rust
+// Backend: Recursive key sorting for deterministic serialization
+fn sort_json_keys(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let mut sorted_map = serde_json::Map::new();
+            let mut keys: Vec<_> = map.keys().collect();
+            keys.sort();  // Alphabetical key ordering
+            for key in keys {
+                sorted_map.insert(key.clone(), Self::sort_json_keys(val.clone()));
+            }
+            Value::Object(sorted_map)
+        }
+        Value::Array(array) => Value::Array(array.into_iter().map(Self::sort_json_keys).collect()),
+        other => other
+    }
+}
+```
+
+```javascript
+// Frontend: Matching deterministic serialization
+function sortObjectKeys(obj) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(sortObjectKeys);
+
+    const sorted = {};
+    const keys = Object.keys(obj).sort();  // Same alphabetical ordering
+    for (const key of keys) {
+        sorted[key] = sortObjectKeys(obj[key]);
+    }
+    return sorted;
+}
+```
+
+### Strict Authentication Method Validation (v1.6.10+)
+
+#### Security Validation Matrix
+
+```rust
+// api/src/utils/signed_request.rs - Enterprise security implementation
+pub fn validate_universal<T>(signed_request: &SignedRequest<T>, request: &Request) -> Result<String, SignedRequestError> {
+    // Parse and detect authentication methods
+    let has_bearer = Self::extract_pub_key_from_bearer(request).is_ok();
+    let has_pub_key = payload_value.get("pub_key").is_some();
+    let has_magiclink = payload_value.get("magiclink").is_some();
+
+    // Enforce strict authentication separation
+    match (has_bearer, has_pub_key, has_magiclink) {
+        (true, false, false) => {
+            // ✅ Bearer-only authentication
+            let pub_key_hex = Self::extract_pub_key_from_bearer(request)?;
+            Self::validate(signed_request, &pub_key_hex)?;
+            Ok(pub_key_hex)
+        }
+        (false, true, false) => {
+            // ✅ Payload pub_key authentication
+            let pub_key_hex = Self::extract_pub_key_from_payload(&payload_value)?;
+            Self::validate(signed_request, &pub_key_hex)?;
+            Ok(pub_key_hex)
+        }
+        (false, false, true) => {
+            // ✅ Payload magiclink authentication
+            let pub_key_hex = Self::extract_pub_key_from_magiclink(&payload_value)?;
+            Self::validate(signed_request, &pub_key_hex)?;
+            Ok(pub_key_hex)
+        }
+        (true, _, _) => {
+            // ❌ Bearer + payload conflict
+            Err(SignedRequestError::ConflictingAuthMethods(
+                "Bearer token present but payload contains pub_key/magiclink - only Bearer allowed"
+            ))
+        }
+        (false, true, true) => {
+            // ❌ Ambiguous payload authentication
+            Err(SignedRequestError::AmbiguousPayloadAuth(
+                "Both pub_key and magiclink found in payload - only one allowed"
+            ))
+        }
+        (false, false, false) => {
+            // ❌ No authentication method
+            Err(SignedRequestError::MissingPublicKey(
+                "No Bearer token and no pub_key/magiclink in payload - exactly one auth method required"
+            ))
+        }
+    }
+}
+```
+
+#### Public Key Extraction Methods
+
+1. **Bearer Token Extraction** (JWT-protected endpoints):
+```rust
+fn extract_pub_key_from_bearer(request: &Request) -> Result<String, SignedRequestError> {
+    let auth_header = request.header("authorization")?;
+    let token = auth_header.strip_prefix("Bearer ")?;
+    let claims = JwtUtils::validate_access_token(token)?;
+    Ok(hex::encode(claims.pub_key))  // Extract Ed25519 pub_key from JWT
+}
+```
+
+2. **Payload pub_key Extraction** (Magic link generation):
+```rust
+fn extract_pub_key_from_payload(payload: &Value) -> Result<String, SignedRequestError> {
+    payload.get("pub_key")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .ok_or_else(|| SignedRequestError::MissingPublicKey("pub_key not found in payload"))
+}
+```
+
+3. **Magiclink Database Lookup** (Magic link validation):
+```rust
+fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedRequestError> {
+    let magiclink = payload.get("magiclink")?.as_str()?;
+    let (_is_valid, _next_param, _user_id, pub_key_bytes) =
+        MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink)?;
+    let pub_key_array = pub_key_bytes.ok_or_else(||
+        SignedRequestError::MissingPublicKey("No pub_key found in magiclink data"))?;
+    Ok(hex::encode(pub_key_array))
+}
+```
+
 ## Magic Link Cryptography with Ed25519 Authentication
 
-### Ed25519 Digital Signature Layer
+### Ed25519 Digital Signature Layer (Enhanced v1.6.10+)
 
 ```
+SignedRequest{payload + signature} → validate_universal() → Authentication Method Detection
+                                              ↓
+                     Bearer Token ←→ pub_key ←→ magiclink (mutually exclusive)
+                                              ↓
 Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] → Backend_Verification
                     ↓                                        ↓
             Pub_Key[32_bytes] → Database_Storage → JWT_Claims[pub_key]

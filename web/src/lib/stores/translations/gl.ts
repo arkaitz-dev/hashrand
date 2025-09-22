@@ -198,6 +198,7 @@ export const gl: I18nTexts = {
 		authenticationFailed: 'Fallou a autenticación',
 		tokenExpired: 'A túa sesión expirou. Por favor, inicia sesión de novo.',
 		accessDenied: 'Acceso denegado. Requírese autenticación.',
+		sessionDataCleared: '⚠️ Datos de sesión borrados por seguridade',
 		userMenu: 'Menú do usuario',
 		login: 'Iniciar sesión',
 		authenticatedAs: 'Autenticado como:',

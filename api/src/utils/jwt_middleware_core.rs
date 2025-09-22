@@ -2,9 +2,9 @@
 
 use spin_sdk::http::{Request, Response};
 
-use super::jwt_middleware_types::AuthContext;
 use super::jwt_middleware_auth::validate_bearer_token;
 use super::jwt_middleware_renewal::add_renewed_tokens_to_response;
+use super::jwt_middleware_types::AuthContext;
 
 /// Check if endpoint requires authentication
 ///

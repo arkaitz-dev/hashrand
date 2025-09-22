@@ -2,6 +2,8 @@
 
 **🔒 Authentication Required**: All generation endpoints require a valid Bearer token in the Authorization header. Obtain tokens through the [magic link authentication flow](./authentication.md).
 
+**🛡️ SignedRequest Security (v1.6.10+)**: All POST endpoints implement **strict authentication method separation** with enterprise-grade security validation. See [SignedRequest Documentation](./authentication.md#signedrequest-universal-structure-with-strict-security-v16100) for details.
+
 ## Quick Reference
 
 | Endpoint | Method | Auth | Description |
@@ -28,7 +30,21 @@ POST /api/custom        # Deterministic generation with seed (requires authentic
 - `suffix` (string, max 32 chars) - Text to append
 - `raw` (boolean, default: true) - If false, adds newline
 
-**POST Body (JSON):**
+**POST Body (SignedRequest v1.6.10+):**
+```json
+{
+  "payload": {
+    "seed": "44-character base58 string (required)",
+    "length": 21,
+    "alphabet": "base58",
+    "prefix": "optional_prefix",
+    "suffix": "optional_suffix"
+  },
+  "signature": "ed25519_signature_hex_128_chars"
+}
+```
+
+**Payload Fields:**
 - `seed` (required) - 44-character base58 string for deterministic generation
 - `length` (2-128) - Length of generated hash
 - `alphabet` (string) - Character set to use

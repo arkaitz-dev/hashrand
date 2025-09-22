@@ -1,7 +1,7 @@
 //! JWT middleware error handling - Authentication error responses
 
-use spin_sdk::http::Response;
 use super::jwt_middleware_types::AuthErrorResponse;
+use spin_sdk::http::Response;
 
 /// Create standardized authentication error response
 pub fn create_auth_error_response(error: &str, expires_in: Option<String>) -> Response {

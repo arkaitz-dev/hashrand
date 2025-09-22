@@ -14,15 +14,21 @@ echo ""
 API_BASE="http://localhost:3000"
 COOKIES_FILE="cookies_test.txt"
 
-# Paso inicial: Generar hash y login
-echo "🔐 SETUP: Generando hash base58 e iniciando sesión..."
-RANDOM_HASH=$(node scripts/generate_hash.js)
-echo "✅ Hash generado: $RANDOM_HASH"
+# Paso inicial: Generar keypair Ed25519 y login
+echo "🔐 SETUP: Generando keypair Ed25519 e iniciando sesión..."
+PUB_KEY=$(node scripts/generate_hash.js)
+echo "✅ Keypair Ed25519 generado: ${PUB_KEY:0:20}..."
 
-# Solicitar magic link
+# Generar firma Ed25519 para la solicitud de magic link usando JSON payload
+NEXT_PARAM="/"
+PAYLOAD_JSON="{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"$NEXT_PARAM\",\"pub_key\":\"$PUB_KEY\"}"
+SIGNATURE=$(node scripts/sign_payload_json.js "$PAYLOAD_JSON")
+echo "✅ Firma Ed25519 generada: ${SIGNATURE:0:20}..."
+
+# Solicitar magic link con Ed25519 signature usando estructura SignedRequest
 MAGIC_RESPONSE=$(curl -s -c $COOKIES_FILE -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"ui_host\":\"$API_BASE\",\"random_hash\":\"$RANDOM_HASH\"}" \
+  -d "{\"payload\":{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"$NEXT_PARAM\",\"pub_key\":\"$PUB_KEY\"},\"signature\":\"$SIGNATURE\"}" \
   $API_BASE/api/login/)
 
 if [ "$MAGIC_RESPONSE" != '{"status":"OK"}' ]; then
@@ -31,7 +37,7 @@ if [ "$MAGIC_RESPONSE" != '{"status":"OK"}' ]; then
 fi
 
 # Extraer magic token
-MAGIC_LINE=$(tail -n 50 .spin-dev.log | grep "🔗.*magiclink=" | tail -n 1)
+MAGIC_LINE=$(tail -n 50 .spin-dev.log | grep "Generated magic_link.*magiclink=" | tail -n 1)
 MAGIC_TOKEN=$(echo "$MAGIC_LINE" | grep -o 'magiclink=[^&]*' | cut -d '=' -f 2)
 
 if [ -z "$MAGIC_TOKEN" ] || [ ${#MAGIC_TOKEN} -lt 10 ]; then
@@ -39,9 +45,15 @@ if [ -z "$MAGIC_TOKEN" ] || [ ${#MAGIC_TOKEN} -lt 10 ]; then
     exit 1
 fi
 
-# Validar magic link y obtener tokens iniciales
-LOGIN_RESPONSE=$(curl -s -b $COOKIES_FILE -c $COOKIES_FILE \
-  "$API_BASE/api/login/?magiclink=${MAGIC_TOKEN}&hash=${RANDOM_HASH}")
+# Generar firma Ed25519 para el magic token
+MAGIC_SIGNATURE=$(node scripts/sign_payload.js "$MAGIC_TOKEN")
+echo "✅ Firma de magic token generada: ${MAGIC_SIGNATURE:0:20}..."
+
+# Validar magic link usando POST endpoint con estructura SignedRequest
+LOGIN_RESPONSE=$(curl -s -b $COOKIES_FILE -c $COOKIES_FILE -X POST \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"magiclink\":\"$MAGIC_TOKEN\"},\"signature\":\"$MAGIC_SIGNATURE\"}" \
+  "$API_BASE/api/login/magiclink/")
 
 if ! echo "$LOGIN_RESPONSE" | grep -q '"access_token"'; then
     echo "❌ Error en login: $LOGIN_RESPONSE"
@@ -273,3 +285,6 @@ echo "   • Doble expiración (>430s): Error descriptivo + limpieza cookies"
 echo "   • Lógica temporal completa implementada correctamente"
 echo ""
 echo "📊 Revisa logs detallados: tail -f .spin-dev.log | grep 'DEBUG 2/3'"
+
+# Limpieza de archivos temporales Ed25519
+rm -f .test-ed25519-private-key

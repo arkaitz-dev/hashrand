@@ -67,7 +67,8 @@ impl MagicLinkStorage {
         }
 
         // Create merged payload: encryption_blob[44] + auth_data[32] + next_param_bytes[variable]
-        let mut payload_plain = Vec::with_capacity(ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + next_param.len());
+        let mut payload_plain =
+            Vec::with_capacity(ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + next_param.len());
         payload_plain.extend_from_slice(encryption_blob);
         payload_plain.extend_from_slice(&auth_data_bytes);
         payload_plain.extend_from_slice(next_param.as_bytes());

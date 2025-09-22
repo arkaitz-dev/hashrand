@@ -6,7 +6,7 @@
  */
 
 import { hasCryptoTokens, hasValidRefreshCookie } from './auth-crypto-tokens';
-import { clearSensitiveAuthData } from './auth-cleanup';
+import { clearSensitiveAuthDataWithMessage } from './auth-cleanup';
 
 /**
  * Check session validity and handle expired refresh cookies
@@ -15,14 +15,28 @@ export async function checkSessionValidity(): Promise<void> {
 	// Check if crypto tokens are missing when we should have them
 	const hasTokens = await hasCryptoTokens();
 	if (!hasTokens) {
-		// Check if refresh cookie is still valid
-		const hasValidCookie = await hasValidRefreshCookie();
+		// Check if we have any stored session data at all
+		try {
+			const { sessionManager } = await import('../../session-manager');
+			const authData = await sessionManager.getAuthData();
+			const hasAnySessionData = authData.access_token || authData.refresh_token || authData.user;
 
-		if (!hasValidCookie) {
-			// Refresh cookie expired/invalid, clear sensitive data
-			await clearSensitiveAuthData();
+			if (hasAnySessionData) {
+				// We have session data but missing crypto tokens - this is corruption
+				// Check if refresh cookie is still valid to attempt recovery
+				const hasValidCookie = await hasValidRefreshCookie();
+
+				if (!hasValidCookie) {
+					// Both crypto tokens missing AND refresh cookie invalid - clear corrupted session
+					await clearSensitiveAuthDataWithMessage();
+				}
+				// If valid cookie exists, crypto tokens will be regenerated on next API call
+			}
+			// If no session data exists at all, this is a clean browser - do nothing
+		} catch {
+			// Failed to check session data - clear to be safe
+			await clearSensitiveAuthDataWithMessage();
 		}
-		// If valid cookie exists, crypto tokens will be generated on next API call via refresh
 	}
 }
 
@@ -45,7 +59,7 @@ export async function ensureAuthenticated(): Promise<boolean> {
 	} catch {
 		// Failed to load auth data from IndexedDB
 		// Clear invalid data and continue to refresh
-		await clearSensitiveAuthData();
+		await clearSensitiveAuthDataWithMessage();
 	}
 
 	// No valid access token found, attempting automatic refresh

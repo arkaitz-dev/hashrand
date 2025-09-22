@@ -4,7 +4,7 @@
 //! with complete payload decryption and JWT token validation.
 
 use super::magic_link_crypto::MagicLinkCrypto;
-use super::magic_link_types::{constants::*, ValidationResult};
+use super::magic_link_types::{ValidationResult, constants::*};
 use crate::database::get_database_connection;
 use bs58;
 use spin_sdk::sqlite::{Error as SqliteError, Value};

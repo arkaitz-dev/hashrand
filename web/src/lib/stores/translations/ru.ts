@@ -197,6 +197,7 @@ export const ru: I18nTexts = {
 		authenticationFailed: 'Аутентификация не удалась',
 		tokenExpired: 'Ваша сессия истекла. Пожалуйста, войдите снова.',
 		accessDenied: 'Доступ запрещён. Требуется аутентификация.',
+		sessionDataCleared: '⚠️ Данные сессии очищены для безопасности',
 		userMenu: 'Меню пользователя',
 		login: 'Войти',
 		authenticatedAs: 'Аутентифицирован как:',

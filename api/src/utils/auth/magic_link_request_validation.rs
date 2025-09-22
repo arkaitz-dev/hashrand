@@ -7,8 +7,8 @@ use spin_sdk::http::{Request, Response};
 
 use super::types::{ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest};
 use crate::utils::{
-    PayloadPublicKeyExtractor, PublicKeyExtractor, SignedRequestValidator,
-    check_rate_limit, ed25519::Ed25519Utils, extract_client_ip, validate_email,
+    SignedRequestValidator, check_rate_limit,
+    ed25519::Ed25519Utils, extract_client_ip, validate_email,
 };
 
 /// Magic link request validation operations
@@ -118,63 +118,28 @@ impl MagicLinkRequestValidation {
     /// # Returns
     /// * `Result<String, Response>` - Ok with public key if valid, Error response if invalid
     pub fn validate_signed_request(
+        request: &Request,
         signed_request: &MagicLinkSignedRequest,
     ) -> Result<String, Response> {
-        // Extract public key from payload for signature validation
-        let payload_value = serde_json::to_value(&signed_request.payload)
-            .map_err(|e| {
-                Response::builder()
-                    .status(400)
-                    .header("content-type", "application/json")
-                    .body(
-                        serde_json::to_string(&ErrorResponse {
-                            error: format!("Invalid payload: {}", e),
-                        })
-                        .unwrap_or_default(),
-                    )
-                    .build()
-            })?;
-
-        let pub_key_extractor = PayloadPublicKeyExtractor {
-            payload: &payload_value,
-        };
-
-        let pub_key_hex = match pub_key_extractor.extract_public_key() {
-            Ok(key) => key,
+        // Use universal validation that automatically detects pub_key source
+        match SignedRequestValidator::validate_universal(signed_request, request) {
+            Ok(pub_key_hex) => {
+                println!("✅ Universal SignedRequest validation successful for email: {}", signed_request.payload.email);
+                Ok(pub_key_hex)
+            },
             Err(e) => {
-                return Err(Response::builder()
+                println!("❌ Universal SignedRequest validation failed: {}", e);
+                Err(Response::builder()
                     .status(400)
                     .header("content-type", "application/json")
                     .body(
                         serde_json::to_string(&ErrorResponse {
-                            error: format!("Missing public key: {}", e),
+                            error: format!("Invalid Ed25519 signature: {}", e),
                         })
                         .unwrap_or_default(),
                     )
-                    .build());
+                    .build())
             }
-        };
-
-        // Validate signed request with Ed25519 signature
-        if let Err(e) = SignedRequestValidator::validate(signed_request, &pub_key_hex) {
-            println!("🔍 DEBUG SignedRequest validation failed: {}", e);
-            return Err(Response::builder()
-                .status(400)
-                .header("content-type", "application/json")
-                .body(
-                    serde_json::to_string(&ErrorResponse {
-                        error: format!("Invalid signed request: {}", e),
-                    })
-                    .unwrap_or_default(),
-                )
-                .build());
         }
-
-        println!(
-            "✅ SignedRequest validation successful for email: {}",
-            signed_request.payload.email
-        );
-
-        Ok(pub_key_hex)
     }
 }

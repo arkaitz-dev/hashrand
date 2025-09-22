@@ -7,7 +7,7 @@ use blake2::{
 use chacha20poly1305::consts::U32;
 use chrono::DateTime;
 
-use super::custom_token_types::{TokenType, CustomTokenClaims};
+use super::custom_token_types::{CustomTokenClaims, TokenType};
 
 /// Serialize claims to bytes: user_id(16) + expires_at(4) + refresh_expires_at(4) + pub_key(32) + blake2b_keyed(8) = 64 bytes
 pub fn claims_to_bytes(claims: &CustomTokenClaims, hmac_key: &[u8]) -> Result<[u8; 64], String> {
@@ -101,8 +101,8 @@ pub fn claims_from_bytes(payload: &[u8; 64], hmac_key: &[u8]) -> Result<CustomTo
             .map_err(|_| "Invalid refresh expires timestamp format")?,
     );
 
-    let expires_at = DateTime::from_timestamp(expires_timestamp as i64, 0)
-        .ok_or("Invalid expires timestamp")?;
+    let expires_at =
+        DateTime::from_timestamp(expires_timestamp as i64, 0).ok_or("Invalid expires timestamp")?;
     let refresh_expires_at = DateTime::from_timestamp(refresh_expires_timestamp as i64, 0)
         .ok_or("Invalid refresh expires timestamp")?;
 

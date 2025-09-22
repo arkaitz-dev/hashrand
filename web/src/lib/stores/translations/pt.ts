@@ -195,6 +195,7 @@ export const pt: I18nTexts = {
 		authenticationFailed: 'Falha na autenticação',
 		tokenExpired: 'Sua sessão expirou. Por favor, faça login novamente.',
 		accessDenied: 'Acesso negado. Autenticação necessária.',
+		sessionDataCleared: '⚠️ Dados da sessão limpos por segurança',
 		userMenu: 'Menu do usuário',
 		login: 'Entrar',
 		authenticatedAs: 'Autenticado como:',

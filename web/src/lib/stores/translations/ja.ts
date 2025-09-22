@@ -199,6 +199,7 @@ export const ja: I18nTexts = {
 		authenticationFailed: '認証に失敗しました',
 		tokenExpired: 'セッションが期限切れです。再度ログインしてください。',
 		accessDenied: 'アクセスが拒否されました。認証が必要です。',
+		sessionDataCleared: '⚠️ セキュリティのためセッションデータをクリアしました',
 		userMenu: 'ユーザーメニュー',
 		login: 'ログイン',
 		authenticatedAs: '認証済みユーザー:',

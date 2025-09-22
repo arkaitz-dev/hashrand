@@ -5,8 +5,8 @@ use crate::utils::jwt::config::get_refresh_token_duration_minutes;
 use chrono::DateTime;
 use spin_sdk::http::Response;
 
-use super::jwt_middleware_types::RenewedTokens;
 use super::jwt_middleware_errors::create_auth_error_response;
+use super::jwt_middleware_types::RenewedTokens;
 
 /// Check if proactive token renewal is needed based on 2/3 threshold
 ///
@@ -108,7 +108,10 @@ pub fn check_proactive_renewal(
 ///
 /// # Returns
 /// * `Response` - Response with added token headers and cookies
-pub fn add_renewed_tokens_to_response(response: Response, renewed_tokens: RenewedTokens) -> Response {
+pub fn add_renewed_tokens_to_response(
+    response: Response,
+    renewed_tokens: RenewedTokens,
+) -> Response {
     // Build new response with original data
     let mut binding = Response::builder();
     let mut builder = binding.status(*response.status());

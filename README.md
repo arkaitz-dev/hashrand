@@ -57,6 +57,7 @@ just dev
 - **🛡️ ChaCha20 Encryption**: Stream cipher for magic link encryption
 - **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
 - **🔄 2/3 Time-Based Token Management**: Intelligent dual-token refresh system with expiration handling
+- **🛡️ SignedRequest Strict Security**: Enterprise-grade authentication method separation preventing confusion attacks (v1.6.10+)
 - **🧪 Comprehensive Testing**: 64 automated tests covering all functionality
 
 ## 📊 Architecture

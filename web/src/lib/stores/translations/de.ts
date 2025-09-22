@@ -199,6 +199,7 @@ export const de: I18nTexts = {
 		authenticationFailed: 'Authentifizierung fehlgeschlagen',
 		tokenExpired: 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.',
 		accessDenied: 'Zugang verweigert. Authentifizierung erforderlich.',
+		sessionDataCleared: '⚠️ Sitzungsdaten aus Sicherheitsgründen gelöscht',
 		userMenu: 'Benutzermenü',
 		login: 'Anmelden',
 		authenticatedAs: 'Authentifiziert als:',

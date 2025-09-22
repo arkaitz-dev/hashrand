@@ -45,12 +45,14 @@ pub struct MagicLinkResponse {
     pub dev_magic_link: Option<String>,
 }
 
-/// Request body for secure magic link validation with Ed25519 verification
-#[derive(Deserialize)]
-pub struct MagicLinkValidationRequest {
+/// Payload structure for magic link validation (unified SignedRequest format)
+#[derive(Deserialize, Serialize)]
+pub struct MagicLinkValidationPayload {
     pub magiclink: String, // Magic link token
-    pub signature: String, // Ed25519 signature of the magic link token (128 hex chars = 64 bytes)
 }
+
+/// Unified signed request structure for magic link validation
+pub type MagicLinkValidationRequest = SignedRequest<MagicLinkValidationPayload>;
 
 /// Error response structure
 #[derive(Serialize)]

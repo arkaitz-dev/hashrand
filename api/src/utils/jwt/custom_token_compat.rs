@@ -4,11 +4,9 @@
 
 use chrono::Duration;
 
-use super::config::{
-    get_access_token_duration_minutes, get_refresh_token_duration_minutes,
-};
+use super::config::{get_access_token_duration_minutes, get_refresh_token_duration_minutes};
 use super::crypto::user_id_to_username;
-use super::custom_token_types::{TokenType, CustomTokenClaims};
+use super::custom_token_types::{CustomTokenClaims, TokenType};
 use super::types::AccessTokenClaims;
 
 /// Convert CustomTokenClaims to AccessTokenClaims for backwards compatibility

@@ -38,7 +38,6 @@ pub mod constants {
     /// Required length for user ID
     pub const USER_ID_LENGTH: usize = 16;
 
-
     /// Minimum payload length (encryption_blob + pub_key)
     pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH;
 

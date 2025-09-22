@@ -61,7 +61,10 @@ pub async fn generate_magic_link(
                 &token_result.magic_link,
                 Some(&magic_request.email_lang),
                 magic_request.ui_host.as_deref(),
-                &MagicLinkTokenGeneration::determine_host_url(req, magic_request.ui_host.as_deref()),
+                &MagicLinkTokenGeneration::determine_host_url(
+                    req,
+                    magic_request.ui_host.as_deref(),
+                ),
                 token_result.magic_expires_at,
             )
             .await;
@@ -71,7 +74,9 @@ pub async fn generate_magic_link(
 
             Ok(MagicLinkResponseBuilder::build_success_response())
         }
-        Err(e) => Ok(MagicLinkResponseBuilder::build_storage_error_response(&e.to_string())?),
+        Err(e) => Ok(MagicLinkResponseBuilder::build_storage_error_response(
+            &e.to_string(),
+        )?),
     }
 }
 
@@ -90,12 +95,14 @@ pub async fn generate_magic_link_signed(
         return Ok(response);
     }
 
-    let _pub_key_hex = match MagicLinkRequestValidation::validate_signed_request(signed_request) {
+    let _pub_key_hex = match MagicLinkRequestValidation::validate_signed_request(req, signed_request) {
         Ok(key) => key,
         Err(response) => return Ok(response),
     };
 
-    if let Err(response) = MagicLinkRequestValidation::validate_email_format(&signed_request.payload.email) {
+    if let Err(response) =
+        MagicLinkRequestValidation::validate_email_format(&signed_request.payload.email)
+    {
         return Ok(response);
     }
 
@@ -125,7 +132,10 @@ pub async fn generate_magic_link_signed(
                 &token_result.magic_link,
                 Some(&signed_request.payload.email_lang),
                 signed_request.payload.ui_host.as_deref(),
-                &MagicLinkTokenGeneration::determine_host_url(req, signed_request.payload.ui_host.as_deref()),
+                &MagicLinkTokenGeneration::determine_host_url(
+                    req,
+                    signed_request.payload.ui_host.as_deref(),
+                ),
                 token_result.magic_expires_at,
             )
             .await;
@@ -135,6 +145,8 @@ pub async fn generate_magic_link_signed(
 
             Ok(MagicLinkResponseBuilder::build_success_response())
         }
-        Err(e) => Ok(MagicLinkResponseBuilder::build_storage_error_response(&e.to_string())?),
+        Err(e) => Ok(MagicLinkResponseBuilder::build_storage_error_response(
+            &e.to_string(),
+        )?),
     }
 }

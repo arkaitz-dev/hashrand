@@ -200,6 +200,7 @@ export const ca: I18nTexts = {
 		authenticationFailed: "Ha fallat l'autenticació",
 		tokenExpired: 'La vostra sessió ha expirat. Si us plau, inicieu sessió de nou.',
 		accessDenied: 'Accés denegat. Cal autenticació.',
+		sessionDataCleared: '⚠️ Dades de sessió esborrades per seguretat',
 		userMenu: "Menú d'usuari",
 		login: 'Iniciar sessió',
 		authenticatedAs: 'Autenticat com a:',

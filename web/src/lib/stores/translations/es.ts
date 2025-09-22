@@ -198,6 +198,7 @@ export const es: I18nTexts = {
 		authenticationFailed: 'Error de autenticación',
 		tokenExpired: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
 		accessDenied: 'Acceso denegado. Se requiere autenticación.',
+		sessionDataCleared: '⚠️ Datos de sesión eliminados por seguridad',
 		userMenu: 'Menú de usuario',
 		login: 'Iniciar sesión',
 		authenticatedAs: 'Autenticado como:',

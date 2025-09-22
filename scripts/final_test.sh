@@ -126,18 +126,18 @@ generate_ed25519_payload() {
         return 1
     fi
 
-    # Create message to sign: email + pub_key + next (next defaults to "/")
-    local sign_message="${email}${pub_key}/"
+    # Create payload object and sign it as JSON (matching frontend SignedRequest)
+    local payload_json="{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"}"
 
-    # Sign the message
-    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    # Sign the JSON payload
+    local signature=$(node ./scripts/sign_payload_json.js "$payload_json")
     if [[ -z "$signature" ]]; then
         echo '{"error":"Failed to sign message"}'
         return 1
     fi
 
-    # Return JSON payload (without extra quotes)
-    printf '{"email":"%s","email_lang":"en","pub_key":"%s","signature":"%s"}' "$email" "$pub_key" "$signature"
+    # Return SignedRequest structure
+    printf '{"payload":{"email":"%s","email_lang":"en","next":"/","pub_key":"%s"},"signature":"%s"}' "$email" "$pub_key" "$signature"
 }
 
 # Authentication helper functions
@@ -153,12 +153,12 @@ request_magic_link() {
 
     echo "Generated Ed25519 public key: ${pub_key:0:20}..."
 
-    # Create message to sign: email + pub_key + next (next defaults to "/")
-    local sign_message="${TEST_EMAIL}${pub_key}/"
-    echo "Message to sign: ${sign_message:0:40}..."
+    # Create payload object and sign it as JSON (matching frontend SignedRequest)
+    local payload_json="{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"}"
+    echo "JSON payload to sign: ${payload_json:0:60}..."
 
-    # Sign the message with Ed25519 private key
-    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    # Sign the JSON payload with Ed25519 private key
+    local signature=$(node ./scripts/sign_payload_json.js "$payload_json")
     if [[ -z "$signature" ]]; then
         echo -e "${RED}✗ Failed to sign message${NC}"
         return 1
@@ -169,8 +169,8 @@ request_magic_link() {
     # Store pub_key for later validation (simulate localStorage behavior)
     echo "$pub_key" > .test-magiclink-pubkey
 
-    # Include pub_key and signature in magic link request
-    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
+    # Include pub_key and signature in magic link request using SignedRequest structure
+    local response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"payload\":{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"},\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $response"
 
     if [[ "$response" == *'"status":"OK"'* ]]; then
@@ -228,12 +228,12 @@ authenticate() {
 
     echo "Generated Ed25519 public key: ${pub_key:0:20}..."
 
-    # Create message to sign: email + pub_key + next (next defaults to "/")
-    local sign_message="me@arkaitz.dev${pub_key}/"
-    echo "Message to sign: ${sign_message:0:40}..."
+    # Create payload object and sign it as JSON (matching frontend SignedRequest)
+    local payload_json="{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"}"
+    echo "JSON payload to sign: ${payload_json:0:60}..."
 
-    # Sign the message with Ed25519 private key
-    local signature=$(node ./scripts/sign_payload.js "$sign_message")
+    # Sign the JSON payload with Ed25519 private key
+    local signature=$(node ./scripts/sign_payload_json.js "$payload_json")
     if [[ -z "$signature" ]]; then
         echo -e "${RED}✗ Authentication failed: Could not sign message${NC}"
         return 1
@@ -244,8 +244,8 @@ authenticate() {
     # Store pub_key for later validation (simulate localStorage behavior)
     echo "$pub_key" > .test-magiclink-pubkey
 
-    # Include pub_key and signature in magic link request
-    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
+    # Include pub_key and signature in magic link request using SignedRequest structure
+    local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"payload\":{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"},\"signature\":\"$signature\"}" "$BASE_URL/api/login/")
     echo "Magic link request response: $magic_response"
 
     if [[ "$magic_response" != *'"status":"OK"'* ]]; then
@@ -296,9 +296,9 @@ authenticate() {
 
     echo "Generated magic token signature: ${magic_signature:0:20}..."
 
-    # Magic link validation using POST endpoint with Ed25519 signature
+    # Magic link validation using POST endpoint with Ed25519 signature (unified SignedRequest structure)
     local jwt_response=$(curl -s -X POST -H "Content-Type: application/json" \
-        -d "{\"magiclink\":\"$magic_token\",\"signature\":\"$magic_signature\"}" \
+        -d "{\"payload\":{\"magiclink\":\"$magic_token\"},\"signature\":\"$magic_signature\"}" \
         "$BASE_URL/api/login/magiclink/")
     echo "JWT response: $jwt_response"
 

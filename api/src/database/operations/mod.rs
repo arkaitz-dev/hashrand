@@ -6,10 +6,10 @@
 //! This module has been refactored into smaller, focused submodules for better
 //! maintainability while preserving the original API for backwards compatibility.
 
-pub mod magic_link_ops;
-pub mod magic_link_types;
 pub mod magic_link_crypto;
+pub mod magic_link_ops;
 pub mod magic_link_storage;
+pub mod magic_link_types;
 pub mod magic_link_validation;
 pub mod user_ops;
 

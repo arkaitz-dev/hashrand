@@ -190,6 +190,7 @@ export const zh: I18nTexts = {
 		authenticationFailed: '身份验证失败',
 		tokenExpired: '您的会话已过期。请重新登录。',
 		accessDenied: '访问被拒绝。需要身份验证。',
+		sessionDataCleared: '⚠️ 为安全起见已清除会话数据',
 		userMenu: '用户菜单',
 		login: '登录',
 		authenticatedAs: '已验证身份：',

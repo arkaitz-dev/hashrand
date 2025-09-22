@@ -199,6 +199,7 @@ export const fr: I18nTexts = {
 		authenticationFailed: "Échec de l'authentification",
 		tokenExpired: 'Votre session a expiré. Veuillez vous reconnecter.',
 		accessDenied: 'Accès refusé. Authentification requise.',
+		sessionDataCleared: '⚠️ Données de session effacées par sécurité',
 		userMenu: 'Menu utilisateur',
 		login: 'Se connecter',
 		authenticatedAs: 'Connecté en tant que :',

@@ -196,6 +196,7 @@ export const eu: I18nTexts = {
 		authenticationFailed: 'Autentifikazioak huts egin du',
 		tokenExpired: 'Zure saioa iraungi da. Mesedez, hasi saioa berriro.',
 		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.',
+		sessionDataCleared: '⚠️ Saio datuak segurtasunagatik garbitu dira',
 		userMenu: 'Erabiltzaile menua',
 		login: 'Hasi saioa',
 		authenticatedAs: 'Autentifikatuta honela:',

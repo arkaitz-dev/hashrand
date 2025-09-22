@@ -54,17 +54,56 @@ const response = await api.requestMagicLink(
 - **🔄 Hybrid Architecture**: Web Crypto API primary with @noble/curves fallback
 - **🛡️ Zero Knowledge**: No personal data stored, only cryptographic keys
 
+## SignedRequest Universal Structure with Strict Security (v1.6.10+)
+
+**CRITICAL SECURITY ENHANCEMENT**: As of v1.6.10, all API endpoints using SignedRequest enforce **strict authentication method separation** to prevent confusion attacks and enhance enterprise-grade security.
+
+### Strict Authentication Rules
+
+**🔒 SECURITY RULES ENFORCED:**
+
+1. **Bearer Token Present**: ONLY Bearer token authentication allowed
+   - ❌ **Forbidden**: pub_key or magiclink in payload when Bearer present
+   - ✅ **Valid**: Bearer token with empty/minimal payload
+
+2. **No Bearer Token**: EXACTLY one payload authentication method required
+   - ✅ **Valid**: pub_key only (magic link generation)
+   - ✅ **Valid**: magiclink only (magic link validation)
+   - ❌ **Forbidden**: Both pub_key AND magiclink in payload
+   - ❌ **Forbidden**: Neither pub_key NOR magiclink in payload
+
+### SignedRequest Structure
+
+All POST endpoints now use the **universal SignedRequest structure**:
+
+```json
+{
+  "payload": {
+    // Endpoint-specific data
+  },
+  "signature": "ed25519_signature_hex_128_chars"
+}
+```
+
+### New Error Types (v1.6.10+)
+
+- **`ConflictingAuthMethods`**: Bearer token present but payload contains pub_key/magiclink
+- **`AmbiguousPayloadAuth`**: Both pub_key and magiclink found in payload
+- **`MissingPublicKey`**: No authentication method found
+
 ## Magic Link Generation with Ed25519 Digital Signatures
 
 **POST /api/login/:**
 ```json
 {
-  "email": "user@example.com",
-  "pub_key": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
-  "signature": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-  "ui_host": "http://localhost:5173",
-  "next": "/result?endpoint=mnemonic&language=english&words=12",
-  "email_lang": "es"
+  "payload": {
+    "email": "user@example.com",
+    "pub_key": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+    "ui_host": "http://localhost:5173",
+    "next": "/result?endpoint=mnemonic&language=english&words=12",
+    "email_lang": "es"
+  },
+  "signature": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 }
 ```
 
@@ -97,10 +136,12 @@ signature = ed25519_sign(private_key, message)
 
 **POST /api/login/magiclink/** (v0.19.14+)
 
-**Request Body:**
+**Request Body (SignedRequest Structure v1.6.10+):**
 ```json
 {
-  "magiclink": "6EUrV3544PDKVqGKygJ1...",
+  "payload": {
+    "magiclink": "6EUrV3544PDKVqGKygJ1..."
+  },
   "signature": "2cf3fb2a8d88bdb3339a..."
 }
 ```
@@ -284,42 +325,73 @@ SPIN_VARIABLE_FROM_EMAIL=noreply@hashrand.dev  # Default sender
 ## Usage Examples
 
 ```bash
-# Ed25519 Magic Link Authentication Flow
+# Ed25519 Magic Link Authentication Flow with SignedRequest (v1.6.10+)
 
 # 1. Generate Ed25519 keypair (using Node.js helper)
 pub_key=$(node ./scripts/generate_hash.js)
 echo "Generated public key: $pub_key"
 
-# 2. Create message to sign (email + pub_key)
+# 2. Create JSON payload for signing
 email="user@example.com"
-message="${email}${pub_key}"
+payload_json="{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"}"
 
-# 3. Sign message with Ed25519 private key
-signature=$(node ./scripts/sign_payload.js "$message")
+# 3. Sign JSON payload with Ed25519 private key
+signature=$(node ./scripts/sign_payload_json.js "$payload_json")
 echo "Generated signature: $signature"
 
-# 4. Request magic link with Ed25519 authentication
+# 4. Request magic link with SignedRequest structure
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"$email\",\"email_lang\":\"en\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\"}"
+  -d "{\"payload\":{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\"},\"signature\":\"$signature\"}"
 
-# 5. Sign magic link token and validate with POST endpoint
+# 5. Sign magic link token and validate with SignedRequest
 magic_token="Ax1wogC82pgTzrfDu8QZhr"  # From development log
-magic_signature=$(node ./scripts/sign_payload.js "$magic_token")
+magic_payload_json="{\"magiclink\":\"$magic_token\"}"
+magic_signature=$(node ./scripts/sign_payload_json.js "$magic_payload_json")
 
 curl -X POST "http://localhost:3000/api/login/magiclink/" \
   -H "Content-Type: application/json" \
-  -d "{\"magiclink\":\"$magic_token\",\"signature\":\"$magic_signature\"}"
+  -d "{\"payload\":{\"magiclink\":\"$magic_token\"},\"signature\":\"$magic_signature\"}"
 
-# Request magic link in Spanish with Ed25519
+# Request magic link in Spanish with SignedRequest
+spanish_payload="{\"email\":\"usuario@ejemplo.com\",\"email_lang\":\"es\",\"pub_key\":\"$pub_key\"}"
+spanish_signature=$(node ./scripts/sign_payload_json.js "$spanish_payload")
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"usuario@ejemplo.com\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\",\"email_lang\":\"es\"}"
+  -d "{\"payload\":{\"email\":\"usuario@ejemplo.com\",\"email_lang\":\"es\",\"pub_key\":\"$pub_key\"},\"signature\":\"$spanish_signature\"}"
+```
 
-# Request magic link in Arabic (RTL support) with Ed25519
+### SignedRequest Security Examples (v1.6.10+)
+
+```bash
+# ✅ VALID: Bearer token only (for protected endpoints)
+curl -X POST "http://localhost:3000/api/custom?length=8" \
+  -H "Authorization: Bearer jwt_token_here" \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"length\":8},\"signature\":\"signature_of_payload\"}"
+
+# ✅ VALID: pub_key only (for magic link generation)
 curl -X POST "http://localhost:3000/api/login/" \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"pub_key\":\"$pub_key\",\"signature\":\"$signature\",\"email_lang\":\"ar\"}"
+  -d "{\"payload\":{\"email\":\"user@example.com\",\"pub_key\":\"...\"},\"signature\":\"...\"}"
+
+# ✅ VALID: magiclink only (for magic link validation)
+curl -X POST "http://localhost:3000/api/login/magiclink/" \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"magiclink\":\"...\"},\"signature\":\"...\"}"
+
+# ❌ INVALID: Bearer + pub_key conflict (ConflictingAuthMethods)
+curl -X POST "http://localhost:3000/api/custom?length=8" \
+  -H "Authorization: Bearer jwt_token_here" \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"length\":8,\"pub_key\":\"...\"},\"signature\":\"...\"}"
+# Response: 400 {"error":"Conflicting auth methods: Bearer token present but payload contains pub_key/magiclink"}
+
+# ❌ INVALID: Both pub_key and magiclink (AmbiguousPayloadAuth)
+curl -X POST "http://localhost:3000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d "{\"payload\":{\"pub_key\":\"...\",\"magiclink\":\"...\"},\"signature\":\"...\"}"
+# Response: 400 {"error":"Ambiguous payload auth: Both pub_key and magiclink found in payload"}
 ```
 
 ### Ed25519 Signature Verification Process

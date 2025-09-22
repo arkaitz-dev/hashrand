@@ -30,6 +30,49 @@ HashRand uses **Blake2b** as its unified cryptographic foundation, providing sup
 
 ## Authentication Security
 
+### SignedRequest Universal Security Architecture (v1.6.10+)
+
+**ENTERPRISE-GRADE SECURITY ENHANCEMENT**: HashRand implements **strict authentication method separation** in the universal SignedRequest system to prevent confusion attacks and ensure predictable security validation.
+
+#### Anti-Confusion Attack Prevention
+
+The SignedRequest validation system enforces **mutually exclusive authentication methods** to eliminate potential attack vectors:
+
+| **Authentication State** | **Validation Result** | **Security Rationale** |
+|--------------------------|----------------------|------------------------|
+| Bearer + Nothing | ✅ Valid | Clear Bearer-only authentication |
+| Bearer + pub_key/magiclink | ❌ ConflictingAuthMethods | Prevents authentication bypass attempts |
+| No Bearer + pub_key only | ✅ Valid | Clear payload pub_key authentication |
+| No Bearer + magiclink only | ✅ Valid | Clear payload magiclink authentication |
+| No Bearer + both | ❌ AmbiguousPayloadAuth | Eliminates ambiguous authentication state |
+| No Bearer + neither | ❌ MissingPublicKey | Requires explicit authentication method |
+
+#### Security Benefits Achieved
+
+- **🚫 Attack Vector Elimination**: Prevents confusion attacks using multiple auth methods
+- **🔒 Predictable Security Model**: Deterministic validation logic for all scenarios
+- **🎖️ Enterprise Compliance**: Meets strict enterprise security requirements
+- **📐 Zero Ambiguity**: Clear error messages for all security violations
+
+#### Technical Implementation
+
+```rust
+// Strict authentication method detection
+let has_bearer = Self::extract_pub_key_from_bearer(request).is_ok();
+let has_pub_key = payload_value.get("pub_key").is_some();
+let has_magiclink = payload_value.get("magiclink").is_some();
+
+// Enforce mutually exclusive authentication
+match (has_bearer, has_pub_key, has_magiclink) {
+    (true, false, false) => bearer_validation(),     // ✅ Bearer only
+    (false, true, false) => pubkey_validation(),     // ✅ PubKey only
+    (false, false, true) => magiclink_validation(),  // ✅ Magiclink only
+    (true, _, _) => Err(ConflictingAuthMethods),     // ❌ Bearer + payload
+    (false, true, true) => Err(AmbiguousPayloadAuth), // ❌ Multiple payload
+    (false, false, false) => Err(MissingPublicKey),  // ❌ No auth method
+}
+```
+
 ### Magic Link Security Model with Ed25519 Authentication
 
 #### Ed25519 Digital Signature Layer

@@ -8,6 +8,9 @@ use serde_json::Value;
 use std::fmt;
 
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
+use crate::utils::jwt::utils::JwtUtils;
+use crate::database::operations::magic_link_ops::MagicLinkOperations;
+use spin_sdk::http::Request;
 
 /// Universal signed request structure for all API endpoints
 #[derive(Debug, Deserialize, Serialize)]
@@ -22,6 +25,8 @@ pub enum SignedRequestError {
     InvalidSignature(String),
     MissingPublicKey(String),
     SerializationError(String),
+    ConflictingAuthMethods(String),
+    AmbiguousPayloadAuth(String),
 }
 
 impl fmt::Display for SignedRequestError {
@@ -31,6 +36,12 @@ impl fmt::Display for SignedRequestError {
             SignedRequestError::MissingPublicKey(msg) => write!(f, "Missing public key: {}", msg),
             SignedRequestError::SerializationError(msg) => {
                 write!(f, "Serialization error: {}", msg)
+            }
+            SignedRequestError::ConflictingAuthMethods(msg) => {
+                write!(f, "Conflicting auth methods: {}", msg)
+            }
+            SignedRequestError::AmbiguousPayloadAuth(msg) => {
+                write!(f, "Ambiguous payload auth: {}", msg)
             }
         }
     }
@@ -42,6 +53,86 @@ impl std::error::Error for SignedRequestError {}
 pub struct SignedRequestValidator;
 
 impl SignedRequestValidator {
+    /// Universal validation with strict auth method separation
+    ///
+    /// SECURITY RULES:
+    /// 1. Bearer token present: ONLY Bearer allowed, NO pub_key/magiclink in payload
+    /// 2. No Bearer token: EXACTLY one of pub_key OR magiclink in payload (never both, never none)
+    ///
+    /// # Arguments
+    /// * `signed_request` - The signed request to validate
+    /// * `request` - HTTP request (for Bearer token extraction)
+    ///
+    /// # Returns
+    /// * `Result<String, SignedRequestError>` - pub_key_hex or error
+    pub fn validate_universal<T>(
+        signed_request: &SignedRequest<T>,
+        request: &Request,
+    ) -> Result<String, SignedRequestError>
+    where
+        T: Serialize,
+    {
+        println!("🔍 Universal SignedRequest validation with strict auth separation...");
+
+        // Serialize payload to check contents
+        let payload_value = serde_json::to_value(&signed_request.payload)
+            .map_err(|e| SignedRequestError::SerializationError(e.to_string()))?;
+
+        // Check what auth methods are present in payload
+        let has_pub_key = payload_value.get("pub_key").and_then(|v| v.as_str()).is_some();
+        let has_magiclink = payload_value.get("magiclink").and_then(|v| v.as_str()).is_some();
+
+        // Check if Bearer token is present
+        let has_bearer = Self::extract_pub_key_from_bearer(request).is_ok();
+
+        println!("🔍 Auth method detection - Bearer: {}, pub_key: {}, magiclink: {}",
+                 has_bearer, has_pub_key, has_magiclink);
+
+        // STRICT VALIDATION RULES
+        if has_bearer {
+            // Rule 1: Bearer token present - NO other auth methods allowed in payload
+            if has_pub_key || has_magiclink {
+                return Err(SignedRequestError::ConflictingAuthMethods(
+                    "Bearer token present but payload contains pub_key/magiclink - only Bearer allowed".to_string()
+                ));
+            }
+
+            // Use Bearer token for validation
+            let pub_key_hex = Self::extract_pub_key_from_bearer(request)?;
+            println!("✅ Using ONLY Bearer token (strict mode)");
+            Self::validate(signed_request, &pub_key_hex)?;
+            Ok(pub_key_hex)
+        } else {
+            // Rule 2: No Bearer token - EXACTLY one payload auth method required
+            match (has_pub_key, has_magiclink) {
+                (true, true) => {
+                    Err(SignedRequestError::AmbiguousPayloadAuth(
+                        "Both pub_key and magiclink found in payload - only one allowed".to_string()
+                    ))
+                }
+                (true, false) => {
+                    // Use pub_key from payload
+                    let pub_key_hex = Self::extract_pub_key_from_payload(&payload_value)?;
+                    println!("✅ Using ONLY pub_key from payload (strict mode)");
+                    Self::validate(signed_request, &pub_key_hex)?;
+                    Ok(pub_key_hex)
+                }
+                (false, true) => {
+                    // Use magiclink from payload
+                    let pub_key_hex = Self::extract_pub_key_from_magiclink(&payload_value)?;
+                    println!("✅ Using ONLY magiclink from payload (strict mode)");
+                    Self::validate(signed_request, &pub_key_hex)?;
+                    Ok(pub_key_hex)
+                }
+                (false, false) => {
+                    Err(SignedRequestError::MissingPublicKey(
+                        "No Bearer token and no pub_key/magiclink in payload - exactly one auth method required".to_string()
+                    ))
+                }
+            }
+        }
+    }
+
     /// Validate signed request with Ed25519 signature
     ///
     /// # Arguments
@@ -67,6 +158,61 @@ impl SignedRequestValidator {
             &signed_request.signature,
             public_key_hex,
         )
+    }
+
+    /// Method 1: Extract pub_key from Bearer token (JWT)
+    fn extract_pub_key_from_bearer(request: &Request) -> Result<String, SignedRequestError> {
+        let auth_header = request
+            .header("authorization")
+            .and_then(|h| h.as_str())
+            .ok_or_else(|| {
+                SignedRequestError::MissingPublicKey("No Authorization header".to_string())
+            })?;
+
+        let token = auth_header
+            .strip_prefix("Bearer ")
+            .ok_or_else(|| {
+                SignedRequestError::MissingPublicKey("Invalid Bearer token format".to_string())
+            })?;
+
+        let claims = JwtUtils::validate_access_token(token).map_err(|e| {
+            SignedRequestError::InvalidSignature(format!("JWT validation failed: {}", e))
+        })?;
+
+        Ok(hex::encode(claims.pub_key))
+    }
+
+    /// Method 2: Extract pub_key directly from payload
+    fn extract_pub_key_from_payload(payload: &Value) -> Result<String, SignedRequestError> {
+        payload
+            .get("pub_key")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .ok_or_else(|| {
+                SignedRequestError::MissingPublicKey("pub_key not found in payload".to_string())
+            })
+    }
+
+    /// Method 3: Extract pub_key from magiclink via database lookup
+    fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedRequestError> {
+        let magiclink = payload
+            .get("magiclink")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| {
+                SignedRequestError::MissingPublicKey("magiclink not found in payload".to_string())
+            })?;
+
+        // Validate magiclink and extract pub_key from database
+        let (_is_valid, _next_param, _user_id, pub_key_bytes) =
+            MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
+                SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
+            })?;
+
+        let pub_key_array = pub_key_bytes.ok_or_else(|| {
+            SignedRequestError::MissingPublicKey("No pub_key found in magiclink data".to_string())
+        })?;
+
+        Ok(hex::encode(pub_key_array))
     }
 
     /// DRY function: Validate Ed25519 signature for any serialized string

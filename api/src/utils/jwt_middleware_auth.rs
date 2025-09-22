@@ -5,10 +5,10 @@ use crate::utils::jwt::config::get_refresh_token_duration_minutes;
 use chrono::{DateTime, Utc};
 use spin_sdk::http::{Request, Response};
 
-use super::jwt_middleware_types::{AuthContext, RenewedTokens};
-use super::jwt_middleware_errors::{create_auth_error_response, create_dual_expiry_response};
 use super::jwt_middleware_cookies::extract_refresh_token_from_cookies;
+use super::jwt_middleware_errors::{create_auth_error_response, create_dual_expiry_response};
 use super::jwt_middleware_renewal::check_proactive_renewal;
+use super::jwt_middleware_types::{AuthContext, RenewedTokens};
 
 /// Extract and validate Bearer token from Authorization header
 ///
@@ -72,41 +72,57 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
 }
 
 /// Handle token refresh when Bearer token validation fails
-fn handle_token_refresh_from_cookies(req: &Request, error_msg: &str) -> Result<AuthContext, Response> {
+fn handle_token_refresh_from_cookies(
+    req: &Request,
+    error_msg: &str,
+) -> Result<AuthContext, Response> {
     println!("🔍 DEBUG: Token expired, attempting refresh from cookies...");
 
     // Try to extract refresh token from cookies
-    let cookie_header = req.header("cookie")
+    let cookie_header = req
+        .header("cookie")
         .and_then(|h| h.as_str())
         .ok_or_else(|| {
             println!("🔍 DEBUG: NO cookie header found in request");
             create_token_validation_error(error_msg)
         })?;
 
-    let refresh_token = extract_refresh_token_from_cookies(cookie_header)
-        .ok_or_else(|| {
-            println!("🔍 DEBUG: No refresh token found in cookies");
-            create_token_validation_error(error_msg)
-        })?;
+    let refresh_token = extract_refresh_token_from_cookies(cookie_header).ok_or_else(|| {
+        println!("🔍 DEBUG: No refresh token found in cookies");
+        create_token_validation_error(error_msg)
+    })?;
 
-    println!("🔍 DEBUG: Refresh token extracted: {}...", &refresh_token[..20.min(refresh_token.len())]);
+    println!(
+        "🔍 DEBUG: Refresh token extracted: {}...",
+        &refresh_token[..20.min(refresh_token.len())]
+    );
 
     // Validate refresh token and handle 2/3 system renewal
     match JwtUtils::validate_refresh_token(&refresh_token) {
         Ok(refresh_claims) => {
-            println!("🔍 DEBUG: Refresh token validated successfully for user: {}", refresh_claims.sub);
+            println!(
+                "🔍 DEBUG: Refresh token validated successfully for user: {}",
+                refresh_claims.sub
+            );
             handle_23_system_renewal(refresh_claims)
         }
         Err(validation_error) => {
-            println!("🔍 DEBUG: Refresh token validation failed: {}", validation_error);
-            println!("🔍 DEBUG: DUAL EXPIRY detected - both access and refresh tokens failed validation");
+            println!(
+                "🔍 DEBUG: Refresh token validation failed: {}",
+                validation_error
+            );
+            println!(
+                "🔍 DEBUG: DUAL EXPIRY detected - both access and refresh tokens failed validation"
+            );
             Err(create_dual_expiry_response())
         }
     }
 }
 
 /// Handle 2/3 system renewal logic when refresh token is valid
-fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTokenClaims) -> Result<AuthContext, Response> {
+fn handle_23_system_renewal(
+    refresh_claims: crate::utils::jwt::types::RefreshTokenClaims,
+) -> Result<AuthContext, Response> {
     let now = Utc::now();
     let refresh_duration_minutes = match get_refresh_token_duration_minutes() {
         Ok(duration) => duration as i64,
@@ -124,7 +140,8 @@ fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTok
         }
     };
 
-    let refresh_created_at = refresh_expires_at - chrono::Duration::minutes(refresh_duration_minutes);
+    let refresh_created_at =
+        refresh_expires_at - chrono::Duration::minutes(refresh_duration_minutes);
     let time_elapsed_duration = now - refresh_created_at;
     let one_third_threshold = chrono::Duration::seconds((refresh_duration_minutes * 60) / 3);
 
@@ -132,7 +149,11 @@ fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTok
         "🔍 DEBUG 2/3 System: time_elapsed={:.0}min, 1/3_threshold={:.0}min ({}2/3 remaining)",
         time_elapsed_duration.num_minutes(),
         one_third_threshold.num_minutes(),
-        if time_elapsed_duration > one_third_threshold { "✅ Activate: " } else { "⏳ Wait: " }
+        if time_elapsed_duration > one_third_threshold {
+            "✅ Activate: "
+        } else {
+            "⏳ Wait: "
+        }
     );
 
     // Create new access token - PRESERVE refresh context for 2/3 system
@@ -141,7 +162,7 @@ fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTok
         JwtUtils::create_access_token_from_username_with_refresh_context(
             &refresh_claims.sub,
             refresh_expires_at,
-            &placeholder_pub_key
+            &placeholder_pub_key,
         )
         .map_err(|_| {
             println!("🔍 DEBUG: Failed to create new access token");
@@ -153,12 +174,16 @@ fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTok
 
     // Check if we need to create new refresh token (2/3 system)
     let renewed_tokens = if time_elapsed_duration > one_third_threshold {
-        println!("🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)");
-        let (new_refresh_token, _) = JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, None)
-            .map_err(|_| {
-                println!("🔍 DEBUG: Failed to create new refresh token");
-                create_auth_error_response("Failed to create new refresh token", None)
-            })?;
+        println!(
+            "🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)"
+        );
+        let (new_refresh_token, _) =
+            JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, None).map_err(
+                |_| {
+                    println!("🔍 DEBUG: Failed to create new refresh token");
+                    create_auth_error_response("Failed to create new refresh token", None)
+                },
+            )?;
 
         Some(RenewedTokens {
             access_token: new_access_token,
@@ -166,7 +191,9 @@ fn handle_23_system_renewal(refresh_claims: crate::utils::jwt::types::RefreshTok
             expires_in,
         })
     } else {
-        println!("🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token");
+        println!(
+            "🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token"
+        );
         Some(RenewedTokens {
             access_token: new_access_token,
             refresh_token: String::new(), // Empty = keep existing cookie

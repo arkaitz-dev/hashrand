@@ -51,15 +51,56 @@ export async function clearSensitiveAuthData(): Promise<void> {
 			// Failed to clear Ed25519 keypairs during sensitive cleanup
 		}
 
-		// Show flash message that session was corrupted and cleared
+		// Sensitive auth data cleanup completed (no message shown)
+	} catch {
+		// Failed to clear sensitive auth data
+	}
+}
+
+/**
+ * Clear sensitive authentication data with localized flash message
+ * Used when we want to inform the user that session data was cleared
+ */
+export async function clearSensitiveAuthDataWithMessage(): Promise<void> {
+	if (typeof window === 'undefined') return;
+
+	try {
+		// Clear all session data including preferences (defensive security)
+		const { sessionManager } = await import('../../session-manager');
+		await sessionManager.clearSession();
+
+		// Clear Ed25519 keypairs
 		try {
-			const { flashMessagesStore } = await import('../flashMessages');
-			flashMessagesStore.addMessage('⚠️ Session corrupted, cleared for security');
+			const { clearAllKeyPairs } = await import('../../ed25519');
+			await clearAllKeyPairs();
 		} catch {
-			// Failed to show session corruption flash message
+			// Failed to clear Ed25519 keypairs during sensitive cleanup
 		}
 
-		// Sensitive auth data cleanup completed
+		// Show localized flash message that session data was cleared
+		try {
+			const { flashMessagesStore } = await import('../flashMessages');
+			const { currentLanguage } = await import('../i18n');
+			const { t } = await import('../i18n');
+
+			// Get current language and show translated message
+			let currentLang = 'en';
+			const unsubscribe = currentLanguage.subscribe((lang) => (currentLang = lang));
+			unsubscribe();
+
+			const message = t('auth.sessionDataCleared', currentLang);
+			flashMessagesStore.addMessage(message);
+		} catch {
+			// Failed to show session flash message - fallback to English
+			try {
+				const { flashMessagesStore } = await import('../flashMessages');
+				flashMessagesStore.addMessage('⚠️ Session data cleared for security');
+			} catch {
+				// Failed to show fallback message
+			}
+		}
+
+		// Sensitive auth data cleanup with message completed
 	} catch {
 		// Failed to clear sensitive auth data
 	}

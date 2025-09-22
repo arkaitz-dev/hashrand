@@ -198,6 +198,7 @@ export const hi: I18nTexts = {
 		authenticationFailed: 'प्रमाणीकरण फेल हो गया',
 		tokenExpired: 'आपका सेशन समाप्त हो गया है। कृपया दोबारा लॉग इन करें।',
 		accessDenied: 'एक्सेस अस्वीकृत। प्रमाणीकरण आवश्यक।',
+		sessionDataCleared: '⚠️ सुरक्षा के लिए सत्र डेटा साफ़ किया गया',
 		userMenu: 'यूजर मेन्यू',
 		login: 'लॉग इन करें',
 		authenticatedAs: 'प्रमाणित के रूप में:',

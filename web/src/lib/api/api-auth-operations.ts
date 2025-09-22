@@ -76,20 +76,10 @@ export async function requestMagicLink(
  */
 export async function validateMagicLink(magicToken: string): Promise<LoginResponse> {
 	// Initiating validateMagicLink
-	// Generate or retrieve Ed25519 keypair
-	const { getOrCreateKeyPair, signMessage } = await import('../ed25519');
-	const keyPair = await getOrCreateKeyPair();
-	// KeyPair obtained
-
-	// Sign the magic link token itself for verification
-	const signature = await signMessage(magicToken, keyPair);
-	// Signature generated
-
-	// Create request body with magic link and signature
-	const validationRequest = {
-		magiclink: magicToken,
-		signature
-	};
+	// Create unified SignedRequest structure with magic link payload
+	const { createSignedRequest } = await import('../signedRequest');
+	const signedRequest = await createSignedRequest({ magiclink: magicToken });
+	// SignedRequest created with Ed25519 signature
 
 	// Sending request to backend
 	const response = await fetch(`${API_BASE}/login/magiclink/`, {
@@ -97,7 +87,7 @@ export async function validateMagicLink(magicToken: string): Promise<LoginRespon
 		headers: {
 			'Content-Type': 'application/json'
 		},
-		body: JSON.stringify(validationRequest)
+		body: JSON.stringify(signedRequest)
 	});
 
 	// Backend response received

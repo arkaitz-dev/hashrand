@@ -9,7 +9,7 @@ use super::config::{
     get_access_token_nonce_key, get_refresh_token_duration_minutes,
 };
 use super::crypto::derive_user_id;
-use super::custom_token_serialization::{claims_to_bytes, claims_from_bytes};
+use super::custom_token_serialization::{claims_from_bytes, claims_to_bytes};
 
 /// Token type enum
 #[derive(Debug, Clone, Copy)]
