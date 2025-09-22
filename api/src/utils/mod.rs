@@ -17,6 +17,7 @@ pub mod random_generator;
 pub mod rate_limiter;
 pub mod routing;
 pub mod signed_request;
+pub mod signed_response;
 pub mod validation;
 
 // Auth functions imported directly in routing.rs
@@ -29,7 +30,6 @@ pub use random_generator::{
 };
 pub use rate_limiter::{check_rate_limit, extract_client_ip, init_rate_limiter};
 pub use routing::route_request_with_req;
-pub use signed_request::{
-    PayloadPublicKeyExtractor, PublicKeyExtractor, SignedRequest, SignedRequestValidator,
-};
+pub use signed_request::{SignedRequest, SignedRequestValidator};
+pub use signed_response::{SignedResponse, SignedResponseGenerator};
 pub use validation::{validate_email, validate_length, validate_prefix_suffix};

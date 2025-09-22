@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test completo del sistema 2/3 con 4 fases progresivas
+# Test completo del sistema 2/3 con 4 fases progresivas + Ed25519 Signed Responses
 echo "🧪 TEST COMPLETO SISTEMA 2/3: Ciclo de Vida Completo de Tokens"
 echo "=================================================================="
 echo "📋 PLAN DE PRUEBAS:"
@@ -9,6 +9,17 @@ echo "   Test 2 (t=62s):   Access expirado, refresh primer 1/3 → Solo nuevo ac
 echo "   Test 3 (t=110s):  Sistema 2/3 (>1/3 elapsed, 2/3 remaining) → Access + refresh reset"
 echo "   Test 4 (t=430s):  Usar cookies Test 3 → Esperar 320s → Doble expiración por tiempo"
 echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
+
+# Source signed response helpers
+source scripts/signed_response_helpers.sh
 
 # Configuración
 API_BASE="http://localhost:3000"
@@ -55,13 +66,30 @@ LOGIN_RESPONSE=$(curl -s -b $COOKIES_FILE -c $COOKIES_FILE -X POST \
   -d "{\"payload\":{\"magiclink\":\"$MAGIC_TOKEN\"},\"signature\":\"$MAGIC_SIGNATURE\"}" \
   "$API_BASE/api/login/magiclink/")
 
-if ! echo "$LOGIN_RESPONSE" | grep -q '"access_token"'; then
-    echo "❌ Error en login: $LOGIN_RESPONSE"
+# Process signed response and extract server public key and access token
+if is_signed_response "$LOGIN_RESPONSE"; then
+    echo -e "${BLUE}📝 Processing signed JWT response...${NC}"
+
+    if ! process_magic_link_response "$LOGIN_RESPONSE"; then
+        echo -e "${RED}❌ Error processing signed login response${NC}"
+        exit 1
+    fi
+
+    # Extract access token from verified signed response
+    ACCESS_TOKEN=$(extract_verified_access_token "$LOGIN_RESPONSE")
+else
+    echo -e "${YELLOW}⚠ Received non-signed response, extracting token directly${NC}"
+    # Fallback for backward compatibility
+    ACCESS_TOKEN=$(extract_access_token "$LOGIN_RESPONSE")
+fi
+
+if [[ -z "$ACCESS_TOKEN" ]]; then
+    echo -e "${RED}❌ Error en login: Could not extract access token${NC}"
+    echo "Response: $LOGIN_RESPONSE"
     exit 1
 fi
 
-ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"access_token":"[^"]*"' | sed 's/"access_token":"\([^"]*\)"/\1/')
-echo "✅ Login exitoso. Access Token: ${ACCESS_TOKEN:0:40}..."
+echo -e "${GREEN}✅ Login exitoso. Access Token: ${ACCESS_TOKEN:0:40}...${NC}"
 
 # Verificar cookies de refresh
 if ! grep -q "refresh_token" $COOKIES_FILE; then
@@ -89,10 +117,40 @@ API_RESPONSE=$(curl -s -i -b $COOKIES_FILE -c $COOKIES_FILE \
   $API_BASE/api/custom?length=8)
 
 if echo "$API_RESPONSE" | grep -q "HTTP/1.1 200"; then
-    if ! echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
-        if echo "$API_RESPONSE" | grep -q '"hash"'; then
-            HASH=$(echo "$API_RESPONSE" | grep -o '"hash":"[^"]*"' | cut -d '"' -f 4)
-            echo "✅ Test 1 EXITOSO - Hash generado sin refresh: $HASH"
+    # Extract response body and check for token renewal
+    RESPONSE_BODY=$(echo "$API_RESPONSE" | tail -n 1)
+
+    # Check if there's an access token in signed response (which would indicate unexpected renewal)
+    has_access_token_in_payload=false
+    if is_signed_response "$RESPONSE_BODY"; then
+        if extract_field_from_payload "$RESPONSE_BODY" "access_token" >/dev/null 2>&1; then
+            has_access_token_in_payload=true
+        fi
+    fi
+
+    # Check if there's header-based token renewal (legacy method)
+    has_header_token=false
+    if echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
+        has_header_token=true
+    fi
+
+    if [[ "$has_access_token_in_payload" == false && "$has_header_token" == false ]]; then
+        if echo "$RESPONSE_BODY" | grep -q '"hash"'; then
+            hash=""
+            if is_signed_response "$RESPONSE_BODY"; then
+                hash=$(extract_field_from_payload "$RESPONSE_BODY" "hash")
+                # Validate signature if we have server public key
+                if [[ -n "$SERVER_PUB_KEY" ]]; then
+                    if process_regular_response "$RESPONSE_BODY"; then
+                        echo -e "${GREEN}   • Response signature validated ✅${NC}"
+                    else
+                        echo -e "${YELLOW}   ⚠ Response signature validation failed${NC}"
+                    fi
+                fi
+            else
+                hash=$(echo "$RESPONSE_BODY" | grep -o '"hash":"[^"]*"' | cut -d '"' -f 4)
+            fi
+            echo "✅ Test 1 EXITOSO - Hash generado sin refresh: $hash"
         else
             echo "❌ Test 1 falló: No se generó hash"
             exit 1
@@ -128,12 +186,50 @@ API_RESPONSE=$(curl -s -i -b $COOKIES_FILE -c $COOKIES_FILE \
   $API_BASE/api/custom?length=10)
 
 if echo "$API_RESPONSE" | grep -q "HTTP/1.1 200"; then
-    if echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
+    # Extract response body and check for token renewal
+    RESPONSE_BODY=$(echo "$API_RESPONSE" | tail -n 1)
+
+    # Extract new access token from signed response payload (preferred) or header (fallback)
+    NEW_TOKEN=""
+    if is_signed_response "$RESPONSE_BODY"; then
+        NEW_TOKEN=$(extract_field_from_payload "$RESPONSE_BODY" "access_token")
+        if [[ -n "$NEW_TOKEN" ]]; then
+            echo -e "${GREEN}   • Access token extracted from signed payload ✅${NC}"
+        fi
+    fi
+
+    # Fallback to header extraction if payload method failed
+    if [[ -z "$NEW_TOKEN" ]] && echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
         NEW_TOKEN=$(echo "$API_RESPONSE" | grep "x-new-access-token:" | cut -d' ' -f2 | tr -d '\r')
+        echo -e "${YELLOW}   • Access token extracted from header (fallback) ⚠${NC}"
+    fi
+
+    if [[ -n "$NEW_TOKEN" ]]; then
         if ! echo "$API_RESPONSE" | grep -q "set-cookie.*refresh_token"; then
-            echo "✅ Test 2 EXITOSO - Refresh parcial (solo access token)"
-            echo "   • Nuevo access token: ${NEW_TOKEN:0:40}..."
-            echo "   • Refresh token mantenido (primer 1/3) ✅"
+            # Extract hash from signed response body
+            if echo "$RESPONSE_BODY" | grep -q '"hash"'; then
+                hash=""
+                if is_signed_response "$RESPONSE_BODY"; then
+                    hash=$(extract_field_from_payload "$RESPONSE_BODY" "hash")
+                    # Validate signature if we have server public key
+                    if [[ -n "$SERVER_PUB_KEY" ]]; then
+                        if process_regular_response "$RESPONSE_BODY"; then
+                            echo -e "${GREEN}   • Response signature validated ✅${NC}"
+                        else
+                            echo -e "${YELLOW}   ⚠ Response signature validation failed${NC}"
+                        fi
+                    fi
+                else
+                    hash=$(echo "$RESPONSE_BODY" | grep -o '"hash":"[^"]*"' | cut -d '"' -f 4)
+                fi
+                echo "✅ Test 2 EXITOSO - Refresh parcial (solo access token)"
+                echo "   • Nuevo access token: ${NEW_TOKEN:0:40}..."
+                echo "   • Refresh token mantenido (primer 1/3) ✅"
+                echo "   • Hash generado: $hash ✅"
+            else
+                echo "❌ Test 2 falló: No se generó hash en la respuesta"
+                exit 1
+            fi
         else
             echo "❌ Test 2 falló: Refresh token renovado prematuramente (debería mantenerse en primer 1/3)"
             exit 1
@@ -174,17 +270,48 @@ echo "$API_RESPONSE"
 echo "==============================="
 
 if echo "$API_RESPONSE" | grep -q "HTTP/1.1 200"; then
-    if echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
+    # Extract response body and check for token renewal
+    RESPONSE_BODY=$(echo "$API_RESPONSE" | tail -n 1)
+
+    # Extract new access token from signed response payload (preferred) or header (fallback)
+    NEW_ACCESS=""
+    if is_signed_response "$RESPONSE_BODY"; then
+        NEW_ACCESS=$(extract_field_from_payload "$RESPONSE_BODY" "access_token")
+        if [[ -n "$NEW_ACCESS" ]]; then
+            echo -e "${GREEN}   • Access token extracted from signed payload ✅${NC}"
+        fi
+    fi
+
+    # Fallback to header extraction if payload method failed
+    if [[ -z "$NEW_ACCESS" ]] && echo "$API_RESPONSE" | grep -q "x-new-access-token:"; then
         NEW_ACCESS=$(echo "$API_RESPONSE" | grep "x-new-access-token:" | cut -d' ' -f2 | tr -d '\r')
+        echo -e "${YELLOW}   • Access token extracted from header (fallback) ⚠${NC}"
+    fi
+
+    if [[ -n "$NEW_ACCESS" ]]; then
         if echo "$API_RESPONSE" | grep -q "set-cookie.*refresh_token"; then
             echo "🎉 Test 3 EXITOSO - SISTEMA 2/3 FUNCIONANDO PERFECTAMENTE"
             echo "   • Nuevo access token: ${NEW_ACCESS:0:40}..."
             echo "   • Nuevo refresh token (reset completo) ✅"
             echo "   • Tiempo reseteado a 5 minutos completos ✅"
 
-            if echo "$API_RESPONSE" | grep -q '"hash"'; then
-                HASH=$(echo "$API_RESPONSE" | grep -o '"hash":"[^"]*"' | cut -d '"' -f 4)
-                echo "   • Hash generado: $HASH ✅"
+            # Extract hash from response body (handle both signed and regular responses)
+            if echo "$RESPONSE_BODY" | grep -q '"hash"'; then
+                hash=""
+                if is_signed_response "$RESPONSE_BODY"; then
+                    hash=$(extract_field_from_payload "$RESPONSE_BODY" "hash")
+                    # Validate signature if we have server public key
+                    if [[ -n "$SERVER_PUB_KEY" ]]; then
+                        if process_regular_response "$RESPONSE_BODY"; then
+                            echo -e "${GREEN}   • Response signature validated ✅${NC}"
+                        else
+                            echo -e "${YELLOW}   ⚠ Response signature validation failed${NC}"
+                        fi
+                    fi
+                else
+                    hash=$(echo "$RESPONSE_BODY" | grep -o '"hash":"[^"]*"' | cut -d '"' -f 4)
+                fi
+                echo "   • Hash generado: $hash ✅"
             fi
         else
             echo "❌ Test 3 falló: Sistema 2/3 NO activado (debería renovar refresh token después de 1/3)"

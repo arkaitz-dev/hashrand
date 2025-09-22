@@ -31,6 +31,8 @@ prehash_hmac_key = { required = true, secret = true }
 # Token Duration Configuration (in minutes)
 access_token_duration_minutes = { default = "15" }
 refresh_token_duration_minutes = { default = "480" }
+# Ed25519 Derivation Key for signed responses (64 bytes)
+ed25519_derivation_key = { required = true, secret = true }
 # Email configuration for Mailtrap REST API with custom domain
 mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
@@ -72,6 +74,7 @@ prehash_nonce_key = "{{ prehash_nonce_key }}"
 prehash_hmac_key = "{{ prehash_hmac_key }}"
 access_token_duration_minutes = "{{ access_token_duration_minutes }}"
 refresh_token_duration_minutes = "{{ refresh_token_duration_minutes }}"
+ed25519_derivation_key = "{{ ed25519_derivation_key }}"
 mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"

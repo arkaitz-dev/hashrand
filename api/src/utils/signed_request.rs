@@ -304,7 +304,7 @@ impl SignedRequestValidator {
     ///
     /// Recursively sorts object keys to ensure identical serialization
     /// between frontend JavaScript and backend Rust
-    fn serialize_payload_deterministic<T>(payload: &T) -> Result<String, serde_json::Error>
+    pub fn serialize_payload_deterministic<T>(payload: &T) -> Result<String, serde_json::Error>
     where
         T: Serialize,
     {
@@ -319,7 +319,7 @@ impl SignedRequestValidator {
     }
 
     /// Recursively sort JSON object keys for deterministic serialization
-    fn sort_json_keys(value: Value) -> Value {
+    pub fn sort_json_keys(value: Value) -> Value {
         match value {
             Value::Object(map) => {
                 let mut sorted_map = serde_json::Map::new();

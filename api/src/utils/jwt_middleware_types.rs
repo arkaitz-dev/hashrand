@@ -26,4 +26,8 @@ pub struct RenewedTokens {
     pub access_token: String,
     pub refresh_token: String,
     pub expires_in: i64,
+    /// User ID for signed response generation
+    pub user_id: Vec<u8>,
+    /// Public key hex for signed response generation
+    pub pub_key_hex: String,
 }

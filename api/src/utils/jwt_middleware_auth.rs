@@ -53,7 +53,16 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
             let refresh_expires_at = claims.refresh_expires_at;
 
             // Check if we need proactive renewal (2/3 threshold)
-            let renewed_tokens = check_proactive_renewal(&claims.sub, refresh_expires_at, now)?;
+            // Extract cryptographic information for signed responses
+            let user_id = bs58::decode(&claims.sub)
+                .into_vec()
+                .map_err(|_| {
+                    println!("🔍 DEBUG: Failed to decode Base58 username from access token");
+                    create_auth_error_response("Invalid username format", None)
+                })?;
+            let pub_key_hex = hex::encode(claims.pub_key);
+
+            let renewed_tokens = check_proactive_renewal(&claims.sub, refresh_expires_at, now, user_id, pub_key_hex)?;
 
             Ok(AuthContext {
                 username: claims.sub,
@@ -185,19 +194,41 @@ fn handle_23_system_renewal(
                 },
             )?;
 
+        // Extract cryptographic information for signed responses
+        let user_id = bs58::decode(&refresh_claims.sub)
+            .into_vec()
+            .map_err(|_| {
+                println!("🔍 DEBUG: Failed to decode Base58 username");
+                create_auth_error_response("Invalid username format", None)
+            })?;
+        let pub_key_hex = hex::encode(refresh_claims.pub_key);
+
         Some(RenewedTokens {
             access_token: new_access_token,
             refresh_token: new_refresh_token,
             expires_in,
+            user_id,
+            pub_key_hex,
         })
     } else {
         println!(
             "🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token"
         );
+        // Extract cryptographic information for signed responses
+        let user_id = bs58::decode(&refresh_claims.sub)
+            .into_vec()
+            .map_err(|_| {
+                println!("🔍 DEBUG: Failed to decode Base58 username");
+                create_auth_error_response("Invalid username format", None)
+            })?;
+        let pub_key_hex = hex::encode(refresh_claims.pub_key);
+
         Some(RenewedTokens {
             access_token: new_access_token,
             refresh_token: String::new(), // Empty = keep existing cookie
             expires_in,
+            user_id,
+            pub_key_hex,
         })
     };
 

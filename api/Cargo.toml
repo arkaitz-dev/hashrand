@@ -20,6 +20,7 @@ chacha20 = "0.9.1"
 chacha20poly1305 = "0.10.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 ed25519-dalek = { version = "2.2.0", features = ["serde"] }
+generic-array = "1.2.0"
 hex = "0.4.3"
 hmac = "0.12.1"
 maud = "0.27.0"

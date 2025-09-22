@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Final API Test Script - Comprehensive with JWT Authentication Support
+# Final API Test Script - Comprehensive with JWT Authentication Support + Ed25519 Signed Responses
 BASE_URL="http://localhost:3000"
 PASSED=0
 FAILED=0
@@ -15,6 +15,9 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 PURPLE='\033[0;35m'
 NC='\033[0m'
+
+# Source signed response helpers
+source scripts/signed_response_helpers.sh
 
 test_api() {
     local name="$1"
@@ -62,7 +65,19 @@ test_api() {
     
     echo "Status: $status"
     echo "Response: $body"
-    
+
+    # Validate signed response if we have server public key and response is signed
+    if [[ "$status" == "200" && -n "$SERVER_PUB_KEY" ]] && is_signed_response "$body"; then
+        echo -e "${BLUE}🔐 Validating signed response...${NC}"
+        if process_regular_response "$body"; then
+            echo -e "${GREEN}✓ Response signature validated${NC}"
+        else
+            echo -e "${RED}✗ FAIL - Response signature validation failed${NC}"
+            ((FAILED++))
+            return
+        fi
+    fi
+
     # Check HTTP status
     if [[ "$status" != "$expected_status" ]]; then
         echo -e "${RED}✗ FAIL - Wrong status: expected $expected_status, got $status${NC}"
@@ -72,8 +87,14 @@ test_api() {
     
     # Optional length check
     if [[ -n "$length_check" && "$status" == "200" ]]; then
-        # Extract hash from JSON response
-        local hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+        # Extract hash from JSON response (handle both signed and regular responses)
+        local hash
+        if is_signed_response "$body"; then
+            hash=$(extract_field_from_payload "$body" "hash")
+        else
+            hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+        fi
+
         if [[ -n "$hash" && "$hash" != "null" ]]; then
             local actual_length=${#hash}
             if [[ $actual_length -ne $length_check ]]; then
@@ -92,7 +113,14 @@ test_api() {
     case "$url" in
         *"/api/api-key"*)
             if [[ "$status" == "200" ]]; then
-                local hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+                # Extract hash from response (handle both signed and regular responses)
+                local hash
+                if is_signed_response "$body"; then
+                    hash=$(extract_field_from_payload "$body" "hash")
+                else
+                    hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
+                fi
+
                 if [[ ! "$hash" == "ak_"* ]]; then
                     echo -e "${RED}✗ FAIL - API key missing 'ak_' prefix${NC}"
                     ((FAILED++))
@@ -304,10 +332,24 @@ authenticate() {
 
     # Clean up the stored pub_key file (no longer needed for validation)
     rm -f .test-magiclink-pubkey
-    
-    # Extract JWT token
-    JWT_TOKEN=$(echo "$jwt_response" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
-    
+
+    # Process signed response and extract server public key
+    if is_signed_response "$jwt_response"; then
+        echo -e "${BLUE}📝 Processing signed JWT response...${NC}"
+
+        if ! process_magic_link_response "$jwt_response"; then
+            echo -e "${RED}✗ Authentication failed: Could not process signed response${NC}"
+            return 1
+        fi
+
+        # Extract access token from verified signed response
+        JWT_TOKEN=$(extract_verified_access_token "$jwt_response")
+    else
+        echo -e "${YELLOW}⚠ Received non-signed response, extracting token directly${NC}"
+        # Fallback for backward compatibility
+        JWT_TOKEN=$(extract_access_token "$jwt_response")
+    fi
+
     if [[ -n "$JWT_TOKEN" ]]; then
         echo -e "${GREEN}✓ JWT token obtained: ${JWT_TOKEN:0:30}...${NC}"
         echo -e "${GREEN}✓ Authentication successful - JWT token ready for protected tests${NC}"
