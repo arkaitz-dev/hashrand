@@ -618,6 +618,63 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 - **web/src/routes/{custom,password,api-key,mnemonic}/+page.svelte**: Route-specific encryption/decryption
 - **web/src/routes/result/+page.svelte**: Result page parameter processing and return URL generation
 
+## SignedResponse Architecture (v1.6.11+)
+
+### Universal Ed25519 Response Signing
+
+**Complete Implementation**: All generation endpoints now return cryptographically signed responses with zero legacy code.
+
+#### SignedResponse Structure
+```rust
+// Universal response format across all endpoints
+{
+    "payload": {
+        // Endpoint-specific data (hash, seed, otp, timestamp, etc.)
+    },
+    "signature": "ed25519_signature_hex_128_chars"
+}
+```
+
+#### Ed25519 Response Signing Process
+```rust
+// Deterministic response signing (api/src/utils/signed_response.rs)
+pub fn create_signed_response<T: Serialize>(
+    payload: &T,
+    server_private_key: &[u8; 32]
+) -> Result<SignedResponse, SignedResponseError> {
+    // 1. Deterministic serialization
+    let sorted_payload = sort_json_keys(payload);
+    let serialized = serde_json::to_string(&sorted_payload)?;
+
+    // 2. Ed25519 signature generation
+    let signature = ed25519_sign(serialized.as_bytes(), server_private_key);
+
+    // 3. Response assembly
+    Ok(SignedResponse {
+        payload: sorted_payload,
+        signature: hex::encode(signature)
+    })
+}
+```
+
+#### Cryptographic Guarantees
+- **Integrity**: Response payload cannot be modified without detection
+- **Authenticity**: Responses verifiably originate from legitimate server
+- **Non-repudiation**: Server cannot deny having generated specific responses
+- **Deterministic**: Consistent signature generation for identical payloads
+
+#### Legacy Elimination Benefits
+- **🗑️ Zero Technical Debt**: Complete removal of all legacy response handlers
+- **🔒 Universal Security**: Consistent Ed25519 protection across all endpoints
+- **⚡ Performance**: Reduced code complexity and improved maintainability
+- **🏛️ Clean Architecture**: Enterprise-grade SOLID principles implementation
+
+#### Secure Cookie Integration (v1.6.11+)
+- **🍪 HTTP Headers Delivery**: Authentication endpoints deliver refresh tokens via standard HTTP `Set-Cookie` headers
+- **🛡️ Enterprise Security Attributes**: HttpOnly, Secure, SameSite=Strict, Max-Age, Path=/ for maximum protection
+- **🔒 Dual Security Model**: SignedResponse integrity + secure cookie delivery combining cryptographic and transport security
+- **🚫 XSS Protection**: HttpOnly attribute prevents JavaScript access to refresh tokens
+
 ## Security Considerations
 
 ### Cryptographic Strength
@@ -625,16 +682,18 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 - **Blake2b**: RFC 7693 standardized, widely adopted, equivalent security to SHA3
 - **ChaCha20**: Industry-standard stream cipher, resistance to timing attacks
 - **Argon2id**: Winner of Password Hashing Competition, memory-hard function
+- **Ed25519**: Elliptic curve digital signatures with 128-bit security level
 - **Base58**: Bitcoin-standard encoding, eliminates character confusion
 
 ### Attack Resistance
 
 - **Rainbow Tables**: Blake2b-keyed with unique keys prevents precomputation attacks
 - **Timing Attacks**: Constant-time implementations in all cryptographic operations
-- **Side-Channel**: ChaCha20 and Blake2b designed for side-channel resistance
+- **Side-Channel**: ChaCha20, Blake2b, and Ed25519 designed for side-channel resistance
+- **Response Tampering**: Ed25519 signatures prevent response modification attacks
 - **Quantum Resistance**: While not post-quantum, provides maximal classical security
 
 ---
 
-*For API usage, see [API Endpoints](./endpoints.md)*  
+*For API usage, see [API Endpoints](./endpoints.md)*
 *For authentication flow, see [Authentication Documentation](./authentication.md)*

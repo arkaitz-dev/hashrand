@@ -58,7 +58,9 @@ just dev
 - **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
 - **🔄 2/3 Time-Based Token Management**: Intelligent dual-token refresh system with expiration handling
 - **🛡️ SignedRequest Strict Security**: Enterprise-grade authentication method separation preventing confusion attacks (v1.6.10+)
-- **🧪 Comprehensive Testing**: 64 automated tests covering all functionality
+- **✨ Pure SignedResponse Architecture**: Complete Ed25519 digital signature system with secure HTTP cookie delivery (v1.6.11+)
+- **🍪 Secure Cookie Management**: HttpOnly refresh tokens with enterprise security attributes (Secure, SameSite=Strict)
+- **🧪 Comprehensive Testing**: 35 automated tests covering all functionality with 100% success rate
 
 ## 📊 Architecture
 
@@ -71,9 +73,9 @@ just dev
 - **Database**: SQLite with Zero Knowledge schema
 
 ### API Endpoints
-- **Authentication**: `POST/GET /api/login/*` - Magic link authentication
-- **Generation**: `POST /api/{custom,password,api-key,mnemonic}` - Secure generation (JWT protected)
-- **User Management**: `GET/POST/DELETE /api/users` - User operations (JWT protected) ⚠️ **FUTURE**  
+- **Authentication**: `POST/GET /api/login/*` - Magic link authentication with Ed25519 signatures
+- **Generation**: `GET/POST /api/{custom,password,api-key,mnemonic}` - Secure generation with SignedResponse (JWT protected)
+- **User Management**: `GET/POST/DELETE /api/users` - User operations (JWT protected) ⚠️ **FUTURE**
 - **System**: `GET /api/version` - Public version information
 
 ## 🔧 Development Commands
@@ -82,7 +84,7 @@ just dev
 # Essential commands (using just)
 just dev         # Start complete development environment
 just stop        # Stop all services  
-just test        # Run 64 comprehensive tests
+just test        # Run 35 comprehensive tests with 100% success rate
 just check       # Code quality (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
 just predeploy   # Production deployment with unified backend

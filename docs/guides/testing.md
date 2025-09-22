@@ -4,9 +4,9 @@ Comprehensive testing strategy and implementation guide for HashRand.
 
 ## Automated Test Suite
 
-### Complete Test Coverage (64 tests)
+### Complete Test Coverage (35 tests)
 
-HashRand includes a comprehensive automated test suite covering all aspects of the application:
+HashRand includes a comprehensive automated test suite covering all aspects of the application with **100% success rate**:
 
 ```bash
 # Run complete test suite
@@ -21,40 +21,31 @@ cd scripts && ./final_test.sh
 
 ### Test Categories
 
-#### API Endpoint Tests (12 tests)
-- **Version endpoint**: Public access validation
-- **Generation endpoints**: Custom, password, API key, mnemonic
-- **User management**: Registration, profile, deletion
-- **Authentication**: Login flow, token validation
-- **Error handling**: Invalid requests, malformed data
+#### Public Endpoint Tests (1 test)
+- **Version endpoint**: Public access validation with no authentication
 
-#### Authentication Flow Tests (15 tests)
-- **Magic link generation**: Email-based authentication
-- **JWT token lifecycle**: Access and refresh token management
-- **Zero Knowledge validation**: User ID derivation and storage
-- **Session management**: Login, logout, automatic refresh
-- **Security validation**: Token expiration and invalidation
+#### Authentication Required Tests (4 tests)
+- **Endpoint protection**: All generation endpoints properly require Bearer tokens
+- **Error responses**: Consistent authentication error messages
 
-#### Generation Algorithm Tests (20 tests)
-- **Custom hash generation**: Entropy, length, character sets
-- **Password security**: Complexity requirements, randomness
-- **API key format**: Prefix validation, entropy verification
-- **BIP39 mnemonic**: Language support, entropy validation
-- **Seed-based generation**: Deterministic reproducibility
+#### Authentication Flow Tests (7 tests)
+- **Magic link generation**: Ed25519-signed email authentication requests
+- **JWT token lifecycle**: Bearer token generation and validation
+- **Token validation**: Access token verification and expiration handling
+- **SignedResponse validation**: Server response signature verification
 
-#### Database Operation Tests (10 tests)
-- **Zero Knowledge schema**: User table validation
-- **Magic link storage**: Encryption, expiration, cleanup
-- **CRUD operations**: Create, read, update, delete users
-- **Data integrity**: Constraint validation, foreign keys
-- **Performance**: Query optimization and indexing
+#### Generation Endpoint Tests (18 tests)
+- **Custom hash generation**: Multiple lengths and configurations
+- **Password generation**: Default and custom length secure passwords
+- **API key generation**: 'ak_' prefixed keys with length validation
+- **BIP39 mnemonic**: 12/24 word phrases in multiple languages (English/Spanish)
+- **SignedResponse format**: All endpoints return Ed25519-signed responses
 
-#### Error Handling Tests (7 tests)
-- **Input validation**: Malformed requests, invalid parameters
-- **Authentication errors**: Invalid tokens, expired sessions
-- **Database errors**: Connection failures, constraint violations
-- **Rate limiting**: Request throttling and abuse prevention
-- **Network errors**: Timeout handling, connection issues
+#### Error Validation Tests (5 tests)
+- **Parameter validation**: Length limits and format requirements
+- **Authentication errors**: Missing/invalid tokens and signatures
+- **Input validation**: Malformed requests and invalid parameters
+- **Business logic**: Password/API key length constraints, invalid mnemonic parameters
 
 ## Test Architecture
 

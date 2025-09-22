@@ -4,6 +4,10 @@
 
 **🛡️ SignedRequest Security (v1.6.10+)**: All POST endpoints implement **strict authentication method separation** with enterprise-grade security validation. See [SignedRequest Documentation](./authentication.md#signedrequest-universal-structure-with-strict-security-v16100) for details.
 
+**✨ SignedResponse Architecture (v1.6.11+)**: ALL endpoints now return **Ed25519-signed responses** with cryptographic integrity validation. Complete SignedResponse implementation includes secure HTTP cookie delivery for authentication endpoints.
+
+**🍪 Secure Cookie Implementation**: Authentication endpoints deliver refresh tokens via secure HTTP cookies with enterprise security attributes (HttpOnly, Secure, SameSite=Strict, Max-Age, Path=/).
+
 ## Quick Reference
 
 | Endpoint | Method | Auth | Description |
@@ -51,15 +55,25 @@ POST /api/custom        # Deterministic generation with seed (requires authentic
 - `prefix` (string, max 32 chars) - Text to prepend
 - `suffix` (string, max 32 chars) - Text to append
 
-**Response Format:**
+**Response Format (SignedResponse v1.6.11+):**
 ```json
 {
-  "hash": "generated_hash_here",
-  "seed": "base58_seed_string",
-  "otp": "123456789",
-  "timestamp": 1692812400
+  "payload": {
+    "hash": "generated_hash_here",
+    "seed": "base58_seed_string",
+    "otp": "123456789",
+    "timestamp": 1692812400
+  },
+  "signature": "ed25519_signature_hex_128_chars_server_signed"
 }
 ```
+
+**Response Fields:**
+- `payload.hash` - The generated hash string
+- `payload.seed` - Base58 seed used for generation
+- `payload.otp` - Numeric timestamp-based one-time pad
+- `payload.timestamp` - Unix timestamp of generation
+- `signature` - Ed25519 digital signature from server for response integrity
 
 **Examples:**
 ```bash

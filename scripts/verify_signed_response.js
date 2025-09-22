@@ -7,8 +7,8 @@
  * and extracts payload data for use in bash test scripts.
  */
 
-const { ed25519 } = require('@noble/curves/ed25519');
-const { bytesToHex, hexToBytes } = require('@noble/hashes/utils');
+const { ed25519 } = require('@noble/curves/ed25519.js');
+const { bytesToHex, hexToBytes } = require('@noble/hashes/utils.js');
 
 /**
  * Sort object keys recursively for deterministic serialization

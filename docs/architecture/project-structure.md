@@ -55,6 +55,8 @@ api/
     │   ├── login.rs            # Zero Knowledge authentication HTTP routing (110 lines)
     │   ├── from_seed.rs        # Deterministic seed-based generation
     │   └── version.rs          # API version information endpoint
+    │   # NOTE (v1.6.11+): All legacy handler functions completely eliminated
+    │   # Pure SignedResponse architecture with zero legacy code
     └── utils/                   # Utility functions and cryptographic operations
         ├── query.rs            # HTTP query parameter parsing and validation
         ├── routing.rs          # Request routing logic and middleware

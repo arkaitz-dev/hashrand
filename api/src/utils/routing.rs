@@ -1,8 +1,8 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key, handle_api_key_request, handle_custom, handle_from_seed, handle_login,
-    handle_mnemonic_request, handle_mnemonic_with_params, handle_password, handle_password_request,
+    handle_api_key_request, handle_from_seed, handle_login,
+    handle_mnemonic_request, handle_password_request,
     handle_users, handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
@@ -30,25 +30,17 @@ pub async fn route_request_with_req(
         path if path.ends_with("/api/custom") => {
             match *method {
                 Method::Get => {
+                    // GET requests: JWT validation + SignedResponse output (no Ed25519 signature required)
                     if requires_authentication(path) {
-                        // GET requests require JWT validation
                         with_auth_and_renewal(req, |req| {
-                            let uri_str = req.uri().to_string();
-                            let query = if let Some(idx) = uri_str.find('?') {
-                                &uri_str[idx + 1..]
-                            } else {
-                                ""
-                            };
-                            let params = crate::utils::query::parse_query_params(query);
-                            handle_custom(params)
+                            crate::handlers::custom::handle_custom_get(req)
                         })
                     } else {
-                        // Fallback for non-auth case (shouldn't happen for /api/custom)
-                        handle_custom_request(req).await
+                        crate::handlers::custom::handle_custom_get(req)
                     }
                 }
                 Method::Post => {
-                    // POST requests use SignedRequest validation internally
+                    // POST requests: Full Ed25519 + JWT validation + SignedResponse output
                     handle_custom_request(req).await
                 }
                 _ => handle_method_not_allowed(),
@@ -57,17 +49,8 @@ pub async fn route_request_with_req(
         path if path.ends_with("/api/password") => {
             match *method {
                 Method::Get => {
-                    if requires_authentication(path) {
-                        // GET requests require JWT validation
-                        with_auth_and_renewal(req, |req| {
-                            let uri_str = req.uri().to_string();
-                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
-                            let params = crate::utils::query::parse_query_params(query_string);
-                            handle_password(params)
-                        })
-                    } else {
-                        handle_password_request(req).await
-                    }
+                    // GET requests now use SignedResponse like POST requests
+                    handle_password_request(req).await
                 }
                 Method::Post => {
                     // POST requests use SignedRequest validation internally
@@ -79,17 +62,8 @@ pub async fn route_request_with_req(
         path if path.ends_with("/api/api-key") => {
             match *method {
                 Method::Get => {
-                    if requires_authentication(path) {
-                        // GET requests require JWT validation
-                        with_auth_and_renewal(req, |req| {
-                            let uri_str = req.uri().to_string();
-                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
-                            let params = crate::utils::query::parse_query_params(query_string);
-                            handle_api_key(params)
-                        })
-                    } else {
-                        handle_api_key_request(req).await
-                    }
+                    // GET requests now use SignedResponse like POST requests
+                    handle_api_key_request(req).await
                 }
                 Method::Post => {
                     // POST requests use SignedRequest validation internally
@@ -101,17 +75,8 @@ pub async fn route_request_with_req(
         path if path.ends_with("/api/mnemonic") => {
             match *method {
                 Method::Get => {
-                    if requires_authentication(path) {
-                        // GET requests require JWT validation
-                        with_auth_and_renewal(req, |req| {
-                            let uri_str = req.uri().to_string();
-                            let query_string = uri_str.split('?').nth(1).unwrap_or("");
-                            let params = crate::utils::query::parse_query_params(query_string);
-                            handle_mnemonic_with_params(params, None)
-                        })
-                    } else {
-                        handle_mnemonic_request(req).await
-                    }
+                    // GET requests now use SignedResponse like POST requests
+                    handle_mnemonic_request(req).await
                 }
                 Method::Post => {
                     // POST requests use SignedRequest validation internally
@@ -125,12 +90,8 @@ pub async fn route_request_with_req(
         path if path.ends_with("/api/generate") => {
             match *method {
                 Method::Get => {
-                    if requires_authentication(path) {
-                        // Need to wrap for protected endpoint
-                        with_auth_and_renewal(req, |_req| handle_custom(query_params))
-                    } else {
-                        handle_custom(query_params) // Backward compatibility
-                    }
+                    // Legacy alias for /api/custom - now uses SignedResponse
+                    handle_custom_request(req).await
                 }
                 _ => handle_method_not_allowed(),
             }
@@ -172,46 +133,6 @@ pub async fn route_request_with_req(
     }
 }
 
-/// Legacy routing function for backward compatibility
-#[allow(dead_code)]
-pub fn route_request(
-    path: &str,
-    query_params: HashMap<String, String>,
-    method: &Method,
-    body: &[u8],
-) -> anyhow::Result<Response> {
-    match (path, method) {
-        // GET endpoints
-        (path, &Method::Get) if path.ends_with("/api/custom") => handle_custom(query_params),
-        (path, &Method::Get) if path.ends_with("/api/generate") => handle_custom(query_params), // Backward compatibility
-        (path, &Method::Get) if path.ends_with("/api/password") => {
-            // Legacy routing not used in current implementation
-            handle_method_not_allowed()
-        }
-        (path, &Method::Get) if path.ends_with("/api/api-key") => {
-            // Legacy routing not used in current implementation
-            handle_method_not_allowed()
-        }
-        (path, &Method::Get) if path.ends_with("/api/version") => handle_version(),
-
-        // POST endpoints
-        (path, &Method::Post) if path.ends_with("/api/from-seed") => handle_from_seed(body),
-
-        // Method not allowed for existing endpoints
-        (path, _)
-            if path.ends_with("/api/custom")
-                || path.ends_with("/api/generate")
-                || path.ends_with("/api/password")
-                || path.ends_with("/api/api-key")
-                || path.ends_with("/api/version") =>
-        {
-            handle_method_not_allowed()
-        }
-
-        // Not found
-        _ => handle_not_found(),
-    }
-}
 
 /// Handles not found routes with useful information about available endpoints
 fn handle_not_found() -> anyhow::Result<Response> {

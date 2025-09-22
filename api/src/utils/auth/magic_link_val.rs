@@ -60,8 +60,13 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
         Err(error_response) => return Ok(error_response),
     };
 
-    // Step 6: Build complete authentication response with secure cookies
-    let auth_response = build_authentication_response(jwt_tokens, token_data.next_param)?;
+    // Step 6: Build complete authentication response with secure cookies (SignedResponse format)
+    let auth_response = build_authentication_response(
+        jwt_tokens,
+        token_data.next_param,
+        &token_data.user_id_bytes,
+        &token_data.pub_key_bytes,
+    )?;
 
     println!("✅ Magic link validation completed successfully");
 

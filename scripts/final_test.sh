@@ -54,8 +54,17 @@ test_api() {
             status=$(curl -s -X POST -H "Content-Type: application/json" -w "%{http_code}" -o "$temp_file" -d "$post_data" "$url")
         fi
     else
+        # For GET requests with authentication, add Ed25519 signature
+        local final_url="$url"
         if [[ "$use_auth" == "true" && -n "$JWT_TOKEN" ]]; then
-            status=$(curl -s -H "Authorization: Bearer $JWT_TOKEN" -w "%{http_code}" -o "$temp_file" "$url")
+            final_url=$(generate_signed_url "$url")
+            if [[ $? -ne 0 ]]; then
+                echo -e "${RED}✗ FAIL - Failed to generate signed URL${NC}"
+                ((FAILED++))
+                return
+            fi
+            # Using signed URL with Ed25519 signature from auth session
+            status=$(curl -s -H "Authorization: Bearer $JWT_TOKEN" -w "%{http_code}" -o "$temp_file" "$final_url")
         else
             status=$(curl -s -w "%{http_code}" -o "$temp_file" "$url")
         fi
@@ -144,6 +153,73 @@ test_api() {
 }
 
 # Ed25519 helper functions
+
+# Generate signed URL for GET requests with Ed25519 signature
+# Usage: generate_signed_url "http://localhost:3000/api/custom?length=12"
+# Returns: URL with signature parameter added
+generate_signed_url() {
+    local base_url="$1"
+    local pub_key_file=".test-magiclink-pubkey"
+
+    # Check if we have a stored public key from authentication
+    if [[ ! -f "$pub_key_file" ]]; then
+        echo -e "${RED}✗ No stored public key found. Authentication required first.${NC}"
+        echo "$base_url"
+        return 1
+    fi
+
+    local pub_key=$(cat "$pub_key_file")
+    if [[ -z "$pub_key" ]]; then
+        echo -e "${RED}✗ Empty public key found.${NC}"
+        echo "$base_url"
+        return 1
+    fi
+
+    # Extract query parameters from URL
+    local params_json="{}"
+    if [[ "$base_url" == *"?"* ]]; then
+        local query_string="${base_url#*\?}"
+        local base_url_no_query="${base_url%%\?*}"
+
+        # Convert query string to JSON for signing
+        params_json="{"
+        local first=true
+        IFS='&' read -ra PAIRS <<< "$query_string"
+        for pair in "${PAIRS[@]}"; do
+            if [[ "$pair" == *"="* ]]; then
+                local key="${pair%%=*}"
+                local value="${pair#*=}"
+                if [[ "$first" == "true" ]]; then
+                    first=false
+                else
+                    params_json+=","
+                fi
+                params_json+="\"$key\":\"$value\""
+            fi
+        done
+        params_json+="}"
+    else
+        local base_url_no_query="$base_url"
+    fi
+
+    # Generate Ed25519 signature for query parameters using AUTH session keypair
+    local signature=$(node ./scripts/sign_query_params.js "$pub_key" "$params_json" 2>/dev/null)
+    if [[ -z "$signature" ]]; then
+        echo -e "${RED}✗ Failed to generate Ed25519 signature for query parameters${NC}"
+        echo "$base_url"
+        return 1
+    fi
+
+    # Add only signature to URL (backend extracts pub_key from JWT Bearer token)
+    local separator="?"
+    if [[ "$base_url" == *"?"* ]]; then
+        separator="&"
+    fi
+
+    echo "${base_url}${separator}signature=${signature}"
+    return 0
+}
+
 generate_ed25519_payload() {
     local email="$1"
 
@@ -330,20 +406,17 @@ authenticate() {
         "$BASE_URL/api/login/magiclink/")
     echo "JWT response: $jwt_response"
 
-    # Clean up the stored pub_key file (no longer needed for validation)
-    rm -f .test-magiclink-pubkey
+    # Keep the stored pub_key file AND private key for GET request signing during protected tests
+    # These files contain the SAME keypair used for authentication
+    # rm -f .test-magiclink-pubkey  # (cleanup moved to end of script)
+    # rm -f .test-ed25519-private-key  # (cleanup moved to end of script)
 
-    # Process signed response and extract server public key
+    # Process signed response and extract JWT token
     if is_signed_response "$jwt_response"; then
         echo -e "${BLUE}📝 Processing signed JWT response...${NC}"
 
-        if ! process_magic_link_response "$jwt_response"; then
-            echo -e "${RED}✗ Authentication failed: Could not process signed response${NC}"
-            return 1
-        fi
-
-        # Extract access token from verified signed response
-        JWT_TOKEN=$(extract_verified_access_token "$jwt_response")
+        # Extract access token from signed JWT response (no server_pub_key needed)
+        JWT_TOKEN=$(extract_access_token "$jwt_response")
     else
         echo -e "${YELLOW}⚠ Received non-signed response, extracting token directly${NC}"
         # Fallback for backward compatibility
@@ -402,7 +475,33 @@ if ! authenticate; then
     echo -e "${YELLOW}⚠ Some tests will be skipped due to authentication failure${NC}"
 else
     echo -e "${GREEN}✓ Authentication successful - proceeding with protected tests${NC}"
-    
+
+    # Test JWT token validation immediately after authentication (before token expires)
+    echo -e "\n${PURPLE}=== JWT TOKEN VALIDATION TESTS ===${NC}"
+
+    test_api "Valid JWT token access" \
+        "$BASE_URL/api/custom?length=8" \
+        "200" \
+        "8" \
+        "GET" \
+        "" \
+        "true"
+
+    # Test with invalid token
+    old_token="$JWT_TOKEN"
+    JWT_TOKEN="invalid_token_123"
+
+    test_api "Invalid JWT token (should fail)" \
+        "$BASE_URL/api/custom?length=8" \
+        "401" \
+        "" \
+        "GET" \
+        "" \
+        "true"
+
+    # Restore valid token
+    JWT_TOKEN="$old_token"
+
     # Now test protected endpoints with authentication
     echo -e "\n${YELLOW}=== PROTECTED ENDPOINTS (With Authentication) ===${NC}"
     
@@ -627,33 +726,7 @@ test_api "Invalid magic link (should fail)" \
     "POST" \
     '{"magiclink":"invalid_token_12345","signature":"invalid_signature_hex_value_123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}'
 
-# Test token expiration (if we have time)
-if [[ -n "$JWT_TOKEN" ]]; then
-    echo -e "\n${PURPLE}=== JWT TOKEN VALIDATION TESTS ===${NC}"
-    
-    test_api "Valid JWT token access" \
-        "$BASE_URL/api/custom?length=8" \
-        "200" \
-        "8" \
-        "GET" \
-        "" \
-        "true"
-    
-    # Test with invalid token
-    old_token="$JWT_TOKEN"
-    JWT_TOKEN="invalid_token_123"
-    
-    test_api "Invalid JWT token (should fail)" \
-        "$BASE_URL/api/custom?length=8" \
-        "401" \
-        "" \
-        "GET" \
-        "" \
-        "true"
-    
-    # Restore valid token
-    JWT_TOKEN="$old_token"
-fi
+# JWT validation tests moved to execute immediately after authentication
 
 # 404 tests (these work without authentication)
 echo -e "\n${YELLOW}=== 404 ERROR TESTS (No Authentication Required) ===${NC}"
