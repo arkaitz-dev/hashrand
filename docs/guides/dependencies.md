@@ -36,17 +36,19 @@ Complete overview of HashRand's technology stack, dependencies, and third-party 
 
 ### Core Dependencies
 
-#### Cryptographic Stack (Blake2b Unified)
+#### Cryptographic Stack (Hybrid Blake2b + Blake3)
 ```toml
 [dependencies]
-# Unified Blake2b cryptographic operations
-blake2 = "0.10"                    # Blake2b/Blake2b-keyed/Blake2b-variable
+# Hybrid Blake2b + Blake3 cryptographic operations (v1.6.12+)
+blake2 = "0.10"                    # Blake2b/Blake2b-keyed/Blake2b-variable (fixed-length)
+blake3 = "1.8.2"                   # Blake3 KDF + XOF (unlimited variable-length)
 argon2 = "0.5.3"                   # Memory-hard user ID derivation
 chacha20poly1305 = "0.10.1"        # Stream cipher for magic link encryption
 ```
 
 **Security Properties:**
-- **Blake2b**: RFC 7693 compliant, faster than SHA3, equivalent security
+- **Blake2b**: RFC 7693 compliant, faster than SHA3, equivalent security (fixed-length operations)
+- **Blake3**: KDF with domain separation + XOF for unlimited variable-length outputs (1 to 2^64 bytes)
 - **Argon2id**: Winner of Password Hashing Competition, OWASP 2024 parameters
 - **ChaCha20**: Industry-standard stream cipher, TLS 1.3 approved
 
@@ -252,6 +254,18 @@ components = ["rustfmt", "clippy"]
 - **Algorithms**: Blake2b-512, Blake2b-keyed, Blake2b-variable
 - **Performance**: SIMD-optimized implementations
 - **Security**: RFC 7693 compliant, extensively analyzed
+- **Usage**: Fixed-length operations (8-64 bytes)
+
+#### Blake3 Implementation (v1.6.12+)
+- **Library**: `blake3` crate (official implementation)
+- **Algorithms**: Blake3 standard hash, Blake3 KDF, Blake3 XOF
+- **Performance**: Parallelizable SIMD architecture for maximum throughput
+- **Security**: Based on BLAKE2 foundation with improved cryptographic properties
+- **Usage**: Variable-length operations (1 to 2^64 bytes), domain separation
+- **Key Features**:
+  - **KDF Mode**: Context-based domain separation for namespace isolation
+  - **XOF Mode**: Unlimited extendable output for any length requirements
+  - **Keyed Mode**: MAC functionality with 32-byte keys
 
 #### Password Hashing
 - **Library**: `argon2` crate

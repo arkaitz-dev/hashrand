@@ -4,20 +4,63 @@ HashRand implements enterprise-grade security through multiple layers of cryptog
 
 ## Cryptographic Foundation
 
-### Blake2b Unified Security Stack
+### Hybrid Blake2b + Blake3 Security Stack (v1.6.12+)
 
-HashRand uses **Blake2b** as its unified cryptographic foundation, providing superior performance while maintaining enterprise-grade security:
+HashRand uses a **hybrid Blake2b + Blake3 cryptographic foundation**, combining Blake2b's optimized fixed-length operations with Blake3's unlimited variable-length outputs:
 
 | **Function** | **Algorithm** | **Usage** | **Security Level** |
 |--------------|---------------|-----------|-------------------|
 | **Standard Hashing** | Blake2b512 | Email hashing, seed generation | 256-bit equivalent |
 | **Keyed Authentication** | Blake2b-keyed | HMAC replacement, integrity | 256-bit equivalent |
-| **Variable Output** | Blake2b-variable | User ID compression, indexing | Configurable (8-64 bytes) |
+| **Variable Output (Fixed)** | Blake2b-variable | User ID compression, indexing | Configurable (8-64 bytes) |
+| **Variable Output (Unlimited)** | Blake3 KDF + XOF | Deterministic variable-length derivation | 256-bit security, 1 to 2^64 bytes |
+| **Domain Separation** | Blake3 KDF (Base58) | Cryptographic namespace isolation | 256-bit security |
+
+### Blake3 Pseudonimizer Security Properties (v1.6.12+)
+
+#### Cryptographic Guarantees
+- **🔒 Domain Separation**: Different `hmac_env_key` produce cryptographically independent outputs
+  - Base58-encoded context ensures namespace isolation
+  - Prevents key material confusion across use cases
+- **🎲 Deterministic Output**: Same inputs always produce identical output
+  - Critical for server public key generation reproducibility
+  - Enables consistent cryptographic operations without storage
+- **🛡️ Key Derivation Security**: Blake3 KDF ensures cryptographic strength
+  - Unique 32-byte key derived per data input
+  - Resistant to related-key attacks and precomputation
+- **📊 XOF Security**: Extended output maintains cryptographic properties
+  - First N bytes of extended output are cryptographically consistent
+  - No pattern leakage or structural weaknesses in variable outputs
+
+#### Implementation Security
+```rust
+// utils/pseudonimizer.rs - Cryptographically secure pipeline
+// STEP 1: Domain separation via Base58-encoded HMAC key
+let context = bs58::encode(hmac_env_key).into_string();  // Namespace isolation
+
+// STEP 2: Blake3 standard hash for key material generation
+let key_material = blake3::hash(data);  // 256-bit security
+
+// STEP 3: Blake3 KDF for deterministic key derivation
+let deterministic_key = blake3::derive_key(&context, key_material.as_bytes());
+
+// STEP 4: Blake3 keyed + XOF for variable-length output
+let mut hasher = blake3::Hasher::new_keyed(&deterministic_key);
+hasher.update(data);
+let mut output_reader = hasher.finalize_xof();  // Unlimited secure output
+```
+
+#### Security Advantages Over Blake2b
+- **✅ Unlimited Output**: Blake3 XOF supports 1 to 2^64 bytes (Blake2b limited to 64 bytes)
+- **✅ Domain Separation**: Blake3 KDF context parameter (Blake2b lacks native domain separation)
+- **✅ Parallel Performance**: Blake3 parallelizable structure for faster operations
+- **✅ Cryptographic Agility**: Dedicated algorithm for variable-length requirements
 
 ### Cryptographic Properties
 
 #### Security Standards
 - **RFC 7693 Compliant**: Blake2b is standardized and widely adopted
+- **Blake3 Security**: Proven security based on BLAKE2 foundation with improved properties
 - **Cryptanalysis Resistant**: Extensive security analysis with no known vulnerabilities
 - **Side-Channel Resistant**: Designed to resist timing and power analysis attacks
 - **Memory-Hard Components**: Argon2id provides resistance to ASIC attacks
@@ -26,7 +69,7 @@ HashRand uses **Blake2b** as its unified cryptographic foundation, providing sup
 - **Constant-Time Operations**: All cryptographic operations execute in constant time
 - **No Secret-Dependent Branches**: Code paths independent of secret values
 - **Cache-Safe**: Operations designed to minimize cache timing leaks
-- **SIMD Optimized**: Hardware acceleration where available
+- **SIMD Optimized**: Hardware acceleration where available (both Blake2b and Blake3)
 
 ## Authentication Security
 

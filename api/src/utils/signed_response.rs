@@ -3,17 +3,18 @@
 //! Provides Ed25519 signature generation for all backend responses
 //! with deterministic JSON serialization matching frontend expectations
 
-use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
-use generic_array::typenum::{U32, U64};
+// use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
+// use generic_array::typenum::{U32, U64};
 use ed25519_dalek::{SigningKey, Signer};
 use hex;
-use rand::{RngCore, SeedableRng};
-use rand_chacha::ChaCha8Rng;
+// use rand::{RngCore, SeedableRng};
+// use rand_chacha::ChaCha8Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use spin_sdk::{http::Response, variables};
 use std::fmt;
 
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 use crate::utils::signed_request::SignedRequestValidator;
 
 /// Universal signed response structure for all API endpoints
@@ -52,13 +53,11 @@ pub struct SignedResponseGenerator;
 impl SignedResponseGenerator {
     /// Generate signed response with per-session Ed25519 key
     ///
-    /// CRYPTOGRAPHIC FLOW:
-    /// 1. user_id_bytes + pub_key_bytes -> Blake2bMac<U64> keyed (64 bytes output)
-    /// 2. Step 1 output (64 bytes) -> Blake2b NO KEYED (32 bytes output)
-    /// 3. Step 2 output (32 bytes) -> ChaCha20-RNG -> Ed25519 private key (32 bytes)
-    /// 3. Ed25519 keypair generation from private key
-    /// 4. Deterministic JSON serialization (matching frontend)
-    /// 5. Ed25519 signature of serialized payload
+    /// CRYPTOGRAPHIC FLOW (Blake3 Pseudonimizer):
+    /// 1. user_id_bytes + pub_key_bytes → Blake3 pseudonimizer → Ed25519 private key (32 bytes)
+    /// 2. Ed25519 keypair generation from private key
+    /// 3. Deterministic JSON serialization (matching frontend)
+    /// 4. Ed25519 signature of serialized payload
     ///
     /// # Arguments
     /// * `payload` - Response data to be signed
@@ -104,11 +103,12 @@ impl SignedResponseGenerator {
 
     /// Derive per-session Ed25519 private key from user_id + pub_key
     ///
-    /// OPTIMIZED CRYPTOGRAPHIC DERIVATION:
+    /// BLAKE3 PSEUDONIMIZER CRYPTOGRAPHIC DERIVATION:
     /// 1. Concatenate: user_id_bytes + pub_key_bytes
-    /// 2. Blake2bMac<U64> keyed with ED25519_DERIVATION_KEY (64 bytes) → 64 bytes output
-    /// 3. Blake2b<U32> NO KEYED of step 2 result → 32 bytes output
-    /// 4. ChaCha20-RNG seeded with step 3 result → 32 bytes Ed25519 private key
+    /// 2. ED25519_DERIVATION_KEY[64] → Base58 → context (domain separation)
+    /// 3. combined_input → Blake3 hash → key_material[32 bytes]
+    /// 4. (context, key_material) → Blake3 KDF → deterministic_key[32 bytes]
+    /// 5. (combined_input, deterministic_key) → Blake3 keyed+XOF → Ed25519 private key[32 bytes]
     ///
     /// # Arguments
     /// * `user_id` - User ID bytes (typically 16 bytes)
@@ -147,24 +147,19 @@ impl SignedResponseGenerator {
         println!("= Deriving session key - user_id: {} bytes, pub_key: {} bytes",
                  user_id.len(), pub_key_bytes.len());
 
-        // PASO 1: Blake2bMac<U64> KEYED → 64 bytes DIRECTOS (optimal!)
-        let derivation_key = Self::get_ed25519_derivation_key()?;
+        // Get ED25519_DERIVATION_KEY[64 bytes] for Blake3 pseudonimizer
+        let ed25519_derivation_key = Self::get_ed25519_derivation_key()?;
 
-        let mut keyed_mac = <Blake2bMac<U64> as KeyInit>::new_from_slice(&derivation_key)
-            .map_err(|_| SignedResponseError::KeyDerivationError(
-                "Invalid ED25519_DERIVATION_KEY format".to_string()
-            ))?;
-        keyed_mac.update(&combined_input);
-        let salida_paso1 = keyed_mac.finalize().into_bytes(); // 64 bytes directos!
+        // Blake3 pseudonimizer pipeline → 32 bytes Ed25519 private key
+        let private_key_vec = blake3_keyed_variable(
+            &ed25519_derivation_key,
+            &combined_input,
+            32
+        );
 
-        // PASO 2: Blake2b<U32> NO KEYED de salida_paso1 → 32 bytes
-        let salida_paso2 = Blake2b::<U32>::digest(salida_paso1); // 32 bytes
-
-        // PASO 3: ChaCha20-RNG seeded con salida_paso2 → Ed25519 private key
-        let chacha_seed: [u8; 32] = salida_paso2.into();
-        let mut rng = ChaCha8Rng::from_seed(chacha_seed);
+        // Convert Vec<u8> to [u8; 32]
         let mut private_key = [0u8; 32];
-        rng.fill_bytes(&mut private_key);
+        private_key.copy_from_slice(&private_key_vec);
 
         println!("= Session private key derived successfully");
 
@@ -327,74 +322,74 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    #[test]
-    fn test_blake2b_comprehensive_output_sizes() {
-        use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
-        use generic_array::typenum::{U8, U16, U32, U64};
-
-        println!("\n=== COMPREHENSIVE BLAKE2B OUTPUT SIZE VERIFICATION ===");
-
-        // Test Blake2b variants with different sizes
-        let test_u8 = Blake2b::<U8>::digest(b"test");
-        let test_u16 = Blake2b::<U16>::digest(b"test");
-        let test_u32 = Blake2b::<U32>::digest(b"test");
-        let test_u64 = Blake2b::<U64>::digest(b"test");
-
-        println!("Blake2b<U8>  output: {} bytes", test_u8.len());
-        println!("Blake2b<U16> output: {} bytes", test_u16.len());
-        println!("Blake2b<U32> output: {} bytes", test_u32.len());
-        println!("Blake2b<U64> output: {} bytes", test_u64.len());
-
-        // Test Blake2bMac variants with different sizes
-        let key = [0u8; 64];
-
-        let mut mac_u8 = <Blake2bMac<U8> as KeyInit>::new_from_slice(&key).unwrap();
-        mac_u8.update(b"test");
-        let mac_output_u8 = mac_u8.finalize().into_bytes();
-
-        let mut mac_u16 = <Blake2bMac<U16> as KeyInit>::new_from_slice(&key).unwrap();
-        mac_u16.update(b"test");
-        let mac_output_u16 = mac_u16.finalize().into_bytes();
-
-        let mut mac_u32 = <Blake2bMac<U32> as KeyInit>::new_from_slice(&key).unwrap();
-        mac_u32.update(b"test");
-        let mac_output_u32 = mac_u32.finalize().into_bytes();
-
-        let mut mac_u64 = <Blake2bMac<U64> as KeyInit>::new_from_slice(&key).unwrap();
-        mac_u64.update(b"test");
-        let mac_output_u64 = mac_u64.finalize().into_bytes();
-
-        println!("Blake2bMac<U8>  output: {} bytes", mac_output_u8.len());
-        println!("Blake2bMac<U16> output: {} bytes", mac_output_u16.len());
-        println!("Blake2bMac<U32> output: {} bytes", mac_output_u32.len());
-        println!("Blake2bMac<U64> output: {} bytes", mac_output_u64.len());
-
-        // Critical assertions based on our pipeline expectations
-        assert_eq!(test_u8.len(), 8, "Blake2b<U8> should produce 8 bytes");
-        assert_eq!(test_u16.len(), 16, "Blake2b<U16> should produce 16 bytes");
-        assert_eq!(test_u32.len(), 32, "Blake2b<U32> should produce 32 bytes");
-        assert_eq!(test_u64.len(), 64, "Blake2b<U64> should produce 64 bytes");
-
-        assert_eq!(mac_output_u8.len(), 8, "Blake2bMac<U8> should produce 8 bytes");
-        assert_eq!(mac_output_u16.len(), 16, "Blake2bMac<U16> should produce 16 bytes");
-        assert_eq!(mac_output_u32.len(), 32, "Blake2bMac<U32> should produce 32 bytes");
-        assert_eq!(mac_output_u64.len(), 64, "Blake2bMac<U64> should produce 64 bytes");
-
-        println!("\n=== VERIFICATION RESULTS ===");
-        println!("✓ Blake2b<UX> produces exactly X bytes");
-        println!("✓ Blake2bMac<UX> produces exactly X bytes");
-        println!("✓ All variants behave consistently");
-
-        // THIS IS THE CRITICAL INSIGHT FOR OUR PIPELINE:
-        println!("\n=== PIPELINE IMPLICATIONS ===");
-        println!("Our current code uses Blake2bMac<U64> = {} bytes output", mac_output_u64.len());
-        if mac_output_u64.len() == 64 {
-            println!("✓ PERFECT! We get 64 bytes directly from Blake2bMac<U64>");
-            println!("✓ No need for expansion rounds - we already have max entropy!");
-        } else {
-            println!("✗ Need expansion from {} bytes to 64 bytes", mac_output_u64.len());
-        }
-    }
+    // #[test]
+    // fn test_blake2b_comprehensive_output_sizes() {
+    //     use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
+    //     use generic_array::typenum::{U8, U16, U32, U64};
+    //
+    //     println!("\n=== COMPREHENSIVE BLAKE2B OUTPUT SIZE VERIFICATION ===");
+    //
+    //     // Test Blake2b variants with different sizes
+    //     let test_u8 = Blake2b::<U8>::digest(b"test");
+    //     let test_u16 = Blake2b::<U16>::digest(b"test");
+    //     let test_u32 = Blake2b::<U32>::digest(b"test");
+    //     let test_u64 = Blake2b::<U64>::digest(b"test");
+    //
+    //     println!("Blake2b<U8>  output: {} bytes", test_u8.len());
+    //     println!("Blake2b<U16> output: {} bytes", test_u16.len());
+    //     println!("Blake2b<U32> output: {} bytes", test_u32.len());
+    //     println!("Blake2b<U64> output: {} bytes", test_u64.len());
+    //
+    //     // Test Blake2bMac variants with different sizes
+    //     let key = [0u8; 64];
+    //
+    //     let mut mac_u8 = <Blake2bMac<U8> as KeyInit>::new_from_slice(&key).unwrap();
+    //     mac_u8.update(b"test");
+    //     let mac_output_u8 = mac_u8.finalize().into_bytes();
+    //
+    //     let mut mac_u16 = <Blake2bMac<U16> as KeyInit>::new_from_slice(&key).unwrap();
+    //     mac_u16.update(b"test");
+    //     let mac_output_u16 = mac_u16.finalize().into_bytes();
+    //
+    //     let mut mac_u32 = <Blake2bMac<U32> as KeyInit>::new_from_slice(&key).unwrap();
+    //     mac_u32.update(b"test");
+    //     let mac_output_u32 = mac_u32.finalize().into_bytes();
+    //
+    //     let mut mac_u64 = <Blake2bMac<U64> as KeyInit>::new_from_slice(&key).unwrap();
+    //     mac_u64.update(b"test");
+    //     let mac_output_u64 = mac_u64.finalize().into_bytes();
+    //
+    //     println!("Blake2bMac<U8>  output: {} bytes", mac_output_u8.len());
+    //     println!("Blake2bMac<U16> output: {} bytes", mac_output_u16.len());
+    //     println!("Blake2bMac<U32> output: {} bytes", mac_output_u32.len());
+    //     println!("Blake2bMac<U64> output: {} bytes", mac_output_u64.len());
+    //
+    //     // Critical assertions based on our pipeline expectations
+    //     assert_eq!(test_u8.len(), 8, "Blake2b<U8> should produce 8 bytes");
+    //     assert_eq!(test_u16.len(), 16, "Blake2b<U16> should produce 16 bytes");
+    //     assert_eq!(test_u32.len(), 32, "Blake2b<U32> should produce 32 bytes");
+    //     assert_eq!(test_u64.len(), 64, "Blake2b<U64> should produce 64 bytes");
+    //
+    //     assert_eq!(mac_output_u8.len(), 8, "Blake2bMac<U8> should produce 8 bytes");
+    //     assert_eq!(mac_output_u16.len(), 16, "Blake2bMac<U16> should produce 16 bytes");
+    //     assert_eq!(mac_output_u32.len(), 32, "Blake2bMac<U32> should produce 32 bytes");
+    //     assert_eq!(mac_output_u64.len(), 64, "Blake2bMac<U64> should produce 64 bytes");
+    //
+    //     println!("\n=== VERIFICATION RESULTS ===");
+    //     println!("✓ Blake2b<UX> produces exactly X bytes");
+    //     println!("✓ Blake2bMac<UX> produces exactly X bytes");
+    //     println!("✓ All variants behave consistently");
+    //
+    //     // THIS IS THE CRITICAL INSIGHT FOR OUR PIPELINE:
+    //     println!("\n=== PIPELINE IMPLICATIONS ===");
+    //     println!("Our current code uses Blake2bMac<U64> = {} bytes output", mac_output_u64.len());
+    //     if mac_output_u64.len() == 64 {
+    //         println!("✓ PERFECT! We get 64 bytes directly from Blake2bMac<U64>");
+    //         println!("✓ No need for expansion rounds - we already have max entropy!");
+    //     } else {
+    //         println!("✗ Need expansion from {} bytes to 64 bytes", mac_output_u64.len());
+    //     }
+    // }
 
     #[test]
     fn test_key_derivation_deterministic() {

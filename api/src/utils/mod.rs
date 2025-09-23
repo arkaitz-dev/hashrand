@@ -14,6 +14,7 @@ pub mod jwt_middleware_errors;
 pub mod jwt_middleware_renewal;
 pub mod jwt_middleware_types;
 pub mod protected_endpoint_middleware;
+pub mod pseudonimizer;
 pub mod query;
 pub mod random_generator;
 pub mod rate_limiter;

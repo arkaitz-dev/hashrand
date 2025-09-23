@@ -1,29 +1,89 @@
 # Cryptographic Architecture
 
-HashRand uses **Blake2b** as its unified cryptographic foundation, providing superior performance while maintaining enterprise-grade security standards.
+HashRand uses a **hybrid Blake2b + Blake3 cryptographic foundation**, combining Blake2b's optimized fixed-length operations with Blake3's unlimited variable-length outputs for maximum efficiency and flexibility.
 
-## Blake2b Unified Architecture
+## Core Cryptographic Stack
 
-### Core Cryptographic Stack
+### Blake2b Unified Architecture
 
 | **Function** | **Algorithm** | **Usage** | **Output** |
 |--------------|---------------|-----------|------------|
 | **Standard Hashing** | Blake2b512 | Email hashing, seed generation | 64 bytes |
-| **Keyed Authentication** | Blake2b-keyed | HMAC replacement, integrity verification | 32 bytes |
+| **Keyed Authentication** | Blake2b-keyed | HMAC replacement, integrity verification | 32-64 bytes |
 | **Variable Output** | Blake2b-variable | User ID compression, database indexing | 8-64 bytes |
 
-### Migration from SHA3 Stack
+### Blake3 Universal Pipeline (v1.6.12+)
 
-**Previous (SHA3/HMAC/SHAKE):**
+**🔐 Enterprise-Grade Variable-Length Cryptography**
+
+| **Function** | **Algorithm** | **Usage** | **Output** |
+|--------------|---------------|-----------|------------|
+| **Universal Pseudonimizer** | Blake3 KDF + XOF | Deterministic variable-length derivation | 1 to 2^64 bytes |
+| **Domain Separation** | Blake3 KDF (Base58 context) | Cryptographic namespace isolation | 32 bytes key |
+| **Extended Output** | Blake3 XOF | Unlimited deterministic expansion | Arbitrary length |
+
+#### Blake3 Pseudonimizer Pipeline
+
+```rust
+// utils/pseudonimizer.rs - Universal cryptographic pipeline
+pub fn blake3_keyed_variable(
+    hmac_env_key: &[u8; 64],  // Domain separation key (one per use case)
+    data: &[u8],               // Input data (any length)
+    output_length: usize       // Desired output (1 to 2^64 bytes)
+) -> Vec<u8> {
+    // STEP 1: hmac_env_key → Base58 → context (domain separation)
+    let context = bs58::encode(hmac_env_key).into_string();
+
+    // STEP 2: data → Blake3 standard hash → key_material[32 bytes]
+    let key_material = blake3::hash(data);
+
+    // STEP 3: (context, key_material) → Blake3 KDF → deterministic_key[32 bytes]
+    let deterministic_key = blake3::derive_key(&context, key_material.as_bytes());
+
+    // STEP 4: (data, deterministic_key, length) → Blake3 keyed+XOF → output
+    let mut hasher = blake3::Hasher::new_keyed(&deterministic_key);
+    hasher.update(data);
+    let mut output_reader = hasher.finalize_xof();
+
+    let mut output = vec![0u8; output_length];
+    output_reader.fill(&mut output);
+
+    output
+}
+```
+
+**Security Properties:**
+- **🔒 Domain Separation**: Different `hmac_env_key` → cryptographically independent outputs
+- **🎲 Deterministic**: Same inputs always produce identical output
+- **⚡ Variable Output**: Single function handles all length requirements (1 to 2^64 bytes)
+- **🛡️ Key Derivation**: Unique 32-byte key derived per data input via Blake3 KDF
+- **📊 XOF Properties**: Extended outputs maintain cryptographic relationship (first N bytes consistent)
+
+#### Usage Example: SignedResponse Ed25519 Key Derivation
+
+```rust
+// Before (v1.6.11): Complex Blake2b expansion logic
+// After (v1.6.12): Direct Blake3 pseudonimizer call
+let private_key_vec = blake3_keyed_variable(
+    &ed25519_derivation_key,  // 64-byte HMAC environment key
+    &combined_input,           // user_id + server_pub_key
+    32                         // Ed25519 private key length
+);
+```
+
+### Migration History
+
+**Previous (SHA3/HMAC/SHAKE - v0.x):**
 ```
 SHA3-256 → HMAC-SHA3-256 → SHAKE256
 Multiple algorithms, complex interactions
 ```
 
-**Current (Blake2b Unified):**
+**Current (Hybrid Blake2b + Blake3 - v1.6.12+):**
 ```
-Blake2b512 → Blake2b-keyed → Blake2b-variable
-Single cryptographic family, simplified architecture
+Blake2b512 → Blake2b-keyed → Blake2b-variable (fixed-length operations)
+Blake3 KDF → Blake3 XOF (variable-length operations, unlimited output)
+Optimal algorithm selection per use case
 ```
 
 ## User ID Derivation System
