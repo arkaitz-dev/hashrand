@@ -9,8 +9,8 @@ use argon2::{
 };
 use base64::{Engine as _, engine::general_purpose};
 use blake2::{
-    Blake2b512, Blake2bMac, Blake2bVar, Digest,
-    digest::{KeyInit as Blake2KeyInit, Mac, Update, VariableOutput},
+    Blake2bMac,
+    digest::{KeyInit as Blake2KeyInit, Mac},
 };
 use chacha20::{
     ChaCha20,
@@ -20,7 +20,8 @@ use chacha20poly1305::consts::U32;
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
-use super::config::{get_argon2_salt, get_chacha_encryption_key, get_user_id_hmac_key};
+use super::config::{get_argon2_salt, get_chacha_encryption_key, get_user_id_hmac_key, get_user_id_argon2_compression};
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 
 /// Argon2id parameters for current security standards (2024)
 /// Fixed parameters as requested: mem_cost=19456, time_cost=2, lane=1, hash_length=32
@@ -29,14 +30,14 @@ pub const ARGON2_TIME_COST: u32 = 2; // Number of iterations
 pub const ARGON2_LANES: u32 = 1; // Parallelism parameter
 pub const ARGON2_HASH_LENGTH: usize = 32; // Output length in bytes
 
-/// Derive secure user ID from email using SHA3-256 + HMAC + Argon2id + SHAKE3
+/// Derive secure user ID from email using Blake3 + Pseudonimizer + Argon2id
 ///
-/// Enhanced security process with Argon2id:
-/// 1. SHA3-256(email) → 32 bytes
-/// 2. HMAC-SHA3-256(sha3_result, hmac_key) → 32 bytes  
-/// 3. Generate dynamic salt: HMAC-SHA3-256(fixed_salt, email_hash) → ChaCha8Rng[32 bytes] → salt
-/// 4. Argon2id(data=email_hash, salt=dynamic_salt, mem_cost=19456, time_cost=2, lane=1) → 32 bytes
-/// 5. SHAKE256(argon2_result) → 16 bytes user_id
+/// Enhanced security process with Blake3:
+/// 1. Blake3 XOF(email) → 64 bytes
+/// 2. blake3_keyed_variable(paso1[64], hmac_key[64], 32) → 32 bytes
+/// 3. Generate dynamic salt: blake3_keyed_variable(argon2_salt[64], paso1[64], 32) → 32 bytes
+/// 4. Argon2id(data=paso2, salt=dynamic_salt, mem_cost=19456, time_cost=2, lane=1) → 32 bytes
+/// 5. blake3_keyed_variable(argon2_result[32], compression_key[64], 16) → 16 bytes user_id
 ///
 /// # Arguments
 /// * `email` - User email address
@@ -44,30 +45,32 @@ pub const ARGON2_HASH_LENGTH: usize = 32; // Output length in bytes
 /// # Returns
 /// * `Result<[u8; 16], String>` - 128-bit deterministic user ID or error
 pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
-    // Step 1: Blake2b hash of email (32 bytes)
-    let email_hash = Blake2b512::digest(email.to_lowercase().trim().as_bytes());
+    // Step 1: Blake3 XOF of email (64 bytes, no key)
+    let mut blake3_hasher = blake3::Hasher::new();
+    blake3_hasher.update(email.to_lowercase().trim().as_bytes());
+    let mut xof_reader = blake3_hasher.finalize_xof();
+    let mut paso1_output = [0u8; 64];
+    xof_reader.fill(&mut paso1_output);
 
-    // Step 2: Blake2b keyed hash of the email hash (replaces HMAC-SHA3-256)
+    // Step 2: blake3_keyed_variable with 64-byte HMAC key
     let hmac_key = get_user_id_hmac_key()?;
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
-        .map_err(|_| "Invalid USER_ID_HMAC_KEY format".to_string())?;
-    Mac::update(&mut keyed_hasher, &email_hash[..32]); // Take first 32 bytes from Blake2b512
-    let hmac_result = keyed_hasher.finalize().into_bytes();
+    let paso2_output = blake3_keyed_variable(&hmac_key, &paso1_output, 32);
 
-    // Step 3: Generate dynamic salt using Blake2b keyed + ChaCha8Rng
-    let dynamic_salt = generate_dynamic_salt(&email_hash)?;
+    let mut hmac_result = [0u8; 32];
+    hmac_result.copy_from_slice(&paso2_output);
+
+    // Step 3: Generate dynamic salt using Blake3 pseudonimizer
+    let dynamic_salt = generate_dynamic_salt(&paso1_output)?;
 
     // Step 4: Argon2id with fixed parameters (using Blake2b result as data input)
     let argon2_output = derive_with_argon2id(&hmac_result[..], &dynamic_salt)?;
 
-    // Step 5: Blake2b variable output to compress to 16 bytes (replaces SHAKE256)
-    let mut final_hasher =
-        Blake2bVar::new(16).map_err(|_| "Blake2b initialization failed".to_string())?;
-    Update::update(&mut final_hasher, &argon2_output);
+    // Step 5: Blake3 keyed variable via pseudonimizer to compress to 16 bytes
+    let compression_key = get_user_id_argon2_compression()?;
+    let user_id_output = blake3_keyed_variable(&compression_key, &argon2_output, 16);
+
     let mut user_id = [0u8; 16];
-    final_hasher
-        .finalize_variable(&mut user_id)
-        .map_err(|_| "Blake2b finalization failed".to_string())?;
+    user_id.copy_from_slice(&user_id_output);
 
     Ok(user_id)
 }
@@ -95,32 +98,22 @@ pub fn email_to_username(email: &str) -> Result<String, String> {
     Ok(user_id_to_username(&user_id))
 }
 
-/// Generate dynamic salt using HMAC-SHA3-256 → ChaCha8Rng → salt bytes
+/// Generate dynamic salt using Blake3 pseudonimizer
 ///
-/// Process: fixed_salt → HMAC-SHA3-256(fixed_salt, data) → ChaCha8Rng[32 bytes] → salt
+/// Process: blake3_keyed_variable(argon2_salt[64], data, 32) → salt[32]
 ///
 /// # Arguments
-/// * `data` - Data to derive salt from (typically email hash)
+/// * `data` - Data to derive salt from (Blake3 XOF output from email)
 ///
 /// # Returns
 /// * `Result<[u8; 32], String>` - 32-byte dynamic salt
 pub fn generate_dynamic_salt(data: &[u8]) -> Result<[u8; 32], String> {
-    let fixed_salt = get_argon2_salt()?;
+    let argon2_salt = get_argon2_salt()?;
 
-    // Generate Blake2b keyed hash (replaces HMAC-SHA3-256)
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&fixed_salt)
-        .map_err(|_| "Invalid ARGON2_SALT format for Blake2b keyed".to_string())?;
-    Mac::update(&mut keyed_hasher, data);
-    let hmac_result = keyed_hasher.finalize().into_bytes();
+    let salt_output = blake3_keyed_variable(&argon2_salt, data, 32);
 
-    // Use HMAC result as seed for ChaCha8Rng
-    let mut chacha_seed = [0u8; 32];
-    chacha_seed.copy_from_slice(&hmac_result[..32]);
-
-    // Generate 32 bytes using ChaCha8Rng
-    let mut rng = ChaCha8Rng::from_seed(chacha_seed);
     let mut dynamic_salt = [0u8; 32];
-    rng.fill_bytes(&mut dynamic_salt);
+    dynamic_salt.copy_from_slice(&salt_output);
 
     Ok(dynamic_salt)
 }

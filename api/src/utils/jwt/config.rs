@@ -15,13 +15,40 @@ pub fn get_jwt_secret() -> Result<String, String> {
 
 /// Get Argon2id salt from Spin variables as bytes
 ///
-/// # Returns  
-/// * `Result<Vec<u8>, String>` - Salt bytes or error message
-pub fn get_argon2_salt() -> Result<Vec<u8>, String> {
+/// # Returns
+/// * `Result<[u8; 64], String>` - 64-byte salt or error message
+pub fn get_argon2_salt() -> Result<[u8; 64], String> {
     let salt_hex = variables::get("argon2_salt")
         .map_err(|e| format!("Failed to get argon2_salt variable: {}", e))?;
 
-    hex::decode(&salt_hex).map_err(|_| "ARGON2_SALT must be a valid hex string".to_string())
+    let decoded = hex::decode(&salt_hex).map_err(|_| "ARGON2_SALT must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("ARGON2_SALT must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut salt = [0u8; 64];
+    salt.copy_from_slice(&decoded);
+    Ok(salt)
+}
+
+/// Get user ID Argon2 compression key from Spin variables as bytes
+///
+/// # Returns
+/// * `Result<[u8; 64], String>` - 64-byte compression key or error message
+pub fn get_user_id_argon2_compression() -> Result<[u8; 64], String> {
+    let key_hex = variables::get("user_id_argon2_compression")
+        .map_err(|e| format!("Failed to get user_id_argon2_compression variable: {}", e))?;
+
+    let decoded = hex::decode(&key_hex).map_err(|_| "USER_ID_ARGON2_COMPRESSION must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("USER_ID_ARGON2_COMPRESSION must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
 }
 
 /// Get magic link HMAC key from Spin variables as bytes
@@ -38,12 +65,20 @@ pub fn get_magic_link_hmac_key() -> Result<Vec<u8>, String> {
 /// Get user ID HMAC key from Spin variables as bytes
 ///
 /// # Returns
-/// * `Result<Vec<u8>, String>` - HMAC key bytes or error message
-pub fn get_user_id_hmac_key() -> Result<Vec<u8>, String> {
+/// * `Result<[u8; 64], String>` - 64-byte HMAC key or error message
+pub fn get_user_id_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("user_id_hmac_key")
         .map_err(|e| format!("Failed to get user_id_hmac_key variable: {}", e))?;
 
-    hex::decode(&key_hex).map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())
+    let decoded = hex::decode(&key_hex).map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("USER_ID_HMAC_KEY must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
 }
 
 /// Get ChaCha20-Poly1305 encryption key from Spin variables as bytes
