@@ -172,9 +172,9 @@ pub fn derive_with_argon2id(data: &[u8], salt: &[u8; 32]) -> Result<[u8; 32], St
     Ok(final_result)
 }
 
-/// Generate nonce and secret key from HMAC-SHA3-256 → ChaCha8RNG[44]
+/// Generate nonce and secret key using Blake3 pseudonimizer
 ///
-/// Process: HMAC-SHA3-256(raw_magic_link, chacha_key) → ChaCha8RNG[44] → nonce[12] + secret_key[32]
+/// Process: Blake3-keyed-variable(chacha_key[64], raw_magic_link, 44) → nonce[12] + secret_key[32]
 ///
 /// # Arguments
 /// * `raw_magic_link` - 32-byte raw magic link data
@@ -184,23 +184,11 @@ pub fn derive_with_argon2id(data: &[u8], salt: &[u8; 32]) -> Result<[u8; 32], St
 pub fn generate_chacha_nonce_and_key(
     raw_magic_link: &[u8; 32],
 ) -> Result<([u8; 12], [u8; 32]), String> {
-    // Get ChaCha encryption key
+    // Get ChaCha encryption key (64 bytes)
     let chacha_key = get_chacha_encryption_key()?;
 
-    // Generate Blake2b keyed hash (replaces HMAC-SHA3-256)
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&chacha_key)
-        .map_err(|_| "Invalid ChaCha encryption key format".to_string())?;
-    Mac::update(&mut keyed_hasher, raw_magic_link);
-    let hmac_result = keyed_hasher.finalize().into_bytes();
-
-    // Use HMAC result as seed for ChaCha8Rng
-    let mut chacha_seed = [0u8; 32];
-    chacha_seed.copy_from_slice(&hmac_result[..32]);
-
-    // Generate 44 bytes using ChaCha8Rng: nonce[12] + secret_key[32]
-    let mut rng = ChaCha8Rng::from_seed(chacha_seed);
-    let mut combined_data = [0u8; 44];
-    rng.fill_bytes(&mut combined_data);
+    // Generate nonce[12] + secret_key[32] using Blake3 pseudonimizer
+    let combined_data = blake3_keyed_variable(&chacha_key, raw_magic_link, 44);
 
     // Extract nonce and secret_key
     let mut nonce = [0u8; 12];

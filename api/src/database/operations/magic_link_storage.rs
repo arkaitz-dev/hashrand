@@ -45,7 +45,7 @@ impl MagicLinkStorage {
             ));
         }
 
-        // Create Blake2b hash of encrypted data for database storage (16 bytes)
+        // Create Blake3 hash of encrypted data for database indexing (16 bytes)
         let token_hash = MagicLinkCrypto::create_encrypted_token_hash(&encrypted_data);
 
         // Decode Ed25519 public key from hex (64 chars = 32 bytes)
@@ -84,7 +84,7 @@ impl MagicLinkStorage {
         // Convert nanoseconds to hours for storage (cleanup purposes)
         let expires_at_hours = (expires_at_nanos / 1_000_000_000) / 3600;
 
-        println!("Database: Creating encrypted magic link with Blake2b hash");
+        println!("Database: Creating encrypted magic link with Blake3 hash");
 
         connection.execute(
             "INSERT INTO magiclinks (token_hash, expires_at, encrypted_payload) VALUES (?, ?, ?)",

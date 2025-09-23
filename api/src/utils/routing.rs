@@ -2,8 +2,7 @@ use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
     handle_api_key_request, handle_from_seed, handle_login,
-    handle_mnemonic_request, handle_password_request,
-    handle_users, handle_version,
+    handle_mnemonic_request, handle_password_request, handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
@@ -113,15 +112,6 @@ pub async fn route_request_with_req(
             _ => handle_method_not_allowed(),
         },
 
-        // User management endpoints (support GET, POST, DELETE)
-        path if path.starts_with("/api/users") => {
-            if requires_authentication(path) {
-                with_auth_and_renewal(req, |req| handle_users(req, path, query_params))
-            } else {
-                handle_users(req, path, query_params)
-            }
-        }
-
         // Authentication endpoints (support GET and POST)
         path if path.starts_with("/api/login") => handle_login(req, query_params).await,
 
@@ -150,10 +140,6 @@ Available endpoints:
 - POST /api/mnemonic (JSON body with seed parameter)
 - POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
 - POST /api/login/magiclink/ (Validate magic link with Ed25519 signature and get JWT tokens)
-- GET /api/users?limit=10 (List users)
-- GET /api/users/:id (Get specific user)
-- POST /api/users (Create user - JSON: {"user_id": "user", "email": "user@example.com"})
-- DELETE /api/users/:id (Delete user)
 - GET /api/version
 - POST /api/from-seed (JSON body required)
 

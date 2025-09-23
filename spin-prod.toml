@@ -12,11 +12,11 @@ jwt_secret = { required = true, secret = true }
 magic_link_hmac_key = { required = true, secret = true }
 user_id_hmac_key = { required = true, secret = true }
 argon2_salt = { required = true, secret = true }
+user_id_argon2_compression = { required = true, secret = true }
 chacha_encryption_key = { required = true, secret = true }
-# Magic Link Multi-Layer Security Keys
-mlink_content_cipher = { required = true, secret = true }
-mlink_content_nonce = { required = true, secret = true }
-mlink_content_salt = { required = true, secret = true }
+encrypted_mlink_token_hash_key = { required = true, secret = true }
+# Magic Link Payload Encryption
+mlink_content = { required = true, secret = true }
 # Custom Token Security Keys
 access_token_cipher_key = { required = true, secret = true }
 access_token_nonce_key = { required = true, secret = true }
@@ -59,10 +59,10 @@ jwt_secret = "{{ jwt_secret }}"
 magic_link_hmac_key = "{{ magic_link_hmac_key }}"
 user_id_hmac_key = "{{ user_id_hmac_key }}"
 argon2_salt = "{{ argon2_salt }}"
+user_id_argon2_compression = "{{ user_id_argon2_compression }}"
 chacha_encryption_key = "{{ chacha_encryption_key }}"
-mlink_content_cipher = "{{ mlink_content_cipher }}"
-mlink_content_nonce = "{{ mlink_content_nonce }}"
-mlink_content_salt = "{{ mlink_content_salt }}"
+encrypted_mlink_token_hash_key = "{{ encrypted_mlink_token_hash_key }}"
+mlink_content = "{{ mlink_content }}"
 access_token_cipher_key = "{{ access_token_cipher_key }}"
 access_token_nonce_key = "{{ access_token_nonce_key }}"
 access_token_hmac_key = "{{ access_token_hmac_key }}"

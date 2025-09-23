@@ -2,25 +2,21 @@
 //!
 //! Handles generation and validation of encrypted magic links for authentication.
 
-use blake2::{
-    Blake2bMac, Blake2bVar,
-    digest::{KeyInit as Blake2KeyInit, Mac, Update, VariableOutput},
-};
-use chacha20poly1305::consts::U32;
 use chrono::{DateTime, Utc};
 
 use super::config::get_magic_link_hmac_key;
 use super::crypto::{
     decrypt_magic_link, derive_user_id, encrypt_magic_link, generate_chacha_nonce_and_key,
 };
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 
-/// Generate secure magic token with ChaCha20-Poly1305 encryption
+/// Generate secure magic token with ChaCha20 encryption
 ///
 /// Enhanced Process:
-/// 1. Create raw_magic_link: user_id (16) + timestamp (8) + SHAKE256(HMAC-SHA3-256) (8) = 32 bytes
-/// 2. Generate nonce[12] + secret_key[32] from HMAC-SHA3-256(raw_magic_link, chacha_key) → ChaCha8RNG[44]  
-/// 3. Encrypt raw_magic_link with ChaCha20-Poly1305 → new_raw_magic_link
-/// 4. Return Base58(new_raw_magic_link) for transmission + encryption_blob + timestamp for database
+/// 1. Create raw_magic_link: user_id (16) + timestamp (8) + Blake3-keyed-variable[8] (hmac) = 32 bytes
+/// 2. Generate nonce[12] + secret_key[32] from Blake3-keyed-variable(chacha_key[64], raw_magic_link, 44)
+/// 3. Encrypt raw_magic_link with ChaCha20 → encrypted_raw_magic_link
+/// 4. Return Base58(encrypted_raw_magic_link) for transmission + encryption_blob + timestamp for database
 ///
 /// # Arguments
 /// * `email` - User email to derive user_id
@@ -46,21 +42,11 @@ pub fn generate_magic_token_encrypted(
     data.extend_from_slice(&user_id);
     data.extend_from_slice(&timestamp_bytes);
 
-    // Generate Blake2b keyed hash for integrity (replaces HMAC-SHA3-256)
+    // Generate 8-byte HMAC using Blake3 pseudonimizer
     let hmac_key = get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
-        .map_err(|_| "Invalid HMAC key format".to_string())?;
-    Mac::update(&mut keyed_hasher, &data);
-    let hmac_result = keyed_hasher.finalize().into_bytes();
-
-    // Compress to 8 bytes using Blake2b variable output (replaces SHAKE256)
-    let mut compressor =
-        Blake2bVar::new(8).map_err(|_| "Blake2b initialization failed".to_string())?;
-    compressor.update(&hmac_result);
+    let hmac_output = blake3_keyed_variable(&hmac_key, &data, 8);
     let mut compressed_hmac = [0u8; 8];
-    compressor
-        .finalize_variable(&mut compressed_hmac)
-        .map_err(|_| "Blake2b finalization failed".to_string())?;
+    compressed_hmac.copy_from_slice(&hmac_output);
 
     // Create raw_magic_link: user_id + timestamp + compressed_hmac (32 bytes)
     let mut raw_magic_link = [0u8; 32];
@@ -124,7 +110,7 @@ pub fn validate_magic_token_encrypted(
     let timestamp_bytes = &raw_magic_link[16..24];
     let provided_compressed_hmac = &raw_magic_link[24..32];
 
-    // Verify Blake2b keyed hash integrity (replaces HMAC verification)
+    // Verify Blake3 HMAC integrity (same as generation)
     let hmac_key = get_magic_link_hmac_key().map_err(|e| format!("HMAC key error: {}", e))?;
 
     // Prepare data for verification (same as generation)
@@ -132,19 +118,9 @@ pub fn validate_magic_token_encrypted(
     verification_data.extend_from_slice(user_id_bytes);
     verification_data.extend_from_slice(timestamp_bytes);
 
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(&hmac_key)
-        .map_err(|_| "Invalid HMAC key format".to_string())?;
-    Mac::update(&mut keyed_hasher, &verification_data);
-    let hmac_result = keyed_hasher.finalize().into_bytes();
-
-    // Compress to 8 bytes using Blake2b variable output (same as generation)
-    let mut compressor =
-        Blake2bVar::new(8).map_err(|_| "Blake2b initialization failed".to_string())?;
-    compressor.update(&hmac_result);
+    let hmac_output = blake3_keyed_variable(&hmac_key, &verification_data, 8);
     let mut expected_compressed_hmac = [0u8; 8];
-    compressor
-        .finalize_variable(&mut expected_compressed_hmac)
-        .map_err(|_| "Blake2b finalization failed".to_string())?;
+    expected_compressed_hmac.copy_from_slice(&hmac_output);
 
     // Compare compressed HMAC values
     if provided_compressed_hmac == expected_compressed_hmac {

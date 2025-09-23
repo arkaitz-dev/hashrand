@@ -4,19 +4,26 @@ Complete guide to environment variables, secrets management, and configuration o
 
 ## Environment Variables & Security Configuration
 
-### Required Secrets for Production
+### Required Secrets for Production (v1.6.13+)
 
-HashRand requires **four cryptographically secure secrets** for production deployment:
+HashRand requires **cryptographically secure secrets** for production deployment. Starting from v1.6.13, user ID derivation uses **three 64-byte keys** for maximum security:
 
 ```bash
 # JWT Secret for token signing (64 hex chars = 32 bytes)
 JWT_SECRET=your-64-character-hex-secret-here
 
-# HMAC Key for magic link integrity (64 hex chars = 32 bytes) 
+# HMAC Key for magic link integrity (64 hex chars = 32 bytes)
 MAGIC_LINK_HMAC_KEY=your-64-character-hex-secret-here
 
-# Salt for Argon2id user ID derivation (64 hex chars = 32 bytes)
-ARGON2_SALT=your-64-character-hex-secret-here
+# === User ID Derivation Keys (v1.6.13+) ===
+# HMAC Key for user ID keyed hashing (128 hex chars = 64 bytes)
+USER_ID_HMAC_KEY=your-128-character-hex-secret-here
+
+# Salt for Argon2id dynamic salt derivation (128 hex chars = 64 bytes)
+ARGON2_SALT=your-128-character-hex-secret-here
+
+# Compression key for final user ID derivation (128 hex chars = 64 bytes)
+USER_ID_ARGON2_COMPRESSION=your-128-character-hex-secret-here
 
 # ChaCha20 encryption key for magic link encryption (64 hex chars = 32 bytes)
 CHACHA_ENCRYPTION_KEY=your-64-character-hex-secret-here
@@ -46,25 +53,31 @@ NODE_ENV=development  # or 'production'
 
 ## Secret Generation
 
-### Cryptographically Secure Generation
+### Cryptographically Secure Generation (v1.6.13+)
 
 Generate all secrets using cryptographically secure methods:
 
 ```python
 import secrets
 
-# Generate all required secrets
+# Standard 32-byte secrets (64 hex chars)
 print("JWT_SECRET=" + secrets.token_hex(32))
 print("MAGIC_LINK_HMAC_KEY=" + secrets.token_hex(32))
-print("ARGON2_SALT=" + secrets.token_hex(32))
 print("CHACHA_ENCRYPTION_KEY=" + secrets.token_hex(32))
+
+# Enhanced 64-byte secrets for user ID derivation (v1.6.13+)
+print("USER_ID_HMAC_KEY=" + secrets.token_hex(64))
+print("ARGON2_SALT=" + secrets.token_hex(64))
+print("USER_ID_ARGON2_COMPRESSION=" + secrets.token_hex(64))
 ```
 
-### Secret Requirements
+### Secret Requirements (v1.6.13+)
 
-- **Length**: All secrets must be exactly 64 hexadecimal characters (32 bytes)
+- **Standard Keys**: JWT, Magic Link, ChaCha20 - 64 hexadecimal characters (32 bytes)
+- **User ID Keys**: HMAC, ARGON2_SALT, COMPRESSION - 128 hexadecimal characters (64 bytes)
 - **Randomness**: Use cryptographically secure random generators only
 - **Uniqueness**: Each secret must be unique across all environments
+- **Domain Separation**: Development and production must use different secrets
 - **Rotation**: Implement secret rotation procedures for production
 
 ## Development Setup
@@ -75,10 +88,16 @@ Create `.env` file in project root (automatically loaded by `just dev`):
 
 ```bash
 # Development secrets (example - generate your own)
+# Standard 32-byte secrets (64 hex chars)
 JWT_SECRET=e6024c8eada7b42bee415ef56eb597c62c170681f1946a8cb899fc5c102e2c11
 MAGIC_LINK_HMAC_KEY=464c57289ac9f1a0a93c98ebe1ced0c31ac777798b9ce55cd67a358db5931b26
-ARGON2_SALT=637de2cf5c738c757fb4e663685721bf3dca002da5168626dbe07f1b9907e1e3
 CHACHA_ENCRYPTION_KEY=8db6db662a0af8881550bbda8dc4c6223c5485bf38964c5181a037d9f95d4a32
+
+# Enhanced 64-byte secrets for user ID derivation (v1.6.13+)
+USER_ID_HMAC_KEY=571ea410cd63ab391278171f6045d9f9dfc1b78644edb6a3182f56fc4833726ef1780c2a0d22de5b3ad84e54ac2bef7790a982570ddcc21c8774de931ea2e771
+ARGON2_SALT=3592e268b87094380a640edfdfa94ffc97baecd47b83ef0989bee489fae0b15e81c87da37f1e22b544798392d73775e3035349e725553ec2c8548847871a92fd
+USER_ID_ARGON2_COMPRESSION=63c604db6c10c875338be1ce921f1796f22e52ef1ff3cf140b8d896d73901f38b8de8bc8c4fd01647818fc2994c3179147265430b1d1c1da02ad4839047383be
+
 NODE_ENV=development
 
 # Email configuration (optional for development)
@@ -131,11 +150,17 @@ just deploy
 
 ```toml
 [variables]
+# Standard 32-byte secrets
 jwt_secret = { required = true, secret = true }
 magic_link_hmac_key = { required = true, secret = true }
+chacha_encryption_key = { required = true, secret = true }
+
+# Enhanced 64-byte secrets for user ID derivation (v1.6.13+)
 user_id_hmac_key = { required = true, secret = true }
 argon2_salt = { required = true, secret = true }
-chacha_encryption_key = { required = true, secret = true }
+user_id_argon2_compression = { required = true, secret = true }
+
+# Email configuration
 mailtrap_api_token = { required = false, secret = true }
 mailtrap_inbox_id = { required = false }
 ```

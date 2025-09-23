@@ -1,7 +1,7 @@
 //! Magic link database operations - Main API exports
 //!
 //! Provides operations for storing and validating encrypted magic links with
-//! multi-layer security using Argon2id, Blake2b, and ChaCha20-Poly1305.
+//! Blake3 KDF and ChaCha20-Poly1305 AEAD encryption.
 //!
 //! This module has been refactored into specialized submodules following SOLID principles:
 //! - magic_link_types: Type definitions and constants

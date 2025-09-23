@@ -43,7 +43,7 @@ impl MagicLinkValidation {
             ));
         }
 
-        // Create Blake2b hash of encrypted data for database lookup
+        // Create Blake3 hash of encrypted data for database lookup
         let token_hash = MagicLinkCrypto::create_encrypted_token_hash(&encrypted_data);
 
         println!("Database: Validating encrypted magic link hash");

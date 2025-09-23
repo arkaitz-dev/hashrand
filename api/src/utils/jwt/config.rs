@@ -54,12 +54,20 @@ pub fn get_user_id_argon2_compression() -> Result<[u8; 64], String> {
 /// Get magic link HMAC key from Spin variables as bytes
 ///
 /// # Returns
-/// * `Result<Vec<u8>, String>` - HMAC key bytes or error message  
-pub fn get_magic_link_hmac_key() -> Result<Vec<u8>, String> {
+/// * `Result<[u8; 64], String>` - 64-byte HMAC key or error message
+pub fn get_magic_link_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("magic_link_hmac_key")
         .map_err(|e| format!("Failed to get magic_link_hmac_key variable: {}", e))?;
 
-    hex::decode(&key_hex).map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())
+    let decoded = hex::decode(&key_hex).map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("MAGIC_LINK_HMAC_KEY must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
 }
 
 /// Get user ID HMAC key from Spin variables as bytes
@@ -81,16 +89,64 @@ pub fn get_user_id_hmac_key() -> Result<[u8; 64], String> {
     Ok(key)
 }
 
-/// Get ChaCha20-Poly1305 encryption key from Spin variables as bytes
+/// Get ChaCha20 encryption key from Spin variables as bytes
 ///
 /// # Returns
-/// * `Result<Vec<u8>, String>` - Encryption key bytes or error message
-pub fn get_chacha_encryption_key() -> Result<Vec<u8>, String> {
+/// * `Result<[u8; 64], String>` - 64-byte encryption key or error message
+pub fn get_chacha_encryption_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("chacha_encryption_key")
         .map_err(|e| format!("Failed to get chacha_encryption_key variable: {}", e))?;
 
-    hex::decode(&key_hex)
-        .map_err(|_| "CHACHA_ENCRYPTION_KEY must be a valid hex string".to_string())
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "CHACHA_ENCRYPTION_KEY must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("CHACHA_ENCRYPTION_KEY must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
+}
+
+/// Get encrypted magic link token hash key from Spin variables as bytes
+///
+/// # Returns
+/// * `Result<[u8; 64], String>` - 64-byte hash key or error message
+pub fn get_encrypted_mlink_token_hash_key() -> Result<[u8; 64], String> {
+    let key_hex = variables::get("encrypted_mlink_token_hash_key")
+        .map_err(|e| format!("Failed to get encrypted_mlink_token_hash_key variable: {}", e))?;
+
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "ENCRYPTED_MLINK_TOKEN_HASH_KEY must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("ENCRYPTED_MLINK_TOKEN_HASH_KEY must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
+}
+
+/// Get magic link payload encryption key from Spin variables as bytes
+///
+/// # Returns
+/// * `Result<[u8; 64], String>` - 64-byte encryption key or error message
+pub fn get_mlink_content_key() -> Result<[u8; 64], String> {
+    let key_hex = variables::get("mlink_content")
+        .map_err(|e| format!("Failed to get mlink_content variable: {}", e))?;
+
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "MLINK_CONTENT must be a valid hex string".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!("MLINK_CONTENT must be exactly 64 bytes, got {}", decoded.len()));
+    }
+
+    let mut key = [0u8; 64];
+    key.copy_from_slice(&decoded);
+    Ok(key)
 }
 
 // Custom Token Security Keys
