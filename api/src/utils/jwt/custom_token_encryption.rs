@@ -5,11 +5,12 @@
 use super::config::{get_prehash_cipher_key, get_prehash_hmac_key, get_prehash_nonce_key};
 use super::custom_token_crypto::{
     decrypt_prehash_seed_data, encrypt_prehash_seed_data, generate_cipher_key,
-    generate_cipher_nonce, generate_prehash, hash_encrypted_payload,
+    generate_cipher_key_from_derived, generate_cipher_nonce, generate_cipher_nonce_from_derived,
+    generate_prehash_from_derived, hash_encrypted_payload,
 };
 
 /// Type alias for prehash encryption keys (cipher_key, nonce_key, hmac_key)
-type PrehashKeys = (Vec<u8>, Vec<u8>, Vec<u8>);
+type PrehashKeys = ([u8; 32], [u8; 32], [u8; 32]);
 
 /// Generate prehash seed encryption keys from encrypted payload (circular interdependence)
 pub fn generate_prehash_encryption_keys(
@@ -28,7 +29,7 @@ pub fn generate_prehash_encryption_keys(
     let nonce_key = generate_cipher_key(&base_nonce_key, &payload_hash)?;
     let hmac_key = generate_cipher_key(&base_hmac_key, &payload_hash)?;
 
-    Ok((cipher_key.to_vec(), nonce_key.to_vec(), hmac_key.to_vec()))
+    Ok((cipher_key, nonce_key, hmac_key))
 }
 
 /// Encrypt prehash seed using circular interdependent encryption
@@ -41,11 +42,11 @@ pub fn encrypt_prehash_seed(
 
     // Generate prehash from encrypted_payload hash for key derivation
     let payload_hash = hash_encrypted_payload(encrypted_payload);
-    let prehash = generate_prehash(&payload_hash, &hmac_key)?;
+    let prehash = generate_prehash_from_derived(&payload_hash, &hmac_key)?;
 
-    // Generate actual cipher key and nonce
-    let final_cipher_key = generate_cipher_key(&cipher_key, &prehash)?;
-    let final_cipher_nonce = generate_cipher_nonce(&nonce_key, &prehash)?;
+    // Generate actual cipher key and nonce using derived keys
+    let final_cipher_key = generate_cipher_key_from_derived(&cipher_key, &prehash)?;
+    let final_cipher_nonce = generate_cipher_nonce_from_derived(&nonce_key, &prehash)?;
 
     // Encrypt prehash_seed with ChaCha20
     encrypt_prehash_seed_data(prehash_seed, &final_cipher_key, &final_cipher_nonce)
@@ -61,11 +62,11 @@ pub fn decrypt_prehash_seed(
 
     // Generate prehash from encrypted_payload hash for key derivation
     let payload_hash = hash_encrypted_payload(encrypted_payload);
-    let prehash = generate_prehash(&payload_hash, &hmac_key)?;
+    let prehash = generate_prehash_from_derived(&payload_hash, &hmac_key)?;
 
-    // Generate actual cipher key and nonce (same as encryption)
-    let final_cipher_key = generate_cipher_key(&cipher_key, &prehash)?;
-    let final_cipher_nonce = generate_cipher_nonce(&nonce_key, &prehash)?;
+    // Generate actual cipher key and nonce (same as encryption) using derived keys
+    let final_cipher_key = generate_cipher_key_from_derived(&cipher_key, &prehash)?;
+    let final_cipher_nonce = generate_cipher_nonce_from_derived(&nonce_key, &prehash)?;
 
     // Decrypt encrypted_prehash_seed with ChaCha20
     decrypt_prehash_seed_data(

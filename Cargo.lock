@@ -621,13 +621,12 @@ checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 
 [[package]]
 name = "hashrand-spin"
-version = "1.6.14"
+version = "1.6.19"
 dependencies = [
  "anyhow",
  "argon2",
  "base64",
  "bip39",
- "blake2",
  "blake3",
  "bs58",
  "chacha20",

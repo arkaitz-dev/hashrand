@@ -21,9 +21,9 @@ pub enum TokenType {
 
 /// Custom token configuration for a specific token type
 pub struct CustomTokenConfig {
-    pub cipher_key: Vec<u8>,
-    pub nonce_key: Vec<u8>,
-    pub hmac_key: Vec<u8>,
+    pub cipher_key: [u8; 64],
+    pub nonce_key: [u8; 64],
+    pub hmac_key: [u8; 64],
     pub duration: Duration,
 }
 
@@ -110,12 +110,12 @@ impl CustomTokenClaims {
     }
 
     /// Serialize claims to bytes using dedicated serialization module
-    pub fn to_bytes(&self, hmac_key: &[u8]) -> Result<[u8; 64], String> {
+    pub fn to_bytes(&self, hmac_key: &[u8; 64]) -> Result<[u8; 64], String> {
         claims_to_bytes(self, hmac_key)
     }
 
     /// Deserialize claims from bytes using dedicated serialization module
-    pub fn from_bytes(payload: &[u8; 64], hmac_key: &[u8]) -> Result<Self, String> {
+    pub fn from_bytes(payload: &[u8; 64], hmac_key: &[u8; 64]) -> Result<Self, String> {
         claims_from_bytes(payload, hmac_key)
     }
 }

@@ -2,7 +2,7 @@
 name = "hashrand-spin"
 authors = ["Arkaitz Dev <me@arkaitz.dev>"]
 description = "A random hash generator API built with Fermyon Spin"
-version = "1.6.14"
+version = "1.6.19"
 rust-version = "1.89"
 edition = "2024"
 
@@ -14,8 +14,7 @@ anyhow = "1"
 argon2 = "0.5.3"
 base64 = "0.22.1"
 bip39 = { version = "2.2.0", features = ["spanish", "french", "portuguese", "chinese-simplified", "chinese-traditional", "japanese", "italian", "korean", "czech"] }
-blake2 = "0.10"
-blake3 = "1.8.2"
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }
 bs58 = "0.5.1"
 chacha20 = "0.9.1"
 chacha20poly1305 = "0.10.1"

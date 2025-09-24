@@ -1,6 +1,6 @@
 //! Custom token operations
 //!
-//! Implements secure custom tokens with Blake2b-keyed HMAC and ChaCha20 encryption.
+//! Implements secure custom tokens with Blake3-keyed HMAC and ChaCha20 encryption.
 //! Uses embedded prehashseed system similar to web UI parameter encryption.
 
 use super::custom_token_crypto::{

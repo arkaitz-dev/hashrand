@@ -1,4 +1,4 @@
-//! Custom token operations using Blake2b-keyed system
+//! Custom token operations using Blake3-keyed system
 //!
 //! Handles creation and validation of access and refresh tokens using our custom token system.
 

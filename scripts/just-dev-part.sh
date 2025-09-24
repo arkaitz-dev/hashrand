@@ -1,5 +1,9 @@
 echo "Starting complete development environment..."
 
+# Load and export environment variables from .env
+echo "Loading environment variables from .env..."
+export $(cat .env | grep -v '^#' | xargs)
+
 # Start spin-cli watch in background (first - API backend)
 echo "Starting spin-cli watch in background..."
 nohup spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml > .spin-dev.log 2>&1 &

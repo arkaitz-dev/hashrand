@@ -40,7 +40,7 @@ pub fn initialize_database() -> Result<(), SqliteError> {
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS magiclinks (
-            token_hash BLOB PRIMARY KEY,    -- Blake2b-var[16] of encrypted magic link token
+            token_hash BLOB PRIMARY KEY,    -- Blake3-var[16] of encrypted magic link token
             expires_at INTEGER NOT NULL,    -- Expiration timestamp in hours since Unix epoch (for cleanup)
             encrypted_payload BLOB NOT NULL -- Merged: encryption_blob[44] + auth_data[32] + next_param_bytes[variable]
         )

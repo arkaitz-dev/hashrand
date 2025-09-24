@@ -2,13 +2,10 @@
 //!
 //! Single Responsibility: Low-level cryptographic functions for prehash, encryption, and key derivation
 
-use blake2::{
-    Blake2bMac, Blake2bVar,
-    digest::{KeyInit as Blake2KeyInit, Mac, Update, VariableOutput},
-};
+use blake3;
 use chacha20::ChaCha20;
 use chacha20::cipher::{KeyIvInit, StreamCipher};
-use chacha20poly1305::consts::U32;
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 
 /// Generate cryptographically secure prehash seed (32 bytes)
 pub fn generate_prehash_seed() -> [u8; 32] {
@@ -19,13 +16,19 @@ pub fn generate_prehash_seed() -> [u8; 32] {
     seed
 }
 
-/// Generate prehash using Blake2b-keyed (similar to web UI cryptoHashGen)
-pub fn generate_prehash(seed: &[u8; 32], hmac_key: &[u8]) -> Result<[u8; 32], String> {
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(hmac_key)
-        .map_err(|_| "Invalid HMAC key format for prehash".to_string())?;
-    Mac::update(&mut keyed_hasher, seed);
-    let result = keyed_hasher.finalize().into_bytes();
+/// Generate prehash using Blake3-keyed with base key (64 bytes)
+pub fn generate_prehash(seed: &[u8; 32], hmac_key: &[u8; 64]) -> Result<[u8; 32], String> {
+    let result = blake3_keyed_variable(hmac_key, seed, 32);
+    let mut output = [0u8; 32];
+    output.copy_from_slice(&result[..32]);
+    Ok(output)
+}
 
+/// Generate prehash using Blake3-keyed with derived key (32 bytes)
+pub fn generate_prehash_from_derived(seed: &[u8; 32], hmac_key: &[u8; 32]) -> Result<[u8; 32], String> {
+    let mut key_64 = [0u8; 64];
+    key_64[..32].copy_from_slice(hmac_key);
+    let result = blake3_keyed_variable(&key_64, seed, 32);
     let mut output = [0u8; 32];
     output.copy_from_slice(&result[..32]);
     Ok(output)
@@ -33,34 +36,40 @@ pub fn generate_prehash(seed: &[u8; 32], hmac_key: &[u8]) -> Result<[u8; 32], St
 
 /// Generate 32-byte hash from 64-byte encrypted payload for key derivation
 pub fn hash_encrypted_payload(encrypted_payload: &[u8; 64]) -> [u8; 32] {
-    let mut hasher = Blake2bVar::new(32).expect("Blake2b initialization should not fail");
-    hasher.update(encrypted_payload);
-    let mut result = [0u8; 32];
-    hasher
-        .finalize_variable(&mut result)
-        .expect("Blake2b finalization should not fail");
-    result
+    *blake3::hash(encrypted_payload).as_bytes()
 }
 
-/// Generate cipher key from base key and prehash (similar to web UI generateCipherKey)
-pub fn generate_cipher_key(base_key: &[u8], prehash: &[u8; 32]) -> Result<[u8; 32], String> {
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(base_key)
-        .map_err(|_| "Invalid base key format for cipher".to_string())?;
-    Mac::update(&mut keyed_hasher, prehash);
-    let result = keyed_hasher.finalize().into_bytes();
-
+/// Generate cipher key from base key (64 bytes) and prehash
+pub fn generate_cipher_key(base_key: &[u8; 64], prehash: &[u8; 32]) -> Result<[u8; 32], String> {
+    let result = blake3_keyed_variable(base_key, prehash, 32);
     let mut output = [0u8; 32];
     output.copy_from_slice(&result[..32]);
     Ok(output)
 }
 
-/// Generate nonce from base key and prehash (similar to web UI generateCipherNonce)
-pub fn generate_cipher_nonce(base_key: &[u8], prehash: &[u8; 32]) -> Result<[u8; 12], String> {
-    let mut keyed_hasher = <Blake2bMac<U32> as Blake2KeyInit>::new_from_slice(base_key)
-        .map_err(|_| "Invalid base key format for nonce".to_string())?;
-    Mac::update(&mut keyed_hasher, prehash);
-    let result = keyed_hasher.finalize().into_bytes();
+/// Generate cipher key from derived key (32 bytes) and prehash
+pub fn generate_cipher_key_from_derived(base_key: &[u8; 32], prehash: &[u8; 32]) -> Result<[u8; 32], String> {
+    let mut key_64 = [0u8; 64];
+    key_64[..32].copy_from_slice(base_key);
+    let result = blake3_keyed_variable(&key_64, prehash, 32);
+    let mut output = [0u8; 32];
+    output.copy_from_slice(&result[..32]);
+    Ok(output)
+}
 
+/// Generate nonce from base key (64 bytes) and prehash
+pub fn generate_cipher_nonce(base_key: &[u8; 64], prehash: &[u8; 32]) -> Result<[u8; 12], String> {
+    let result = blake3_keyed_variable(base_key, prehash, 12);
+    let mut output = [0u8; 12];
+    output.copy_from_slice(&result[..12]);
+    Ok(output)
+}
+
+/// Generate nonce from derived key (32 bytes) and prehash
+pub fn generate_cipher_nonce_from_derived(base_key: &[u8; 32], prehash: &[u8; 32]) -> Result<[u8; 12], String> {
+    let mut key_64 = [0u8; 64];
+    key_64[..32].copy_from_slice(base_key);
+    let result = blake3_keyed_variable(&key_64, prehash, 12);
     let mut output = [0u8; 12];
     output.copy_from_slice(&result[..12]);
     Ok(output)

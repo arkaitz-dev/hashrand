@@ -151,76 +151,178 @@ pub fn get_mlink_content_key() -> Result<[u8; 64], String> {
 
 // Custom Token Security Keys
 
-/// Get access token cipher key from Spin variables as bytes
-pub fn get_access_token_cipher_key() -> Result<Vec<u8>, String> {
+/// Get access token cipher key from Spin variables as bytes (64 bytes required)
+pub fn get_access_token_cipher_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("access_token_cipher_key")
         .map_err(|e| format!("Failed to get access_token_cipher_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_CIPHER_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_CIPHER_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "ACCESS_TOKEN_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get access token nonce key from Spin variables as bytes
-pub fn get_access_token_nonce_key() -> Result<Vec<u8>, String> {
+/// Get access token nonce key from Spin variables as bytes (64 bytes required)
+pub fn get_access_token_nonce_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("access_token_nonce_key")
         .map_err(|e| format!("Failed to get access_token_nonce_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_NONCE_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_NONCE_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "ACCESS_TOKEN_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get access token HMAC key from Spin variables as bytes
-pub fn get_access_token_hmac_key() -> Result<Vec<u8>, String> {
+/// Get access token HMAC key from Spin variables as bytes (64 bytes required)
+pub fn get_access_token_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("access_token_hmac_key")
         .map_err(|e| format!("Failed to get access_token_hmac_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_HMAC_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "ACCESS_TOKEN_HMAC_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "ACCESS_TOKEN_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get refresh token cipher key from Spin variables as bytes
+/// Get refresh token cipher key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
-pub fn get_refresh_token_cipher_key() -> Result<Vec<u8>, String> {
+pub fn get_refresh_token_cipher_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("refresh_token_cipher_key")
         .map_err(|e| format!("Failed to get refresh_token_cipher_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_CIPHER_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_CIPHER_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "REFRESH_TOKEN_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get refresh token nonce key from Spin variables as bytes
+/// Get refresh token nonce key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
-pub fn get_refresh_token_nonce_key() -> Result<Vec<u8>, String> {
+pub fn get_refresh_token_nonce_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("refresh_token_nonce_key")
         .map_err(|e| format!("Failed to get refresh_token_nonce_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_NONCE_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_NONCE_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "REFRESH_TOKEN_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get refresh token HMAC key from Spin variables as bytes
+/// Get refresh token HMAC key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
-pub fn get_refresh_token_hmac_key() -> Result<Vec<u8>, String> {
+pub fn get_refresh_token_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("refresh_token_hmac_key")
         .map_err(|e| format!("Failed to get refresh_token_hmac_key variable: {}", e))?;
-    hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_HMAC_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "REFRESH_TOKEN_HMAC_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "REFRESH_TOKEN_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get prehash cipher key from Spin variables as bytes
-pub fn get_prehash_cipher_key() -> Result<Vec<u8>, String> {
+/// Get prehash cipher key from Spin variables as bytes (64 bytes required)
+pub fn get_prehash_cipher_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("prehash_cipher_key")
         .map_err(|e| format!("Failed to get prehash_cipher_key variable: {}", e))?;
-    hex::decode(&key_hex).map_err(|_| "PREHASH_CIPHER_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_CIPHER_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "PREHASH_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get prehash nonce key from Spin variables as bytes
-pub fn get_prehash_nonce_key() -> Result<Vec<u8>, String> {
+/// Get prehash nonce key from Spin variables as bytes (64 bytes required)
+pub fn get_prehash_nonce_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("prehash_nonce_key")
         .map_err(|e| format!("Failed to get prehash_nonce_key variable: {}", e))?;
-    hex::decode(&key_hex).map_err(|_| "PREHASH_NONCE_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_NONCE_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "PREHASH_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
-/// Get prehash HMAC key from Spin variables as bytes
-pub fn get_prehash_hmac_key() -> Result<Vec<u8>, String> {
+/// Get prehash HMAC key from Spin variables as bytes (64 bytes required)
+pub fn get_prehash_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("prehash_hmac_key")
         .map_err(|e| format!("Failed to get prehash_hmac_key variable: {}", e))?;
-    hex::decode(&key_hex).map_err(|_| "PREHASH_HMAC_KEY must be a valid hex string".to_string())
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|_| "PREHASH_HMAC_KEY must be a valid hex string".to_string())?;
+
+    if key_bytes.len() != 64 {
+        return Err(format!(
+            "PREHASH_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
+            key_bytes.len()
+        ));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
 }
 
 /// Get access token duration in minutes from Spin variables

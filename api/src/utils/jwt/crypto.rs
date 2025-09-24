@@ -8,17 +8,10 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
 };
 use base64::{Engine as _, engine::general_purpose};
-use blake2::{
-    Blake2bMac,
-    digest::{KeyInit as Blake2KeyInit, Mac},
-};
 use chacha20::{
     ChaCha20,
     cipher::{KeyIvInit, StreamCipher},
 };
-use chacha20poly1305::consts::U32;
-use rand::{RngCore, SeedableRng};
-use rand_chacha::ChaCha8Rng;
 
 use super::config::{get_argon2_salt, get_chacha_encryption_key, get_user_id_hmac_key, get_user_id_argon2_compression};
 use crate::utils::pseudonimizer::blake3_keyed_variable;
@@ -33,11 +26,14 @@ pub const ARGON2_HASH_LENGTH: usize = 32; // Output length in bytes
 /// Derive secure user ID from email using Blake3 + Pseudonimizer + Argon2id
 ///
 /// Enhanced security process with Blake3:
-/// 1. Blake3 XOF(email) → 64 bytes
-/// 2. blake3_keyed_variable(paso1[64], hmac_key[64], 32) → 32 bytes
+/// 1. Blake3 XOF(email) → 64 bytes (paso1)
+/// 2. blake3_keyed_variable(paso1[64], hmac_key[64], 32) → 32 bytes (paso2)
+///    - paso1[64] meets Blake3 KDF 32-byte minimum (used directly as key_material)
 /// 3. Generate dynamic salt: blake3_keyed_variable(argon2_salt[64], paso1[64], 32) → 32 bytes
-/// 4. Argon2id(data=paso2, salt=dynamic_salt, mem_cost=19456, time_cost=2, lane=1) → 32 bytes
+///    - paso1[64] meets Blake3 KDF 32-byte minimum (used directly as key_material)
+/// 4. Argon2id(data=paso2[32], salt=dynamic_salt[32], mem_cost=19456, time_cost=2, lane=1) → 32 bytes
 /// 5. blake3_keyed_variable(argon2_result[32], compression_key[64], 16) → 16 bytes user_id
+///    - argon2_result[32] meets Blake3 KDF 32-byte minimum (used directly as key_material)
 ///
 /// # Arguments
 /// * `email` - User email address
@@ -62,7 +58,7 @@ pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
     // Step 3: Generate dynamic salt using Blake3 pseudonimizer
     let dynamic_salt = generate_dynamic_salt(&paso1_output)?;
 
-    // Step 4: Argon2id with fixed parameters (using Blake2b result as data input)
+    // Step 4: Argon2id with fixed parameters (using Blake3-keyed result as data input)
     let argon2_output = derive_with_argon2id(&hmac_result[..], &dynamic_salt)?;
 
     // Step 5: Blake3 keyed variable via pseudonimizer to compress to 16 bytes
