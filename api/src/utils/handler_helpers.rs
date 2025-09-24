@@ -74,11 +74,11 @@ where
 /// * `crypto_material` - JWT crypto material for signing
 ///
 /// # Returns
-/// * `Result<SignedResponse<T>, String>` - Signed response struct or error
+/// * `Result<SignedResponse, String>` - Signed response struct or error
 pub fn create_signed_response_struct<T>(
     payload: T,
     crypto_material: &CryptoMaterial,
-) -> Result<SignedResponse<T>, String>
+) -> Result<SignedResponse, String>
 where
     T: serde::Serialize,
 {

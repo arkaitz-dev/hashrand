@@ -127,6 +127,7 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 ### 🧩 Modular Architecture Systems
 
 #### Cryptographic Modules (`lib/crypto/`, `lib/ed25519/`)
+
 - **Crypto System**: 5 specialized modules for cryptographic operations
   - `crypto-core.ts` - Blake2b + ChaCha8 cryptographic functions
   - `crypto-encoding.ts` - Base64/Base64URL conversion utilities
@@ -142,11 +143,13 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
   - `ed25519-api.ts` - High-level API functions
 
 #### API & Session Management (`lib/api/`, `lib/session/`, `lib/stores/auth/`)
+
 - **API Layer**: 4 DRY modules eliminating endpoint duplication
 - **Session Management**: 6 modules following Single Responsibility Principle
 - **Auth Store**: 5 specialized modules for authentication state management
 
 #### Universal Composables (`lib/composables/`)
+
 - **DRY Elimination**: 2 composables replacing 840+ lines of duplicate code
   - `useGenerationWorkflow.ts` - Unified generation logic across all endpoints
   - `useFormParams.ts` - Centralized form parameter management

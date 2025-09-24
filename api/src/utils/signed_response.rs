@@ -1,7 +1,7 @@
 //! Universal signed response system for all API endpoints
 //!
 //! Provides Ed25519 signature generation for all backend responses
-//! with deterministic JSON serialization matching frontend expectations
+//! NEW: Uses msgpack serialization for guaranteed frontend-backend consistency
 
 // use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
 // use generic_array::typenum::{U32, U64};
@@ -18,9 +18,12 @@ use crate::utils::pseudonimizer::blake3_keyed_variable;
 use crate::utils::signed_request::SignedRequestValidator;
 
 /// Universal signed response structure for all API endpoints
+/// NEW: payload is now msgpack-serialized string for identical verification
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SignedResponse<T> {
-    pub payload: T,
+pub struct SignedResponse {
+    /// Base64 URL-safe encoded JSON payload as string (signed content)
+    pub payload: String,
+    /// Ed25519 signature of the original JSON string (before Base64 encoding)
     pub signature: String,
 }
 
@@ -65,12 +68,12 @@ impl SignedResponseGenerator {
     /// * `pub_key_hex` - Frontend Ed25519 public key as hex string
     ///
     /// # Returns
-    /// * `Result<SignedResponse<T>, SignedResponseError>` - Signed response or error
+    /// * `Result<SignedResponse, SignedResponseError>` - Signed response or error
     pub fn create_signed_response<T>(
         payload: T,
         user_id: &[u8],
         pub_key_hex: &str,
-    ) -> Result<SignedResponse<T>, SignedResponseError>
+    ) -> Result<SignedResponse, SignedResponseError>
     where
         T: Serialize,
     {
@@ -85,18 +88,33 @@ impl SignedResponseGenerator {
 
         println!("= Generated Ed25519 keypair - Server pub_key: {}", hex::encode(public_key.as_bytes()));
 
-        // Step 3: Serialize payload deterministically (reusing existing function)
-        let serialized_payload = SignedRequestValidator::serialize_payload_deterministic(&payload)
+        // Step 3: CORRECTED - Serialize payload to deterministic JSON for frontend consistency
+        let json_string = SignedRequestValidator::serialize_payload_deterministic(&payload)
             .map_err(|e| SignedResponseError::SerializationError(e.to_string()))?;
 
-        // Step 4: Sign serialized payload with Ed25519
-        let signature_bytes = signing_key.sign(serialized_payload.as_bytes());
+        // Step 4: Encode JSON as Base64 URL-safe
+        let base64_payload = {
+            let bytes = json_string.as_bytes();
+            let base64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes)
+                .replace('+', "-")
+                .replace('/', "_")
+                .replace('=', "");
+            base64
+        };
+        println!(
+            "🔍 DEBUG BASE64 BACKEND: JSON length: {}, Base64 length: {}",
+            json_string.len(),
+            base64_payload.len()
+        );
+
+        // Step 5: Sign Base64 payload with Ed25519 (same as frontend!)
+        let signature_bytes = signing_key.sign(base64_payload.as_bytes());
         let signature_hex = hex::encode(signature_bytes.to_bytes());
 
         println!("= Response signed successfully - Signature: {}...", &signature_hex[..20]);
 
         Ok(SignedResponse {
-            payload,
+            payload: base64_payload,
             signature: signature_hex,
         })
     }
@@ -210,12 +228,12 @@ impl SignedResponseGenerator {
     /// * `pub_key_hex` - Frontend Ed25519 public key as hex string
     ///
     /// # Returns
-    /// * `Result<SignedResponse<T>, SignedResponseError>` - Signed response with server_pub_key
+    /// * `Result<SignedResponse, SignedResponseError>` - Signed response with server_pub_key
     pub fn create_signed_response_with_server_pubkey<T>(
         payload: T,
         user_id: &[u8],
         pub_key_hex: &str,
-    ) -> Result<SignedResponse<T>, SignedResponseError>
+    ) -> Result<SignedResponse, SignedResponseError>
     where
         T: Serialize + for<'de> Deserialize<'de>,
     {

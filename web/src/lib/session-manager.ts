@@ -17,6 +17,9 @@ import {
 	setAuthData,
 	isAuthenticated,
 	clearAuthData,
+	setServerPubKey,
+	getServerPubKey,
+	clearServerPubKey,
 	getUserPreferences,
 	setLanguagePreference,
 	setThemePreference,
@@ -146,6 +149,27 @@ class SessionManager {
 	 */
 	async isAuthenticated(): Promise<boolean> {
 		return await isAuthenticated();
+	}
+
+	/**
+	 * Set server public key for signed response validation
+	 */
+	async setServerPubKey(serverPubKey: string): Promise<void> {
+		return await setServerPubKey(serverPubKey);
+	}
+
+	/**
+	 * Get server public key for signed response validation
+	 */
+	async getServerPubKey(): Promise<string | null> {
+		return await getServerPubKey();
+	}
+
+	/**
+	 * Clear server public key (called during logout)
+	 */
+	async clearServerPubKey(): Promise<void> {
+		return await clearServerPubKey();
 	}
 
 	// ============================================================================

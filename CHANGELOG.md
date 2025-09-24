@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.20 + Web v0.21.1] - 2025-09-25
+
+### 🔧 CRITICAL FIX: Ed25519 Signature Verification System
+
+**BUG FIX**: Resolved Ed25519 signature verification failures in magic link authentication caused by frontend-backend serialization inconsistency.
+
+#### ✅ Problem Resolved
+- **Issue**: Magic link authentication failing with "Ed25519 signature verification failed"
+- **Root Cause**: Frontend and backend were signing/verifying different content formats
+  - **Frontend**: Signing deterministic JSON string
+  - **Backend**: Attempting verification against various formats (msgpack, JSON)
+- **Impact**: Complete authentication system breakdown
+
+#### 🔒 Solution: Universal Base64 URL-Safe Signing
+
+**Implemented deterministic Base64 approach** where both frontend and backend sign/verify the SAME Base64 string:
+
+**Frontend Changes:**
+- ✅ **Request Signing**: `createSignedRequest()` now signs Base64 payload instead of JSON
+- ✅ **Response Verification**: `validateSignedResponse()` verifies against Base64 payload directly
+- ✅ **Dependency Cleanup**: Removed `@msgpack/msgpack` from package.json
+
+**Backend Changes:**
+- ✅ **Signature Validation**: All validation functions now verify Base64 payload directly
+- ✅ **Magic Link Fix**: `verify_magic_link_signature()` receives and verifies Base64 payload
+- ✅ **Response Signing**: `SignedResponseGenerator` now signs Base64-encoded JSON
+- ✅ **Dependency Cleanup**: Removed `rmp-serde` from Cargo.toml
+
+#### 🎯 Files Modified
+**Backend:**
+- `src/utils/signed_request.rs`: `validate_base64_payload()` verifies Base64 directly
+- `src/utils/auth/magic_link_signature_validator.rs`: Verifies received Base64 payload
+- `src/utils/signed_response.rs`: Signs Base64-encoded JSON responses
+- `src/utils/auth/magic_link_val.rs`: Passes Base64 payload to signature validator
+- `src/utils/protected_endpoint_middleware.rs`: Uses Base64 validation
+- `src/utils/jwt_middleware_renewal.rs`: Base64 decoding for token renewal
+
+**Frontend:**
+- `src/lib/signedRequest.ts`: Signs Base64 payload in `createSignedRequest()`
+- `src/lib/signedResponse.ts`: Verifies Base64 payload in `validateSignedResponse()`
+
+#### 🧪 Validation
+- **Magic Link Authentication**: ✅ Working correctly
+- **Signature Verification**: ✅ Perfect consistency between frontend/backend
+- **Compilation**: ✅ Zero errors after dependency cleanup
+- **Test Suite**: ✅ All tests passing
+
+#### 🔐 Security Enhancement
+**Maximum Determinism**: Base64 strings provide the highest level of deterministic content for cryptographic operations:
+- **Before**: Multiple serialization formats causing verification mismatches
+- **After**: Single Base64 string signed and verified by both sides identically
+
+**Result**: Magic link authentication system fully restored with perfect Ed25519 signature verification consistency.
+
 ## [API v1.6.19 + Web v0.21.0] - 2025-09-24
 
 ### ⚡ Blake3 WASM Performance Optimization

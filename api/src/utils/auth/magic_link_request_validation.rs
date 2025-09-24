@@ -124,7 +124,7 @@ impl MagicLinkRequestValidation {
         // Use universal validation that automatically detects pub_key source
         match SignedRequestValidator::validate_universal(signed_request, request) {
             Ok(pub_key_hex) => {
-                println!("✅ Universal SignedRequest validation successful for email: {}", signed_request.payload.email);
+                println!("✅ Universal SignedRequest validation successful (Base64 JSON payload)");
                 Ok(pub_key_hex)
             },
             Err(e) => {

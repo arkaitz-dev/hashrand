@@ -20,7 +20,8 @@ fn default_next_path() -> String {
 }
 
 /// New signed request structure for magic link generation
-pub type MagicLinkSignedRequest = SignedRequest<MagicLinkPayload>;
+/// CORRECTED: No longer generic since SignedRequest uses Base64-encoded JSON payload
+pub type MagicLinkSignedRequest = SignedRequest;
 
 /// Legacy request body for magic link generation (DEPRECATED - kept for transition)
 #[derive(Deserialize)]
@@ -52,7 +53,8 @@ pub struct MagicLinkValidationPayload {
 }
 
 /// Unified signed request structure for magic link validation
-pub type MagicLinkValidationRequest = SignedRequest<MagicLinkValidationPayload>;
+/// CORRECTED: No longer generic since SignedRequest uses Base64-encoded JSON payload
+pub type MagicLinkValidationRequest = SignedRequest;
 
 /// Error response structure
 #[derive(Serialize)]

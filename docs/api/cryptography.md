@@ -216,6 +216,50 @@ function sortObjectKeys(obj) {
 }
 ```
 
+#### Base64 URL-Safe Signature Verification (v1.6.20+)
+
+**CRITICAL ENHANCEMENT**: Implemented universal Base64 URL-safe signature verification system ensuring perfect consistency between frontend and backend Ed25519 operations.
+
+**Verification Flow:**
+1. **JSON → Base64**: Deterministic JSON serialized and encoded as Base64 URL-safe
+2. **Sign Base64**: Both frontend and backend sign the Base64 string directly
+3. **Verify Base64**: Signature verification performed against Base64 payload
+4. **Extract Data**: After verification, Base64 decoded to JSON for data extraction
+
+```typescript
+// Frontend: Signs Base64 payload directly
+export async function createSignedRequest<T>(payload: T): Promise<SignedRequest> {
+    const jsonPayload = serializePayload(payload);         // Step 1: JSON deterministic
+    const base64Payload = encodePayloadBase64(jsonPayload); // Step 2: JSON → Base64 URL-safe
+    const signature = await signMessage(base64Payload, keyPair); // Step 3: Sign Base64!
+
+    return {
+        payload: base64Payload,  // Send Base64 (what was signed)
+        signature
+    };
+}
+```
+
+```rust
+// Backend: Verifies Base64 payload directly
+pub fn validate_base64_payload(
+    base64_payload: &str,     // The Base64 string that was signed
+    signature: &str,
+    public_key_hex: &str,
+) -> Result<(), SignedRequestError> {
+    // Verify signature directly against Base64 payload (maximum determinism!)
+    Self::validate_signature_string(base64_payload, signature, public_key_hex)
+}
+```
+
+**Security Benefits:**
+- **🎯 Maximum Determinism**: Base64 strings provide highest consistency for cryptographic operations
+- **🔒 Perfect Consistency**: Frontend and backend sign/verify identical content
+- **⚡ Performance**: No re-serialization needed during verification
+- **🛡️ Error Elimination**: Eliminates serialization format mismatches
+
+**Migration Note (v1.6.20)**: Previous versions attempted msgpack serialization which caused verification failures due to binary data in JSON strings. The Base64 approach resolves all consistency issues.
+
 ### Strict Authentication Method Validation (v1.6.10+)
 
 #### Security Validation Matrix

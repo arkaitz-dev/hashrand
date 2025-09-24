@@ -12,62 +12,46 @@ import type {
 	SeedMnemonicRequest,
 	CustomHashResponse
 } from '../types';
-import { handlePostRequest } from './api-helpers';
-
 const API_BASE = '/api';
 
 /**
- * Generic seed-based generation function (DRY implementation)
+ * Generic seed-based generation function using universal authenticated signed POST request
  */
 async function generateWithSeed<T>(
 	endpoint: string,
-	seedRequest: T,
-	// eslint-disable-next-line no-unused-vars
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
+	seedRequest: T
 ): Promise<CustomHashResponse> {
-	return await handlePostRequest<CustomHashResponse>(
+	const { httpAuthenticatedSignedPOSTRequest } = await import('../httpSignedRequests');
+	return await httpAuthenticatedSignedPOSTRequest<T, CustomHashResponse>(
 		`${API_BASE}/${endpoint}`,
-		seedRequest,
-		authenticatedFetch
+		seedRequest
 	);
 }
 
 /**
  * Generate custom hash with seed
  */
-export async function generateCustomWithSeed(
-	seedRequest: SeedGenerateRequest,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateWithSeed('custom', seedRequest, authenticatedFetch);
+export async function generateCustomWithSeed(seedRequest: SeedGenerateRequest): Promise<CustomHashResponse> {
+	return await generateWithSeed('custom', seedRequest);
 }
 
 /**
  * Generate password with seed
  */
-export async function generatePasswordWithSeed(
-	seedRequest: SeedPasswordRequest,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateWithSeed('password', seedRequest, authenticatedFetch);
+export async function generatePasswordWithSeed(seedRequest: SeedPasswordRequest): Promise<CustomHashResponse> {
+	return await generateWithSeed('password', seedRequest);
 }
 
 /**
  * Generate API key with seed
  */
-export async function generateApiKeyWithSeed(
-	seedRequest: SeedApiKeyRequest,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateWithSeed('api-key', seedRequest, authenticatedFetch);
+export async function generateApiKeyWithSeed(seedRequest: SeedApiKeyRequest): Promise<CustomHashResponse> {
+	return await generateWithSeed('api-key', seedRequest);
 }
 
 /**
  * Generate mnemonic with seed
  */
-export async function generateMnemonicWithSeed(
-	seedRequest: SeedMnemonicRequest,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateWithSeed('mnemonic', seedRequest, authenticatedFetch);
+export async function generateMnemonicWithSeed(seedRequest: SeedMnemonicRequest): Promise<CustomHashResponse> {
+	return await generateWithSeed('mnemonic', seedRequest);
 }

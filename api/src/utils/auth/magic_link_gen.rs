@@ -9,10 +9,11 @@ use super::magic_link_email_delivery::MagicLinkEmailDelivery;
 use super::magic_link_request_validation::MagicLinkRequestValidation;
 use super::magic_link_response_builder::MagicLinkResponseBuilder;
 use super::magic_link_token_gen::MagicLinkTokenGeneration;
-use super::types::{MagicLinkRequest, MagicLinkSignedRequest};
+use super::types::{MagicLinkRequest, MagicLinkSignedRequest, MagicLinkPayload, ErrorResponse};
 use crate::database::operations::MagicLinkOperations;
 use crate::utils::jwt::crypto::derive_user_id;
 use crate::utils::signed_response::SignedResponseGenerator;
+use crate::utils::SignedRequestValidator;
 use serde_json::json;
 
 /// Generate and send magic link for authentication
@@ -93,6 +94,24 @@ pub async fn generate_magic_link_signed(
     req: &Request,
     signed_request: &MagicLinkSignedRequest,
 ) -> anyhow::Result<Response> {
+    // Step 0: CORRECTED - Deserialize Base64-encoded JSON payload first
+    let payload: MagicLinkPayload = match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
+        Ok(payload) => payload,
+        Err(e) => {
+            println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(
+                    serde_json::to_string(&ErrorResponse {
+                        error: "Invalid Base64 JSON payload format".to_string(),
+                    })?
+                )
+                .build());
+        }
+    };
+    println!("✅ DEBUG: Deserialized Base64 JSON payload for magic link generation");
+
     // Step 1: Validate request (rate limiting and signed request)
     if let Err(response) = MagicLinkRequestValidation::check_rate_limiting(req) {
         return Ok(response);
@@ -104,7 +123,7 @@ pub async fn generate_magic_link_signed(
     };
 
     if let Err(response) =
-        MagicLinkRequestValidation::validate_email_format(&signed_request.payload.email)
+        MagicLinkRequestValidation::validate_email_format(&payload.email)
     {
         return Ok(response);
     }
@@ -112,8 +131,8 @@ pub async fn generate_magic_link_signed(
     // Step 2: Generate token and create magic link URL
     let token_result = match MagicLinkTokenGeneration::generate_complete_result(
         req,
-        &signed_request.payload.email,
-        signed_request.payload.ui_host.as_deref(),
+        &payload.email,
+        payload.ui_host.as_deref(),
         15, // 15 minutes expiration
     ) {
         Ok(result) => result,
@@ -125,19 +144,19 @@ pub async fn generate_magic_link_signed(
         &token_result.magic_token,
         &token_result.encryption_blob,
         token_result.expires_at_nanos,
-        &signed_request.payload.next,
-        &signed_request.payload.pub_key,
+        &payload.next,
+        &payload.pub_key,
     ) {
         Ok(_) => {
             // Send email with fallback to console logging
             let _ = MagicLinkEmailDelivery::send_with_fallback(
-                &signed_request.payload.email,
+                &payload.email,
                 &token_result.magic_link,
-                Some(&signed_request.payload.email_lang),
-                signed_request.payload.ui_host.as_deref(),
+                Some(&payload.email_lang),
+                payload.ui_host.as_deref(),
                 &MagicLinkTokenGeneration::determine_host_url(
                     req,
-                    signed_request.payload.ui_host.as_deref(),
+                    payload.ui_host.as_deref(),
                 ),
                 token_result.magic_expires_at,
             )
@@ -147,7 +166,7 @@ pub async fn generate_magic_link_signed(
             let _ = MagicLinkOperations::cleanup_expired_links();
 
             // Create signed response with server public key (magic link creation scenario)
-            match create_signed_magic_link_response(&signed_request.payload.email, &pub_key_hex) {
+            match create_signed_magic_link_response(&payload.email, &pub_key_hex) {
                 Ok(response) => Ok(response),
                 Err(e) => {
                     println!("❌ Error creating signed response: {}", e);

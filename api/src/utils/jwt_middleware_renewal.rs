@@ -2,7 +2,7 @@
 
 use crate::utils::JwtUtils;
 use crate::utils::jwt::config::get_refresh_token_duration_minutes;
-use crate::utils::{SignedResponseGenerator, SignedResponse};
+use crate::utils::{SignedResponseGenerator, SignedResponse, SignedRequestValidator};
 use chrono::DateTime;
 use serde_json::Value;
 use spin_sdk::http::Response;
@@ -148,8 +148,8 @@ fn handle_signed_response_with_tokens(
     renewed_tokens: RenewedTokens,
     body_str: &str,
 ) -> Response {
-    // Parse existing signed response
-    let signed_response: SignedResponse<Value> = match serde_json::from_str(body_str) {
+    // Parse existing signed response (now with Base64-encoded JSON payload)
+    let signed_response: SignedResponse = match serde_json::from_str(body_str) {
         Ok(resp) => resp,
         Err(_) => {
             println!("🔍 DEBUG: Failed to parse signed response, falling back to headers");
@@ -157,8 +157,24 @@ fn handle_signed_response_with_tokens(
         }
     };
 
-    // Add access token to payload
-    let mut enhanced_payload = signed_response.payload;
+    // CORRECTED: Deserialize Base64-encoded JSON payload, modify, and re-serialize
+    let json_string = match SignedRequestValidator::decode_payload_base64(&signed_response.payload) {
+        Ok(json) => json,
+        Err(e) => {
+            println!("❌ DEBUG: Failed to decode Base64 payload: {}", e);
+            return handle_non_signed_response_with_tokens(response, renewed_tokens);
+        }
+    };
+
+    let mut enhanced_payload: Value = match serde_json::from_str(&json_string) {
+        Ok(payload) => payload,
+        Err(e) => {
+            println!("❌ DEBUG: Failed to parse JSON payload: {}", e);
+            return handle_non_signed_response_with_tokens(response, renewed_tokens);
+        }
+    };
+
+    // Add access token to deserialized payload
     if let Value::Object(ref mut map) = enhanced_payload {
         map.insert("access_token".to_string(), Value::String(renewed_tokens.access_token.clone()));
         map.insert("expires_in".to_string(), Value::Number(renewed_tokens.expires_in.into()));

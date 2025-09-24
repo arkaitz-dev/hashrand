@@ -60,16 +60,19 @@ export async function hasValidRefreshCookie(): Promise<boolean> {
 	if (typeof window === 'undefined') return false;
 
 	try {
-		// Make a lightweight request to check if refresh cookie is valid
-		const response = await fetch('/api/refresh', {
-			method: 'POST',
-			credentials: 'include' // Include HttpOnly cookies
-		});
+		// Use universal signed POST request to check if refresh cookie is valid
+		const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
+		await httpSignedPOSTRequest<Record<string, never>, any>(
+			'/api/refresh',
+			{},
+			false,
+			{ credentials: 'include' }
+		);
 
-		// If we get 200, cookie is valid
-		// If we get 401, cookie is expired/invalid
-		return response.ok;
+		// If request succeeds, cookie is valid
+		return true;
 	} catch {
+		// If request fails (401), cookie is expired/invalid
 		return false;
 	}
 }

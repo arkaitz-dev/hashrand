@@ -5,7 +5,8 @@
 
 use spin_sdk::http::Response;
 
-use super::types::{ErrorResponse, MagicLinkValidationRequest};
+use super::types::{ErrorResponse, MagicLinkValidationRequest, MagicLinkValidationPayload};
+use crate::utils::SignedRequestValidator;
 
 /// Parse and validate magic link validation request from JSON body
 ///
@@ -43,14 +44,19 @@ pub fn parse_validation_request(request_body: &[u8]) -> Result<MagicLinkValidati
 }
 
 /// Extract magic token and signature from validated request
+/// CORRECTED: Deserializes Base64-encoded JSON payload to access fields
 ///
 /// # Arguments
 /// * `signed_request` - Validated magic link validation request
 ///
 /// # Returns
-/// * `(String, String)` - Tuple of (magic_token, signature_hex)
-pub fn extract_request_data(signed_request: &MagicLinkValidationRequest) -> (String, String) {
-    let magic_token = signed_request.payload.magiclink.clone();
+/// * `Result<(String, String), String>` - Tuple of (magic_token, signature_hex) or error
+pub fn extract_request_data(signed_request: &MagicLinkValidationRequest) -> Result<(String, String), String> {
+    // CORRECTED: Deserialize Base64-encoded JSON payload to access magiclink field
+    let payload: MagicLinkValidationPayload = SignedRequestValidator::deserialize_base64_payload(&signed_request.payload)
+        .map_err(|e| format!("Failed to deserialize Base64 payload: {}", e))?;
+
+    let magic_token = payload.magiclink.clone();
     let signature_hex = signed_request.signature.clone();
 
     println!(
@@ -62,5 +68,5 @@ pub fn extract_request_data(signed_request: &MagicLinkValidationRequest) -> (Str
         signature_hex
     );
 
-    (magic_token, signature_hex)
+    Ok((magic_token, signature_hex))
 }

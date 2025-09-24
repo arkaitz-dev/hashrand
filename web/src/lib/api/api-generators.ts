@@ -12,62 +12,61 @@ import type {
 	MnemonicParams,
 	CustomHashResponse
 } from '../types';
-import { handleGetRequest } from './api-helpers';
-
 const API_BASE = '/api';
 
 /**
- * Generic generation function (DRY implementation)
+ * Generic generation function using universal authenticated signed GET request
  */
 async function generateHash(
 	endpoint: string,
-	params: GenerateParams | PasswordParams | ApiKeyParams | MnemonicParams,
-	// eslint-disable-next-line no-unused-vars
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
+	params: GenerateParams | PasswordParams | ApiKeyParams | MnemonicParams
 ): Promise<CustomHashResponse> {
-	return await handleGetRequest<CustomHashResponse>(
+	const { httpAuthenticatedSignedGETRequest } = await import('../httpSignedRequests');
+
+	// Convert parameters to string format for signing
+	const stringParams: Record<string, string> = {};
+	Object.entries(params).forEach(([key, value]) => {
+		if (value !== undefined && value !== null) {
+			if (typeof value === 'boolean') {
+				stringParams[key] = value.toString();
+			} else if (typeof value === 'number') {
+				stringParams[key] = value.toString();
+			} else if (typeof value === 'string') {
+				stringParams[key] = value;
+			}
+		}
+	});
+
+	return await httpAuthenticatedSignedGETRequest<CustomHashResponse>(
 		`${API_BASE}/${endpoint}`,
-		params as Record<string, unknown>,
-		authenticatedFetch
+		stringParams
 	);
 }
 
 /**
  * Generate custom hash
  */
-export async function generate(
-	params: GenerateParams,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateHash('custom', params, authenticatedFetch);
+export async function generate(params: GenerateParams): Promise<CustomHashResponse> {
+	return await generateHash('custom', params);
 }
 
 /**
  * Generate password
  */
-export async function generatePassword(
-	params: PasswordParams,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateHash('password', params, authenticatedFetch);
+export async function generatePassword(params: PasswordParams): Promise<CustomHashResponse> {
+	return await generateHash('password', params);
 }
 
 /**
  * Generate API key
  */
-export async function generateApiKey(
-	params: ApiKeyParams,
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateHash('api-key', params, authenticatedFetch);
+export async function generateApiKey(params: ApiKeyParams): Promise<CustomHashResponse> {
+	return await generateHash('api-key', params);
 }
 
 /**
  * Generate mnemonic
  */
-export async function generateMnemonic(
-	params: MnemonicParams = {},
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<CustomHashResponse> {
-	return await generateHash('mnemonic', params, authenticatedFetch);
+export async function generateMnemonic(params: MnemonicParams = {}): Promise<CustomHashResponse> {
+	return await generateHash('mnemonic', params);
 }

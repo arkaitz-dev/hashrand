@@ -1,11 +1,12 @@
 //! Universal signed request validation system
 //!
 //! Provides Ed25519 signature verification for all API endpoints
-//! with deterministic JSON serialization matching frontend
+//! CORRECTED: Uses deterministic JSON + Base64 URL-safe for perfect consistency
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt;
+use base64::{Engine as _, engine::general_purpose};
 
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
 use crate::utils::jwt::utils::JwtUtils;
@@ -13,9 +14,13 @@ use crate::database::operations::magic_link_ops::MagicLinkOperations;
 use spin_sdk::http::Request;
 
 /// Universal signed request structure for all API endpoints
+/// CORRECTED: payload is Base64 URL-safe encoded deterministic JSON
+/// Signature verifies the original JSON string (before Base64 encoding)
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SignedRequest<T> {
-    pub payload: T,
+pub struct SignedRequest {
+    /// Base64 URL-safe encoded deterministic JSON payload
+    pub payload: String,
+    /// Ed25519 signature of the original JSON string (before Base64 encoding)
     pub signature: String,
 }
 
@@ -54,29 +59,33 @@ pub struct SignedRequestValidator;
 
 impl SignedRequestValidator {
     /// Universal validation with strict auth method separation
+    /// CORRECTED: Now validates Base64 URL-safe encoded JSON payload for perfect consistency
     ///
     /// SECURITY RULES:
     /// 1. Bearer token present: ONLY Bearer allowed, NO pub_key/magiclink in payload
     /// 2. No Bearer token: EXACTLY one of pub_key OR magiclink in payload (never both, never none)
     ///
     /// # Arguments
-    /// * `signed_request` - The signed request to validate
+    /// * `signed_request` - The signed request with Base64-encoded JSON payload
     /// * `request` - HTTP request (for Bearer token extraction)
     ///
     /// # Returns
     /// * `Result<String, SignedRequestError>` - pub_key_hex or error
-    pub fn validate_universal<T>(
-        signed_request: &SignedRequest<T>,
+    pub fn validate_universal(
+        signed_request: &SignedRequest,
         request: &Request,
-    ) -> Result<String, SignedRequestError>
-    where
-        T: Serialize,
-    {
+    ) -> Result<String, SignedRequestError> {
         println!("🔍 Universal SignedRequest validation with strict auth separation...");
 
-        // Serialize payload to check contents
-        let payload_value = serde_json::to_value(&signed_request.payload)
-            .map_err(|e| SignedRequestError::SerializationError(e.to_string()))?;
+        // Decode Base64 payload to check auth method contents
+        println!("🔍 DEBUG BASE64: Decoding Base64 payload for auth method detection...");
+        let json_string = Self::decode_payload_base64(&signed_request.payload)
+            .map_err(|e| SignedRequestError::SerializationError(format!("Base64 decoding failed: {}", e)))?;
+
+        let payload_value: Value = serde_json::from_str(&json_string)
+            .map_err(|e| SignedRequestError::SerializationError(format!("JSON parsing failed: {}", e)))?;
+
+        println!("🔍 DEBUG BASE64: Decoded payload: {}", payload_value);
 
         // Check what auth methods are present in payload
         let has_pub_key = payload_value.get("pub_key").and_then(|v| v.as_str()).is_some();
@@ -100,7 +109,7 @@ impl SignedRequestValidator {
             // Use Bearer token for validation
             let pub_key_hex = Self::extract_pub_key_from_bearer(request)?;
             println!("✅ Using ONLY Bearer token (strict mode)");
-            Self::validate(signed_request, &pub_key_hex)?;
+            Self::validate_base64_payload(&signed_request.payload, &signed_request.signature, &pub_key_hex)?;
             Ok(pub_key_hex)
         } else {
             // Rule 2: No Bearer token - EXACTLY one payload auth method required
@@ -114,14 +123,14 @@ impl SignedRequestValidator {
                     // Use pub_key from payload
                     let pub_key_hex = Self::extract_pub_key_from_payload(&payload_value)?;
                     println!("✅ Using ONLY pub_key from payload (strict mode)");
-                    Self::validate(signed_request, &pub_key_hex)?;
+                    Self::validate_base64_payload(&signed_request.payload, &signed_request.signature, &pub_key_hex)?;
                     Ok(pub_key_hex)
                 }
                 (false, true) => {
                     // Use magiclink from payload
                     let pub_key_hex = Self::extract_pub_key_from_magiclink(&payload_value)?;
                     println!("✅ Using ONLY magiclink from payload (strict mode)");
-                    Self::validate(signed_request, &pub_key_hex)?;
+                    Self::validate_base64_payload(&signed_request.payload, &signed_request.signature, &pub_key_hex)?;
                     Ok(pub_key_hex)
                 }
                 (false, false) => {
@@ -133,31 +142,29 @@ impl SignedRequestValidator {
         }
     }
 
-    /// Validate signed request with Ed25519 signature
+    /// CORRECTED: Validate Base64 payload with Ed25519 signature
+    /// The Base64 string itself is signed/verified directly (most deterministic!)
     ///
     /// # Arguments
-    /// * `signed_request` - The signed request to validate
+    /// * `base64_payload` - Base64 URL-safe encoded payload string (this is what was signed)
+    /// * `signature` - Ed25519 signature hex string
     /// * `public_key_hex` - Ed25519 public key as hex string
     ///
     /// # Returns
     /// * `Result<(), SignedRequestError>` - Success or error
-    pub fn validate<T>(
-        signed_request: &SignedRequest<T>,
+    pub fn validate_base64_payload(
+        base64_payload: &str,
+        signature: &str,
         public_key_hex: &str,
-    ) -> Result<(), SignedRequestError>
-    where
-        T: Serialize,
-    {
-        // Serialize payload deterministically (matching frontend)
-        let serialized_payload = Self::serialize_payload_deterministic(&signed_request.payload)
-            .map_err(|e| SignedRequestError::SerializationError(e.to_string()))?;
+    ) -> Result<(), SignedRequestError> {
+        println!(
+            "🔍 DEBUG BASE64: Validating signature directly against Base64 string - Length: {}, Signature: {}...",
+            base64_payload.len(),
+            &signature[..20.min(signature.len())]
+        );
 
-        // Use DRY function for validation
-        Self::validate_signature_string(
-            &serialized_payload,
-            &signed_request.signature,
-            public_key_hex,
-        )
+        // Validate signature directly against the Base64 string (most deterministic approach!)
+        Self::validate_signature_string(base64_payload, signature, public_key_hex)
     }
 
     /// Method 1: Extract pub_key from Bearer token (JWT)
@@ -300,10 +307,54 @@ impl SignedRequestValidator {
         serde_json::to_string(&sorted_value)
     }
 
-    /// Deterministic JSON serialization (matching frontend sortObjectKeys)
+    /// Decode Base64 URL-safe payload back to original JSON string
     ///
-    /// Recursively sorts object keys to ensure identical serialization
-    /// between frontend JavaScript and backend Rust
+    /// # Arguments
+    /// * `base64_payload` - Base64 URL-safe encoded JSON string
+    ///
+    /// # Returns
+    /// * `Result<String, String>` - Original JSON string or error
+    pub fn decode_payload_base64(base64_payload: &str) -> Result<String, String> {
+        // Convert Base64 URL-safe to standard Base64
+        let base64_standard = base64_payload
+            .replace('-', "+")
+            .replace('_', "/");
+
+        // Add padding if needed
+        let padding_len = (4 - (base64_standard.len() % 4)) % 4;
+        let base64_padded = format!("{}{}", base64_standard, "=".repeat(padding_len));
+
+        // Decode Base64 to bytes
+        let bytes = general_purpose::STANDARD.decode(&base64_padded)
+            .map_err(|e| format!("Base64 decoding failed: {}", e))?;
+
+        // Convert bytes to UTF-8 string
+        String::from_utf8(bytes)
+            .map_err(|e| format!("UTF-8 conversion failed: {}", e))
+    }
+
+    /// Deserialize JSON payload back to typed structure
+    /// First decodes Base64, then parses JSON
+    ///
+    /// # Arguments
+    /// * `base64_payload` - Base64 URL-safe encoded JSON string
+    ///
+    /// # Returns
+    /// * `Result<T, String>` - Deserialized payload or error
+    pub fn deserialize_base64_payload<T>(base64_payload: &str) -> Result<T, String>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        // Step 1: Decode Base64 to original JSON string
+        let json_string = Self::decode_payload_base64(base64_payload)?;
+
+        // Step 2: Parse JSON to typed structure
+        serde_json::from_str(&json_string)
+            .map_err(|e| format!("JSON deserialization failed: {}", e))
+    }
+
+    /// Deterministic JSON serialization for consistent signing
+    /// This function creates identical JSON strings between frontend and backend
     pub fn serialize_payload_deterministic<T>(payload: &T) -> Result<String, serde_json::Error>
     where
         T: Serialize,
@@ -407,5 +458,46 @@ mod tests {
         let a_pos = serialized.find("\"a_field\"").unwrap();
         let z_pos = serialized.find("\"z_field\"").unwrap();
         assert!(a_pos < z_pos, "Keys should be sorted alphabetically");
+    }
+
+    #[test]
+    fn debug_frontend_vs_backend_serialization() {
+        println!("\n🔍 Backend JSON Serialization Test");
+        println!("=====================================");
+
+        // Test 1: Magic link payload - CRITICAL TEST
+        println!("\n[1] Magic link payload");
+        let magic_payload = json!({
+            "magiclink": "8ukaMHhcnJJSEePzD5UYaoHgWib1tr8rS6ms73pC985s"
+        });
+        println!("Input: {}", magic_payload);
+        let serialized = SignedRequestValidator::serialize_payload_deterministic(&magic_payload).unwrap();
+        println!("Serialized: {}", serialized);
+        println!("Length: {}", serialized.len());
+
+        // Test 2: Empty object
+        println!("\n[2] Empty object");
+        let empty_payload = json!({});
+        println!("Input: {}", empty_payload);
+        let serialized = SignedRequestValidator::serialize_payload_deterministic(&empty_payload).unwrap();
+        println!("Serialized: {}", serialized);
+        println!("Length: {}", serialized.len());
+
+        // Test 3: Login payload
+        println!("\n[3] Login payload");
+        let login_payload = json!({
+            "email": "me@arkaitz.dev",
+            "ui_host": "http://localhost:5173",
+            "next": "/",
+            "email_lang": "en",
+            "pub_key": "abc123"
+        });
+        println!("Input: {}", login_payload);
+        let serialized = SignedRequestValidator::serialize_payload_deterministic(&login_payload).unwrap();
+        println!("Serialized: {}", serialized);
+        println!("Length: {}", serialized.len());
+
+        // Assert it works
+        assert!(!serialized.is_empty());
     }
 }

@@ -25,7 +25,7 @@ export function encodeNextToBase58(nextObj: Record<string, unknown> | null): str
 
 /**
  * Handle email confirmation for authentication
- * Sends magic link request with next parameter
+ * Sends magic link request with next parameter using universal signed request
  */
 export async function handleEmailConfirmation(
 	email: string,
@@ -40,29 +40,20 @@ export async function handleEmailConfirmation(
 		// Encode nextObject to Base58 for backend
 		const nextBase58 = encodeNextToBase58(nextObject);
 
-		const requestBody = {
+		const requestPayload = {
 			email: email,
 			ui_host: currentHost,
 			...(nextBase58 && { next: nextBase58 })
 		};
 
-		const response = await fetch('/api/login/', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(requestBody)
-		});
+		// Use universal signed POST request (first signed response to extract server_pub_key)
+		const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
+		await httpSignedPOSTRequest('/api/login/', requestPayload, true);
 
-		if (response.ok) {
-			// Magic link sent successfully
-			onSuccess();
-		} else {
-			// Error sending magic link
-			onError('common.sendError');
-		}
+		// Magic link sent successfully
+		onSuccess();
 	} catch (error) {
-		console.error('Error sending magic link:', error);
+		console.error('Error sending signed magic link request:', error);
 		onError('common.connectionError');
 	}
 }

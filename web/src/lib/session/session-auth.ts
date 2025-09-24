@@ -14,12 +14,14 @@ export async function getAuthData(): Promise<{
 	user: { user_id: string; isAuthenticated: boolean } | null;
 	access_token: string | null;
 	expires_at: number | null;
+	server_pub_key: string | null;
 }> {
 	const session = await sessionDB.getSession();
 	return {
 		user: session.auth_user,
 		access_token: session.access_token,
-		expires_at: session.token_expires_at
+		expires_at: session.token_expires_at,
+		server_pub_key: session.server_pub_key
 	};
 }
 
@@ -47,6 +49,32 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
+ * Set server public key for signed response validation
+ */
+export async function setServerPubKey(serverPubKey: string): Promise<void> {
+	await sessionDB.updateSession({
+		server_pub_key: serverPubKey
+	});
+}
+
+/**
+ * Get server public key for signed response validation
+ */
+export async function getServerPubKey(): Promise<string | null> {
+	const session = await sessionDB.getSession();
+	return session.server_pub_key;
+}
+
+/**
+ * Clear server public key (called during logout)
+ */
+export async function clearServerPubKey(): Promise<void> {
+	await sessionDB.updateSession({
+		server_pub_key: null
+	});
+}
+
+/**
  * Clear auth data only, PRESERVE user preferences (for preventive cleanup)
  */
 export async function clearAuthData(): Promise<void> {
@@ -60,6 +88,7 @@ export async function clearAuthData(): Promise<void> {
 	session.auth_user = null;
 	session.access_token = null;
 	session.token_expires_at = null;
+	session.server_pub_key = null; // Clear server public key on logout
 	session.authFlow.pending_email = null;
 
 	// Keep userPreferences intact for UX

@@ -23,14 +23,22 @@ export class ApiError extends Error {
 }
 
 /**
- * Handle JSON response with consistent error handling
+ * Handle JSON response with STRICT SignedResponse validation
+ *
+ * ALL responses (except /api/version) MUST be SignedResponse
+ * No fallback - redirects to "/" on validation failure
  */
 export async function handleJsonResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
 		const errorText = await response.text();
 		throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
 	}
-	return response.json();
+
+	const responseData = await response.json();
+
+	// STRICT validation - NO fallback for security
+	const { handleSignedResponseStrict } = await import('../universalSignedResponseHandler');
+	return await handleSignedResponseStrict<T>(responseData, false);
 }
 
 /**
@@ -52,62 +60,4 @@ export function buildSearchParams(params: Record<string, unknown>): URLSearchPar
 	});
 
 	return searchParams;
-}
-
-/**
- * Generic GET request handler with Ed25519 signature validation
- */
-export async function handleGetRequest<T>(
-	endpoint: string,
-	params: Record<string, unknown>,
-	// eslint-disable-next-line no-unused-vars
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<T> {
-	// Convert parameters to string format for signing
-	const stringParams: Record<string, string> = {};
-	Object.entries(params).forEach(([key, value]) => {
-		if (value !== undefined && value !== null) {
-			if (typeof value === 'boolean') {
-				stringParams[key] = value.toString();
-			} else if (typeof value === 'number') {
-				stringParams[key] = value.toString();
-			} else if (typeof value === 'string') {
-				stringParams[key] = value;
-			}
-		}
-	});
-
-	// Generate Ed25519 signature for query parameters
-	const { signQueryParams } = await import('../signedRequest');
-	const signature = await signQueryParams(stringParams);
-
-	// Add signature to parameters
-	const signedParams = { ...stringParams, signature };
-
-	// Build final URL with all parameters including signature
-	const searchParams = new URLSearchParams(signedParams);
-	const url = `${endpoint}?${searchParams}`;
-
-	const response = await authenticatedFetch(url);
-	return await handleJsonResponse<T>(response);
-}
-
-/**
- * Generic POST request handler (DRY for seed endpoints)
- */
-export async function handlePostRequest<T>(
-	endpoint: string,
-	body: unknown,
-	// eslint-disable-next-line no-unused-vars
-	authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>
-): Promise<T> {
-	const response = await authenticatedFetch(endpoint, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify(body)
-	});
-
-	return await handleJsonResponse<T>(response);
 }

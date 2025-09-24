@@ -11,7 +11,8 @@ use super::{SignedRequest, SignedRequestValidator};
 use crate::utils::auth::ErrorResponse;
 
 /// Universal payload wrapper for protected endpoints
-pub type ProtectedSignedRequest<T> = SignedRequest<T>;
+/// CORRECTED: No longer generic since SignedRequest uses Base64-encoded JSON payload
+pub type ProtectedSignedRequest = SignedRequest;
 
 /// Protected endpoint middleware result
 pub struct ProtectedEndpointResult<T> {
@@ -86,8 +87,8 @@ impl ProtectedEndpointMiddleware {
             Err(response) => return Err(response),
         };
 
-        // Step 2: Parse signed request from body
-        let signed_request: ProtectedSignedRequest<T> = match serde_json::from_slice(body_bytes) {
+        // Step 2: Parse signed request from body (now with Base64-encoded JSON payload)
+        let signed_request: ProtectedSignedRequest = match serde_json::from_slice(body_bytes) {
             Ok(req) => req,
             Err(e) => {
                 println!("🔍 DEBUG: Failed to parse SignedRequest: {}", e);
@@ -104,8 +105,12 @@ impl ProtectedEndpointMiddleware {
             }
         };
 
-        // Step 3: Validate Ed25519 signature using JWT pub_key
-        if let Err(e) = SignedRequestValidator::validate(&signed_request, &pub_key_hex) {
+        // Step 3: Validate Ed25519 signature using JWT pub_key (Base64 payload)
+        if let Err(e) = SignedRequestValidator::validate_base64_payload(
+            &signed_request.payload,
+            &signed_request.signature,
+            &pub_key_hex
+        ) {
             println!("🔍 DEBUG: SignedRequest validation failed: {}", e);
             return Err(Response::builder()
                 .status(401)
@@ -124,8 +129,28 @@ impl ProtectedEndpointMiddleware {
             user_id
         );
 
+        // Step 4: Deserialize Base64-encoded JSON payload to typed structure
+        let deserialized_payload: T = match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
+            Ok(payload) => payload,
+            Err(e) => {
+                println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
+                return Err(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(
+                        serde_json::to_string(&ErrorResponse {
+                            error: format!("Invalid payload format: {}", e),
+                        })
+                        .unwrap_or_default(),
+                    )
+                    .build());
+            }
+        };
+
+        println!("✅ Msgpack payload deserialized successfully");
+
         Ok(ProtectedEndpointResult {
-            payload: signed_request.payload,
+            payload: deserialized_payload,
             user_id,
         })
     }

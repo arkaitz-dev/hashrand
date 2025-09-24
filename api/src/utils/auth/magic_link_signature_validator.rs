@@ -5,9 +5,11 @@
 
 use hex;
 use spin_sdk::http::Response;
+use serde_json::json;
 
 use super::types::ErrorResponse;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
+use crate::utils::signed_request::SignedRequestValidator;
 
 /// Verify Ed25519 signature for magic link authentication
 ///
@@ -15,28 +17,39 @@ use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
 /// The signature proves possession of the private key corresponding to the public key
 /// embedded in the magic link token.
 ///
+/// CORRECTED BASE64 APPROACH: Verifies Base64 payload signature directly.
+/// Frontend signs the Base64 payload string directly - backend verifies against same string.
+/// NO RECREATION NEEDED - we already have what was signed!
+///
 /// # Arguments
-/// * `magic_token` - The magic link token that was signed
+/// * `base64_payload` - The Base64 payload string that was signed by frontend
 /// * `signature_hex` - The Ed25519 signature as hex string
 /// * `pub_key_bytes` - The Ed25519 public key bytes (32 bytes)
 ///
 /// # Returns
 /// * `Result<(), Response>` - Success or error response
 pub fn verify_magic_link_signature(
-    magic_token: &str,
+    base64_payload: &str,
     signature_hex: &str,
     pub_key_bytes: &[u8; 32],
 ) -> Result<(), Response> {
     println!(
-        "🔍 DEBUG Ed25519: Verifying signature for magic link token: {}",
-        magic_token
+        "🔍 DEBUG Ed25519: Verifying signature for Base64 payload: {}...",
+        &base64_payload[..base64_payload.len().min(50)]
     );
 
     // Convert pub_key_array to hex string for verification
     let pub_key_hex = hex::encode(pub_key_bytes);
+    println!("🔍 DEBUG: Using pub_key_hex for verification: {}", pub_key_hex);
 
-    // The message that was signed is the magic link token itself
-    let message_to_verify = magic_token.as_bytes();
+    // CORRECTED: Verify signature directly against the Base64 payload received from frontend!
+    // NO NEED TO RECREATE ANYTHING - we already have what was signed!
+    println!("🔍 DEBUG BASE64: Verifying signature against received Base64 payload (length {}): {}...",
+             base64_payload.len(),
+             &base64_payload[..base64_payload.len().min(100)]);
+
+    // The message that was signed is the Base64 payload we received - USE IT DIRECTLY!
+    let message_to_verify = base64_payload.as_bytes();
 
     // Perform Ed25519 signature verification
     let signature_verification_result =

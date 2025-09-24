@@ -18,7 +18,15 @@ export {
 } from './session-crypto';
 
 // Authentication data management
-export { getAuthData, setAuthData, isAuthenticated, clearAuthData } from './session-auth';
+export {
+	getAuthData,
+	setAuthData,
+	isAuthenticated,
+	clearAuthData,
+	setServerPubKey,
+	getServerPubKey,
+	clearServerPubKey
+} from './session-auth';
 
 // User preferences management
 export {

@@ -11,6 +11,7 @@ use super::{
     magic_link_request_parser::{extract_request_data, parse_validation_request},
     magic_link_signature_validator::verify_magic_link_signature,
     magic_link_token_processor::validate_and_extract_token_data,
+    types::ErrorResponse,
 };
 
 /// Validate magic link with Ed25519 signature verification (secure POST endpoint)
@@ -37,7 +38,21 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
     };
 
     // Step 2: Extract magic token and signature from request
-    let (magic_token, signature_hex) = extract_request_data(&signed_request);
+    let (magic_token, signature_hex) = match extract_request_data(&signed_request) {
+        Ok(data) => data,
+        Err(e) => {
+            println!("❌ DEBUG: Failed to extract request data: {}", e);
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(
+                    serde_json::to_string(&ErrorResponse {
+                        error: format!("Invalid request format: {}", e),
+                    })?
+                )
+                .build());
+        }
+    };
 
     // Step 3: Validate magic link token and extract embedded data
     let token_data = match validate_and_extract_token_data(&magic_token) {
@@ -47,7 +62,7 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
 
     // Step 4: Verify Ed25519 signature (critical security step)
     if let Err(error_response) = verify_magic_link_signature(
-        &magic_token,
+        &signed_request.payload, // Pass the Base64 payload directly!
         &signature_hex,
         &token_data.pub_key_bytes,
     ) {
