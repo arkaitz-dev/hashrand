@@ -13,7 +13,9 @@
 	import { goto, replaceState } from '$app/navigation';
 	import DialogContainer from '$lib/components/DialogContainer.svelte';
 	import VersionFooter from '$lib/components/VersionFooter.svelte';
+	import UpdateButton from '$lib/components/UpdateButton.svelte';
 	import { parseNextParameterJson } from '$lib/utils/navigation';
+	import { initializeVersionCheck, restoreSessionState } from '$lib/stores/version-update';
 
 	let { children } = $props();
 
@@ -132,6 +134,12 @@
 		// Initialize sprite preload detection
 		initializeSpriteLoader();
 
+		// Initialize version checking system
+		initializeVersionCheck();
+
+		// Restore session state if coming from update reload
+		restoreSessionState();
+
 		return unsubscribe;
 	});
 
@@ -228,6 +236,9 @@
 <main class="min-h-screen relative">
 	<!-- Top Controls Container -->
 	<TopControls />
+
+	<!-- Update Button - appears when new frontend version available -->
+	<UpdateButton />
 
 	{@render children?.()}
 </main>

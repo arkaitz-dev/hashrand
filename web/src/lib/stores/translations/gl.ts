@@ -77,7 +77,10 @@ export const gl: I18nTexts = {
 		serverError: 'Erro do servidor (500)',
 		clientError: 'Erro do cliente ({status})',
 		genericError: 'Erro ({status})',
-		redirectingToHome: 'Redirixindo ao inicio...'
+		redirectingToHome: 'Redirixindo ao inicio...',
+		update: 'Actualizar',
+		updating: 'Actualizando',
+		updateAvailable: 'Actualización dispoñible'
 	},
 	menu: {
 		title: 'Xerador de Hash',

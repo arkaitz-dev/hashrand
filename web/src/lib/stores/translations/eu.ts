@@ -77,7 +77,10 @@ export const eu: I18nTexts = {
 		serverError: 'Zerbitzariaren errorea (500)',
 		clientError: 'Bezeroaren errorea ({status})',
 		genericError: 'Errorea ({status})',
-		redirectingToHome: 'Hasierara bideratzen...'
+		redirectingToHome: 'Hasierara bideratzen...',
+		update: 'Eguneratu',
+		updating: 'Eguneratzen',
+		updateAvailable: 'Eguneraketa eskuragarri'
 	},
 	menu: {
 		title: 'Hash-Sortzailea',

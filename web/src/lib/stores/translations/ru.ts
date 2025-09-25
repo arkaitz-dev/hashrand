@@ -78,7 +78,10 @@ export const ru: I18nTexts = {
 		serverError: 'Ошибка сервера (500)',
 		clientError: 'Ошибка клиента ({status})',
 		genericError: 'Ошибка ({status})',
-		redirectingToHome: 'Перенаправление на главную...'
+		redirectingToHome: 'Перенаправление на главную...',
+		update: 'Обновить',
+		updating: 'Обновление',
+		updateAvailable: 'Доступно обновление'
 	},
 	menu: {
 		title: 'Генератор хешей',

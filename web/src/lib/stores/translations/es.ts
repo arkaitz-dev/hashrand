@@ -77,7 +77,10 @@ export const es: I18nTexts = {
 		serverError: 'Error del servidor (500)',
 		clientError: 'Error del cliente ({status})',
 		genericError: 'Error ({status})',
-		redirectingToHome: 'Redirigiendo al inicio...'
+		redirectingToHome: 'Redirigiendo al inicio...',
+		update: 'Actualizar',
+		updating: 'Actualizando',
+		updateAvailable: 'Nueva versión disponible'
 	},
 	menu: {
 		title: 'Generador de Hash',

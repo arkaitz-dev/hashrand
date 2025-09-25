@@ -77,7 +77,10 @@ export const hi: I18nTexts = {
 		serverError: 'सर्वर एरर (500)',
 		clientError: 'क्लाइंट एरर ({status})',
 		genericError: 'एरर ({status})',
-		redirectingToHome: 'होम पर रिडायरेक्ट हो रहे हैं...'
+		redirectingToHome: 'होम पर रिडायरेक्ट हो रहे हैं...',
+		update: 'अपडेट',
+		updating: 'अपडेट हो रहा है',
+		updateAvailable: 'अपडेट उपलब्ध है'
 	},
 	menu: {
 		title: 'हैश जनरेटर',

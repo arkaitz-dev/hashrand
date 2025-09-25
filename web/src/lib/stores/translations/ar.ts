@@ -77,7 +77,10 @@ export const ar: I18nTexts = {
 		serverError: 'خطأ الخادم (500)',
 		clientError: 'خطأ العميل ({status})',
 		genericError: 'خطأ ({status})',
-		redirectingToHome: 'جاري التوجيه إلى الصفحة الرئيسية...'
+		redirectingToHome: 'جاري التوجيه إلى الصفحة الرئيسية...',
+		update: 'تحديث',
+		updating: 'جاري التحديث',
+		updateAvailable: 'تحديث متوفر'
 	},
 	menu: {
 		title: 'مولد الهاش',

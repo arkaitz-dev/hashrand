@@ -77,7 +77,10 @@ export const ja: I18nTexts = {
 		serverError: 'サーバーエラー (500)',
 		clientError: 'クライアントエラー ({status})',
 		genericError: 'エラー ({status})',
-		redirectingToHome: 'ホームにリダイレクト中...'
+		redirectingToHome: 'ホームにリダイレクト中...',
+		update: '更新',
+		updating: '更新中',
+		updateAvailable: '更新が利用可能'
 	},
 	menu: {
 		title: 'ハッシュ生成器',

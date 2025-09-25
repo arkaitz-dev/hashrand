@@ -76,7 +76,10 @@ export const zh: I18nTexts = {
 		serverError: '服务器错误 (500)',
 		clientError: '客户端错误 ({status})',
 		genericError: '错误 ({status})',
-		redirectingToHome: '正在重定向到主页...'
+		redirectingToHome: '正在重定向到主页...',
+		update: '更新',
+		updating: '更新中',
+		updateAvailable: '有可用更新'
 	},
 	menu: {
 		title: '哈希生成器',

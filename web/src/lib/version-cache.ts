@@ -63,7 +63,7 @@ async function readCache(): Promise<VersionCache | null> {
 /**
  * Writes version cache to IndexedDB
  */
-async function writeCache(versions: VersionResponse): Promise<void> {
+export async function writeCache(versions: VersionResponse): Promise<void> {
 	try {
 		const db = await openDB();
 		const cache: VersionCache = {
