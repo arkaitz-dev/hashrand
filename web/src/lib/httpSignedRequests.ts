@@ -22,6 +22,8 @@ export class HttpSignedRequestError extends Error {
 	}
 }
 
+// TODO: Implement reactive 401 handling when integrating with HTTP request functions
+
 /**
  * Universal signed POST request
  *
@@ -169,7 +171,7 @@ export async function httpAuthenticatedSignedPOSTRequest<TRequest, TResponse>(
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${authData.access_token}`
+				Authorization: `Bearer ${authData.access_token}`
 			},
 			body: JSON.stringify(signedRequest)
 		});
@@ -237,7 +239,7 @@ export async function httpAuthenticatedSignedGETRequest<TResponse>(
 		// Send authenticated signed GET request
 		const response = await fetch(url, {
 			headers: {
-				'Authorization': `Bearer ${authData.access_token}`
+				Authorization: `Bearer ${authData.access_token}`
 			}
 		});
 

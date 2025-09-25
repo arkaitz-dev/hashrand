@@ -19,7 +19,7 @@ export {
 } from './auth-cleanup';
 
 // Session validation
-export { checkSessionValidity, ensureAuthenticated } from './auth-session';
+export { checkSessionValidity, hasLocalAuthTokens } from './auth-session';
 
 // Authentication actions
 export { requestMagicLink, validateMagicLink, logout } from './auth-actions';

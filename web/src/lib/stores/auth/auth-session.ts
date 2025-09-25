@@ -1,12 +1,40 @@
 /**
  * Auth Session Module - Session Management and Validation
  *
- * Single Responsibility: Handle session validation and automatic refresh logic
+ * REFACTORED: Moved from proactive (HTTP calls "just in case") to reactive (HTTP only when server requires)
+ * Single Responsibility: Handle session validation and local token checking
  * Part of auth.ts refactorization to apply SOLID principles
  */
 
-import { hasCryptoTokens, hasValidRefreshCookie } from './auth-crypto-tokens';
+import {
+	hasCryptoTokens,
+	hasValidRefreshCookie
+} from './auth-crypto-tokens';
 import { clearSensitiveAuthDataWithMessage } from './auth-cleanup';
+
+/**
+ * Check if user has local auth tokens (NO HTTP calls, NO validation)
+ *
+ * CORRECTED APPROACH: Frontend CANNOT validate tokens - only check existence
+ * Only backend can determine if tokens are valid/expired/invalid
+ * UI shows "authenticated" based on local existence only
+ *
+ * @returns Promise<boolean> - true if we have local access token and user data (existence only)
+ */
+export async function hasLocalAuthTokens(): Promise<boolean> {
+	if (typeof window === 'undefined') return false;
+
+	try {
+		const { sessionManager } = await import('../../session-manager');
+		const authData = await sessionManager.getAuthData();
+
+		// Only check EXISTENCE - never validity (that's server's job)
+		return !!(authData.access_token && authData.user?.user_id);
+	} catch {
+		// Failed to read from IndexedDB - assume no tokens
+		return false;
+	}
+}
 
 /**
  * Check session validity and handle expired refresh cookies
@@ -41,43 +69,24 @@ export async function checkSessionValidity(): Promise<void> {
 }
 
 /**
- * Ensure authentication by trying refresh only if no access token exists
- * Returns true if authenticated (or after successful refresh), false if needs login
+ * DEPRECATED: ensureAuthenticated() - REMOVED for reactive architecture
+ *
+ * OLD PROACTIVE APPROACH (inefficient):
+ * - Made HTTP calls "just in case" before every operation
+ * - Caused unnecessary /api/refresh calls
+ * - Frontend tried to predict if tokens were valid (impossible)
+ *
+ * NEW REACTIVE APPROACH (efficient):
+ * - UI: Use hasLocalAuthTokens() - no HTTP, just existence check
+ * - API: Make normal HTTP calls with existing tokens
+ * - Server: Returns 401 "expired" → automatic refresh → retry
+ * - Server: Returns 401 "invalid" → clear session → login dialog
+ *
+ * This function is REMOVED because frontend cannot and should not
+ * validate tokens proactively. Only server knows if tokens are valid.
  */
-export async function ensureAuthenticated(): Promise<boolean> {
-	// Check if we already have access token in IndexedDB
-	try {
-		const { sessionManager } = await import('../../session-manager');
-		const authData = await sessionManager.getAuthData();
 
-		if (authData.access_token && authData.user) {
-			// We have tokens - backend will validate expiration
-			if (authData.user.isAuthenticated && authData.user.user_id) {
-				return true; // Valid session exists - NO refresh needed
-			}
-		}
-	} catch {
-		// Failed to load auth data from IndexedDB
-		// Clear invalid data and continue to refresh
-		await clearSensitiveAuthDataWithMessage();
-	}
-
-	// No valid access token found, attempting automatic refresh
-
-	try {
-		// Import api to avoid circular dependencies
-		const { api } = await import('../../api');
-		const refreshSuccess = await api.refreshToken();
-
-		if (refreshSuccess) {
-			// Automatic refresh successful
-			return true;
-		} else {
-			// Automatic refresh failed - login required
-			return false;
-		}
-	} catch {
-		// Refresh attempt failed
-		return false;
-	}
-}
+// export async function ensureAuthenticated(): Promise<boolean> {
+// 	// REMOVED - This pattern was inefficient and conceptually wrong
+// 	// See above comment for the new reactive approach
+// }

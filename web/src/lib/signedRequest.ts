@@ -56,7 +56,7 @@ export function decodePayloadBase64(base64String: string): string {
 	const base64 = base64String
 		.replace(/-/g, '+')
 		.replace(/_/g, '/')
-		.padEnd(base64String.length + (4 - (base64String.length % 4)) % 4, '=');
+		.padEnd(base64String.length + ((4 - (base64String.length % 4)) % 4), '=');
 
 	// Decode Base64 to bytes and convert back to string
 	const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
@@ -104,10 +104,7 @@ export async function createSignedRequest<T>(payload: T): Promise<SignedRequest>
 
 	// Step 1: Serialize payload to deterministic JSON
 	const jsonPayload = serializePayload(payload);
-	console.log(
-		'🔍 JSON FRONTEND: Serialized payload to JSON length:',
-		jsonPayload.length
-	);
+	console.log('🔍 JSON FRONTEND: Serialized payload to JSON length:', jsonPayload.length);
 
 	// Step 2: Encode JSON as Base64 URL-safe for transmission
 	const base64Payload = encodePayloadBase64(jsonPayload);

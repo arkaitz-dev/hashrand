@@ -6,7 +6,6 @@
 	import { clearResult } from '$lib/stores/result';
 	import { _ } from '$lib/stores/i18n';
 	import MenuCard from '$lib/components/MenuCard.svelte';
-	import Footer from '$lib/components/Footer.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { authStore } from '$lib/stores/auth';
 
@@ -111,8 +110,5 @@
 				/>
 			{/each}
 		</div>
-
-		<!-- Footer with Version Information -->
-		<Footer />
 	</div>
 </div>

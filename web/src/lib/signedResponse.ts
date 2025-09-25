@@ -6,7 +6,7 @@
  */
 
 import { ed25519 } from '@noble/curves/ed25519.js';
-import { sortObjectKeys, serializePayload, decodePayloadBase64 } from './signedRequest';
+import { sortObjectKeys, decodePayloadBase64 } from './signedRequest';
 
 /**
  * Universal signed response structure from backend
@@ -107,7 +107,9 @@ export class SignedResponseValidator {
 		// Step 3: Parse JSON back to typed object
 		try {
 			const deserializedPayload = JSON.parse(originalJsonPayload) as T;
-			console.log('✅ BASE64 FRONTEND: Signature verified against Base64, data extracted from JSON');
+			console.log(
+				'✅ BASE64 FRONTEND: Signature verified against Base64, data extracted from JSON'
+			);
 			return deserializedPayload;
 		} catch (e) {
 			throw new SignedResponseError(`JSON parsing failed: ${e}`);
@@ -140,7 +142,11 @@ export class SignedResponseValidator {
 				const originalJsonPayload = decodePayloadBase64(signedResponse.payload);
 				const deserializedPayload = JSON.parse(originalJsonPayload) as Record<string, unknown>;
 
-				if (deserializedPayload && typeof deserializedPayload === 'object' && 'server_pub_key' in deserializedPayload) {
+				if (
+					deserializedPayload &&
+					typeof deserializedPayload === 'object' &&
+					'server_pub_key' in deserializedPayload
+				) {
 					const serverKey = deserializedPayload.server_pub_key;
 					if (typeof serverKey === 'string' && this.isValidHexKey(serverKey, 64)) {
 						return serverKey;

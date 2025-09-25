@@ -5,8 +5,7 @@
  * Part of api.ts refactorization to apply SRP and organize by domain
  */
 
-import type { LoginResponse, MagicLinkResponse, AuthError } from '../types';
-import { ApiError } from './api-helpers';
+import type { LoginResponse, MagicLinkResponse } from '../types';
 
 const API_BASE = '/api';
 
@@ -51,7 +50,11 @@ export async function requestMagicLink(
 
 	// Use universal signed POST request (first signed response to extract server_pub_key)
 	const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
-	return await httpSignedPOSTRequest<typeof payload, MagicLinkResponse>(`${API_BASE}/login/`, payload, true);
+	return await httpSignedPOSTRequest<typeof payload, MagicLinkResponse>(
+		`${API_BASE}/login/`,
+		payload,
+		true
+	);
 }
 
 /**
@@ -105,7 +108,7 @@ export async function refreshToken(): Promise<boolean> {
 	try {
 		// Use universal signed POST request with empty payload and credentials for HttpOnly cookies
 		const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
-		const data = await httpSignedPOSTRequest<Record<string, never>, any>(
+		const data = await httpSignedPOSTRequest<Record<string, never>, LoginResponse>(
 			`${API_BASE}/refresh`,
 			{},
 			false,
@@ -135,7 +138,10 @@ export async function refreshToken(): Promise<boolean> {
 		return true;
 	} catch (error) {
 		// Check for dual token expiry in the error
-		if (error instanceof Error && error.message.includes('Both access and refresh tokens have expired')) {
+		if (
+			error instanceof Error &&
+			error.message.includes('Both access and refresh tokens have expired')
+		) {
 			// DUAL EXPIRY detected during refresh
 			await handleDualTokenExpiry();
 		}
@@ -144,26 +150,7 @@ export async function refreshToken(): Promise<boolean> {
 	}
 }
 
-/**
- * Check if a 401 response indicates dual token expiry (both access and refresh tokens expired)
- */
-async function isDualTokenExpiry(response: Response): Promise<boolean> {
-	if (response.status !== 401) return false;
-
-	try {
-		// Clone response to read body without consuming it
-		const responseClone = response.clone();
-		const errorData = await responseClone.json();
-
-		// Check for dual expiry message from backend
-		return !!(
-			errorData.error && errorData.error.includes('Both access and refresh tokens have expired')
-		);
-	} catch {
-		// If parsing fails, it's not a dual expiry response
-		return false;
-	}
-}
+// Function removed - was not being used anywhere in the codebase
 
 /**
  * Handle dual token expiry scenario

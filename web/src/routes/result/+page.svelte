@@ -4,7 +4,6 @@
 	import { page } from '$app/stores';
 	import BackButton from '$lib/components/BackButton.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import Footer from '$lib/components/Footer.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import Iconize from '$lib/components/Iconize.svelte';
 	import DateTimeLocalized from '$lib/components/DateTimeLocalized.svelte';
@@ -62,15 +61,10 @@
 
 	// Function to generate result from URL parameters
 	async function generateFromParams() {
-		// Verify auth is available with automatic refresh if needed
+		// REACTIVE APPROACH: No proactive auth checks
+		// If tokens are invalid/expired, the API call will get 401
+		// and reactive interceptor will handle refresh/login automatically
 		const { authStore } = await import('$lib/stores/auth');
-		const isAuthenticated = await authStore.ensureAuthenticated();
-
-		if (!isAuthenticated) {
-			// Not authenticated, redirecting to home
-			goto('/');
-			return;
-		}
 
 		// First try to decrypt encrypted parameters
 		let urlParams: Record<string, unknown> = {};
@@ -829,9 +823,6 @@
 					</div>
 				</div>
 			</div>
-
-			<!-- Footer with Version Information -->
-			<Footer />
 		</div>
 	</div>
 
@@ -853,9 +844,6 @@
 				</p>
 				<BackButton to="/" />
 			</div>
-
-			<!-- Footer with Version Information -->
-			<Footer />
 		</div>
 	</div>
 {/if}

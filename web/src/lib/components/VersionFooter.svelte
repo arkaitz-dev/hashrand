@@ -1,18 +1,26 @@
+<!--
+	VersionFooter - Intelligent cached version display
+
+	Features:
+	- IndexedDB cache with 24-hour expiration
+	- Single API call per day maximum
+	- Fallback to direct fetch if cache fails
+	- Same visual design as original Footer
+-->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { _ } from '$lib/stores/i18n';
 	import Icon from './Icon.svelte';
 	import type { VersionResponse } from '$lib/types';
+	import { getVersionWithCache } from '$lib/version-cache';
 
 	let versions: VersionResponse | null = null;
 	let loadingVersion = false;
 
 	onMount(async () => {
-		// Load version info from API
 		try {
 			loadingVersion = true;
-			const { api } = await import('$lib/api');
-			versions = await api.getVersion();
+			versions = await getVersionWithCache();
 		} catch (error) {
 			console.error('Failed to load versions:', error);
 		} finally {

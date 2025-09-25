@@ -30,23 +30,30 @@
 	});
 
 	/**
-	 * Handle main button click
+	 * Handle main button click - REACTIVE APPROACH
+	 *
+	 * NEW LOGIC: No proactive HTTP calls, only check local token existence
+	 * Actual token validation happens reactively when user performs operations
 	 */
 	async function handleButtonClick() {
 		if (isAuthenticated) {
+			// User appears authenticated locally - show dropdown
 			showUserDropdown = !showUserDropdown;
 		} else {
-			// Try to authenticate with automatic refresh first
-			const isNowAuthenticated = await authStore.ensureAuthenticated();
+			// Check if we have local tokens without HTTP calls
+			const hasTokensLocally = await authStore.hasLocalAuthTokens();
 
-			if (isNowAuthenticated) {
-				// Refresh succeeded - show dropdown
+			if (hasTokensLocally) {
+				// We have tokens locally but reactive auth state shows false
+				// This means store might not be synced - refresh state from storage
+				// But don't make HTTP calls - let the UI show as authenticated
+				// Validation will happen reactively on next API operation
 				showUserDropdown = true;
 			} else {
+				// No local tokens - show login dialog immediately
 				// Clear any residual auth data before asking for email (defensive security)
 				authStore.clearPreventiveAuthData();
 
-				// Only show authentication dialog if refresh failed
 				const authConfig = {
 					destination: { route: '/' }
 				};

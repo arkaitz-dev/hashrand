@@ -11,7 +11,7 @@ import {
 	loadAuthFromStorage,
 	clearPreventiveAuthData,
 	checkSessionValidity,
-	ensureAuthenticated,
+	hasLocalAuthTokens,
 	requestMagicLink as requestMagicLinkAction,
 	validateMagicLink as validateMagicLinkAction,
 	logout as logoutAction,
@@ -98,14 +98,16 @@ export const authStore = {
 	},
 
 	/**
-	 * Ensure authentication by trying refresh only if no access token exists
-	 * Returns true if authenticated (or after successful refresh), false if needs login
+	 * Check if user has authentication tokens locally (NO HTTP calls)
+	 *
+	 * NEW REACTIVE APPROACH: Only check local existence, never validate
+	 * UI uses this to show authenticated state
+	 * Actual validation happens reactively when server responds to HTTP calls
+	 *
+	 * @returns Promise<boolean> - true if local auth tokens exist
 	 */
-	async ensureAuthenticated(): Promise<boolean> {
-		const result = await ensureAuthenticated();
-		// Refresh store state after potential token changes
-		await refreshStoreFromStorage();
-		return result;
+	async hasLocalAuthTokens(): Promise<boolean> {
+		return await hasLocalAuthTokens();
 	},
 
 	/**

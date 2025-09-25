@@ -2,7 +2,6 @@
 	// import { goto } from '$app/navigation'; // REPLACED by useGenerationWorkflow
 	// import { onMount } from 'svelte'; // REPLACED by useFormParams
 	// import { page } from '$app/stores'; // REPLACED by useFormParams
-	import Footer from '$lib/components/Footer.svelte';
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
@@ -341,8 +340,5 @@
 				</form>
 			</div>
 		</div>
-
-		<!-- Footer with Version Information -->
-		<Footer />
 	</div>
 </div>

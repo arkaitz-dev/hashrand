@@ -12,7 +12,6 @@
 
 import { goto } from '$app/navigation';
 import { authStore } from '$lib/stores/auth';
-import { dialogStore } from '$lib/stores/dialog';
 import { createEncryptedUrl } from '$lib/crypto';
 
 export interface GenerationConfig<T = Record<string, unknown>> {
@@ -27,6 +26,7 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 
 	/**
 	 * Main generation handler - unified for all endpoints
+	 * REACTIVE APPROACH: No proactive auth checks, let HTTP calls handle authentication
 	 */
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -35,32 +35,11 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 			return;
 		}
 
-		// Verify authentication with automatic refresh
-		const isAuthenticated = await authStore.ensureAuthenticated();
+		// REACTIVE APPROACH: Skip proactive authentication check
+		// If user isn't authenticated, the result page API call will get 401
+		// and reactive interceptor will handle refresh/login automatically
 
-		if (!isAuthenticated) {
-			// Store parameters for post-auth generation
-			const params = config.getParams();
-			pendingGenerationParams = {
-				endpoint: config.endpoint,
-				...params,
-				...(config.urlProvidedSeed && { seed: config.urlProvidedSeed })
-			};
-
-			// Clear any residual auth data before asking for email (defensive security)
-			authStore.clearPreventiveAuthData();
-
-			const authConfig = {
-				destination: {
-					route: '/result',
-					params: pendingGenerationParams
-				}
-			};
-			dialogStore.show('auth', authConfig);
-			return;
-		}
-
-		// User authenticated - proceed with generation
+		// Proceed directly with generation
 		await performGeneration();
 	}
 

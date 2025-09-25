@@ -12,6 +12,7 @@
 	import { authStore } from '$lib/stores/auth';
 	import { goto, replaceState } from '$app/navigation';
 	import DialogContainer from '$lib/components/DialogContainer.svelte';
+	import VersionFooter from '$lib/components/VersionFooter.svelte';
 	import { parseNextParameterJson } from '$lib/utils/navigation';
 
 	let { children } = $props();
@@ -230,6 +231,9 @@
 
 	{@render children?.()}
 </main>
+
+<!-- Version Footer - Global for all pages -->
+<VersionFooter />
 
 <!-- Global Dialog Container -->
 <DialogContainer />
