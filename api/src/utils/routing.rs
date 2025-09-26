@@ -1,8 +1,8 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_from_seed, handle_login,
-    handle_mnemonic_request, handle_password_request, handle_version,
+    handle_api_key_request, handle_from_seed, handle_login, handle_mnemonic_request,
+    handle_password_request, handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
@@ -122,7 +122,6 @@ pub async fn route_request_with_req(
         _ => handle_not_found(),
     }
 }
-
 
 /// Handles not found routes with useful information about available endpoints
 fn handle_not_found() -> anyhow::Result<Response> {

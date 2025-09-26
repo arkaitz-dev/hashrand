@@ -9,6 +9,13 @@ import { writable, derived, type Readable } from 'svelte/store';
 import { getVersionWithCache } from '$lib/version-cache';
 import type { VersionResponse } from '$lib/types';
 
+// Session backup interface
+interface SessionBackup {
+	timestamp: number;
+	currentRoute: string;
+	value?: unknown;
+}
+
 // Current versions from API
 const currentVersions = writable<VersionResponse | null>(null);
 
@@ -146,15 +153,21 @@ export async function restoreSessionState(): Promise<void> {
 		const db = await new Promise<IDBDatabase>((resolve, reject) => {
 			request.onerror = () => reject(request.error);
 			request.onsuccess = () => resolve(request.result);
+			request.onupgradeneeded = (event) => {
+				const db = (event.target as IDBOpenDBRequest).result;
+				if (!db.objectStoreNames.contains('session-state')) {
+					db.createObjectStore('session-state');
+				}
+			};
 		});
 
 		const transaction = db.transaction(['session-state'], 'readonly');
 		const store = transaction.objectStore('session-state');
 		const getRequest = store.get('pre-update-backup');
 
-		const backup = await new Promise<any>((resolve, reject) => {
+		const backup = await new Promise<SessionBackup | undefined>((resolve, reject) => {
 			getRequest.onerror = () => reject(getRequest.error);
-			getRequest.onsuccess = () => resolve(getRequest.result);
+			getRequest.onsuccess = () => resolve(getRequest.result?.value || undefined);
 		});
 
 		if (backup && Date.now() - backup.timestamp < 300000) {

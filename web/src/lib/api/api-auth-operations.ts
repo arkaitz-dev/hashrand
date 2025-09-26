@@ -126,6 +126,17 @@ export async function refreshToken(): Promise<boolean> {
 		// Update store and IndexedDB
 		authStore.updateTokens(user, data.access_token);
 
+		// Update session expiration timestamp if provided (new refresh cookie issued)
+		if (data.expires_at) {
+			try {
+				const { storeSessionExpiration } = await import('../session-storage');
+				await storeSessionExpiration(data.expires_at);
+			} catch (error) {
+				console.warn('Failed to store session expiration during refresh:', error);
+				// Non-blocking - refresh continues without persistent expiration tracking
+			}
+		}
+
 		// Note: Crypto tokens are NOT generated during refresh
 		// They are only generated during initial login (magic link validation)
 		// If tokens are missing, it means session is corrupted and should restart
@@ -166,6 +177,15 @@ async function handleDualTokenExpiry(): Promise<void> {
 
 	// Clear all crypto tokens and auth data (defensive security)
 	await authStore.clearPreventiveAuthData();
+
+	// Clear session expiration timestamp (defensive security)
+	try {
+		const { clearSessionExpiration } = await import('../session-storage');
+		await clearSessionExpiration();
+	} catch (error) {
+		console.warn('Failed to clear session expiration during dual token expiry:', error);
+		// Non-blocking - continue with auth dialog
+	}
 
 	// Show auth dialog to request new email authentication
 	const authConfig = {

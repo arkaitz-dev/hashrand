@@ -222,43 +222,25 @@ impl Ed25519Utils {
         Ok(())
     }
 
-    /// Create message for signing: email + public_key + next
-    ///
-    /// # Arguments
-    /// * `email` - User email
-    /// * `public_key_hex` - Ed25519 public key as hex string
-    /// * `next` - Next parameter (always present, "/" for default)
-    ///
-    /// # Returns
-    /// * `String` - Message to be signed
-    pub fn create_sign_message(email: &str, public_key_hex: &str, next: &str) -> String {
-        format!("{}{}{}", email, public_key_hex, next)
-    }
+    // Create message for signing: email + public_key + next
+    //
+    // # Arguments
+    // * `email` - User email
+    // * `public_key_hex` - Ed25519 public key as hex string
+    // * `next` - Next parameter (always present, "/" for default)
+    //
+    // # Returns
+    // * `String` - Message to be signed
+    // DELETED: Legacy function create_sign_message removed - was completely unused
 
-    /// Verify complete magic link request signature
-    ///
-    /// # Arguments
-    /// * `email` - User email from request
-    /// * `public_key_hex` - Ed25519 public key as hex string
-    /// * `next` - Next parameter (always present, "/" for default)
-    /// * `signature_hex` - Ed25519 signature as hex string
-    ///
-    /// # Returns
-    /// * `SignatureVerificationResult` - Verification result
-    pub fn verify_magic_link_request(
-        email: &str,
-        public_key_hex: &str,
-        next: &str,
-        signature_hex: &str,
-    ) -> SignatureVerificationResult {
-        let message = Self::create_sign_message(email, public_key_hex, next);
-        println!(
-            "🔍 DEBUG Ed25519: Verifying magic link request for email: {}",
-            email
-        );
-        println!("🔍 DEBUG Ed25519: Message to verify: {}", message);
-        Self::verify_signature_string(&message, signature_hex, public_key_hex)
-    }
+    // Verify complete magic link request signature
+    //
+    // # Arguments
+    // * `email` - User email from request
+    // * `public_key_hex` - Ed25519 public key as hex string
+    // * `next` - Next parameter (always present, "/" for default)
+    // * `signature_hex` - Ed25519 signature as hex string
+    // DELETED: Legacy function verify_magic_link_request removed - was completely unused, replaced by universal SignedRequest validation
 }
 
 #[cfg(test)]
@@ -288,20 +270,5 @@ mod tests {
             signature: "0".repeat(128),
         };
         assert!(Ed25519Utils::validate_signature_format(&invalid_data).is_err());
-    }
-
-    #[test]
-    fn test_create_sign_message() {
-        let email = "test@example.com";
-        let public_key = "a".repeat(64);
-
-        let message_with_default = Ed25519Utils::create_sign_message(email, &public_key, "/");
-        assert_eq!(message_with_default, format!("{}{}/", email, public_key));
-
-        let message_with_next = Ed25519Utils::create_sign_message(email, &public_key, "/dashboard");
-        assert_eq!(
-            message_with_next,
-            format!("{}{}/dashboard", email, public_key)
-        );
     }
 }

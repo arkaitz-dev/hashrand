@@ -4,4 +4,4 @@
 pub mod connection;
 pub mod operations;
 
-pub use connection::{get_database_connection, initialize_database};
+pub use connection::get_database_connection;

@@ -4,13 +4,177 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
-## [API v1.6.20 + Web v0.21.1] - 2025-09-25
+## [API v1.6.21 + Web v0.21.4] - 2025-09-26
+
+### 🧹 MAJOR: Legacy Code Cleanup & Architecture Refinement (API v1.6.21)
+
+**REFACTORING**: Comprehensive removal of legacy code patterns and architecture cleanup following complete migration to SignedResponse system.
+
+#### ✂️ Legacy Handler Removal
+
+- **Handlers Cleanup**: Removed all legacy `*_with_params()` handler functions from generation endpoints
+  - `handle_custom_with_params()` - Replaced by universal SignedResponse system
+  - `handle_password_with_params()` - No longer needed after Ed25519 migration
+  - `handle_api_key_with_params()` - Obsolete after SignedRequest standardization
+  - `handle_mnemonic_with_params()` - Removed in favor of unified approach
+- **Magic Link Generation**: Removed `generate_magic_link()` legacy function (kept only `generate_magic_link_signed()`)
+
+#### 🔐 Ed25519 Function Cleanup
+
+- **Signature Utilities**: Removed unused Ed25519 helper functions
+  - `create_sign_message()` - Replaced by universal SignedRequest validation
+  - `verify_magic_link_request()` - Obsolete after SignedRequest standardization
+- **Test Cleanup**: Removed `test_create_sign_message()` test for deleted function
+
+#### 🏗️ Type System Optimization
+
+- **Unused Types**: Removed experimental and unused type definitions
+  - `MagicLinkKeys` struct - Was never implemented
+  - `PublicKeyExtractor` trait - Experimental code never used
+  - `PayloadPublicKeyExtractor` - Unused implementation
+  - `SigningError` enum variants - Streamlined error handling
+- **Import Cleanup**: Removed all unused imports following code elimination
+
+#### 📏 Code Quality Improvements
+
+- **Compilation Clean**: Fixed all Rust doc comment compilation errors
+- **Format Standards**: Applied `cargo fmt` for consistent formatting
+- **Import Optimization**: Removed unused imports detected by clippy
+- **Quality Checks**: ✅ Zero warnings, full clippy compliance, formatted code
+
+**Architecture Impact**: System now exclusively uses SignedResponse pattern (except `/api/version`), eliminating all legacy dual-authentication paths and potential security confusion vectors.
+
+### 🟡 NEW FEATURE: Advanced Session Expiration Management (Web v0.21.4)
+
+**FEATURE**: Sophisticated global session expiration detection and visual feedback system with enterprise-grade user experience.
+
+#### 🌍 Global Session Status Architecture
+
+- **Centralized Store**: Created `session-status.ts` for application-wide session state management
+- **Layout Integration**: Enhanced `+layout.svelte` with automatic session verification on every route change
+- **Universal Coverage**: Session expiration checking now covers all routes (including `/`) automatically
+- **Smart Timing**: Backend JWT responses now include `expires_at` timestamp matching refresh cookie expiration
+
+#### 🎯 Proactive Session Management
+
+- **Route-Level Verification**: Every navigation triggers session validity check against stored timestamp
+- **Magic Link Integration**: Successful authentication automatically marks session as valid
+- **Real-Time Updates**: Session status updates immediately reflect across all UI components
+- **IndexedDB Integration**: Leverages existing `session-storage.ts` for persistent expiration tracking
+
+#### 🟨 Spectacular Visual Feedback System
+
+- **AuthStatusButton Enhancement**: Dynamic yellow pulsing animation when session expires
+  - 10-tone color progression (yellow-900 → yellow-300 → yellow-900)
+  - 1.5s complete cycle with smooth ease-in-out transitions
+  - Box-shadow animation synchronized with color changes
+  - Instant authentication dialog launch on expired session click
+
+#### ✨ Visual Coherence & Design System
+
+- **UpdateButton Animation**: Applied identical pulsing animation to frontend update notifications
+- **Consistent Visual Language**: Both critical UI elements now use same attention-grabbing effect
+- **Professional Polish**: White text with optimized contrast across all yellow tones
+- **Responsive Design**: Animation scales perfectly across mobile, tablet, and desktop
+- **Hover States**: Smart animation pause during user interaction with fallback colors
+
+#### 🏗️ Technical Implementation
+
+- **Clean Architecture**: Separation of concerns with dedicated stores and reactive components
+- **Performance Optimized**: CSS-only animations for maximum efficiency (no JavaScript)
+- **Cross-Browser Compatible**: Direct hex colors ensure universal browser support
+- **Accessibility Ready**: Maintains proper contrast ratios and screen reader compatibility
+
+**Files Created**: `session-status.ts`
+**Files Modified**: `+layout.svelte`, `AuthStatusButton.svelte`, `UpdateButton.svelte`, `JwtAuthResponse` (backend)
+**User Impact**: Impossible-to-miss visual feedback for session expiration with seamless renewal flow
+
+---
+
+## [API v1.6.20 + Web v0.21.3] - 2025-09-25
+
+### 🔄 NEW FEATURE: Seamless Frontend Update System (Web v0.21.3)
+
+**FEATURE**: Intelligent frontend version detection and seamless update system with zero data loss and enhanced user experience.
+
+#### ✅ Smart Version Detection
+
+- **Reactive Store**: `version-update.ts` compares API vs cached frontend versions using existing version cache system
+- **Conditional Trigger**: Only activates when cached version exists AND differs from current (prevents false positives)
+- **Cache Integration**: Leverages existing IndexedDB `version-cache.ts` for consistency
+
+#### 🟡 Prominent Update Notification
+
+- **Animated Button**: Eye-catching yellow button with continuous color-cycling animation
+- **Strategic Positioning**: Appears in corner opposite to TopControls (RTL/LTR aware)
+- **Responsive Design**: Follows existing UI patterns with `sm:` and `md:` breakpoints
+- **User-Friendly Text**: "Actualizar" with loading spinner during processing
+
+#### 💾 Zero Data Loss Architecture
+
+- **Session Backup**: Automatic IndexedDB backup before `window.location.reload()`
+- **State Preservation**: Current route, form data, and application state maintained
+- **Cookie Persistence**: JWT HttpOnly cookies survive full page reload
+- **Intelligent Restore**: 5-minute timeout with automatic cleanup
+- **Fallback Safety**: Continues with reload even if backup fails
+
+#### 🌍 Internationalization Ready
+
+- **Complete i18n**: Added translations for `common.update`, `common.updating`, `common.updateAvailable`
+- **Multi-Language**: Spanish and English support with extensible pattern
+- **Accessible**: ARIA labels and screen reader compatibility
+
+#### 🏗️ Technical Implementation
+
+- **Global Integration**: Added to `+layout.svelte` for application-wide availability
+- **Modular Architecture**: Clean separation with dedicated store and component
+- **Build Quality**: ✅ Zero compilation errors, full ESLint compliance, formatted code
+
+**Files Created**: `version-update.ts`, `UpdateButton.svelte`
+**Files Modified**: `+layout.svelte`, `es.ts`, `en.ts`, `version-cache.ts` (exported writeCache)
+**User Impact**: Effortless frontend updates with complete session preservation
+
+---
+
+## [API v1.6.20 + Web v0.21.2] - 2025-09-25 (Previous Entry)
+
+### 🚀 FRONTEND PERFORMANCE: HTTP Request Optimization (Web v0.21.2)
+
+**OPTIMIZATION**: Major frontend performance enhancement through elimination of unnecessary HTTP calls and implementation of reactive authentication patterns.
+
+#### ✅ HTTP Request Reduction
+
+- **Version Caching**: IndexedDB cache system reducing `/api/version` calls from ~6 per session to ~1 per 24 hours
+- **Reactive Authentication**: Migrated from proactive token validation to reactive pattern eliminating unnecessary `/api/login/refresh` calls
+- **DRY Architecture**: Centralized `VersionFooter` component in `+layout.svelte` eliminating code duplication across 6 pages
+
+#### 🔄 Authentication Architecture Transformation
+
+- **Key Insight**: _"Frontend cannot validate tokens, only check existence - validation is exclusively server's responsibility"_
+- **Local-Only Checks**: Created `hasLocalAuthTokens()` for existence verification (no HTTP calls)
+- **Eliminated Proactive Validation**: Removed conceptually incorrect `ensureAuthenticated()` function
+- **401 Reactive Infrastructure**: Prepared for server-initiated token refresh on actual 401 responses
+
+#### 📊 Technical Impact
+
+- **Performance**: Faster page transitions with local-first authentication checks
+- **Server Load**: Significant reduction in unnecessary API requests
+- **Code Quality**: Cleaned unused imports and improved TypeScript coverage
+- **Architecture**: Clean DRY compliance and reactive patterns
+
+**Files Created**: `version-cache.ts`, `VersionFooter.svelte`
+**Build Status**: ✅ Clean compilation with zero errors, all linting issues resolved
+
+---
+
+## [API v1.6.20 + Web v0.21.1] - 2025-09-25 (Previous Entry)
 
 ### 🔧 CRITICAL FIX: Ed25519 Signature Verification System
 
 **BUG FIX**: Resolved Ed25519 signature verification failures in magic link authentication caused by frontend-backend serialization inconsistency.
 
 #### ✅ Problem Resolved
+
 - **Issue**: Magic link authentication failing with "Ed25519 signature verification failed"
 - **Root Cause**: Frontend and backend were signing/verifying different content formats
   - **Frontend**: Signing deterministic JSON string
@@ -22,18 +186,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Implemented deterministic Base64 approach** where both frontend and backend sign/verify the SAME Base64 string:
 
 **Frontend Changes:**
+
 - ✅ **Request Signing**: `createSignedRequest()` now signs Base64 payload instead of JSON
 - ✅ **Response Verification**: `validateSignedResponse()` verifies against Base64 payload directly
 - ✅ **Dependency Cleanup**: Removed `@msgpack/msgpack` from package.json
 
 **Backend Changes:**
+
 - ✅ **Signature Validation**: All validation functions now verify Base64 payload directly
 - ✅ **Magic Link Fix**: `verify_magic_link_signature()` receives and verifies Base64 payload
 - ✅ **Response Signing**: `SignedResponseGenerator` now signs Base64-encoded JSON
 - ✅ **Dependency Cleanup**: Removed `rmp-serde` from Cargo.toml
 
 #### 🎯 Files Modified
+
 **Backend:**
+
 - `src/utils/signed_request.rs`: `validate_base64_payload()` verifies Base64 directly
 - `src/utils/auth/magic_link_signature_validator.rs`: Verifies received Base64 payload
 - `src/utils/signed_response.rs`: Signs Base64-encoded JSON responses
@@ -42,17 +210,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `src/utils/jwt_middleware_renewal.rs`: Base64 decoding for token renewal
 
 **Frontend:**
+
 - `src/lib/signedRequest.ts`: Signs Base64 payload in `createSignedRequest()`
 - `src/lib/signedResponse.ts`: Verifies Base64 payload in `validateSignedResponse()`
 
 #### 🧪 Validation
+
 - **Magic Link Authentication**: ✅ Working correctly
 - **Signature Verification**: ✅ Perfect consistency between frontend/backend
 - **Compilation**: ✅ Zero errors after dependency cleanup
 - **Test Suite**: ✅ All tests passing
 
 #### 🔐 Security Enhancement
+
 **Maximum Determinism**: Base64 strings provide the highest level of deterministic content for cryptographic operations:
+
 - **Before**: Multiple serialization formats causing verification mismatches
 - **After**: Single Base64 string signed and verified by both sides identically
 
@@ -65,6 +237,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **PERFORMANCE ENHANCEMENT**: Enabled Blake3 WASM32 SIMD optimizations for improved cryptographic performance in WebAssembly runtime.
 
 #### ✅ WASM Optimization Enabled
+
 - **Feature Added**: `wasm32_simd` feature enabled for Blake3
   - **Before**: `blake3 = "1.8.2"` (no WASM optimizations)
   - **After**: `blake3 = { version = "1.8.2", features = ["wasm32_simd"] }` (SIMD enabled)
@@ -72,6 +245,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Spin Compatibility**: Optimized for Fermyon Spin's WebAssembly runtime
 
 #### 📊 Technical Benefits
+
 - **SIMD Instructions**: Uses WebAssembly SIMD (128-bit) for parallel processing
 - **Hash Performance**: Faster Blake3 operations for all cryptographic flows
   - User ID derivation (5 Blake3 operations per derivation)
@@ -82,9 +256,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Binary Size**: Minimal size increase for significant performance gain
 
 #### 🎯 Files Modified
+
 - **`api/Cargo.toml`**: Added `features = ["wasm32_simd"]` to Blake3 dependency
 
 #### 🧪 Validation
+
 - **Compilation**: Clean build with SIMD feature enabled
 - **Test Suite**: 35/35 tests passing (100% success rate)
 - **Runtime**: All cryptographic operations working correctly with SIMD
@@ -98,6 +274,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **CLEANUP**: Complete removal of Blake2 dependency from the project after successful migration to Blake3.
 
 #### ✅ Dependency Cleanup
+
 - **Removed**: `blake2 = "0.10"` from `api/Cargo.toml`
 - **Reason**: All Blake2 usage has been migrated to Blake3
   - ✅ v1.6.15: `random_generator.rs` migrated Blake2b512 → Blake3
@@ -108,12 +285,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `crypto.rs`, `custom_tokens.rs`, `tokens.rs`, `connection.rs`: Documentation references
 
 #### 📊 Impact
+
 - **Compilation**: Zero errors, clean build without Blake2
 - **Test Suite**: 35/35 tests passing (100% success rate)
 - **Binary Size**: Reduced WASM binary size (Blake2 dependency eliminated)
 - **Maintenance**: Single hash library (Blake3) simplifies codebase
 
 #### 🎯 Files Modified
+
 - **`api/Cargo.toml`**: Removed `blake2 = "0.10"` dependency
 
 **Result**: Project now uses exclusively Blake3 for all cryptographic hashing operations, completing the modernization initiative.
@@ -125,6 +304,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **SECURITY IMPROVEMENT**: Implementation of Blake3 KDF minimum key material requirement (32 bytes) in `blake3_keyed_variable` function, ensuring compliance with cryptographic best practices.
 
 #### ✅ Key Material Length Enforcement
+
 - **Blake3 KDF Compliance**: Key material now guaranteed to be ≥32 bytes (recommended minimum)
   - **Before**: All `data` inputs used directly as key material (could be <32 bytes)
   - **After**: Short data (<32 bytes) automatically hashed to meet 32-byte minimum
@@ -139,7 +319,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   ```
 
 #### 🔐 Cryptographic Flow Updated
+
 **New Pipeline with Security Enforcement:**
+
 1. `hmac_env_key[64]` → Base58 → context (domain separation)
 2. **Key Material Preparation** (NEW):
    - If `data.len() >= 32`: Use `data` directly as key_material
@@ -148,6 +330,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 4. `(data, deterministic_key, length)` → Blake3 keyed+XOF → output
 
 #### 🧪 Test Coverage Enhanced
+
 - **New Test**: `test_blake3_keyed_variable_short_data_handling()`
   - Validates short data (5 bytes) produces valid output
   - Validates long data (62 bytes) produces valid output
@@ -159,12 +342,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Integration**: 35/35 full suite tests passing
 
 #### 📊 Security Impact
+
 - **Blake3 KDF Best Practice**: Follows official recommendation for minimum key material length
 - **Zero Breaking Changes**: Output remains identical for data ≥32 bytes
 - **Enhanced Security**: Small inputs now benefit from hash expansion
 - **Deterministic Behavior**: Same input always produces same output (preserved)
 
 #### 🎯 Files Modified
+
 - **`api/src/utils/pseudonimizer.rs`**:
   - Updated `blake3_keyed_variable()` with key material length check
   - Added comprehensive documentation of new security behavior
@@ -179,6 +364,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **ARCHITECTURE IMPROVEMENT**: Complete resolution of JWT custom token cryptographic key size inconsistencies by implementing proper 64-byte base key architecture with specialized functions for derived keys.
 
 #### ✅ Key Size Standardization Completed
+
 - **Environment Variable Configuration**: All HMAC, cipher, and nonce keys standardized to 64 bytes (128 hex chars)
   - **Access Token Keys**: `ACCESS_TOKEN_CIPHER_KEY`, `ACCESS_TOKEN_NONCE_KEY`, `ACCESS_TOKEN_HMAC_KEY` → 64 bytes
   - **Refresh Token Keys**: `REFRESH_TOKEN_CIPHER_KEY`, `REFRESH_TOKEN_NONCE_KEY`, `REFRESH_TOKEN_HMAC_KEY` → 64 bytes
@@ -190,6 +376,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Pattern Applied**: All token key functions follow same signature pattern
 
 #### 🔐 Cryptographic Function Specialization
+
 - **Base Key Functions** (64-byte keys from environment):
   - `generate_prehash(seed, hmac_key: &[u8; 64])` - First level HMAC derivation
   - `generate_cipher_key(base_key: &[u8; 64], prehash)` - Cipher key derivation
@@ -206,6 +393,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   ```
 
 #### 🏗️ Token Serialization Architecture
+
 - **`custom_token_serialization.rs`**: Strong type enforcement
   - `claims_to_bytes(claims, hmac_key: &[u8; 64])` - Only accepts 64-byte HMAC keys
   - `claims_from_bytes(payload, hmac_key: &[u8; 64])` - Validates with 64-byte keys
@@ -215,6 +403,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `CustomTokenClaims::from_bytes(payload, hmac_key: &[u8; 64])` - Type safety
 
 #### 🔄 Encryption Pipeline Updates
+
 - **`custom_token_encryption.rs`**: Dual derivation workflow
   - **First Derivation**: Base keys (64 bytes) → Intermediate keys (32 bytes)
   - **Second Derivation**: Intermediate keys (32 bytes) → Final keys (32/12 bytes)
@@ -222,12 +411,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Import Updates**: Added `generate_*_from_derived` functions to module exports
 
 #### 🧪 Validation & Testing
+
 - **Compilation**: Zero errors, clean cargo check
 - **Test Suite**: 100% success rate (35/35 tests passing)
 - **JWT Authentication**: Ed25519 + custom tokens working perfectly
 - **Environment Loading**: Spin correctly loads all 64-byte keys from `.env`
 
 #### 📊 Technical Impact
+
 - **Type Safety**: Compile-time enforcement of key sizes eliminates runtime errors
 - **Code Clarity**: Explicit function names (`*_from_derived`) document two-stage derivation
 - **No Performance Impact**: Zero-padding negligible overhead, Blake3 performance unchanged
@@ -235,6 +426,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Architecture Clean**: Eliminated "HMAC key must be 64 bytes, got 32" errors completely
 
 #### 🎯 Files Modified
+
 - **Configuration Layer**:
   - `api/src/utils/jwt/config.rs` - All key getters return `[u8; 64]`
   - `.env` and `.env-prod` - All keys upgraded to 128 hex chars (64 bytes)
@@ -253,6 +445,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **PERFORMANCE OPTIMIZATION**: Migration of random seed generation from Blake2b512 to Blake3, eliminating redundant truncation and improving performance while maintaining cryptographic security.
 
 #### ✅ Random Seed Generator Modernization
+
 - **Blake2b512 → Blake3 Migration**: Complete replacement in `generate_random_seed()` function
   - **Before (v1.6.14)**: `Blake2b512::digest()` → 64 bytes → truncate to 32 bytes
   - **After (v1.6.15)**: `blake3::hash()` → 32 bytes direct output
@@ -268,6 +461,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Endpoints**: Custom, Password, API Key, Mnemonic generation working perfectly
 
 #### 🔧 Technical Implementation
+
 - **`api/src/utils/random_generator.rs`**: Blake2b512 imports removed
   - **Import Change**: `use blake2::{Blake2b512, Digest};` → `use blake3;`
   - **Function Update**: `generate_random_seed()` using Blake3 direct hash
@@ -279,6 +473,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `handle_mnemonic_request()` - Mnemonic phrase generation
 
 #### 🏗️ Architecture Benefits
+
 - **🚀 Performance**: Blake3 faster than Blake2b512 for 32-byte output
 - **⚡ Code Simplicity**: Direct output without truncation overhead
 - **🔒 Security Maintained**: Blake3 cryptographic strength equivalent to Blake2b
@@ -286,6 +481,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🧪 Test Coverage**: All 6 random_generator tests passing + full suite validation
 
 #### 📈 Impact Scope
+
 - **Single Module**: Only `random_generator.rs` modified
 - **Universal Usage**: Affects all generation endpoints (custom, password, api-key, mnemonic)
 - **ChaCha8Rng Integration**: Blake3 seeds work identically with ChaCha8Rng
@@ -300,6 +496,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **PERFORMANCE BREAKTHROUGH**: Complete elimination of Argon2id + Blake2b + ChaCha8RNG multi-layer pipeline in magic link payload encryption, replaced with single Blake3 pseudonimizer call achieving dramatic performance improvement while maintaining enterprise-grade security.
 
 #### ✅ Magic Link Encryption Modernization
+
 - **Single-Step Blake3 Pipeline**: Replaced complex 4-step encryption with direct pseudonimizer call
   - **Before (v1.6.13)**: Argon2id (memory-hard, slow) → Blake2b HMAC → ChaCha8RNG → final keys
   - **After (v1.6.14)**: `blake3_keyed_variable(MLINK_CONTENT[64], encrypted_data, 44)` → nonce[12] + cipher_key[32]
@@ -315,6 +512,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **No IV/Salt Storage**: Nonce/key derived on-demand from encrypted token hash
 
 #### 🔧 Technical Implementation
+
 - **`api/src/database/operations/magic_link_crypto.rs`**: Complete pipeline refactored
   - `encrypt_payload_content()`: Direct Blake3 pseudonimizer → ChaCha20-Poly1305 encryption
   - `decrypt_payload_content()`: Reverse process with same Blake3 derivation
@@ -328,6 +526,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `.env-prod`: Production `MLINK_CONTENT` (64 bytes different from dev)
 
 #### 🏗️ Architecture Benefits
+
 - **🚀 Performance**: Eliminated slow Argon2id (memory-hard) operations from hot path
 - **⚡ Simplification**: 4-step pipeline → 1-step Blake3 call (75% complexity reduction)
 - **🔑 Configuration**: 3 environment keys → 1 (simpler deployment)
@@ -336,12 +535,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🔒 Zero Storage**: No need to store IVs or salts - everything derived from token
 
 #### 🧪 Testing & Validation
+
 - **✅ 100% Test Success Rate**: All 35/35 automated tests passing with optimized pipeline
 - **🔬 End-to-End Flow**: Magic link generation → Email → Validation → JWT creation fully tested
 - **🎖️ Zero Breaking Changes**: Complete encryption optimization with preserved functionality
 - **🛠️ Production Ready**: Comprehensive validation confirms performance optimization success
 
 #### 📚 Performance Impact
+
 - **Magic Link Generation**: ~100x faster (Argon2id eliminated)
 - **Magic Link Validation**: ~100x faster (no memory-hard KDF on critical path)
 - **Email Sending**: No performance impact (encryption now negligible)
@@ -356,6 +557,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **CRYPTOGRAPHIC MODERNIZATION**: Complete refactorization of `user_id` derivation pipeline from Blake2b to Blake3 with universal pseudonimizer integration achieving maximum cryptographic security and code consistency.
 
 #### ✅ Blake3 Pipeline Implementation (5 Steps)
+
 - **Step 1: Blake3 XOF (64 bytes)**: Replaced Blake2b-512 with Blake3 Extendable Output Function
   - **No Key Required**: Direct hash of email using XOF for variable-length output
   - **Modern Cryptography**: Blake3 superior performance and security properties
@@ -386,6 +588,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Result**: 16-byte deterministic user_id → Base58 username (~22 chars)
 
 #### 🔑 Environment Variables Updates
+
 - **`USER_ID_HMAC_KEY`**: 32 bytes → **64 bytes** (128 hex chars)
   - Development: New secure random value
   - Production: Different secure random value (domain separation)
@@ -397,6 +600,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Production: Different secure random value
 
 #### 🔧 Technical Implementation
+
 - **`api/src/utils/jwt/config.rs`**:
   - `get_user_id_hmac_key()`: Return type changed to `[u8; 64]` with validation
   - `get_argon2_salt()`: Return type changed to `[u8; 64]` with validation
@@ -411,6 +615,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `.env` / `.env-prod`: Updated with new 64-byte values
 
 #### 🏗️ Architecture Benefits
+
 - **🔒 Maximum Security**: Three independent 64-byte keys for multi-layer protection
   - `hmac_key` for keyed hashing
   - `argon2_salt` for dynamic salt derivation
@@ -422,12 +627,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🔮 Domain Separation**: Different keys ensure cryptographic independence
 
 #### 🧪 Testing & Validation
+
 - **✅ 100% Test Success Rate**: All 35/35 automated tests passing with new pipeline
 - **🔬 Cargo Check**: Clean compilation with zero errors, 22 non-critical warnings
 - **🎖️ Zero Breaking Changes**: Complete pipeline modernization with preserved functionality
 - **🛠️ Production Ready**: Comprehensive validation confirms security enhancement success
 
 #### 📚 Security Properties Achieved
+
 - **Preimage Resistance**: user_id → email reversal impossible without all three secret keys
 - **Second Preimage Resistance**: Cannot find different email producing same user_id
 - **Collision Resistance**: Astronomically unlikely to find two emails with same user_id
@@ -443,6 +650,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **CRYPTOGRAPHIC OPTIMIZATION**: Comprehensive Blake3 implementation with universal cryptographic pipeline for variable-length deterministic outputs and Blake2b optimization achieving maximum entropy utilization.
 
 #### ✅ Blake3 Universal Pipeline Implementation
+
 - **📦 New Module**: Created `utils/pseudonimizer.rs` with enterprise-grade Blake3 cryptographic pipeline
   - **Universal Function**: `blake3_keyed_variable(hmac_env_key: &[u8; 64], data: &[u8], output_length: usize) -> Vec<u8>`
   - **Pipeline Architecture**: hmac_env_key[64] → Base58 → context → Blake3 KDF → Blake3 keyed+XOF → variable output
@@ -454,6 +662,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Zero Breaking Changes**: 100% compatibility preserved with existing SignedResponse architecture
 
 #### 🎯 Blake2b Pipeline Optimization
+
 - **Pipeline Simplification**: Eliminated unnecessary multi-round expansion logic in Blake2b operations
   - **Direct Blake2bMac<U64>**: Leverages 64 bytes direct output without expansion overhead
   - **Maximum Efficiency**: Full entropy utilization with minimal processing
@@ -464,6 +673,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Enterprise Performance**: Maintained security while improving code maintainability
 
 #### 🏗️ Cryptographic Architecture Benefits
+
 - **🔒 Domain Separation**: Different hmac_env_key values produce cryptographically independent outputs
 - **🎲 Deterministic**: Same inputs always produce identical output for reproducibility
 - **⚡ Variable Output**: Single function handles all output length requirements (1 to 2^64 bytes)
@@ -471,12 +681,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📊 XOF Properties**: Extended outputs maintain cryptographic relationship (first N bytes consistent)
 
 #### 🧪 Comprehensive Testing & Validation
+
 - **✅ 100% Test Success Rate**: All 35/35 automated tests passing with Blake3 implementation
 - **🔬 Unit Test Coverage**: Deterministic behavior, domain separation, data sensitivity, variable lengths
 - **🎖️ Zero Regression**: Complete pipeline optimization with preserved functionality
 - **🛠️ Enterprise Quality**: Production-ready cryptographic implementation with comprehensive validation
 
 #### 📚 Technical Implementation Details
+
 - **Blake3 Dependency**: Added `blake3 = "1.8.2"` via `cargo add blake3`
 - **Module Export**: Pseudonimizer module exported in `utils/mod.rs` for universal access
 - **Hybrid Approach**: Blake3 for variable outputs, optimized Blake2b for fixed-length operations
@@ -491,6 +703,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **ARCHITECTURAL COMPLETION**: Finalized pure SignedResponse architecture with secure HTTP cookie delivery and comprehensive legacy code elimination achieving enterprise-grade standards.
 
 #### 🍪 Secure Cookie Implementation for JWT Refresh Tokens
+
 - **✅ HTTP Headers Cookie Delivery**: `/api/login/magiclink` now delivers secure refresh tokens via standard HTTP `Set-Cookie` headers
   - **Security Attributes**: HttpOnly, Secure, SameSite=Strict, Max-Age, Path=/ for maximum protection
   - **Automatic Browser Handling**: Transparent cookie management without JavaScript exposure
@@ -500,6 +713,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Enterprise Standard**: Industry-standard cookie security practices with cryptographic response validation
 
 #### ✅ Pure SignedResponse Architecture Completion
+
 - **🎯 /api/login/magiclink Transformation**: Final endpoint converted to SignedResponse format eliminating all legacy response systems
 - **🧪 Test Script Fixes**: Resolved incorrect `server_pub_key` expectation in JWT validation responses
   - **Issue**: Test script expected `server_pub_key` in JWT response (only present in magic link generation)
@@ -507,6 +721,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Result**: 100% test success rate (35/35 tests) with proper SignedResponse handling
 
 #### 🔧 Ed25519 Signature System Completion
+
 - **✅ Noble Crypto Dependencies**: Fixed missing `@noble/curves` and `@noble/hashes` dependencies for test scripts
 - **🔒 Query Parameter Signatures**: Resolved Ed25519 signature generation for GET requests with deterministic JSON serialization
 - **📝 Test Suite Integration**: Fixed API key prefix validation by correcting `extract_field_from_payload` function
@@ -514,6 +729,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📊 Session Keypair Consistency**: Unified Ed25519 keypair usage across authentication and subsequent GET requests
 
 #### 🧪 Testing Infrastructure Excellence
+
 - **✅ 100% Test Success Rate**: Achieved 35/35 tests passing after complete legacy elimination
 - **🔬 Comprehensive Coverage**: All endpoints (custom, password, api-key, mnemonic) functioning perfectly
 - **🛡️ Security Validation**: Ed25519 digital signatures validated in all test scenarios
@@ -521,6 +737,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎖️ Enterprise Quality**: Robust test suite confirms architectural transformation success
 
 #### 📚 Architecture Benefits Achieved
+
 - **🚫 Zero Technical Debt**: Complete elimination of legacy code paths and deprecated functions
 - **🔒 Universal SignedResponse**: All generation endpoints now use consistent Ed25519-signed response format
 - **⚡ Performance Optimization**: Reduced code complexity and improved maintainability
@@ -528,6 +745,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🔮 Future-Proof**: Modern architecture foundation for continued development
 
 #### 🔧 Technical Implementation Details
+
 - **DRY Architecture**: Universal `handle_signed_get_request` function eliminated code duplication
 - **Ed25519 Integration**: All GET requests now include signature parameter with backend public key extraction from JWT Bearer
 - **Noble Crypto Stack**: Frontend and test scripts using `@noble/curves/ed25519.js` and `@noble/hashes/utils.js` for cryptographic operations
@@ -542,6 +760,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **CRITICAL SECURITY IMPROVEMENT**: Implemented strict authentication method separation in SignedRequest validation to prevent confusion attacks and enhance enterprise-grade security.
 
 #### ✅ Strict Authentication Method Validation
+
 - **🛡️ Anti-Confusion Security**: Enforced mutually exclusive authentication methods to prevent attack vectors
   - **Bearer Token Rule**: When Bearer present, NO pub_key/magiclink allowed in payload
   - **Payload Auth Rule**: Without Bearer, EXACTLY one of pub_key OR magiclink required (never both, never none)
@@ -552,6 +771,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Clear Error Messages**: Descriptive security violation messages for debugging
 
 #### 🔧 Enhanced SignedRequest Validation Logic
+
 - **📋 Authentication Matrix**: Comprehensive validation covering all auth method combinations
   - **Bearer + Nothing**: ✅ Valid (Bearer-only authentication)
   - **Bearer + pub_key/magiclink**: ❌ ConflictingAuthMethods error
@@ -563,12 +783,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **⚡ Zero Breaking Changes**: 100% backward compatibility maintained with existing endpoints
 
 #### 🧪 Security Validation & Testing
+
 - **✅ 100% Test Success Rate**: All 35 automated tests pass with enhanced security validation
 - **🔄 JWT 2/3 System**: Advanced token refresh logic unaffected by security changes
 - **🎯 Ed25519 Integration**: Cryptographic signatures work seamlessly with strict validation
 - **🛠️ Enterprise Standards**: Follows industry best practices for authentication security
 
 #### 📚 Security Benefits Achieved
+
 - **🚫 Attack Vector Elimination**: Prevents authentication method confusion attacks
 - **🔒 Predictable Security Model**: Deterministic authentication flow for all endpoints
 - **🎖️ Enterprise Compliance**: Meets strict enterprise security requirements
@@ -583,6 +805,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **CRYPTOGRAPHIC SYSTEM FINALIZATION**: Complete Ed25519 digital signature implementation with frontend participation, universal browser compatibility, and enterprise-grade security.
 
 #### ✅ Frontend Ed25519 Cryptographic Integration
+
 - **🔑 Complete Frontend Participation**: Frontend now generates Ed25519 keypairs and participates fully in cryptographic authentication
   - **`web/src/lib/ed25519.ts`**: Complete Ed25519 module with WebCrypto + Noble curves hybrid implementation
   - **Automatic Keypair Generation**: `getOrCreateKeyPair()` with secure IndexedDB storage and automatic cleanup
@@ -594,12 +817,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Secure Storage**: Non-extractable WebCrypto keys with secure IndexedDB fallback for Noble curves
 
 #### 🧹 Legacy System Complete Elimination
+
 - **❌ RandomHash System Removed**: Complete elimination of obsolete random validation system
   - **Frontend Cleanup**: Removed `generateRandomHash()`, `base58Encode()`, and all localStorage magic link storage
   - **API Simplification**: `validateMagicLink(token)` simplified, removed hash parameter validation
   - **Security Enhancement**: Ed25519 signatures replace weak random string validation
 
 #### 🌐 Universal Browser Compatibility
+
 - **🛡️ Hybrid Cryptographic Architecture**: Intelligent fallback system for maximum compatibility
   - **WebCrypto Primary**: Non-extractable keys when Ed25519 support available
   - **Noble Curves Fallback**: Pure JavaScript implementation for older browsers
@@ -607,12 +832,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **IndexedDB Persistence**: Secure key storage for both WebCrypto and Noble implementations
 
 #### 🔧 SvelteKit Integration Improvements
+
 - **📱 Navigation API Compliance**: Fixed SvelteKit router conflicts
   - **Replaced `history.replaceState()`**: Using SvelteKit's `replaceState` from `$app/navigation`
   - **Eliminated Browser Warnings**: No more router conflict warnings in console
   - **URL Management**: Clean magic link parameter removal using SvelteKit APIs
 
 #### ✅ System Validation & Quality Assurance
+
 - **🧪 100% Test Success Rate**: All 35 automated tests passing with Ed25519 integration
   - **Authentication Flow**: Complete end-to-end Ed25519 signature verification working
   - **Protected Endpoints**: All generation endpoints secured with JWT + Ed25519 authentication
@@ -620,6 +847,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎯 Zero Breaking Changes**: Complete backward compatibility maintained throughout integration
 
 #### 🏆 Enterprise-Grade Security Achieved
+
 - **🔒 Cryptographic Excellence**: Ed25519 digital signatures active in production
   - **256-bit Ed25519 Keys**: Industry-standard elliptic curve cryptography providing 128-bit security strength
   - **Non-repudiation**: Cryptographic proof of magic link request authenticity
@@ -641,6 +869,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### 🧹 Legacy Code Cleanup & Test Suite Modernization
 
 #### ✅ Complete localStorage → IndexedDB Migration Finalization
+
 - **📦 SessionManager Extension**: Added user preferences and auth flow data management
   - **Language & Theme Preferences**: Automatic migration from localStorage to IndexedDB with `setLanguagePreference()` and `setThemePreference()`
   - **Auth Flow Data**: `pending_auth_email` moved to unified IndexedDB storage via `clearPendingAuthEmail()`
@@ -652,6 +881,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Async Integration**: Updated all localStorage references to use SessionManager async operations
 
 #### ✅ Legacy GET Endpoint Elimination (Zero Breaking Changes)
+
 - **🗑️ Magic Link GET Endpoint**: Completely removed obsolete GET `/api/login/?magiclink=...` authentication
   - **Function Removal**: `validate_magic_link()` function eliminated (200+ lines of duplicate code)
   - **Router Cleanup**: GET handler removed from `login.rs` router, only POST `/api/login/magiclink/` remains
@@ -663,6 +893,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Documentation Updated**: All references updated to reflect POST-only endpoint
 
 #### ✅ Test Suite Complete Modernization (100% Success Rate)
+
 - **🧪 Authentication Flow Upgrade**: Updated test suite to use modern POST endpoint with Ed25519 signatures
   - **`authenticate()` Function**: Complete rewrite to use POST `/api/login/magiclink/` with signature generation
   - **Ed25519 Integration**: Test suite now generates Ed25519 keypairs and signs magic tokens for validation
@@ -673,6 +904,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Zero Regression**: No breaking changes detected in comprehensive test validation
 
 #### 📚 User Management Endpoint Documentation
+
 - **⚠️ Future Functionality Clarification**: Comprehensive documentation of `/api/users/` preparatory status
   - **Status Documentation**: Added clear warnings in `api/src/handlers/users.rs` about FUTURE/PREPARATORY status
   - **Non-Usage Documentation**: Explained zero frontend usage (no references in `web/`) and test exclusion
@@ -687,6 +919,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **INFRASTRUCTURE CONTINUATION**: Building upon the IndexedDB migration with enhanced session management and cross-tab consistency.
 
 #### ✅ Unified SessionManager Implementation
+
 - **📁 New Core Module**: `web/src/lib/session-manager.ts` - Unified IndexedDB management for entire application
   - **Single Database**: `hashrand-sessions` with comprehensive `AppSessionData` interface
   - **Crypto Tokens**: `cipher_token`, `nonce_token`, `hmac_key` migrated to IndexedDB
@@ -696,6 +929,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Error Handling**: Comprehensive error management with fallback strategies
 
 #### ✅ Hybrid Architecture for Backward Compatibility
+
 - **🔄 Auth Store Cache Layer**: Maintains synchronous interface while using async IndexedDB
   - **Cache State**: `cipherToken`, `nonceToken`, `hmacKey` cached in auth store
   - **Sync Getters**: `getCipherToken()`, `getNonceToken()`, `getHmacKey()` remain synchronous
@@ -707,6 +941,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Zero User Impact**: Migration happens transparently in background
 
 #### ✅ Enhanced Security & Cleanup Systems
+
 - **🔒 Complete Logout Cleanup**: `clearAuthFromStorage()` now clears EVERYTHING in IndexedDB
   - **Total Erasure**: Auth tokens, crypto tokens, prehashseeds completely removed
   - **Ed25519 Integration**: Combined with `clearAllKeyPairs()` for total security cleanup
@@ -717,6 +952,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Security Enhancement**: Prevents any cached data persistence after expiry
 
 #### ✅ URL Encryption System Migration
+
 - **🔐 PrehashSeed Storage**: Complete migration to IndexedDB with enhanced security
   - **Cryptographic Keys**: 8-byte keys derived from `cryptoHashGen(seed, hmacKey, 8)`
   - **FIFO Management**: Automatic rotation with 20-seed limit prevents memory bloat
@@ -729,6 +965,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Error Handling**: Comprehensive error management for async operations
 
 #### ✅ TypeScript & Compilation Fixes
+
 - **🔧 Ed25519 Buffer Type Fixes**: 4 ArrayBufferLike → BufferSource compatibility issues resolved
   - **WebCrypto API**: Fixed Uint8Array wrapping for `crypto.subtle` operations
   - **Import Resolution**: Updated to `@noble/hashes/utils` for `bytesToHex`/`hexToBytes`
@@ -739,6 +976,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Performance**: Optimized async operations for smooth user experience
 
 #### ✅ Cross-Tab Session Benefits
+
 - **🌐 Tab Synchronization**: Sessions automatically synchronized across browser tabs
   - **Shared Auth State**: Authentication status consistent across all tabs
   - **Crypto Token Sharing**: Encryption keys shared for seamless navigation
@@ -749,6 +987,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Security Maintained**: Proper expiry handling preserves security
 
 #### ✅ System Validation Results
+
 - **🧪 100% Test Success (35/35 tests)**: Complete system validation with zero breaking changes
 - **✅ Authentication Flow**: Ed25519 + JWT + magic links functioning perfectly
 - **✅ URL Encryption**: ChaCha20-Poly1305 encryption working with IndexedDB storage
@@ -757,6 +996,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **✅ Security**: Enhanced security with persistent but properly managed sessions
 
 #### 🎖️ Architecture Benefits Realized
+
 - **🏗️ Enterprise-Grade Session Management**: IndexedDB provides superior data management
 - **⚡ Enhanced Performance**: Efficient queries and automatic cleanup prevent bloat
 - **🔒 Improved Security**: Better isolation and encryption key management
@@ -773,6 +1013,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **COMPLETE CRYPTOGRAPHIC INTEGRATION**: Finalización del sistema Ed25519 con participación total del frontend, eliminando completamente los sistemas legacy y estableciendo un workflow criptográfico end-to-end completamente funcional.
 
 #### ✅ Ed25519 Frontend Implementation
+
 - **🔐 Complete Frontend Participation**: Frontend ahora genera Ed25519 keypairs y firma mensajes automáticamente
 - **📁 New Module**: `web/src/lib/ed25519.ts` - Módulo criptográfico completo con Web Crypto API + Noble fallback
   - `getOrCreateKeyPair()`: Generación segura de keypairs con almacenamiento IndexedDB
@@ -782,6 +1023,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Non-extractable Keys**: Claves privadas no-extractables para máxima seguridad
 
 #### ✅ API Integration Modernization
+
 - **🔄 `api.requestMagicLink()` Updated**: Nueva signature `(email, ui_host, next?)` con Ed25519 automático
   - **Automatic Keypair Generation**: Genera Ed25519 keypair transparentemente
   - **Message Signing**: Firma automática de `email + pub_key` antes de envío
@@ -791,6 +1033,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🧹 AuthDialog Cleanup**: Eliminación completa de generación y almacenamiento `randomHash`
 
 #### ✅ Legacy System Elimination
+
 - **❌ `randomHash` System Completely Removed**: Sistema legacy eliminado del frontend y backend integration
 - **❌ localStorage Magic Hash**: Eliminado `localStorage.setItem('magiclink_hash')` completamente
 - **❌ Frontend Token Expiration**: Frontend ya no maneja lógica de expiración (backend responsibility)
@@ -798,6 +1041,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **❌ Legacy Functions**: `generateRandomHash()` y `base58Encode()` eliminadas completamente
 
 #### ✅ Technical Excellence & Configuration
+
 - **⚙️ ESLint Configuration Enhanced**: Agregados Web API globals (`CryptoKey`, `indexedDB`, `IDBDatabase`)
 - **📦 Import Resolution**: Migración a `@noble/hashes/utils` para compatibility
 - **🔧 Type Safety**: Corrección tipos Uint8Array → ArrayBuffer para Web Crypto API
@@ -807,6 +1051,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Security**: Variables sandbox comentadas para preservar configuración
 
 #### ✅ System Validation Results
+
 - **🧪 97% Test Success (34/35 tests)**: Sistema Ed25519 funcionando perfectamente end-to-end
 - **✅ Magic Link Generation**: Ed25519 signatures verificadas correctamente por backend
 - **✅ JWT Token Creation**: Access tokens generados exitosamente con Ed25519 verification
@@ -814,6 +1059,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **✅ Compilation Clean**: Zero errores TypeScript/Rust, solo warnings menores
 
 #### 🎖️ Architecture Benefits Achieved
+
 - **🔒 Complete Cryptographic Security**: Ed25519 signatures reemplazan weak random validation
 - **🚫 Zero Legacy Debt**: Eliminación total de código obsoleto, arquitectura completamente moderna
 - **⚡ Microsecond Performance**: Ed25519 verification performance enterprise-grade
@@ -821,6 +1067,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🔄 Automatic Security**: Ed25519 keypairs limpiados automáticamente en logout
 
 #### 🎯 End-to-End Workflow Established
+
 1. **Frontend Keypair Generation**: Ed25519 keypair automático con Web Crypto API/Noble
 2. **Message Signing**: Firma automática de `email + pub_key` por frontend
 3. **Backend Verification**: Verificación criptográfica antes de magic link creation
@@ -836,6 +1083,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **REVOLUTIONARY SECURITY ENHANCEMENT**: Complete implementation of Ed25519 elliptic curve digital signatures for magic link authentication, replacing the legacy random_hash system with cryptographically verifiable signatures.
 
 #### ✅ Ed25519 Cryptographic Integration:
+
 - **🔑 Backend Signature Verification**: New `ed25519.rs` module implementing Ed25519 signature verification
   - `verify_magic_link_request()`: Validates email + pub_key + signature combinations
   - Uses `ed25519-dalek = "2.2.0"` for industry-standard cryptographic operations
@@ -850,6 +1098,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Zero breaking changes to existing magic link validation flow
 
 #### ✅ Signature Verification Workflow:
+
 1. **Frontend Keypair Generation**: Ed25519 keypair generation using Node.js crypto
 2. **Message Signing**: Sign `email + pub_key + next` concatenation with private key
 3. **Backend Verification**: Verify signature against public key before magic link creation
@@ -857,6 +1106,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 5. **Token Integration**: Include pub_key in both access and refresh JWT claims
 
 #### ✅ Security Architecture Benefits:
+
 - **🛡️ Cryptographic Authentication**: Replaces weak random_hash with cryptographically strong signatures
 - **🔒 Non-Repudiation**: Ed25519 signatures provide mathematical proof of authenticity
 - **⚡ Performance**: Ed25519 verification is extremely fast (microseconds)
@@ -865,6 +1115,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🔐 Zero Knowledge Preserved**: Public keys stored encrypted, never expose private keys
 
 #### ✅ Implementation Files:
+
 - **`api/src/utils/ed25519.rs`**: Core Ed25519 signature verification module (NEW)
 - **`api/src/utils/auth/types.rs`**: Enhanced with mandatory Ed25519 fields
 - **`api/src/utils/auth/magic_link_gen.rs`**: Integrated signature verification
@@ -875,6 +1126,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **`scripts/final_test.sh`**: Updated comprehensive test suite with Ed25519 flow
 
 #### ✅ Testing & Validation:
+
 - **✅ 100% Test Success**: Complete Ed25519 authentication flow validated
 - **✅ Signature Generation**: Keypair generation and message signing working
 - **✅ Backend Verification**: Ed25519 signature validation before magic link creation
@@ -883,6 +1135,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **✅ Zero Breaking Changes**: All existing authentication middleware preserved
 
 #### ✅ Migration Notes:
+
 - **🔄 Legacy Removal**: `random_hash` completely removed from magic link system
 - **🆕 Mandatory Fields**: All magic link requests must include `pub_key` and `signature`
 - **📊 Database Schema**: Magic link payloads now store Ed25519 public keys
@@ -897,6 +1150,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **2/3 Time-Based Token Refresh System with Dual Expiration Handling**
 
 #### ✅ Intelligent Token Lifecycle Management:
+
 - **🕐 2/3 System Logic**: Implements smart refresh behavior based on remaining token lifetime
   - **First 1/3 (0-80s)**: Only renews access token, keeps existing refresh token
   - **Last 2/3 (>80s)**: Resets both tokens completely for maximum security
@@ -906,6 +1160,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Triggers frontend sessionStorage cleanup and re-authentication flow
 
 #### ✅ Critical Bug Fixes & Optimizations:
+
 - **🔧 Integer Division Fix**: Corrected 1/3 threshold calculation bug
   - **Before**: `refresh_duration_minutes / 3` (integer division caused premature activation)
   - **After**: `(refresh_duration_minutes * 60) / 3` (precise seconds calculation)
@@ -913,11 +1168,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎯 Precise Timing**: System now correctly activates at exact 1/3 threshold (80s for 240s tokens)
 
 #### ✅ Frontend Integration Excellence:
+
 - **🖥️ Smart Detection**: `isDualTokenExpiry()` function detects dual expiration scenarios
 - **🧹 Automatic Cleanup**: `handleDualTokenExpiry()` clears sessionStorage and shows auth dialog
 - **⚡ Seamless UX**: Users see clean re-authentication flow without technical errors
 
 #### ✅ Comprehensive Testing Implementation:
+
 - **📋 4-Phase Test Suite**: Complete test script `test_2_3_complete.sh` validates entire flow
   - **Test 1 (t=0s)**: Normal API access without refresh
   - **Test 2 (t=62s)**: Access expired, partial refresh (first 1/3)
@@ -927,6 +1184,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **⏱️ Configurable Timing**: Test-friendly token durations (1min access, 4min refresh)
 
 #### ✅ Security & Architecture Benefits:
+
 - **🛡️ Enhanced Session Security**: Proactive token reset when 2/3 lifetime elapsed
 - **🔐 Zero-Leak Expiration**: Complete cleanup of expired credentials
 - **📊 Debug Logging**: Detailed 2/3 system logs for monitoring and troubleshooting
@@ -941,12 +1199,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Ultra-Compact URL Parameter Encryption System**
 
 #### ✅ Breakthrough URL Compression Architecture:
+
 - **📏 66% URL Reduction**: Changed from `?encrypted=...&idx=...` to single `?p=...` parameter
 - **🎯 Binary Concatenation**: idx_bytes (8 bytes) + encrypted_bytes combined before Base64URL encoding
 - **⚡ Zero Breaking Changes**: All external APIs maintain identical interfaces while optimized internally
 - **🔐 Enhanced Privacy**: More compact URLs provide better protection against pattern analysis
 
 #### ✅ Technical Implementation Excellence:
+
 - **🏗️ Advanced Byte Manipulation**: Precise 8-byte idx extraction from combined parameter stream
 - **🔧 Surgical Code Updates**: Modified 6 core crypto functions while preserving backward compatibility
   - `encryptUrlParams()`: Returns `{ p: string }` instead of `{ encrypted, idx }`
@@ -956,12 +1216,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎨 Clean Architecture**: All Svelte components work seamlessly without modifications
 
 #### ✅ Comprehensive Quality Assurance:
+
 - **✅ 36/36 Tests Pass**: Complete test suite validation at 100% success rate
 - **🔍 Zero TypeScript Errors**: Clean compilation with only minor linting warnings
 - **🚫 No Functional Regression**: All authentication, encryption, and generation features intact
 - **📱 UI Compatibility**: All Svelte routes and components work without changes
 
 #### ✅ Performance & Security Benefits:
+
 - **📊 Reduced URL Length**: Shorter URLs improve sharing, logging, and browser performance
 - **🛡️ Maintained Security**: Same ChaCha20-Poly1305 + FIFO rotation with compact transmission
 - **⚡ Optimized Parsing**: Single parameter reduces URL parsing overhead
@@ -976,43 +1238,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Enterprise-Grade Security Hardening & Zero-Leak Data Management**
 
 #### ✅ Complete URL Parameter Security Enforcement:
+
 - **🚫 Eliminated Legacy Fallbacks**: All routes now ONLY accept encrypted parameters (except `magiclink` in `/`)
 - **🔒 Mandatory Encryption**: Removed all direct URL parameter processing from custom/, password/, api-key/, mnemonic/ routes
 - **🎯 Consistent Architecture**: Only `encrypted` + `idx` parameters accepted across all generation routes
 - **🛡️ Zero Attack Surface**: Eliminated potential bypass vectors through direct parameter manipulation
 
 #### ✅ Cryptographic Key Persistence Optimization:
+
 - **🔑 Smart Key Generation**: Crypto tokens (cipher/nonce/hmac) only generated when missing, not on every refresh
 - **⚡ Session Continuity**: URL encryption keys preserved across token refreshes for seamless UX
 - **🔄 Efficient Management**: Prevents unnecessary regeneration while maintaining security boundaries
 - **📱 Stable Encryption**: Users can save and reuse encrypted URLs during active sessions
 
 #### ✅ Comprehensive Storage Security Audit:
+
 - **🧹 Complete Data Inventory**: Systematic audit of ALL sessionStorage and localStorage variables
 - **🗑️ Strategic Cleanup Architecture**: Three-tier cleaning system for different security contexts
   - `clearPreventiveAuthData()`: Defense before authentication (preserves UX preferences)
-  - `clearSensitiveAuthData()`: Token expiration/errors (preserves magic link flows)  
+  - `clearSensitiveAuthData()`: Token expiration/errors (preserves magic link flows)
   - `clearAuthFromStorage()`: Complete logout (maximum security)
 - **📦 Zero Data Leaks**: Eliminated all potential sensitive data persistence across sessions
 
 #### ✅ Proactive Security Defense System:
+
 - **🛡️ Preventive Data Clearing**: Automatic cleanup before EVERY authentication dialog display
 - **🔒 Clean State Guarantee**: Ensures zero residual data regardless of previous session termination
 - **⚡ Defensive Programming**: Protects against improper logout, browser crashes, or session corruption
 - **🎯 UX Preservation**: Maintains language and theme preferences while eliminating security risks
 
 #### ✅ Intelligent Sensitive Data Management:
+
 - **⏱️ Immediate Cleanup**: `pending_auth_email` removed instantly after successful authentication
 - **🎯 Lifecycle Optimization**: Sensitive data exists only for minimum required duration
 - **🔄 Multi-Point Clearing**: Removed in both `validateMagicLink()` and `updateTokens()` flows
 - **🛡️ Zero Persistence**: Eliminated unnecessary data retention across authentication cycles
 
 #### ✅ Enhanced UI Logic Security:
+
 - **🔘 Fixed "Regenerar" Button**: Now correctly detects seed from encrypted parameters instead of URL
 - **🎯 Preserved Functionality**: Maintains original UX behavior while supporting encrypted parameter architecture
 - **🔒 Consistent Security Model**: All UI decisions based on decrypted data, not exposed URL parameters
 
 #### 🛡️ Security Impact Summary:
+
 - **📊 Zero Data Leaks**: Complete elimination of sensitive data persistence vulnerabilities
 - **🔒 Defense in Depth**: Multiple security layers protect against various attack vectors
 - **⚡ Performance Optimized**: Intelligent cleanup prevents unnecessary operations while maintaining security
@@ -1020,6 +1289,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🏗️ Future-Proof**: Scalable architecture supports additional security enhancements
 
 #### 🎯 Technical Excellence:
+
 - **✅ Zero Breaking Changes**: Complete backward compatibility maintained throughout security hardening
 - **🔧 Clean Compilation**: All TypeScript/Svelte/Rust code compiles without errors or warnings
 - **📋 Comprehensive Testing**: All existing functionality verified through automated test suite
@@ -1032,6 +1302,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Revolutionary Privacy Protection Architecture**
 
 #### ✅ Bidirectional URL Parameter Encryption:
+
 - **🛡️ ChaCha20-Poly1305 AEAD Encryption**: Enterprise-grade encryption for all URL parameters across the application
 - **🔄 Universal Implementation**: All routes (custom/, password/, api-key/, mnemonic/, result/) now encrypt/decrypt parameters automatically
 - **🎯 Triple Token System**: Cipher (32 bytes) + Nonce (32 bytes) + HMAC (32 bytes) keys for maximum cryptographic security
@@ -1039,19 +1310,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📦 Base64URL Encoding**: URL-safe transmission without padding characters for clean browser compatibility
 
 #### ✅ Advanced Cryptographic Architecture:
+
 - **🔑 FIFO KV Storage**: sessionStorage management with 20-seed rotation limit prevents memory bloat
-- **🧂 Crypto Salt Integration**: 32-byte internal noise generation for enhanced security protection  
+- **🧂 Crypto Salt Integration**: 32-byte internal noise generation for enhanced security protection
 - **🏷️ 8-Byte Cryptographic Keys**: Efficient sessionStorage indexing using Blake2b-derived identifiers
 - **⚡ Pipeline Optimization**: Blake2b-keyed → ChaCha8RNG → ChaCha20-Poly1305 for performance and security
 - **🔐 Zero Content Dependencies**: Encryption keys completely independent of parameter content
 
 #### ✅ Complete Navigation Flow Protection:
+
 - **Backend → Frontend**: Layout interceptor encrypts `next` parameter URLs automatically
 - **Configuration → Result**: All Generate buttons create encrypted URLs (`/result?encrypted=...&idx=...`)
 - **Result → Configuration**: Edit/Adjust buttons generate encrypted return URLs with preserved parameters
 - **Universal Decryption**: All target routes decrypt parameters seamlessly with fallback to direct URLs
 
 #### ✅ Privacy & Security Benefits:
+
 - **🛡️ Browser History Protection**: Complete URL parameter privacy even from physical device access
 - **🔒 Zero Plaintext Exposure**: Sensitive parameters never appear in browser history or server logs
 - **♿ Seamless UX**: Users experience identical functionality with enhanced privacy protection
@@ -1059,6 +1333,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎯 Zero Breaking Changes**: Entire system maintains 100% API and functional compatibility
 
 #### ✅ Technical Implementation Excellence:
+
 - **📁 New Crypto Module**: `/lib/crypto.ts` with comprehensive encryption/decryption utilities
   - `encryptUrlParams()`: Complete ChaCha20-Poly1305 parameter encryption
   - `decryptPageParams()`: Automatic parameter decryption with error handling
@@ -1069,6 +1344,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **✅ Enterprise Quality**: Zero compilation errors, comprehensive error handling, clean TypeScript
 
 #### 🎯 User Privacy Impact:
+
 - **🕵️ Physical Security**: URLs remain private even if device is compromised or inspected
 - **📊 Analytics Protection**: Sensitive user parameters hidden from web analytics and monitoring
 - **🔒 Network Security**: Encrypted parameters provide additional layer beyond HTTPS
@@ -1083,6 +1359,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Complete Email Template Architecture Improvement**
 
 #### ✅ Text-Specific Translation System:
+
 - **🌐 Multilingual Plain Text Support**: Added dedicated translation keys for all 13 languages
   - `text_intro`: Plain text version without HTML button references
   - `text_access_label`: Text-appropriate access instructions
@@ -1091,6 +1368,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📝 Content Optimization**: Plain text emails no longer reference impossible UI elements (buttons)
 
 #### ✅ Internationalization Completeness:
+
 - **13 Language Coverage**: Enhanced YAML locale files for complete text-plain support
   - English, Spanish, French, German, Portuguese, Russian, Chinese, Japanese
   - Arabic (RTL), Hindi, Catalan, Galician, Basque
@@ -1098,12 +1376,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📧 Dual Format Excellence**: HTML + plain text versions both professionally internationalized
 
 #### ✅ Code Quality & Maintainability:
+
 - **🚫 No Hardcoding**: Removed all hardcoded email text from Rust source code
 - **🎯 Proper Separation**: HTML concerns (CSS, buttons) vs plain text concerns cleanly separated
 - **✅ Mailtrap Integration**: Both `html` and `text` fields properly populated for all email clients
 - **🔧 Zero Breaking Changes**: Maintains full backwards compatibility with existing email system
 
 #### 🎯 User Experience Impact:
+
 - **📱 Email Client Compatibility**: Perfect rendering in both HTML and text-only email clients
 - **🌍 Global Accessibility**: Native language support for plain text email readers
 - **🔒 Security Clarity**: Clear, localized security information without UI confusion
@@ -1116,14 +1396,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Enterprise-Grade Code Quality & Maintainability Improvements**
 
 #### ✅ Centralized Authentication Loading State:
+
 - **🏪 Unified State Management**: Moved `isRefreshing` logic from individual components to centralized `authStore.ts`
 - **📦 DRY Implementation**: Eliminated duplicate authentication loading state across 6 components
-  - `AuthStatusButton.svelte` - Removed local `isRefreshing` state  
+  - `AuthStatusButton.svelte` - Removed local `isRefreshing` state
   - Generation pages (custom, password, api-key, mnemonic) - Simplified to use centralized store
   - All components now use `$authStore.isRefreshing` for consistent loading states
 - **🎯 Single Source of Truth**: Authentication loading state managed in one location for maintainability
 
 #### ✅ Svelte 5 Runes Mode Compliance:
+
 - **⚡ Modern Syntax Migration**: Complete conversion from legacy reactive statements to Svelte 5 runes
   - `result/+page.svelte`: 2 `$:` reactive statements → `$derived()` functions
   - 8 state variables across 5 files: `let variable` → `let variable = $state()`
@@ -1134,14 +1416,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Clean TypeScript and Svelte compilation across entire frontend
 
 #### ✅ User Experience Enhancements:
+
 - **⏳ Enhanced Loading Feedback**: Consistent spinner behavior during authentication attempts
 - **🎨 Visual Polish**: Pure CSS spinner animation for auth status button
 - **♿ Accessibility Maintained**: All loading states properly announced to screen readers
 - **📱 Mobile Optimized**: Responsive loading indicators across all screen sizes
 
 #### 🎯 Developer Experience Impact:
+
 - **🔧 Maintainable Architecture**: Centralized loading state reduces maintenance complexity
-- **📝 Clean Code**: DRY principles applied systematically across authentication flows  
+- **📝 Clean Code**: DRY principles applied systematically across authentication flows
 - **⚡ Modern Standards**: Full Svelte 5 runes mode compliance for future-proofing
 - **🧪 Quality Assurance**: Enterprise-grade code standards with zero compilation warnings
 
@@ -1152,13 +1436,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Complete DatabaseEnvironment Refactoring**
 
 #### ✅ Infrastructure Modernization:
+
 - **🔧 Eliminated Legacy Code**: Removed obsolete `DatabaseEnvironment` hardcoding throughout codebase
   - `connection.rs`: Streamlined to use Spin variables exclusively
-  - Database operations: Removed `env` parameters from all functions  
+  - Database operations: Removed `env` parameters from all functions
   - Auth handlers: Simplified to modern variable-based configuration
   - 200+ lines of obsolete environment detection logic removed
 
 #### ✅ Spin Variable Integration:
+
 - **📊 Modern Configuration**: Full migration to Spin variable-based database selection
   - Development environment: `database_name = "hashrand-dev"`
   - Production environment: `database_name = "hashrand"`
@@ -1166,9 +1452,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - True separation of development vs production database environments
 
 #### ✅ Code Quality Improvements:
+
 - **⚡ Surgical Refactoring**: 7 core files modernized with zero breaking changes
   - `api/src/database/connection.rs` - Eliminated `DatabaseEnvironment` enum
-  - `api/src/database/operations/*.rs` - Simplified all database operations  
+  - `api/src/database/operations/*.rs` - Simplified all database operations
   - `api/src/utils/auth/*.rs` - Updated authentication handlers
   - `api/src/handlers/*.rs` - Modernized user and login handlers
 - **🧪 Quality Assurance**: All changes verified with cargo clippy (zero warnings)
@@ -1176,6 +1463,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **🎯 User ID Consistency**: Confirmed cryptographic consistency between environments
 
 #### 🎯 Developer Experience Impact:
+
 - **Fixed Predeploy Issues**: Resolved `just predeploy` access denied errors
 - **Cleaner Codebase**: Removed technical debt and obsolete patterns
 - **Simplified Maintenance**: Modern architecture easier to understand and extend
@@ -1188,18 +1476,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Environment-Specific Configuration Management**
 
 #### ✅ Configuration Architecture Enhancement:
+
 - **📁 Split Configuration Files**: Separated `spin.toml` into environment-specific configurations
-  - **`spin-dev.toml`**: Development configuration (no static fileserver, SvelteKit on port 5173)  
+  - **`spin-dev.toml`**: Development configuration (no static fileserver, SvelteKit on port 5173)
   - **`spin-prod.toml`**: Production configuration (with static fileserver enabled)
   - Eliminates commented sections and provides cleaner configuration management
 
 #### ✅ Justfile Command Updates:
+
 - **⚙️ Environment-Specific Commands**: All development commands now use appropriate configuration
   - Development (`just dev`, `just up`, `just dev-fg`) → use `spin-dev.toml`
   - Production (`just predeploy`, `just deploy`) → use `spin-prod.toml`
   - Testing (`just test-dev`) → uses development configuration
 
 #### ✅ Project Cleanup:
+
 - **🗑️ Removed Unnecessary Files**:
   - `test_auth_flow.sh` - Redundant test script
   - `test_deterministic.rs` - Unused test file
@@ -1209,6 +1500,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **📋 Updated .gitignore**: Added `data/` directory to prevent database files from being committed
 
 #### 🎯 Developer Experience Impact:
+
 - **Simplified Configuration**: Clear separation between development and production setups
 - **Reduced Clutter**: Cleaner project structure with only essential files
 - **Environment Clarity**: No more commented sections in configuration files
@@ -1221,6 +1513,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Enhanced Session Management Widget**
 
 #### ✅ Authentication Button Improvements:
+
 - **👤 Consistent User Icon**: Authentication button now always displays a filled user silhouette icon
   - Replaced dynamic icon switching (settings ⚙️ vs check ✅) with consistent user icon 👤
   - Icon now uses `fill="currentColor"` for solid appearance matching theme system
@@ -1228,6 +1521,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Emoji fallback 👤 (bust in silhouette) for loading states
 
 #### ✅ Always-Visible Session Button:
+
 - **🔍 Improved Visibility**: Session management button now always visible regardless of authentication state
   - Removed conditional rendering logic (`hasActiveSession` check) from TopControls component
   - Cleaned up unused session detection functions (`checkActiveSession`)
@@ -1235,6 +1529,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Streamlined code architecture by removing unnecessary session state polling
 
 #### ✅ Visual Icon Enhancements:
+
 - **📏 Larger Icon Sizes**: Increased theme toggle and session icons from `w-4 h-4 sm:w-5 sm:h-5` to `w-5 h-5 sm:w-6 sm:h-6`
   - Better visual prominence within button containers
   - Improved accessibility and touch target clarity
@@ -1242,6 +1537,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Maintained button container sizes for layout stability
 
 #### 📱 User Experience Impact:
+
 - **Consistent Interface**: Users always see session management option
 - **Intuitive Design**: Single user icon represents authentication regardless of state
 - **Improved Recognition**: Filled icons provide better visual distinction
@@ -1254,12 +1550,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 **Enhanced Authentication Dialog Experience**
 
 #### ✅ Dialog Interaction Fixes:
+
 - **🔧 Fixed Dialog Close Behavior**: Corrected issue where clicking inside the authentication dialog would incorrectly close it
   - Added `stopPropagation()` to dialog content container
   - Dialog now only closes when clicking outside (backdrop) or pressing Escape
   - Prevents accidental dialog closure when interacting with form elements
 
 #### ✅ Email Input Enhancements:
+
 - **🎯 Auto-Focus Email Input**: Email field automatically receives focus when dialog opens
   - Users can immediately start typing without clicking the input field
   - Improved keyboard-first user experience and accessibility
@@ -1269,6 +1567,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Better visual hierarchy between placeholder and actual input content
 
 #### 📱 User Experience Impact:
+
 - **Streamlined Authentication Flow**: Reduced friction in login process
 - **Improved Accessibility**: Better keyboard navigation and visual feedback
 - **Professional Polish**: Enhanced visual refinement across dialog interactions
@@ -1403,7 +1702,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #### 💡 Benefits Achieved:
 
 - **⚡ Performance**: Faster cryptographic operations across entire application
-- **🏗️ Simplification**: Unified Blake2b family reduces architectural complexity  
+- **🏗️ Simplification**: Unified Blake2b family reduces architectural complexity
 - **🔧 Maintainability**: Single cryptographic family easier to audit and maintain
 - **📈 Future-Proofing**: Blake2b designed for modern computing environments
 - **🛡️ Security**: Maintained or improved cryptographic security properties
@@ -1479,12 +1778,12 @@ This represents a **fundamental cryptographic infrastructure upgrade** that mode
 
 #### ✅ Code Quality Metrics Achievement:
 
-- **📊 Rust Backend**: 
+- **📊 Rust Backend**:
   - ✅ **0 warnings** with `cargo clippy -- -D warnings` (strict mode)
   - ✅ **Perfect formatting** with `cargo fmt --check`
   - ✅ **Clean compilation** without any linting issues
 
-- **🌐 Frontend**: 
+- **🌐 Frontend**:
   - ✅ **0 errors** and **0 warnings** in `svelte-check`
   - ✅ **Perfect formatting** with Prettier verification
   - ✅ **TypeScript compliance** with strict type checking
@@ -1526,7 +1825,7 @@ This represents a **fundamental cryptographic infrastructure upgrade** that mode
 
 - **🗑️ Deprecated Component Removal**:
   - **AuthGuard.svelte**: Eliminated obsolete component (replaced by modern dialog system)
-  - **EmailInputDialog.svelte**: Removed unused legacy email input component  
+  - **EmailInputDialog.svelte**: Removed unused legacy email input component
   - **simple-test route**: Deleted unused testing route for cleaner codebase
   - **Obsolete imports/references**: Cleaned up all AuthGuard imports across generation pages
   - **Commented legacy code**: Removed extensive obsolete email dialog code blocks
@@ -1545,7 +1844,7 @@ This represents a **fundamental cryptographic infrastructure upgrade** that mode
 
 - **📡 Backend-Frontend Communication**:
   - **Simplified data flow**: `next` parameter sent as plain string (no Base58/Base64 encoding)
-  - **Direct URL construction**: Frontend builds simple `/result?endpoint=...&params` URLs  
+  - **Direct URL construction**: Frontend builds simple `/result?endpoint=...&params` URLs
   - **Response-based navigation**: `next` returned in JWT validation response for seamless redirection
 
 - **🎯 Technical Implementation**:
@@ -1556,7 +1855,7 @@ This represents a **fundamental cryptographic infrastructure upgrade** that mode
 
 #### ✅ Translation Improvements:
 
-- **📝 Spanish Orthography**: 
+- **📝 Spanish Orthography**:
   - **Corrected email template**: "solo puede ser usado" → "sólo puede ser usado"
   - **Location**: `/api/locales/es.yml` security warning message
   - **Proper grammar**: Uses tilde for "solamente" meaning to avoid ambiguity
@@ -1685,7 +1984,7 @@ This session achieved **complete translation coverage** and **unified branding**
   - **Performance Improvement**: Simplified encryption/decryption operations
   - **Same Security Model**: Authentication provided by HMAC verification and database token presence
 
-- **🛡️ Security Architecture Enhancement**: 
+- **🛡️ Security Architecture Enhancement**:
   - **Dual Authentication**: ChaCha20 encryption + HMAC-SHA3-256 integrity verification
   - **Database Validation**: Token presence in database provides additional security layer
   - **No Security Reduction**: Authentication guarantees maintained through existing mechanisms
@@ -1716,7 +2015,7 @@ This session achieved **complete translation coverage** and **unified branding**
   - **Email Compatibility**: Reduced risk of line breaks in email clients
   - **URL Length Optimization**: Shorter query parameters
 
-- **⚡ Performance Improvements**: 
+- **⚡ Performance Improvements**:
   - **Simpler Operations**: Stream cipher faster than AEAD
   - **Reduced Memory**: 32 bytes vs 48 bytes encrypted data
   - **Faster Validation**: Less data to process and validate
@@ -1729,10 +2028,12 @@ This session achieved **complete translation coverage** and **unified branding**
 #### ✅ Security Analysis:
 
 **Security Model Before (ChaCha20-Poly1305)**:
-- Encryption: ChaCha20-Poly1305 AEAD (48 bytes: 32 + 16 auth tag)  
+
+- Encryption: ChaCha20-Poly1305 AEAD (48 bytes: 32 + 16 auth tag)
 - Authentication: Built-in AEAD authentication + HMAC + database presence
 
 **Security Model After (ChaCha20)**:
+
 - Encryption: ChaCha20 stream cipher (32 bytes)
 - Authentication: HMAC-SHA3-256 verification + database presence validation
 - **Result**: Equivalent security with simpler implementation
@@ -1825,22 +2126,24 @@ This session achieved **complete translation coverage** and **unified branding**
 #### ✅ Implementation Benefits:
 
 - **🎯 Consistent Design**: Identical appearance across all languages
-- **⚡ Performance**: Compile-time templates eliminate runtime overhead  
+- **⚡ Performance**: Compile-time templates eliminate runtime overhead
 - **🛠️ Maintainability**: Single template source with automatic i18n
 - **🔄 Backward Compatibility**: Zero breaking changes to email API
 - **🧪 Tested**: Complete testing with Spanish, Euskera, and French emails
 
 #### ✅ Dependencies Added:
+
 ```toml
 maud = "0.27"           # Compile-time HTML templating
 rust-i18n = "3.1"      # YAML-based internationalization
 ```
 
 #### ✅ File Structure:
+
 ```
 api/src/email_templates/
   ├── mod.rs                 # Module exports
-  ├── magic_link.rs          # Maud template implementation  
+  ├── magic_link.rs          # Maud template implementation
   └── email_styles.css       # Professional CSS styling
 
 api/locales/
@@ -1908,7 +2211,7 @@ api/locales/
 ### 💪 Security Improvements:
 
 - **Resistance to GPU Attacks**: Argon2id's memory-hard function makes GPU attacks economically infeasible
-- **ASIC Resistance**: Memory requirements make specialized hardware attacks impractical  
+- **ASIC Resistance**: Memory requirements make specialized hardware attacks impractical
 - **Side-Channel Protection**: Argon2id includes built-in protection against timing attacks
 - **Future-Proof Algorithm**: Designed to remain secure against advances in computing power
 
@@ -1918,10 +2221,11 @@ api/locales/
 - **Performance Verification**: Authentication flow maintains fast response times
 - **Security Validation**: Cryptographic implementation verified with comprehensive test suite
 - **Email Testing**: Updated test suite to use only authorized test addresses
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+  and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **Component Versions:**
-- **API**: Stable backend (starts from 1.0.0)  
+
+- **API**: Stable backend (starts from 1.0.0)
 - **Web**: User interface (evolving, 0.x.x series)
 
 ---
@@ -1929,7 +2233,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.6.1] - 2025-09-03
 
 ### Database Architecture Simplification & Email Accessibility (v1.6.1)
+
 #### Enhanced
+
 - **🗄️ Simplified Database Architecture**: Replaced complex `auth_sessions` table with streamlined `magiclinks` table
   - **New Schema**: `magiclinks (token_hash BLOB PRIMARY KEY, expires_at INTEGER NOT NULL)`
   - **HMAC-SHA3-256 + SHAKE-256**: Magic link hashing using `HMAC-SHA3-256(magic_link, hmac_key) → SHAKE-256(hmac_result) → [16 bytes]`
@@ -1946,6 +2252,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Inline Style Enforcement**: Added `style="color: white !important;"` to guarantee text visibility
 
 #### Technical
+
 - **MagicLinkOperations Module**: New database operations module replacing AuthOperations
   - `store_magic_link()`: Stores HMAC-SHA3-256 + SHAKE-256 compressed hash
   - `validate_and_consume_magic_link()`: Validates hash and removes from database (one-time use)
@@ -1959,6 +2266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Testing Verified**: Complete system validation with 100% test pass rate
 
 #### Fixed
+
 - **Authentication Flow Stability**: Resolved authentication system complexity through database simplification
 - **Email Accessibility**: Fixed button and link colors for colorblind users in all email templates
 - **Storage Optimization**: Reduced database storage requirements through hash-only approach
@@ -1968,7 +2276,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.6.0] - 2025-09-02
 
 ### Magic Token Compression with SHAKE256 (v1.6.0)
-#### Enhanced  
+
+#### Enhanced
+
 - **🗜️ Compressed Magic Tokens**: Reduced magic token size by 42% using SHAKE256 compression
   - **New Format**: `user_id (16 bytes) + timestamp (8 bytes) + SHAKE256(HMAC-SHA3-256) (8 bytes) = 32 bytes total`
   - **Size Reduction**: Magic links reduced from ~76 to ~44 characters (42% smaller)
@@ -1978,6 +2288,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Maintained Security**: Same HMAC-SHA3-256 integrity protection with efficient compression
 
 #### Technical
+
 - **SHAKE256 Compression**: `SHAKE256(HMAC-SHA3-256) → 8 bytes` for space-efficient integrity verification
 - **Updated Validation**: Enhanced `validate_magic_token()` function supporting compressed format
 - **Token Structure**: Optimized 32-byte structure (16+8+8) for maximum efficiency
@@ -1989,7 +2300,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.5.1] - 2025-09-02
 
 ### Per-User Salt Security Enhancement (v1.5.1)
+
 #### Enhanced
+
 - **🔐 Unique Salt Per User**: Implemented per-user salt derivation for maximum PBKDF2 security
   - **Enhanced Process**: `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → derive_user_salt(HMAC-SHA3-256(email, global_salt)) → PBKDF2-SHA3-256(hmac_result, user_salt, 600k iter.) → SHAKE256(pbkdf2_result) → 16-byte user_id`
   - **Per-User Salt Generation**: Each user gets a unique 32-byte salt derived via `HMAC-SHA3-256(email, global_salt)`
@@ -1998,6 +2311,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Zero Impact Performance**: Same computational cost with enhanced security guarantees
 
 #### Technical
+
 - **Salt Derivation Function**: New `derive_user_salt()` method using HMAC-SHA3-256 for deterministic per-user salts
 - **Updated Documentation**: Enhanced process flow documentation reflecting 5-step security derivation
 - **Testing Verified**: 100% test pass rate with unique magic tokens generated per user email
@@ -2008,7 +2322,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.5.0] - 2025-09-02
 
 ### Enhanced User ID Derivation with HMAC + SHAKE256 Security (v1.5.0)
+
 #### Enhanced
+
 - **🔐 Multi-Layer User ID Security**: Upgraded deterministic user ID derivation process with enhanced cryptographic security
   - **Process Flow**: `SHA3-256(email) → HMAC-SHA3-256(sha3_result, hmac_key) → PBKDF2-SHA3-256(hmac_result, salt, 600k iter.) → SHAKE256(pbkdf2_result) → 16-byte user_id`
   - **HMAC Layer**: Added HMAC-SHA3-256 with dedicated `USER_ID_HMAC_KEY` secret for additional security against rainbow table attacks
@@ -2019,6 +2335,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Professional Security**: Industry-standard key derivation following NIST and OWASP cryptographic recommendations
 
 #### Technical
+
 - **Environment Variables**: Added `USER_ID_HMAC_KEY` configuration to `.env` and `spin.toml`
 - **Database Operations**: Updated all user ID functions to handle 16-byte arrays instead of 32-byte
 - **JWT Integration**: Seamless integration with existing JWT access/refresh token system
@@ -2030,7 +2347,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.5 / Web v0.19.4] - 2025-09-02
 
 ### SPA Routing & Authentication System Enhancement (v1.4.5 / v0.19.4)
+
 #### Added
+
 - **🔄 Complete SPA Routing Support**: Production-grade single-page application routing system
   - **Fallback Configuration**: `FALLBACK_PATH = "index.html"` in `static-fileserver` component for proper SPA routing
   - **Route Resolution**: All non-API routes (`/custom/`, `/password/`, `/api-key/`, `/mnemonic/`) now properly fallback to `index.html`
@@ -2050,6 +2369,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Frontend Integration**: Uses `currentLanguage` store for seamless language detection
 
 #### Enhanced
+
 - **🔧 Development Environment Improvements**: Optimized development workflow without production conflicts
   - **Conditional Static Serving**: `static-fileserver` component commented out in development mode
   - **Clean Development Setup**: Prevents conflicts when running `just clean` → `just dev`
@@ -2061,6 +2381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Dialog Store Integration**: Enhanced `dialogStore.show('auth')` integration for all protected pages
 
 #### Technical Implementation
+
 - **Frontend Changes**: Updated all generation page components to use modern authentication flow
   - **AuthDialogContent.svelte**: Enhanced with `currentLanguage` import and `email_lang` parameter
   - **Generation Pages**: `/password/`, `/api-key/`, `/mnemonic/` updated to use `dialogStore.show('auth')`
@@ -2071,6 +2392,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Deployment Workflow**: Seamless transition between development and production configurations
 
 #### User Experience Impact
+
 - **Seamless SPA Navigation**: Users can directly access any URL without 404 errors
 - **Consistent Authentication**: Identical login experience across all generation tools
 - **Native Language Support**: Magic link emails arrive in user's preferred interface language
@@ -2081,7 +2403,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.5 / Web v0.19.4] - 2025-09-02
 
 ### Production Deployment System (v1.4.5 / v0.19.4)
+
 #### Added
+
 - **🚀 Complete Production Deployment System**: New `just predeploy` command for unified deployment
   - **Unified Backend Architecture**: Single server serves both API endpoints (`/api/*`) and static web interface (`/`)
   - **Static File Server Integration**: Official Fermyon `spin-fileserver` component for production-grade static serving
@@ -2100,6 +2424,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Tailscale Management**: Enhanced `tailscale-stop` command for comprehensive Tailscale serve cleanup
 
 #### Enhanced
+
 - **🔧 Development Workflow Improvements**: Enhanced justfile with production deployment capabilities
   - **Process Cleanup**: `just clean` now removes predeploy logs and PID files
   - **Status Monitoring**: Enhanced `just status` with predeploy server status display
@@ -2107,6 +2432,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Log Management**: Predeploy logs separate from development logs for clear separation
 
 #### Architecture
+
 - **📁 Static File Serving**: Production-grade static file serving architecture
   - **Official Component**: Uses verified `spin-fileserver` WASM component from Fermyon
   - **Secure Integration**: Component downloaded with SHA256 digest verification
@@ -2122,7 +2448,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.5 / Web v0.19.4] - 2025-09-01
 
 ### Automatic Token Refresh System (v1.4.5 / v0.19.4)
+
 #### Added
+
 - **🔄 Complete Automatic Token Refresh System**: Seamless user experience with transparent token renewal
   - **Backend Refresh Endpoint**: New `POST /api/refresh` endpoint for automatic access token renewal
     - **HttpOnly Cookie Authentication**: Secure refresh using HttpOnly, Secure, SameSite=Strict cookies
@@ -2143,6 +2471,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Confirmation Dialog**: Professional logout confirmation prevents accidental logouts
 
 #### Enhanced
+
 - **🔧 Authentication Architecture Improvements**: Complete overhaul of authentication system reliability
   - **Token Duration Optimization**: Extended access token to 3 minutes and refresh token to 15 minutes
   - **Universal API Protection**: All generation endpoints now use `authenticatedFetch()` wrapper
@@ -2150,7 +2479,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Automatic Refresh**: GET and POST seed-based generation with transparent token refresh
     - **Consistent Error Handling**: Unified 401 handling across all protected endpoints
   - **Enhanced Auth Store**: New `updateTokens()` method for refresh-triggered token updates
-    - **Seamless Token Update**: Updates both memory state and localStorage automatically  
+    - **Seamless Token Update**: Updates both memory state and localStorage automatically
     - **State Consistency**: Maintains authentication state during refresh operations
     - **Proper Validation**: Validates new tokens and user information during updates
   - **Cookie Management**: Complete HttpOnly refresh token lifecycle management
@@ -2159,6 +2488,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Cross-Request Persistence**: Survives browser refresh and tab changes
 
 #### Technical Implementation
+
 - **Security Architecture**: Industry-standard refresh token implementation
   - **HttpOnly Protection**: Refresh tokens completely inaccessible to client-side JavaScript
   - **Secure Cookie Flags**: HttpOnly, Secure, SameSite=Strict protection against XSS/CSRF
@@ -2175,7 +2505,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.4 / Web v0.19.3] - 2025-09-01
 
 ### Email Integration & Multilingual Support (v1.4.4)
+
 #### Added
+
 - **📧 Complete Mailtrap Email Integration**: Professional email delivery system for magic link authentication
   - **Production-Ready Email Delivery**: Full Mailtrap REST API integration replacing development console logging
     - **REST API Implementation**: Native Spin SDK HTTP client (`spin_sdk::http::send`) for reliable email delivery
@@ -2199,6 +2531,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Technical Precision**: Consistent magic link, expiration, and security messaging
 
 #### Enhanced
+
 - **🔧 Email Configuration System**: Complete environment variable and Spin configuration integration
   - **Environment Variables**: Added Mailtrap API token and inbox ID configuration
     ```env
@@ -2215,6 +2548,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Performance Optimized**: Non-blocking email delivery maintaining fast API response times
 
 #### Technical Implementation
+
 - **Email Module Architecture**: Professional email service with comprehensive multilingual support
   - **`EmailConfig` Structure**: Centralized configuration management for API credentials and settings
   - **Template System**: 13 complete language templates with HTML and plain text versions
@@ -2230,6 +2564,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Status Validation**: HTTP status 200 confirmation for successful email delivery
 
 #### User Experience Benefits
+
 - **🌐 Native Language Experience**: Users receive magic link emails in their selected UI language
 - **📱 Professional Email Design**: HTML emails with proper styling and branding across all devices
 - **⚡ Reliable Delivery**: Production-grade email infrastructure replacing development console logs
@@ -2241,7 +2576,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.3 / Web v0.19.3] - 2025-08-31
 
 ### Testing Infrastructure Changes (v1.4.3)
+
 #### Fixed
+
 - **🔧 Critical Testing System Compatibility**: Completely updated `final_test.sh` for JWT authentication compatibility
   - **Authentication-Aware Testing**: Major overhaul to support Zero Knowledge JWT authentication system
     - **Magic Link Flow Integration**: Added complete magic link → JWT token authentication flow
@@ -2261,6 +2598,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Error Validation**: Comprehensive testing of invalid emails, expired magic links, and malformed tokens
 
 #### Technical Implementation
+
 - **Testing Architecture Evolution**: Professional testing system transformation
   - **JWT Authentication Integration**: Complete magic link to Bearer token workflow
   - **Color-Coded Output**: Enhanced user experience with detailed authentication status reporting
@@ -2277,7 +2615,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [API v1.4.2 / Web v0.19.3] - 2025-08-31
 
 ### Web Interface Changes (v0.19.3)
+
 #### Added
+
 - **🔒 Logout Confirmation Dialog**: Professional confirmation dialog for secure logout process
   - **Modal Confirmation Dialog**: Elegant modal interface preventing accidental logouts
     - **Professional Design**: Consistent with existing dialog system (auth, seed dialogs)
@@ -2297,6 +2637,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **State Management**: Proper dialog state management with smooth transitions
 
 #### Enhanced
+
 - **🎭 Dialog System Evolution**: Extended dialog system to support logout confirmation type
   - **Unified Dialog Container**: `DialogContainer.svelte` now supports `logout` dialog type
   - **Component Integration**: `LogoutDialogContent.svelte` seamlessly integrated with existing dialog architecture
@@ -2308,6 +2649,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **State Synchronization**: Proper state management between dropdown and dialog systems
 
 #### Technical Implementation
+
 - **Dialog System Architecture**: Professional modal system expansion
   - **`LogoutDialogContent.svelte`**: New component handling logout confirmation UI
   - **Dialog Store Integration**: Seamless integration with existing `dialogStore` management
@@ -2326,6 +2668,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Consistent Terminology**: Unified logout terminology across all UI elements
 
 #### User Experience Benefits
+
 - **🛡️ Accidental Logout Prevention**: Users must explicitly confirm logout action
 - **🎯 Clear Intent**: Visual confirmation dialog makes logout intention explicit
 - **📱 Mobile Friendly**: Touch-friendly buttons and responsive dialog design
@@ -2341,7 +2684,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release represents a major milestone in implementing a **Zero Knowledge authentication architecture** where the server never stores or processes user emails or personal information. The system achieves complete user privacy through cryptographic user ID derivation while providing robust JWT-based endpoint protection.
 
 #### API Backend Changes (v1.4.2)
+
 #### Added
+
 - **🔐 Zero Knowledge JWT Authentication Middleware**: Complete endpoint protection system achieving ZK privacy goals
   - **JWT Bearer Token Validation**: All protected endpoints now require valid Bearer tokens
     - **Protected Endpoints**: `/api/custom`, `/api/password`, `/api/api-key`, `/api/mnemonic`, `/api/from-seed`, `/api/users/*`
@@ -2358,6 +2703,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Cryptographic Security**: 600,000 PBKDF2 iterations following OWASP 2024 standards
 
 #### Enhanced
+
 - **⚡ JWT Token Duration Optimization**: Configured for rapid testing and development
   - **Access Token**: 20 seconds (was 15 minutes) - enables quick expiration testing
   - **Refresh Token**: 2 minutes (was 1 week) - allows complete token lifecycle testing
@@ -2365,6 +2711,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Easy Configuration**: Production deployments can extend durations via constants
 - **🗄️ Zero Knowledge Database Schema**: Privacy-preserving database structure
   - **Users Table Refactoring**: Removed all PII fields achieving true ZK architecture
+
     ```sql
     -- OLD (Privacy-invasive)
     CREATE TABLE users (
@@ -2374,18 +2721,20 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
         created_at DATETIME,
         updated_at DATETIME
     );
-    
+
     -- NEW (Zero Knowledge)
     CREATE TABLE users (
         user_id BLOB PRIMARY KEY,  -- ✅ Cryptographic hash only
         created_at INTEGER DEFAULT (unixepoch())
     );
     ```
+
   - **BLOB Primary Keys**: 32-byte cryptographic user IDs replace sequential integers
   - **Temporal Privacy**: Unix timestamps prevent timezone information leakage
   - **Automatic User Creation**: Users automatically created during authentication without manual signup
 
 #### Technical Implementation
+
 - **Authentication Middleware Architecture**: Professional security layer implementation
   - **`utils/auth.rs`**: Complete JWT validation and authorization middleware
     - **Token Extraction**: Bearer token parsing with format validation
@@ -2401,9 +2750,11 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Magic Link Integrity**: HMAC-SHA3-256 protects magic links with cryptographic verification
 
 ### Web Interface Changes (v0.19.2)
-*No changes in this release - focus on backend Zero Knowledge authentication implementation*
+
+_No changes in this release - focus on backend Zero Knowledge authentication implementation_
 
 ### Zero Knowledge Benefits Achieved
+
 - **✅ Complete Email Privacy**: Server never stores or logs user email addresses
 - **✅ Deterministic User IDs**: Same email always generates same user ID for consistency
 - **✅ Cryptographic Security**: Industry-standard key derivation with high iteration counts
@@ -2413,6 +2764,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **✅ Scalable Architecture**: ZK system supports millions of users without PII storage concerns
 
 ### Migration Notes
+
 - **Database Schema**: Existing `users` table structure automatically migrated to ZK schema
 - **API Clients**: Must include `Authorization: Bearer <token>` header for protected endpoints
 - **Development Testing**: Short token durations require frequent authentication during testing
@@ -2423,18 +2775,23 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.4.1 / Web v0.19.1] - 2025-08-29
 
 ### API Backend Changes (v1.4.1)
+
 #### Fixed
+
 - **🔗 Magic Link Host Detection**: Fixed magic links to correctly use the UI host from request instead of fallback host
   - Magic links now properly point to `https://elite.faun-pirate.ts.net` when accessed via Tailscale
   - Added `ui_host` parameter to `/api/login/` endpoint for dynamic host detection
   - Improved host URL construction with proper fallback logic
 
 #### Technical
+
 - Enhanced debug logging for magic link generation (development mode only)
 - Improved error handling in login authentication flow
 
 ### Web Interface Changes (v0.19.1)
+
 #### Added
+
 - **📧 EmailInputDialog Component**: Reusable authentication component for enhanced user experience
   - **Two-Step Email Flow**: Professional email input and confirmation dialog
     - Step 1: Email input with real-time validation and error handling
@@ -2461,7 +2818,8 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - Euskera: Added authentic Basque language translations with proper ergative/absolutive cases
   - **Translation Quality**: Ensured linguistic authenticity and professional terminology across all supported languages
 
-#### Enhanced  
+#### Enhanced
+
 - **✨ Authentication UX Improvements**: Complete redesign of authentication flow for better user experience
   - **Frictionless Exploration**: All generator pages show content immediately without authentication barriers
   - **On-Demand Authentication**: Login dialog appears only when user clicks "Generate" button
@@ -2473,6 +2831,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Error Handling**: Comprehensive error states with user-friendly messages in all supported languages
 
 #### Technical Implementation
+
 - **🔧 Advanced State Management**: Sophisticated parameter preservation system
   - **Base58 Encoding**: JSON form parameters → UTF-8 bytes → base58 URL-safe encoding
   - **localStorage Integration**: Temporary parameter storage with automatic cleanup
@@ -2487,6 +2846,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Touch-Friendly Interface**: Optimized button sizes and touch targets for mobile interaction
 
 #### Fixed
+
 - **🔧 TypeScript Integration**: Resolved all type definition issues
   - **Global Types**: Proper `globalThis` usage for TextEncoder/TextDecoder compatibility
   - **Event Types**: Fixed CustomEvent type declarations for component communication
@@ -2500,7 +2860,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Complete Verification**: All 13 languages now have exactly 143 translation keys each
 
 ### Web Interface Changes (v0.19.0) - Previous Release
-#### Enhanced  
+
+#### Enhanced
+
 - **✨ Enhanced Authentication UX**: Completely redesigned authentication flow for better user experience
   - **Frictionless Exploration**: All generator pages (custom/, password/, api-key/, mnemonic/) now show content immediately without authentication
   - **On-Demand Authentication**: Login dialog only appears when user clicks "Generate" button
@@ -2512,6 +2874,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **🔗 Dynamic Magic Links**: Magic links automatically adapt to current host (localhost/Tailscale)
 
 #### Removed
+
 - Debug messages and visual indicators from production interface
 - Authentication barriers that prevented content exploration
 
@@ -2520,7 +2883,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.4.0 / Web v0.18.0] - 2025-08-27
 
 ### API Backend Changes (v1.4.0)
+
 #### Added
+
 - **🔐 Complete Authentication System**: Magic link authentication with JWT token management
   - **Magic Link Authentication Flow**: Passwordless authentication via email magic links
     - **POST /api/login/**: Generate magic link and send via email (logged in development mode)
@@ -2544,6 +2909,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Base58 Encoding**: URL-safe tokens eliminating problematic characters
 
 #### Enhanced
+
 - **🏗️ JWT Utilities Module**: Complete JWT token management system
   - **`utils/jwt.rs`**: New utilities module for JWT operations
     - **Token Generation**: Access and refresh token creation with proper claims
@@ -2567,6 +2933,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Session Cleanup**: Automatic expired session removal
 
 #### Technical Implementation
+
 - **Authentication Handler Architecture**: Professional request handling
   - **Method-Based Routing**: POST for magic link generation, GET for validation
   - **JSON Request Handling**: Proper JSON parsing for magic link requests
@@ -2583,6 +2950,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **CORS Handling**: Proper cross-origin handling for authentication flows
 
 #### Dependencies Added
+
 - **JWT Authentication Stack**: Complete authentication dependency set
   ```toml
   base64 = "0.22.1"           # Base64 encoding for JWT tokens
@@ -2592,7 +2960,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   ```
 
 ### Web Interface Changes (v0.18.0)
+
 #### Added
+
 - **🛡️ AuthGuard Component**: Automatic route protection with authentication enforcement
   - **Route Protection**: Protects custom/, password/, api-key/, and mnemonic/ routes
   - **Authentication Detection**: Intelligent check for valid access tokens and refresh cookies
@@ -2613,6 +2983,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Magic Link Processing**: URL parameter processing for magic link authentication
 
 #### Enhanced
+
 - **🔄 Layout Integration**: Complete authentication flow integration
   - **Magic Link Detection**: Automatic magic link parameter processing in +layout.svelte
   - **Token Management**: Seamless token handling throughout application lifecycle
@@ -2624,6 +2995,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **13-Language Support**: Authentication interface available in all supported languages
 
 #### Technical Implementation
+
 - **Authentication Architecture**: Professional frontend authentication system
   - **Component-Based Guards**: Reusable AuthGuard component for route protection
   - **State-Driven UI**: Reactive UI updates based on authentication state
@@ -2639,7 +3011,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Error Handling**: Comprehensive error handling with user feedback
 
 ### Cross-Component Integration
+
 #### Enhanced
+
 - **🔄 Complete Authentication Flow**: End-to-end authentication system integration
   - **Backend ↔ Frontend**: Seamless API integration for authentication endpoints
   - **Database ↔ Sessions**: Complete session management with database persistence
@@ -2655,11 +3029,13 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.3.0] - 2025-08-27
 
 ### API Backend Changes (v1.3.0)
+
 #### Added
+
 - **🗄️ Complete SQLite Database System**: Full user management with environment-aware database selection
   - **Database Module Architecture**: New modular database layer in `api/src/database/`
     - **`connection.rs`**: Environment-aware database connections with automatic host detection
-    - **`models.rs`**: User model with complete data structures and TypeScript-compatible serialization  
+    - **`models.rs`**: User model with complete data structures and TypeScript-compatible serialization
     - **`operations.rs`**: Full CRUD operations with proper error handling and SQL injection protection
     - **`mod.rs`**: Clean module exports with unified database interface
   - **Dual Environment Support**: Automatic database selection based on request origin
@@ -2676,6 +3052,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Input Validation**: Server-side validation for usernames, emails, and ID formats
 
 #### Enhanced
+
 - **🏗️ Database Integration**: Seamless integration with existing Spin architecture
   - **Configuration Setup**: New `runtime-config.toml` defining multiple database environments
   - **Spin Configuration**: Updated `spin.toml` with SQLite database access permissions
@@ -2688,7 +3065,8 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Updated Help System**: Enhanced 404 responses include new user management endpoints
   - **Backward Compatibility**: All existing endpoints remain unchanged
 
-#### Technical Implementation  
+#### Technical Implementation
+
 - **Professional Database Architecture**: Industry-standard patterns and practices
   - **Connection Pooling**: Efficient database connection management via Spin SDK
   - **Transaction Safety**: Proper error handling with automatic rollback on failures
@@ -2702,12 +3080,13 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Testing Support**: Database operations fully testable in development environment
 
 #### Database Schema
+
 - **Users Table Structure**: Complete user entity with timestamps and constraints
   ```sql
   CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
-      email TEXT NOT NULL UNIQUE, 
+      email TEXT NOT NULL UNIQUE,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -2717,6 +3096,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **Auto-Increment IDs**: Primary key generation handled automatically
 
 #### Integration Benefits
+
 - **Stateful Operations**: Enables user management and persistent data storage
 - **Scalable Architecture**: Foundation for future database-dependent features
 - **Development Efficiency**: Automatic environment detection eliminates configuration overhead
@@ -2728,7 +3108,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.2.1] - 2025-08-25
 
 ### API Backend Changes (v1.2.1)
+
 #### Enhanced
+
 - **🔐 ChaCha8 OTP Generation**: Refactored OTP generation for complete cryptographic consistency
   - **Unified Cryptographic Architecture**: All random generation now uses ChaCha8Rng throughout the system
     - **Hash Generation**: Uses `ChaCha8Rng::from_seed()` for main hash/password/api-key generation (existing)
@@ -2744,12 +3126,14 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Professional Standards**: Follows established cryptographic best practices
 
 #### Fixed
+
 - **🔧 Deprecated API Usage**: Updated to modern Rust rand API
-  - **Method Migration**: Changed `rng.gen_range()` to `rng.random_range()` 
+  - **Method Migration**: Changed `rng.gen_range()` to `rng.random_range()`
   - **Compiler Compliance**: Eliminated deprecation warnings during build process
   - **Future-Proof**: Updated to latest rand crate API standards
 
 #### Technical Implementation
+
 - **Cryptographic Architecture**: Complete ChaCha8 ecosystem implementation
   - **Single Dependency**: `rand_chacha = "0.9.0"` handles all random generation needs
   - **Seed Management**: Consistent 32-byte seed format across all generation functions
@@ -2761,7 +3145,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.2.0 / Web v0.17.2] - 2025-08-24
 
 ### Major New Feature: Complete BIP39 Mnemonic Generation System
+
 #### Added
+
 - **🔐 BIP39 Mnemonic Endpoint**: New `/api/mnemonic` endpoint for generating Bitcoin Improvement Proposal 39 mnemonic phrases
   - **GET Method**: Random mnemonic generation with query parameters
     - `language` parameter: 10 supported languages (english, spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech)
@@ -2777,9 +3163,10 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - Standard BIP39 wordlists for all supported languages
 
 #### Enhanced
+
 - **🌍 Complete Language Coverage**: 10 languages with full BIP39 standard compliance
   - **Western Europe**: English (default), Spanish, French, Portuguese, Italian
-  - **Asia**: Chinese Simplified, Chinese Traditional, Japanese, Korean  
+  - **Asia**: Chinese Simplified, Chinese Traditional, Japanese, Korean
   - **Central Europe**: Czech
   - All languages use official BIP39 wordlists from the standard specification
   - Perfect compatibility with hardware wallets and standard cryptocurrency software
@@ -2794,6 +3181,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - All validation errors return HTTP 400 with clear error descriptions
 
 #### Technical Implementation
+
 - **🏗️ Modular Architecture**: New mnemonic handler following established patterns
   - `api/src/handlers/mnemonic.rs`: Complete handler implementation
   - Integrated routing with both GET and POST support
@@ -2809,6 +3197,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Enhanced Test Script**: Updated `final_test.sh` with POST request support
 
 #### Documentation Updates
+
 - **📚 Complete Documentation**: Updated README.md with comprehensive mnemonic endpoint documentation
   - Detailed API documentation with examples for all languages
   - Language support matrix with native names and codes
@@ -2820,6 +3209,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Enhanced project structure documentation
 
 #### User Benefits
+
 - **🎯 Complete BIP39 Compliance**: Full compatibility with cryptocurrency ecosystem
 - **🌐 Global Accessibility**: Support for users in 10 different languages
 - **🔒 Security Options**: Both standard (12-word) and high (24-word) security levels
@@ -2831,9 +3221,11 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.1.0 / Web v0.17.1] - 2025-08-24
 
 ### Web Interface Changes (v0.17.1)
+
 #### Fixed
+
 - **🔄 Regenerate Button Behavior**: Corrected regenerate functionality to always perform GET requests without seed
-  - **Problem**: Regenerate button was including seed in API call parameters, causing deterministic instead of random generation  
+  - **Problem**: Regenerate button was including seed in API call parameters, causing deterministic instead of random generation
   - **Solution**: Modified `regenerateHash()` function to explicitly exclude seed from parameters (`delete paramsForGeneration.seed`)
   - **Result**: Regenerate button now correctly generates new random values while preserving other parameters (length, alphabet, prefix, suffix)
   - **Consistency**: Maintains intended behavior where regenerate always produces different results regardless of how the original was generated
@@ -2843,7 +3235,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.1.0 / Web v0.17.0] - 2025-08-24
 
 ### Major Breaking Change: Base58 Seed Format Migration
+
 #### Changed
+
 - **🔄 Seed Format Migration**: Complete migration from hexadecimal to base58 seed encoding
   - **API Breaking Change**: All endpoints now use 44-character base58 seeds instead of 64-character hexadecimal
   - **Enhanced Security**: Base58 encoding eliminates confusing characters (0, O, I, l) for better usability
@@ -2852,6 +3246,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Backward Incompatibility**: Old hex seeds no longer accepted - requires migration for existing implementations
 
 #### Enhanced
+
 - **📊 Custom Endpoint Improvements**: Major enhancements to /api/custom endpoint
   - **🔢 Numeric Alphabet**: New `numeric` alphabet type supporting only digits 0-9
     - Perfect for generating numeric codes, PINs, or numeric-only identifiers
@@ -2873,6 +3268,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Smart Regenerate Logic**: Regenerate button hidden only when seed comes from URL parameters, not API responses
 
 #### Fixed
+
 - **🔧 Regenerate Button Logic**: Corrected regenerate button visibility logic
   - **Problem**: Button was hidden whenever any seed was present (including API-generated ones)
   - **Solution**: Only hide when seed parameter comes from URL GET parameters (`searchParams.has('seed')`)
@@ -2884,7 +3280,8 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Simplified UI components by removing complex seed handling logic
 
 #### Technical Implementation
-- **Backend Changes**: 
+
+- **Backend Changes**:
   - Added `bs58` crate dependency for base58 encoding/decoding
   - Updated all seed handling functions to use base58 format
   - Modified custom endpoint to return structured JSON with hash, seed, OTP, and timestamp
@@ -2896,6 +3293,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Removed all seed copying and input functionality from UI
 
 #### Migration Notes
+
 - **API Clients**: Must update to use base58 seed format (44 characters) instead of hexadecimal (64 characters)
 - **Existing Seeds**: Cannot be directly converted - new base58 seeds must be generated
 - **URL Parameters**: Seed parameters in URLs must now use base58 format
@@ -2906,23 +3304,26 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.16.0] - 2025-08-23
 
 ### Major New Feature: Seed-Based Deterministic Generation
+
 #### Added
+
 - **🌱 Comprehensive Seed Support**: Complete deterministic generation system for all three generators
   - **Universal Seed Fields**: Optional 64-character hexadecimal seed input in custom, password, and api-key pages
-  - **Dual API Modes**: 
+  - **Dual API Modes**:
     - **GET Requests**: Traditional random generation with auto-generated seed (existing behavior)
     - **POST Requests**: NEW deterministic generation using provided seed
   - **API Endpoint Enhancement**: All three endpoints now support both GET and POST methods
     - `POST /api/custom` - Deterministic hash generation with seed
-    - `POST /api/password` - Deterministic password generation with seed  
+    - `POST /api/password` - Deterministic password generation with seed
     - `POST /api/api-key` - Deterministic API key generation with seed
   - **Consistent Response Format**: Both random and seeded generation return same JSON structure with hash and seed
   - **Perfect Reproducibility**: Same seed + same parameters = exactly same result every time
 
 #### Enhanced
+
 - **🎯 Intelligent UI Behavior**: Smart interface adaptations for deterministic generation
   - **Conditional UI Elements**: "Generate Another" button automatically hidden when using deterministic seeds
-  - **Smart Result Display**: 
+  - **Smart Result Display**:
     - User-provided seeds displayed as informational text (non-editable)
     - Auto-generated seeds displayed as copyable textarea for reuse
   - **Seed Reuse Dialog**: Interactive modal when returning to settings with existing seed
@@ -2937,6 +3338,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Error Handling**: Comprehensive error responses for invalid seeds or parameters
 
 #### Technical Implementation
+
 - **Frontend Integration**: Complete TypeScript integration with new API methods
   - **New API Services**: `generatePasswordWithSeed()`, `generateApiKeyWithSeed()` methods
   - **Type Safety**: New interfaces `SeedPasswordRequest`, `SeedApiKeyRequest`
@@ -2944,11 +3346,12 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **URL Parameter Support**: Seeds passed as URL parameters maintain full functionality
 - **Backend Architecture**: Elegant dual-mode handler system
   - **Request Routing**: Single handlers manage both GET and POST for each endpoint
-  - **Code Reuse**: Shared generation logic between random and seeded modes  
+  - **Code Reuse**: Shared generation logic between random and seeded modes
   - **Hex Seed Parsing**: Robust conversion from hex string to 32-byte seed array
   - **Unified Response**: Both modes return consistent JSON with hash and seed fields
 
 #### User Experience Benefits
+
 - **🎯 Reproducible Testing**: Perfect for demonstrations, testing, and development workflows
 - **📋 Audit Trails**: Complete traceability with seed included in every response
 - **🔄 Consistent Results**: Eliminate randomness when needed for specific use cases
@@ -2960,7 +3363,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.15.0] - 2025-08-23
 
 ### Web Interface Changes (v0.15.0)
+
 #### Enhanced
+
 - **🌍 Translation Naturalness Improvements**: Comprehensive review and enhancement of all 13 language translations
   - **Portuguese Improvements**: Enhanced terminology for technical precision
     - Changed "letras" to "caracteres" for consistency across technical contexts
@@ -3007,6 +3412,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - Maintained proper SOV structure throughout the interface
 
 #### Enhanced
+
 - **📅 DateTimeLocalized Component Robustness**: Advanced fallback system for broader browser compatibility
   - **Multi-Level Fallback Architecture**: Sophisticated fallback system for unsupported locales
     - **Primary**: Attempts native `Intl.DateTimeFormat` with target locale
@@ -3028,6 +3434,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - **Performance Optimization**: Efficient validation without impacting rendering speed
 
 #### Fixed
+
 - **🔤 Translation Consistency**: Resolved terminology inconsistencies across languages
   - **Technical Terms**: Standardized character/letter terminology in Portuguese, French, and Catalan
   - **Regional Variations**: Enhanced European Portuguese vs Brazilian Portuguese distinctions
@@ -3038,6 +3445,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Edge Case Handling**: Better handling of mixed locale support scenarios
 
 #### Technical Implementation
+
 - **Translation Quality Assurance**: Systematic approach to linguistic improvements
   - **Native Speaker Review**: Used English as reference with Spanish linguistic guidance
   - **Grammatical Considerations**: Applied language-specific grammatical rules
@@ -3056,7 +3464,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.14.0] - 2025-08-23
 
 ### Web Interface Changes (v0.14.0)
+
 #### Added
+
 - **🖼️ Progressive Sprite Loading System**: Advanced icon loading with immediate fallbacks
   - **Deferred Loading**: 10-second delayed sprite loading after DOM ready (testing mode)
   - **UTF Placeholder System**: Instant visual feedback with Unicode emojis during sprite loading
@@ -3085,6 +3495,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Shareable URLs**: Complete configuration can be shared via URL parameters
 
 #### Enhanced
+
 - **🏗️ Centralized API Architecture**: Reorganized generation workflow for better maintainability
   - **Generator Pages**: Handle only UI, validation, and navigation (NO API calls)
   - **Result Page**: Centralized API calling via `generateFromParams()` function
@@ -3098,6 +3509,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Loading Indicators**: Subtle visual feedback during sprite loading
 
 #### Fixed
+
 - **🔧 SVG Internal References**: Resolved flag display issues with complex SVGs
   - **Unique ID Prefixes**: Added country prefixes to prevent ID conflicts (e.g., `#cn-a` → `#china-cn-a`)
   - **Bulk Processing**: Processed 1,764 SVG files, fixed 574 with internal references
@@ -3105,6 +3517,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Complete Coverage**: All flag SVGs now display correctly with proper internal links
 
 #### Architecture Changes
+
 - **Navigation Flow**: Enhanced user experience with parameter persistence
   - **Menu → Generator**: Loads defaults or URL parameters
   - **Generator → Result**: Passes configuration via URL parameters
@@ -3116,24 +3529,33 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Component Reuse**: Consistent component usage patterns
 
 #### Technical Implementation
+
 - **Sprite Loading Pipeline**: Sophisticated loading system with fallbacks
   ```javascript
   // app.html - Deferred loading with 10s delay
   window.__SPRITE_STATE__ = { loaded: false, loading: true, error: false };
-  setTimeout(() => { /* fetch and inject sprite */ }, 10000);
+  setTimeout(() => {
+    /* fetch and inject sprite */
+  }, 10000);
   ```
 - **Parameter Processing**: URL parameter parsing in all generator pages
   ```typescript
   // onMount in generator pages
-  const urlLength = searchParams.get('length');
+  const urlLength = searchParams.get("length");
   if (urlLength && isValid(urlLength)) params.length = parseInt(urlLength);
   ```
 - **Result Generation**: Unified API calling based on endpoint parameter
   ```typescript
   switch (endpoint) {
-    case 'custom': result = await api.generate(params); break;
-    case 'password': result = await api.generatePassword(params); break;
-    case 'api-key': result = await api.generateApiKey(params); break;
+    case "custom":
+      result = await api.generate(params);
+      break;
+    case "password":
+      result = await api.generatePassword(params);
+      break;
+    case "api-key":
+      result = await api.generateApiKey(params);
+      break;
   }
   ```
 
@@ -3142,7 +3564,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.13.0] - 2025-08-23
 
 ### Web Interface Changes (v0.13.0)
+
 #### Added
+
 - **🔍 Comprehensive Linting System**: Enterprise-grade code quality tools unified through Vite
   - **Modern ESLint v9**: Latest flat config with TypeScript and Svelte support
   - **Prettier Integration**: Automatic code formatting with Svelte plugin support
@@ -3151,7 +3575,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Browser Globals**: Pre-configured ESLint environment for fetch, localStorage, DOM APIs
 - **⚡ Unified Quality Pipeline**: Single command for complete code verification
   - **`just check`**: Complete quality verification (clippy + fmt + ESLint + svelte-check)
-  - **`just lint`**: Dual-language linting (Rust clippy + ESLint via Vite)  
+  - **`just lint`**: Dual-language linting (Rust clippy + ESLint via Vite)
   - **`just fmt`**: Unified formatting (cargo fmt + Prettier)
   - **Smart Build Integration**: Production builds fail only on errors, warnings allowed
 - **🛠️ Developer Experience**: Enhanced development workflow integration
@@ -3161,6 +3585,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Editor Integration**: Compatible with VSCode, vim, emacs ESLint plugins
 
 #### Enhanced
+
 - **🎯 Code Quality Standards**: Comprehensive cleanup and standardization
   - **Zero Warnings**: Eliminated all 15+ ESLint warnings across the codebase
   - **Import Cleanup**: Removed unused imports from route components (Icon, resultState, etc.)
@@ -3174,6 +3599,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Error Handling**: Enhanced catch blocks without unused error variables
 
 #### Fixed
+
 - **🚨 TypeScript Compilation Errors**: Resolved all build-blocking TypeScript issues
   - **Missing Type Definitions**: Added `@types/node` for process.env access
   - **Custom Declarations**: Created type definitions for vite-plugin-eslint
@@ -3186,6 +3612,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Type Imports**: Cleaned unused type definitions like `VersionResponse`
 
 #### Technical Implementation
+
 - **ESLint Configuration**: Modern flat config architecture for maximum compatibility
   - **Dual Language Support**: Separate configs for TypeScript and Svelte files
   - **Plugin Integration**: Comprehensive plugin ecosystem (TypeScript, Svelte, Prettier)
@@ -3206,7 +3633,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.12.0] - 2025-08-23
 
 ### Web Interface Changes (v0.12.0)
+
 #### Added
+
 - **📅 DateTimeLocalized Component**: Portable date/time formatting component for internationalization
   - **Universal Date Formatting**: Handles 13 languages with proper locale detection and formatting
   - **Custom Euskera Format**: Special handling for Basque language with authentic format: `{year}ko {month}ak {day}, {time}`
@@ -3227,6 +3656,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Better Semantics**: Home icon is more intuitive for navigation to main menu
 
 #### Enhanced
+
 - **🔧 Iconize Component Improvements**: Advanced positioning control with `invertposition` parameter
   - **Flexible Positioning**: New `invertposition` parameter (default: `false`) controls content order
     - `false` (default): Icon first, then content → "▶ Generate"
@@ -3238,7 +3668,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **🎯 Result Page Button Styling**: Enhanced buttons to match form page consistency
   - **Unified Button Sizes**: All result buttons now use same size as custom/password/api-key pages
   - **Professional Padding**: Upgraded to `px-6 py-4` (from `px-6 py-3`) for better touch targets
-  - **Typography Enhancement**: Changed to `font-semibold` (from `font-medium`) for better readability  
+  - **Typography Enhancement**: Changed to `font-semibold` (from `font-medium`) for better readability
   - **Consistent Spacing**: Added `hover:shadow-lg` effects matching other page buttons
   - **Icon Size Standardization**: Increased icon sizes to `w-5 h-5` (from `w-4 h-4`) for consistency
   - **Container Integration**: Moved buttons inside result container for better visual hierarchy
@@ -3249,6 +3679,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Flexbox Layout**: Used native flexbox for proper spacing between emojis and titles
 
 #### Fixed
+
 - **🔧 Svelte 5 Syntax Issues**: Corrected reactive syntax in components
   - **DateTimeLocalized**: Fixed `$derived(() => {})` to `$derived.by(() => {})` syntax error
   - **Iconize**: Resolved function code display issue by using correct reactive syntax
@@ -3260,6 +3691,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Icon Positioning**: Improved icon placement in various UI components using Iconize
 
 #### Technical Implementation
+
 - **Portable Component Design**: Both DateTimeLocalized and enhanced Iconize follow portable design patterns
   - **Zero Project Dependencies**: Components can be easily copied to other projects
   - **Clean Interfaces**: Simple, well-defined props with TypeScript support
@@ -3276,12 +3708,14 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.11.0] - 2025-08-22
 
 ### Web Interface Changes (v0.11.0)
+
 #### Added
+
 - **🔧 Universal Iconize Component**: Revolutionary RTL-aware wrapper for any content with automatic icon positioning
   - **Universal Wrapper**: Works with any content - plain text, HTML elements, or complex components
   - **Smart RTL Behavior**: Automatically positions icons correctly for LTR and RTL languages
     - **LTR**: `[icon][text]` - Icon appears on the left (start position)
-    - **RTL**: `[text][icon]` - Icon appears on the right (end position) 
+    - **RTL**: `[text][icon]` - Icon appears on the right (end position)
   - **Dual Icon Support**: Supports both SVG sprite icons and Unicode emojis
     - **Sprite Icons**: `<Iconize conf={{icon: "arrow-right"}}>Choose</Iconize>`
     - **Emoji Support**: `<Iconize conf={{emoji: "🎲"}}>Custom Hash Generator</Iconize>`
@@ -3291,6 +3725,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **KISS Principle**: Simple implementation using native browser RTL behavior instead of complex CSS order logic
 
 #### Enhanced
+
 - **🎯 Menu Interface**: Complete migration to Iconize component
   - **All Card Titles**: Custom, Password, and API Key cards now use Iconize with their respective emojis
     - 🎲 Custom Hash Generator with automatic RTL positioning
@@ -3300,6 +3735,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Simplified Code**: Eliminated complex conditional RTL logic in favor of automatic behavior
 
 #### Technical Implementation
+
 - **Flexbox RTL Integration**: Leverages Tailwind CSS and HTML `dir` attribute for automatic RTL behavior
   - **No Manual Order**: Eliminates need for CSS `order-1`/`order-2` classes
   - **Native Browser Support**: Uses browser's built-in RTL handling capabilities
@@ -3311,6 +3747,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **Performance Optimized**: Minimal overhead with automatic browser-native RTL handling
 
 #### Fixed
+
 - **🔧 RTL Icon Positioning**: Resolved complex CSS order issues with browser-native solution
   - **Problem**: Previous attempts using `order-1`/`order-2` classes had compilation issues
   - **Root Cause**: Tailwind wasn't compiling dynamically generated order classes
@@ -3322,7 +3759,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.10.0] - 2025-08-21
 
 ### Web Interface Changes (v0.10.0)
+
 #### Added
+
 - **🔄 RTL-Aware Button Component**: Universal button wrapper with automatic RTL support
   - **Smart Icon Positioning**: Icons automatically position left (LTR) or right (RTL) based on language direction
   - **CSS Direction-Based**: Uses `direction: rtl/ltr` for seamless visual order changes
@@ -3338,6 +3777,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Quality Assurance**: Self-replicating code quality rules across all project documentation
 
 #### Enhanced
+
 - **🔘 Universal Button RTL Support**: All buttons now support RTL automatically
   - **Result Page Buttons**: Regenerate, settings, and menu buttons with proper RTL icon positioning
   - **Form Buttons**: Generate and navigation buttons across custom, password, and API key forms
@@ -3345,6 +3785,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Consistent Experience**: Arabic users see icons on the right, other languages on the left
 
 #### Technical
+
 - **🏗️ Component Architecture**: Simplified Button component implementation
   - **Removed Complex Logic**: Eliminated confusing variant/size props and conditional logic
   - **Pure Wrapper**: Button component now purely wraps native button with RTL enhancement
@@ -3352,6 +3793,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Clean Implementation**: Single responsibility principle - just handle icon positioning
 
 #### Fixed
+
 - **🔧 RTL Icon Positioning**: Resolved incorrect icon placement in Arabic language mode
   - **Visual Order**: Icons now appear on correct side in RTL languages (text first, icon second)
   - **CSS Direction**: Proper use of CSS direction property for automatic visual reordering
@@ -3362,7 +3804,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.9.0] - 2025-08-21
 
 ### Web Interface Changes (v0.9.0)
+
 #### Added
+
 - **🎭 Advanced RTL Transition System**: Smooth fade effects for language direction changes
   - **Visual Fade Transitions**: Top controls container fades out/in (1.5s duration) when switching between LTR/RTL languages
   - **Seamless Direction Changes**: Controls smoothly transition from right corner (LTR) to left corner (RTL)
@@ -3378,6 +3822,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Perfect Balance**: Immediate feedback for content changes, elegant transitions for visual states
 
 #### Enhanced
+
 - **📱 Mobile-First Design**: Optimized spacing and positioning for all screen sizes
   - **Compact Mobile Layout**: 2px margins from screen edges on mobile devices
   - **Enlarged Icons**: Language flag icons increased to `w-12 h-12` (48px) for better visibility and touch interaction
@@ -3394,6 +3839,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Improved Accessibility**: Copy functionality only visible when results are available
 
 #### Fixed
+
 - **🔧 TypeScript Build Warnings**: Resolved SvelteKit configuration issues
   - **Missing Base Config**: Fixed `Cannot find base config file "./.svelte-kit/tsconfig.json"` warning
   - **Automatic Sync**: Build process now includes `npx svelte-kit sync` to generate required config files
@@ -3404,6 +3850,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **RTL Button Visibility**: Fixed issue where theme toggle disappeared in RTL mode due to flex ordering
 
 #### Technical Implementation
+
 - **Component Architecture**: Revolutionary approach to control grouping
   - **Self-Contained Logic**: All theme and language functionality consolidated in single component
   - **No External Dependencies**: Eliminated complex interactions between separate positioned components
@@ -3423,14 +3870,16 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.8.0] - 2025-08-20
 
 ### Web Interface Changes (v0.8.0)
+
 #### Added
+
 - **🌍 Complete Translation System**: Full restoration of internationalization with 13 languages
   - **Modular Translation Architecture**: Separated each language into individual files for better maintainability
     - `/web/src/lib/stores/translations/en.ts`, `es.ts`, `pt.ts`, `fr.ts`, `de.ts`, `ru.ts`, `zh.ts`, `ar.ts`, `eu.ts`, `ca.ts`, `gl.ts`, `hi.ts`, `ja.ts`
     - Clean import system in main `i18n.ts` for all language modules
     - No more syntax errors from large monolithic translation file
   - **13 Complete Languages Operational**: All translations now display correctly instead of translation keys
-    - **Western Europe**: English, Spanish, Portuguese, French, German  
+    - **Western Europe**: English, Spanish, Portuguese, French, German
     - **Eastern Europe**: Russian
     - **Asia**: Chinese, Hindi, Japanese
     - **Middle East**: Arabic (with RTL text direction prepared)
@@ -3448,6 +3897,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - Dynamic content based on user actions
 
 #### Enhanced
+
 - **🏴 Language Selector UI**: Improved visual consistency and user feedback
   - **Larger Flag Icons**: Main selector button upgraded to `w-6 h-6` (was `w-5 h-5`) for better visibility
   - **Active State Indication**: Button shows pressed/highlighted appearance while dropdown is open
@@ -3457,6 +3907,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Size Consistency**: Dropdown flag icons standardized to `w-5 h-5` matching theme toggle
 
 #### Fixed
+
 - **🐛 Translation System Restoration**: Complete fix of broken internationalization
   - **Problem**: Only 3 out of 13 languages were working (English, Hindi, Japanese)
   - **Root Cause**: Missing translation files for 10 languages caused display of translation keys instead of actual text
@@ -3468,6 +3919,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Eliminated ESBuild errors that prevented successful builds
 
 #### Technical Implementation
+
 - **Modular Architecture**: Clean separation of translation concerns
   - Each language in its own TypeScript file with proper type definitions
   - Centralized import system maintaining performance
@@ -3486,7 +3938,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.7.0] - 2025-08-20
 
 ### Cross-Component Changes
+
 #### Enhanced
+
 - **🚀 Enhanced Development Workflow**: Complete justfile integration for unified development experience
   - **Unified Development Commands**: `just dev` now launches complete environment
     - Automatically starts Spin API backend in background (port 3000)
@@ -3500,12 +3954,13 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - Status reporting for all running services
 
 #### Added
+
 - **🌐 Tailscale Integration**: Built-in remote access support for development
-  - **Frontend Exposure Commands**: 
+  - **Frontend Exposure Commands**:
     - `just tailscale-front-start` - Expose web interface (port 5173) via Tailscale
     - `just tailscale-front-stop` - Stop Tailscale serve for frontend
   - **Backend Exposure Commands**:
-    - `just tailscale-back-start` - Expose API backend (port 3000) via Tailscale  
+    - `just tailscale-back-start` - Expose API backend (port 3000) via Tailscale
     - `just tailscale-back-stop` - Stop Tailscale serve for backend
   - **Automatic Installation Check**: Verifies Tailscale CLI availability before execution
   - **Status Integration**: `just status` now shows Tailscale serve status and active URLs
@@ -3521,7 +3976,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
     - `just rebuild` - Alias for clean and rebuild workflow
 
 ### Web Interface Changes (v0.7.0)
+
 #### Enhanced
+
 - **⚡ Developer Experience**: Significant improvements to development workflow efficiency
   - **One-Command Setup**: `just dev` provides complete development environment
   - **Automatic Remote Access**: Frontend automatically available via Tailscale network
@@ -3538,6 +3995,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Developer-Friendly Commands**: Intuitive command names for common operations
 
 #### Changed
+
 - **Development Workflow**: Updated primary development commands
   - **`just dev`**: Now launches complete environment (was Spin-only)
     - Previous: Started only `spin-cli watch` in foreground
@@ -3554,9 +4012,11 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Cleanup Process**: Comprehensive cleanup of all background services
 
 ### API Changes (v1.0.0)
-*No breaking changes - API reached stability at 1.0.0*
+
+_No breaking changes - API reached stability at 1.0.0_
 
 #### Technical Implementation
+
 - **Component Versioning**: Independent versioning system implemented
   - API follows stable 1.x.x versioning (backward compatible)
   - Web interface follows 0.x.x development versioning
@@ -3567,7 +4027,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.6.0] - 2025-08-20
 
 ### Web Interface Changes (v0.6.0)
+
 #### Added
+
 - **🌍 Language Selector Component**: Complete visual language selection interface
   - **Interactive Dropdown**: Shows 11 languages with authentic flag representations
   - **Flag Icon Integration**: Complete flag sprite collection with national and regional flags
@@ -3586,6 +4048,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Scalable Design**: Vector graphics ensure crisp rendering at any size
 
 #### Enhanced
+
 - **🎨 UI Component Consistency**: Improved visual cohesion across interface controls
   - **Uniform Button Sizing**: Both language selector and theme toggle use identical dimensions (36x36px)
   - **Consistent Padding**: Standardized internal spacing (8px padding) for better visual balance
@@ -3600,6 +4063,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Reactivity Fix**: Resolved Svelte 5 runes mode compatibility issues
 
 #### Fixed
+
 - **⚡ Svelte 5 Runes Compatibility**: Updated components for modern Svelte syntax
   - **State Management**: Migrated from `let` to `$state()` for reactive variables
   - **Derived Values**: Changed `$:` reactive statements to `$derived()` syntax
@@ -3611,7 +4075,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.5.0] - 2025-08-19
 
 ### Web Interface Changes (v0.5.0)
+
 #### Added
+
 - **🖼️ SVG Icon Sprite System**: Complete implementation of optimized icon management
   - **Centralized Sprite**: All icons consolidated into `/static/icons-sprite.svg` for efficient caching
   - **Icon Component**: New reusable `Icon.svelte` component for consistent icon usage
@@ -3627,6 +4093,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Automatic Caching**: Browser handles sprite caching without preload warnings
 
 #### Enhanced
+
 - **⚡ Performance Optimization**: Significant improvements to loading and rendering
   - **Reduced Bundle Size**: Eliminated inline SVG from JavaScript/CSS bundles
   - **Single HTTP Request**: All icons downloaded in one cached file
@@ -3638,6 +4105,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **Type Safety**: TypeScript support for icon names and properties
 
 #### Changed
+
 - **Icon Implementation**: Migrated from inline SVG to sprite-based system
   - **ThemeToggle.svelte**: Uses `Icon` component for sun/moon icons
   - **BackButton.svelte**: Uses `Icon` component for left arrow
@@ -3653,7 +4121,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.4.0] - 2025-08-19
 
 ### Web Interface Changes (v0.4.0)
+
 #### Added
+
 - **🌙 Smart Theme Toggle System**: Complete manual dark/light mode switching implementation
   - **Intelligent Default Behavior**: Uses system preference (`prefers-color-scheme`) on first visit
   - **Persistent User Choice**: Saves manual selection to localStorage and respects it on subsequent visits
@@ -3675,6 +4145,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Smooth theme transitions with CSS transition properties
 
 #### Enhanced
+
 - **🎯 User Experience**: Significant improvements to theme switching experience
   - No visual flicker during theme changes
   - Immediate visual feedback on toggle interaction
@@ -3695,7 +4166,9 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.3.0] - 2025-08-19
 
 ### Web Interface Changes (v0.3.0)
+
 #### Added
+
 - **🎨 Enhanced Web Interface**: Major UI/UX improvements for professional user experience
   - **Interactive Range Sliders**: Replaced number inputs with attractive gradient sliders for length parameters
   - **Dynamic Informational Notes**: Context-aware help text that changes based on alphabet selection
@@ -3704,7 +4177,8 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - **In-Place Regeneration**: Generate new hashes without navigating back to configuration
   - **Visual Loading States**: Button color changes and disabled states during processing
 
-#### Changed  
+#### Changed
+
 - **Route Reorganization**: Renamed `/generate` route to `/custom` for better semantic clarity
 - **Simplified Configuration**: All web UI operations now use `raw=true` by default (hidden from user)
 - **Streamlined Navigation**: Removed redundant navigation buttons for cleaner user flow
@@ -3717,6 +4191,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - Fixed button visibility issues (borders, contrast)
 
 #### Improved
+
 - **User Experience**: Comprehensive UX enhancements based on reference project patterns
   - Professional gradient styling on range sliders
   - Real-time parameter validation with dynamic feedback
@@ -3730,10 +4205,13 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 ## [API v1.0.0 / Web v0.2.0] - 2025-08-19
 
 ### API Changes (v1.0.0)
-*API reached stable 1.0.0 - No breaking changes since initial implementation*
+
+_API reached stable 1.0.0 - No breaking changes since initial implementation_
 
 ### Web Interface Changes (v0.2.0)
+
 #### Added
+
 - **🎨 Professional Web Interface**: Complete SPA built with modern web technologies
   - **SvelteKit 2.x** - Modern web framework with SPA configuration
   - **TypeScript** - Full type safety throughout the application
@@ -3771,6 +4249,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
   - TypeScript and Svelte code validation
 
 #### Technical Implementation
+
 - **Single Page Application (SPA)**: Built with `@sveltejs/adapter-static`
 - **API Service Layer**: Type-safe API integration with error handling
 - **State Management**: Svelte stores for navigation, results, and i18n
@@ -3779,6 +4258,7 @@ This release represents a major milestone in implementing a **Zero Knowledge aut
 - **Build System**: Optimized production builds with code splitting
 
 #### Web Interface Structure
+
 ```
 web/
 ├── src/
@@ -3800,7 +4280,9 @@ web/
 ## [API v1.0.0] - 2025-08-18
 
 ### API Changes (v1.0.0)
+
 #### Added
+
 - **Initial implementation of HashRand Spin API** - Complete random hash generator solution
 - **GET /api/generate** endpoint for customizable hash generation
   - Support for length parameter (2-128 characters)
@@ -3812,7 +4294,7 @@ web/
   - Length range validation (21-44 characters)
   - Symbol and no-look-alike alphabet support
 - **GET /api/api-key** endpoint for API key generation
-  - Automatic ak_ prefix for all generated keys
+  - Automatic ak\_ prefix for all generated keys
   - Length validation (44-64 characters)
   - Support for full and no-look-alike alphabets
 - **GET /api/version** endpoint returning JSON version information
@@ -3842,6 +4324,7 @@ web/
   - Automatic cleanup on server stop
 
 #### Technical Details
+
 - Built with Fermyon Spin WebAssembly framework
 - Uses spin-sdk 3.1.0 for HTTP component functionality
 - Implements cdylib crate type for WASM compatibility
@@ -3849,6 +4332,7 @@ web/
 - Workspace structure for better code organization
 
 #### Dependencies
+
 - `spin-sdk = "3.1.0"` - Core Spin framework
 - `nanoid = "0.4.0"` - Secure random ID generation
 - `serde = "1.0.219"` - Serialization framework
@@ -3856,6 +4340,7 @@ web/
 - `anyhow = "1"` - Error handling
 
 #### Testing
+
 - 43 comprehensive test cases covering all endpoints
 - Parameter validation testing
 - Edge case and error condition testing
@@ -3864,6 +4349,7 @@ web/
 - 100% test success rate achieved
 
 #### Documentation
+
 - Complete README.md with API documentation
 - Detailed endpoint descriptions and examples
 - Project structure documentation
@@ -3875,6 +4361,7 @@ web/
 ## [Unreleased]
 
 ### Planned Features
+
 - **Complete Internationalization System**: Full i18n implementation with 11 languages
 - Performance benchmarking
 - Additional alphabet types
@@ -3918,23 +4405,27 @@ web/
 ## Versioning Strategy
 
 ### API (Backend) Versioning
+
 - **Stable Versioning**: API follows strict semver starting from 1.0.0
 - **Backward Compatibility**: Minor versions (1.1.0, 1.2.0) add features without breaking changes
 - **Major Versions**: Only for breaking API changes (2.0.0, 3.0.0)
 - **Production Ready**: API is stable and production-ready at 1.0.0
 
-### Web Interface Versioning  
+### Web Interface Versioning
+
 - **Development Versioning**: Web interface follows 0.x.x series during active development
 - **Rapid Iteration**: Minor versions (0.17.0, 0.17.1) for UI/UX improvements and bug fixes
 - **Breaking UI Changes**: Major versions in 0.x.x series (0.16.0 → 0.17.0) for significant UI restructures
 - **Stability Target**: Will reach 1.0.0 when feature-complete and UI/UX is finalized
 
 ### Release Tags
+
 - **API releases**: `api-v1.0.0`, `api-v1.1.0`, etc.
 - **Web releases**: `web-v0.7.0`, `web-v0.8.0`, etc.
 - **Combined releases**: When both components are updated simultaneously
 
 ### Version Endpoint
+
 - **GET /api/version**: Returns both component versions
   ```json
   {

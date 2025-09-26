@@ -13,14 +13,12 @@ import { sessionDB } from './session-db';
 export async function getAuthData(): Promise<{
 	user: { user_id: string; isAuthenticated: boolean } | null;
 	access_token: string | null;
-	expires_at: number | null;
 	server_pub_key: string | null;
 }> {
 	const session = await sessionDB.getSession();
 	return {
 		user: session.auth_user,
 		access_token: session.access_token,
-		expires_at: session.token_expires_at,
 		server_pub_key: session.server_pub_key
 	};
 }
@@ -30,13 +28,11 @@ export async function getAuthData(): Promise<{
  */
 export async function setAuthData(
 	user: { user_id: string; isAuthenticated: boolean },
-	access_token: string,
-	expires_at?: number
+	access_token: string
 ): Promise<void> {
 	await sessionDB.updateSession({
 		auth_user: user,
-		access_token,
-		token_expires_at: expires_at || null
+		access_token
 	});
 }
 
@@ -87,7 +83,6 @@ export async function clearAuthData(): Promise<void> {
 	session.prehashSeeds = [];
 	session.auth_user = null;
 	session.access_token = null;
-	session.token_expires_at = null;
 	session.server_pub_key = null; // Clear server public key on logout
 	session.authFlow.pending_email = null;
 

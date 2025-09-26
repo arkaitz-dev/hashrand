@@ -21,10 +21,14 @@ pub fn get_argon2_salt() -> Result<[u8; 64], String> {
     let salt_hex = variables::get("argon2_salt")
         .map_err(|e| format!("Failed to get argon2_salt variable: {}", e))?;
 
-    let decoded = hex::decode(&salt_hex).map_err(|_| "ARGON2_SALT must be a valid hex string".to_string())?;
+    let decoded =
+        hex::decode(&salt_hex).map_err(|_| "ARGON2_SALT must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("ARGON2_SALT must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "ARGON2_SALT must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut salt = [0u8; 64];
@@ -40,10 +44,14 @@ pub fn get_user_id_argon2_compression() -> Result<[u8; 64], String> {
     let key_hex = variables::get("user_id_argon2_compression")
         .map_err(|e| format!("Failed to get user_id_argon2_compression variable: {}", e))?;
 
-    let decoded = hex::decode(&key_hex).map_err(|_| "USER_ID_ARGON2_COMPRESSION must be a valid hex string".to_string())?;
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "USER_ID_ARGON2_COMPRESSION must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("USER_ID_ARGON2_COMPRESSION must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "USER_ID_ARGON2_COMPRESSION must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];
@@ -59,10 +67,14 @@ pub fn get_magic_link_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("magic_link_hmac_key")
         .map_err(|e| format!("Failed to get magic_link_hmac_key variable: {}", e))?;
 
-    let decoded = hex::decode(&key_hex).map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())?;
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("MAGIC_LINK_HMAC_KEY must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "MAGIC_LINK_HMAC_KEY must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];
@@ -78,10 +90,14 @@ pub fn get_user_id_hmac_key() -> Result<[u8; 64], String> {
     let key_hex = variables::get("user_id_hmac_key")
         .map_err(|e| format!("Failed to get user_id_hmac_key variable: {}", e))?;
 
-    let decoded = hex::decode(&key_hex).map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())?;
+    let decoded = hex::decode(&key_hex)
+        .map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("USER_ID_HMAC_KEY must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "USER_ID_HMAC_KEY must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];
@@ -101,7 +117,10 @@ pub fn get_chacha_encryption_key() -> Result<[u8; 64], String> {
         .map_err(|_| "CHACHA_ENCRYPTION_KEY must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("CHACHA_ENCRYPTION_KEY must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "CHACHA_ENCRYPTION_KEY must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];
@@ -114,14 +133,21 @@ pub fn get_chacha_encryption_key() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte hash key or error message
 pub fn get_encrypted_mlink_token_hash_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("encrypted_mlink_token_hash_key")
-        .map_err(|e| format!("Failed to get encrypted_mlink_token_hash_key variable: {}", e))?;
+    let key_hex = variables::get("encrypted_mlink_token_hash_key").map_err(|e| {
+        format!(
+            "Failed to get encrypted_mlink_token_hash_key variable: {}",
+            e
+        )
+    })?;
 
     let decoded = hex::decode(&key_hex)
         .map_err(|_| "ENCRYPTED_MLINK_TOKEN_HASH_KEY must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("ENCRYPTED_MLINK_TOKEN_HASH_KEY must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "ENCRYPTED_MLINK_TOKEN_HASH_KEY must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];
@@ -141,7 +167,10 @@ pub fn get_mlink_content_key() -> Result<[u8; 64], String> {
         .map_err(|_| "MLINK_CONTENT must be a valid hex string".to_string())?;
 
     if decoded.len() != 64 {
-        return Err(format!("MLINK_CONTENT must be exactly 64 bytes, got {}", decoded.len()));
+        return Err(format!(
+            "MLINK_CONTENT must be exactly 64 bytes, got {}",
+            decoded.len()
+        ));
     }
 
     let mut key = [0u8; 64];

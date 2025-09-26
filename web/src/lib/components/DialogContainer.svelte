@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dialogStore } from '$lib/stores/dialog';
+	import { dialogStore, type AuthDialogProps, type SeedDialogProps } from '$lib/stores/dialog';
 	import AuthDialogContent from './AuthDialogContent.svelte';
 	import AuthConfirmDialogContent from './AuthConfirmDialogContent.svelte';
 	import SeedDialogContent from './SeedDialogContent.svelte';
@@ -45,20 +45,18 @@
 			<!-- Render different dialog types -->
 			{#if $dialogStore.type === 'auth'}
 				<AuthDialogContent
-					config={($dialogStore.props || { destination: { route: '/' } }) as any}
+					config={($dialogStore.props as AuthDialogProps) || { destination: { route: '/' } }}
 					onClose={closeDialog}
 				/>
 			{:else if $dialogStore.type === 'auth-confirm'}
 				<AuthConfirmDialogContent
-					config={($dialogStore.props || { destination: { route: '/' } }) as any}
+					config={($dialogStore.props as AuthDialogProps) || { destination: { route: '/' } }}
 					onClose={closeDialog}
 				/>
 			{:else if $dialogStore.type === 'seed'}
 				<SeedDialogContent
 					onClose={closeDialog}
-					onSeedChoice={(($dialogStore.props as any)?.onSeedChoice || (() => {})) as (
-						keepSeed: boolean
-					) => void}
+					onSeedChoice={($dialogStore.props as SeedDialogProps)?.onSeedChoice || (() => {})}
 				/>
 			{:else if $dialogStore.type === 'logout'}
 				<LogoutDialogContent onClose={closeDialog} />

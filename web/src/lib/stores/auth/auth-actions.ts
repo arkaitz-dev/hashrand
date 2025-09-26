@@ -53,6 +53,17 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	// Save to IndexedDB
 	await saveAuthToStorage(user, loginResponse.access_token);
 
+	// Store session expiration timestamp if provided (new refresh cookie)
+	if (loginResponse.expires_at) {
+		try {
+			const { storeSessionExpiration } = await import('../../session-storage');
+			await storeSessionExpiration(loginResponse.expires_at);
+		} catch (error) {
+			console.warn('Failed to store session expiration:', error);
+			// Non-blocking - auth continues without persistent expiration tracking
+		}
+	}
+
 	// Show flash message for successful magic link validation
 	try {
 		const { flashMessagesStore } = await import('../flashMessages');
@@ -103,5 +114,14 @@ export async function logout(): Promise<void> {
 		await sessionManager.clearSession();
 	} catch {
 		// Failed to clear IndexedDB session
+	}
+
+	// Clear session expiration timestamp
+	try {
+		const { clearSessionExpiration } = await import('../../session-storage');
+		await clearSessionExpiration();
+	} catch (error) {
+		console.warn('Failed to clear session expiration during logout:', error);
+		// Non-blocking - logout continues
 	}
 }

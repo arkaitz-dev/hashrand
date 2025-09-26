@@ -2,7 +2,7 @@
 
 use crate::utils::JwtUtils;
 use crate::utils::jwt::config::get_refresh_token_duration_minutes;
-use crate::utils::{SignedResponseGenerator, SignedResponse, SignedRequestValidator};
+use crate::utils::{SignedRequestValidator, SignedResponse, SignedResponseGenerator};
 use chrono::DateTime;
 use serde_json::Value;
 use spin_sdk::http::Response;
@@ -128,8 +128,8 @@ pub fn add_renewed_tokens_to_response(
     let body_str = String::from_utf8_lossy(&body_vec);
 
     // Check if response is signed (contains {"payload": ..., "signature": ...})
-    let is_signed_response = body_str.trim_start().starts_with('{') &&
-        serde_json::from_str::<Value>(&body_str)
+    let is_signed_response = body_str.trim_start().starts_with('{')
+        && serde_json::from_str::<Value>(&body_str)
             .map(|v| v.get("payload").is_some() && v.get("signature").is_some())
             .unwrap_or(false);
 
@@ -158,7 +158,8 @@ fn handle_signed_response_with_tokens(
     };
 
     // CORRECTED: Deserialize Base64-encoded JSON payload, modify, and re-serialize
-    let json_string = match SignedRequestValidator::decode_payload_base64(&signed_response.payload) {
+    let json_string = match SignedRequestValidator::decode_payload_base64(&signed_response.payload)
+    {
         Ok(json) => json,
         Err(e) => {
             println!("❌ DEBUG: Failed to decode Base64 payload: {}", e);
@@ -176,8 +177,11 @@ fn handle_signed_response_with_tokens(
 
     // Add access token to deserialized payload
     if let Value::Object(ref mut map) = enhanced_payload {
-        map.insert("access_token".to_string(), Value::String(renewed_tokens.access_token.clone()));
-        map.insert("expires_in".to_string(), Value::Number(renewed_tokens.expires_in.into()));
+        map.insert(
+            "access_token".to_string(),
+            Value::String(renewed_tokens.access_token.clone()),
+        );
+        // Reactive auth: no expires_in needed - frontend responds to 401s
     } else {
         println!("🔍 DEBUG: Payload is not an object, cannot add access_token");
         return handle_non_signed_response_with_tokens(response, renewed_tokens);
@@ -191,7 +195,10 @@ fn handle_signed_response_with_tokens(
     ) {
         Ok(resp) => resp,
         Err(e) => {
-            println!("🔍 DEBUG: Failed to create signed response: {}, falling back to headers", e);
+            println!(
+                "🔍 DEBUG: Failed to create signed response: {}, falling back to headers",
+                e
+            );
             return handle_non_signed_response_with_tokens(response, renewed_tokens);
         }
     };

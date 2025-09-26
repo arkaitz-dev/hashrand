@@ -3,8 +3,8 @@
 //! Provides cryptographic functions for magic link security using
 //! Blake3 KDF and ChaCha20-Poly1305 AEAD encryption.
 
-use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
 use crate::utils::pseudonimizer::blake3_keyed_variable;
+use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
 
 /// Magic link cryptographic operations
@@ -17,7 +17,7 @@ impl MagicLinkCrypto {
     /// * `Result<[u8; 64], SqliteError>` - 64-byte encryption key
     pub fn get_mlink_content_key() -> Result<[u8; 64], SqliteError> {
         use crate::utils::jwt::config::get_mlink_content_key;
-        get_mlink_content_key().map_err(|e| SqliteError::Io(e))
+        get_mlink_content_key().map_err(SqliteError::Io)
     }
 
     /// Encrypt payload using Blake3 KDF + ChaCha20-Poly1305
@@ -41,9 +41,11 @@ impl MagicLinkCrypto {
         // Step 1: Derive nonce + cipher_key using Blake3 KDF
         let derived = blake3_keyed_variable(&mlink_key, encrypted_data, 44);
 
-        let nonce_bytes: [u8; 12] = derived[0..12].try_into()
+        let nonce_bytes: [u8; 12] = derived[0..12]
+            .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; 32] = derived[12..44].try_into()
+        let cipher_key: [u8; 32] = derived[12..44]
+            .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
         let nonce = Nonce::from_slice(&nonce_bytes);
@@ -76,9 +78,11 @@ impl MagicLinkCrypto {
         // Step 1: Derive nonce + cipher_key using Blake3 KDF (same as encryption)
         let derived = blake3_keyed_variable(&mlink_key, encrypted_data, 44);
 
-        let nonce_bytes: [u8; 12] = derived[0..12].try_into()
+        let nonce_bytes: [u8; 12] = derived[0..12]
+            .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; 32] = derived[12..44].try_into()
+        let cipher_key: [u8; 32] = derived[12..44]
+            .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
         let nonce = Nonce::from_slice(&nonce_bytes);

@@ -7,7 +7,7 @@ use spin_sdk::http::Response;
 
 use super::magic_link_jwt_generator::JwtTokens;
 use crate::types::responses::JwtAuthResponse;
-use crate::utils::{CryptoMaterial, create_signed_endpoint_response, create_error_response};
+use crate::utils::{CryptoMaterial, create_error_response, create_signed_endpoint_response};
 
 /// Build successful authentication response with JWT tokens and secure cookies (SignedResponse format)
 ///
@@ -25,15 +25,22 @@ pub fn build_authentication_response(
     user_id_bytes: &[u8],
     pub_key_bytes: &[u8],
 ) -> anyhow::Result<Response> {
-    // Calculate token expiration time
-    let expires_in = jwt_tokens.access_expires.timestamp() - chrono::Utc::now().timestamp();
+    // Calculate refresh cookie expiration timestamp
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
+        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
 
-    // Create JWT response payload using new structure
+    let expires_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("System clock error")
+        .as_secs() as i64
+        + (refresh_duration_minutes as i64 * 60);
+
+    // Create JWT response payload with refresh cookie expiration timestamp
     let payload = JwtAuthResponse::new(
         jwt_tokens.access_token,
-        expires_in,
         jwt_tokens.username,
         next_param.clone(),
+        Some(expires_at),
     );
 
     // Build crypto material for SignedResponse generation
@@ -45,7 +52,12 @@ pub fn build_authentication_response(
     // Create signed response using DRY helper (same pattern as all other endpoints)
     let signed_response = match create_signed_endpoint_response(payload, &crypto_material) {
         Ok(response) => response,
-        Err(e) => return Ok(create_error_response(500, &format!("Failed to create signed response: {}", e))),
+        Err(e) => {
+            return Ok(create_error_response(
+                500,
+                &format!("Failed to create signed response: {}", e),
+            ));
+        }
     };
 
     // Add secure HttpOnly refresh token cookie to signed response
@@ -84,7 +96,10 @@ fn create_secure_refresh_cookie(refresh_token: &str) -> anyhow::Result<String> {
         refresh_duration_minutes * 60 // Convert minutes to seconds
     );
 
-    println!("✅ Secure refresh cookie created with {} minute duration", refresh_duration_minutes);
+    println!(
+        "✅ Secure refresh cookie created with {} minute duration",
+        refresh_duration_minutes
+    );
 
     Ok(cookie_value)
 }

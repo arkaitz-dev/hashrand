@@ -6,10 +6,7 @@
  * Part of auth.ts refactorization to apply SOLID principles
  */
 
-import {
-	hasCryptoTokens,
-	hasValidRefreshCookie
-} from './auth-crypto-tokens';
+import { hasCryptoTokens, hasValidRefreshCookie } from './auth-crypto-tokens';
 import { clearSensitiveAuthDataWithMessage } from './auth-cleanup';
 
 /**
@@ -47,7 +44,7 @@ export async function checkSessionValidity(): Promise<void> {
 		try {
 			const { sessionManager } = await import('../../session-manager');
 			const authData = await sessionManager.getAuthData();
-			const hasAnySessionData = authData.access_token || authData.refresh_token || authData.user;
+			const hasAnySessionData = authData.access_token || authData.user;
 
 			if (hasAnySessionData) {
 				// We have session data but missing crypto tokens - this is corruption

@@ -58,8 +58,18 @@
 	});
 
 	// Form state managed by composable
-	let params = $derived(formParamsManager.params.value);
 	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// Reactive bindings for form inputs
+	let alphabet = $state('full');
+	let length = $state(44);
+
+	// Initialize from params when available
+	$effect(() => {
+		const currentParams = formParamsManager.params.value;
+		if (currentParams.alphabet) alphabet = currentParams.alphabet;
+		if (currentParams.length) length = currentParams.length;
+	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
 	// let searchParams = $derived($page.url.searchParams);
@@ -84,8 +94,8 @@
 	]);
 
 	// Dynamic minimum length based on alphabet
-	let minLength = $derived(params.alphabet === 'full' ? 44 : 47);
-	let lengthValid = $derived(params.length && params.length >= minLength && params.length <= 64);
+	let minLength = $derived(alphabet === 'full' ? 44 : 47);
+	let lengthValid = $derived(length && length >= minLength && length <= 64);
 	let formValid = $derived(lengthValid);
 
 	// ENTERPRISE ARCHITECTURE: Generation workflow composable
@@ -95,8 +105,9 @@
 			return Boolean(formValid);
 		},
 		getParams: () => ({
-			length: params.length ?? 44,
-			alphabet: params.alphabet ?? 'full'
+			length: length ?? 44,
+			alphabet: alphabet ?? 'full',
+			raw: true
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;
@@ -121,10 +132,10 @@
 	function handleAlphabetChange() {
 		// Use setTimeout to avoid reactivity issues
 		setTimeout(() => {
-			const newMinLength = params.alphabet === 'full' ? 44 : 47;
-			if (params.length! < newMinLength) {
-				// Update params through the composable manager
-				formParamsManager.updateParams({ length: newMinLength });
+			const newMinLength = alphabet === 'full' ? 44 : 47;
+			if (length < newMinLength) {
+				// Update local state directly
+				length = newMinLength;
 			}
 		}, 0);
 	}
@@ -175,7 +186,7 @@
 				<form onsubmit={generationWorkflow.handleGenerate} class="space-y-6">
 					<!-- Alphabet -->
 					<AlphabetSelector
-						bind:value={formParamsManager.params.value.alphabet}
+						bind:value={alphabet}
 						options={alphabetOptions}
 						label={$_('apiKey.alphabet')}
 						id="alphabet"
@@ -194,14 +205,14 @@
 							<input
 								type="range"
 								id="length"
-								bind:value={formParamsManager.params.value.length}
+								bind:value={length}
 								min={minLength}
 								max="64"
 								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
 							/>
 							<span
 								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
-								>{params.length}</span
+								>{length}</span
 							>
 						</div>
 						{#if !lengthValid}
@@ -216,15 +227,15 @@
 							class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3"
 						>
 							<p class="text-sm text-blue-800 dark:text-blue-200">
-								<strong>{$_('common.format')}:</strong> ak_ prefix + {params.length || 44}
+								<strong>{$_('common.format')}:</strong> ak_ prefix + {length || 44}
 								{$_('apiKey.randomCharacters')}
-								{#if params.alphabet === 'no-look-alike'}
+								{#if alphabet === 'no-look-alike'}
 									{$_('apiKey.noLookAlikeAlphabet')}
 								{:else}
 									{$_('apiKey.fullAlphanumericAlphabet')}
 								{/if}
 								<br /><strong>{$_('common.security')}:</strong>
-								{#if params.alphabet === 'no-look-alike'}
+								{#if alphabet === 'no-look-alike'}
 									{$_('apiKey.noLookAlikeNote').replace('{0}', minLength.toString())}
 								{:else}
 									{$_('apiKey.fullAlphanumericNote').replace('{0}', minLength.toString())}

@@ -11,7 +11,7 @@ email:
     security_notice: "如果您没有请求此登录链接，请忽略此邮件。"
     footer_text: "HashRand - 随机哈希生成器"
     no_reply_notice: "这是一条自动消息。请勿回复此邮件。"
-    
+
     # 文本版本（用于纯文本邮件）
     text_intro: "您请求了一个安全登录链接。请使用下面的链接进行身份验证并访问您的账户。"
     text_access_label: "HashRand 访问链接"

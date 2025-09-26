@@ -22,7 +22,9 @@ pub struct TokenValidationResult {
 ///
 /// # Returns
 /// * `Result<TokenValidationResult, Response>` - Extracted data or error response
-pub fn validate_and_extract_token_data(magic_token: &str) -> Result<TokenValidationResult, Response> {
+pub fn validate_and_extract_token_data(
+    magic_token: &str,
+) -> Result<TokenValidationResult, Response> {
     // Validate and consume encrypted magic token, extract next parameter, user_id, and Ed25519 pub_key
     let (is_valid, next_param, user_id_bytes, pub_key_bytes) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {

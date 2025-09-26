@@ -37,7 +37,7 @@
 			: 'left-0.5 md:left-4'}"
 	>
 		<button
-			class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-lg sm:rounded-xl shadow-lg border border-yellow-500 transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse-yellow"
+			class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-white rounded-lg sm:rounded-xl border transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed yellow-pulse-animation"
 			class:cursor-not-allowed={isProcessing}
 			class:opacity-50={isProcessing}
 			disabled={isProcessing}
@@ -48,7 +48,7 @@
 			{#if isProcessing}
 				<div class="flex items-center gap-1">
 					<div
-						class="w-3 h-3 border-2 border-yellow-900 border-t-transparent rounded-full animate-spin"
+						class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"
 					></div>
 					<span>{$_('common.updating')}...</span>
 				</div>
@@ -60,35 +60,84 @@
 {/if}
 
 <style>
-	/* Custom yellow pulse animation cycling through yellow tones */
-	@keyframes pulse-yellow {
-		0%,
-		100% {
-			background-color: rgb(250 204 21); /* yellow-400 */
-			border-color: rgb(234 179 8); /* yellow-500 */
+	/* Advanced yellow pulsing animation for update notification - Same as AuthStatus expired animation */
+	@keyframes yellowPulse {
+		0% {
+			background-color: #713f12; /* yellow-900 */
+			border-color: #a16207; /* yellow-800 */
+			box-shadow: 0 0 10px rgba(113, 63, 18, 0.8);
 		}
-		25% {
-			background-color: rgb(253 224 71); /* yellow-300 */
-			border-color: rgb(250 204 21); /* yellow-400 */
+		10% {
+			background-color: #a16207; /* yellow-800 */
+			border-color: #ca8a04; /* yellow-700 */
+			box-shadow: 0 0 12px rgba(161, 98, 7, 0.8);
+		}
+		20% {
+			background-color: #ca8a04; /* yellow-700 */
+			border-color: #d97706; /* yellow-600 */
+			box-shadow: 0 0 14px rgba(202, 138, 4, 0.8);
+		}
+		30% {
+			background-color: #d97706; /* yellow-600 */
+			border-color: #f59e0b; /* yellow-500 */
+			box-shadow: 0 0 16px rgba(217, 119, 6, 0.8);
+		}
+		40% {
+			background-color: #f59e0b; /* yellow-500 */
+			border-color: #fbbf24; /* yellow-400 */
+			box-shadow: 0 0 18px rgba(245, 158, 11, 0.8);
+		}
+		45% {
+			background-color: #fbbf24; /* yellow-400 */
+			border-color: #fcd34d; /* yellow-300 */
+			box-shadow: 0 0 20px rgba(251, 191, 36, 0.9);
 		}
 		50% {
-			background-color: rgb(254 240 138); /* yellow-200 */
-			border-color: rgb(253 224 71); /* yellow-300 */
+			background-color: #fcd34d; /* yellow-300 - punto más claro */
+			border-color: #fde68a; /* yellow-200 */
+			box-shadow: 0 0 25px rgba(252, 211, 77, 1.0);
 		}
-		75% {
-			background-color: rgb(253 224 71); /* yellow-300 */
-			border-color: rgb(250 204 21); /* yellow-400 */
+		55% {
+			background-color: #fbbf24; /* yellow-400 */
+			border-color: #fcd34d; /* yellow-300 */
+			box-shadow: 0 0 20px rgba(251, 191, 36, 0.9);
+		}
+		60% {
+			background-color: #f59e0b; /* yellow-500 */
+			border-color: #fbbf24; /* yellow-400 */
+			box-shadow: 0 0 18px rgba(245, 158, 11, 0.8);
+		}
+		70% {
+			background-color: #d97706; /* yellow-600 */
+			border-color: #f59e0b; /* yellow-500 */
+			box-shadow: 0 0 16px rgba(217, 119, 6, 0.8);
+		}
+		80% {
+			background-color: #ca8a04; /* yellow-700 */
+			border-color: #d97706; /* yellow-600 */
+			box-shadow: 0 0 14px rgba(202, 138, 4, 0.8);
+		}
+		90% {
+			background-color: #a16207; /* yellow-800 */
+			border-color: #ca8a04; /* yellow-700 */
+			box-shadow: 0 0 12px rgba(161, 98, 7, 0.8);
+		}
+		100% {
+			background-color: #713f12; /* yellow-900 - vuelta al inicio */
+			border-color: #a16207; /* yellow-800 */
+			box-shadow: 0 0 10px rgba(113, 63, 18, 0.8);
 		}
 	}
 
-	.animate-pulse-yellow {
-		animation: pulse-yellow 2s ease-in-out infinite;
+	.yellow-pulse-animation {
+		animation: yellowPulse 1.5s ease-in-out infinite;
 	}
 
 	/* Hover overrides animation for better UX feedback */
-	.animate-pulse-yellow:hover {
+	.yellow-pulse-animation:hover {
 		animation: none;
-		background-color: rgb(234 179 8) !important; /* yellow-500 */
-		border-color: rgb(161 98 7) !important; /* yellow-600 */
+		background-color: #d97706 !important; /* yellow-600 */
+		border-color: #ca8a04 !important; /* yellow-700 */
+		box-shadow: 0 0 15px rgba(217, 119, 6, 0.9) !important;
 	}
 </style>

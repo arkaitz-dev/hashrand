@@ -25,6 +25,14 @@ pub mod validation;
 
 // Auth functions imported directly in routing.rs
 pub use email::send_magic_link_email;
+pub use endpoint_helpers::{
+    create_auth_error_response, create_client_error_response, create_error_response,
+    create_server_error_response, generate_avoiding_unwanted_patterns,
+    generate_password_avoiding_patterns, handle_signed_get_request,
+};
+pub use handler_helpers::{
+    CryptoMaterial, create_signed_endpoint_response, extract_crypto_material_from_request,
+};
 pub use jwt::JwtUtils;
 pub use protected_endpoint_middleware::{ProtectedEndpointMiddleware, ProtectedEndpointResult};
 pub use query::parse_query_params;
@@ -35,11 +43,4 @@ pub use rate_limiter::{check_rate_limit, extract_client_ip, init_rate_limiter};
 pub use routing::route_request_with_req;
 pub use signed_request::{SignedRequest, SignedRequestValidator};
 pub use signed_response::{SignedResponse, SignedResponseGenerator};
-pub use endpoint_helpers::{
-    extract_query_params, create_error_response, create_auth_error_response,
-    create_client_error_response, create_server_error_response, contains_unwanted_patterns,
-    generate_avoiding_unwanted_patterns, generate_password_avoiding_patterns,
-    handle_signed_get_request
-};
-pub use handler_helpers::{CryptoMaterial, extract_crypto_material_from_request, create_signed_endpoint_response, create_signed_response_struct};
 pub use validation::{validate_email, validate_length, validate_prefix_suffix};

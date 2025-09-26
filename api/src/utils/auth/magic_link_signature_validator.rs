@@ -5,11 +5,9 @@
 
 use hex;
 use spin_sdk::http::Response;
-use serde_json::json;
 
 use super::types::ErrorResponse;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
-use crate::utils::signed_request::SignedRequestValidator;
 
 /// Verify Ed25519 signature for magic link authentication
 ///
@@ -40,13 +38,18 @@ pub fn verify_magic_link_signature(
 
     // Convert pub_key_array to hex string for verification
     let pub_key_hex = hex::encode(pub_key_bytes);
-    println!("🔍 DEBUG: Using pub_key_hex for verification: {}", pub_key_hex);
+    println!(
+        "🔍 DEBUG: Using pub_key_hex for verification: {}",
+        pub_key_hex
+    );
 
     // CORRECTED: Verify signature directly against the Base64 payload received from frontend!
     // NO NEED TO RECREATE ANYTHING - we already have what was signed!
-    println!("🔍 DEBUG BASE64: Verifying signature against received Base64 payload (length {}): {}...",
-             base64_payload.len(),
-             &base64_payload[..base64_payload.len().min(100)]);
+    println!(
+        "🔍 DEBUG BASE64: Verifying signature against received Base64 payload (length {}): {}...",
+        base64_payload.len(),
+        &base64_payload[..base64_payload.len().min(100)]
+    );
 
     // The message that was signed is the Base64 payload we received - USE IT DIRECTLY!
     let message_to_verify = base64_payload.as_bytes();

@@ -24,7 +24,6 @@ export interface AppSessionData {
 		isAuthenticated: boolean;
 	} | null;
 	access_token: string | null;
-	token_expires_at: number | null;
 
 	// Ed25519 server public key for signed response validation (cleared on auth logout)
 	server_pub_key: string | null;
@@ -156,7 +155,6 @@ class SessionDB {
 			prehashSeeds: [],
 			auth_user: null,
 			access_token: null,
-			token_expires_at: null,
 			server_pub_key: null,
 			userPreferences: {
 				language: null, // Auto-detect browser language

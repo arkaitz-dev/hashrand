@@ -8,12 +8,11 @@
 use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
-    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
-    generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,
-    validate_length, validate_prefix_suffix, extract_crypto_material_from_request,
-    create_signed_endpoint_response, extract_query_params, create_auth_error_response,
-    create_client_error_response, create_server_error_response, generate_avoiding_unwanted_patterns,
-    handle_signed_get_request,
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, create_auth_error_response,
+    create_client_error_response, create_server_error_response, create_signed_endpoint_response,
+    extract_crypto_material_from_request, generate_avoiding_unwanted_patterns, generate_otp,
+    generate_random_seed, generate_with_seed, handle_signed_get_request, seed_to_base58,
+    validate_length, validate_prefix_suffix,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -51,7 +50,12 @@ pub async fn handle_custom_post_signed(req: Request) -> anyhow::Result<Response>
     // Extract crypto material for signing response
     let crypto_material = match extract_crypto_material_from_request(&req) {
         Ok(material) => material,
-        Err(e) => return Ok(create_auth_error_response(&format!("Crypto extraction failed: {}", e))),
+        Err(e) => {
+            return Ok(create_auth_error_response(&format!(
+                "Crypto extraction failed: {}",
+                e
+            )));
+        }
     };
 
     // Convert payload to parameters and extract seed
@@ -133,84 +137,11 @@ fn generate_custom_hash_signed(
     // Create signed response using DRY helper
     match create_signed_endpoint_response(payload, crypto_material) {
         Ok(signed_response) => Ok(signed_response),
-        Err(e) => Ok(create_server_error_response(&format!("Failed to create signed response: {}", e))),
+        Err(e) => Ok(create_server_error_response(&format!(
+            "Failed to create signed response: {}",
+            e
+        ))),
     }
 }
 
-
-/// Core logic for handling custom hash generation
-pub fn handle_custom_with_params(
-    params: HashMap<String, String>,
-    provided_seed: Option<[u8; 32]>,
-) -> anyhow::Result<Response> {
-    // Parse parameters with default values
-    let length = params
-        .get("length")
-        .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(21);
-
-    let alphabet_type = params
-        .get("alphabet")
-        .map(|s| AlphabetType::from_str(s))
-        .unwrap_or(AlphabetType::Base58);
-
-    let prefix = params.get("prefix").cloned().unwrap_or_default();
-    let suffix = params.get("suffix").cloned().unwrap_or_default();
-
-    // Validate length (2-128)
-    if let Err(e) = validate_length(length, 2, 128) {
-        return Ok(Response::builder()
-            .status(400)
-            .header("content-type", "text/plain")
-            .body(e.to_string())
-            .build());
-    }
-
-    // Validate prefix and suffix (4 bytes max, safe characters)
-    if let Err(e) = validate_prefix_suffix(&prefix, "Prefix") {
-        return Ok(Response::builder()
-            .status(400)
-            .header("content-type", "text/plain")
-            .body(e.to_string())
-            .build());
-    }
-    if let Err(e) = validate_prefix_suffix(&suffix, "Suffix") {
-        return Ok(Response::builder()
-            .status(400)
-            .header("content-type", "text/plain")
-            .body(e.to_string())
-            .build());
-    }
-
-    // Use provided seed or generate random one
-    let seed_32 = provided_seed.unwrap_or_else(generate_random_seed);
-    let seed_base58 = seed_to_base58(&seed_32);
-
-    // Generate hash using seeded generator
-    let alphabet = alphabet_type.as_chars();
-    let hash = if alphabet_type == AlphabetType::FullWithSymbols {
-        // For full-with-symbols, avoid results containing '--' or '__' patterns
-        generate_avoiding_unwanted_patterns(length, &alphabet, &prefix, &suffix, seed_32)
-    } else {
-        // For other alphabets, generate normally with seeded generator
-        let base_hash = generate_with_seed(seed_32, length, &alphabet);
-        format!("{}{}{}", prefix, base_hash, suffix)
-    };
-
-    // Generate OTP using the same seed
-    let otp = generate_otp(seed_32);
-
-    // Get current timestamp
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-
-    // Create JSON response
-    let response = CustomHashResponse::new(hash, seed_base58, otp, timestamp);
-    let json_body = serde_json::to_string(&response)?;
-
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(json_body)
-        .build())
-}
-
+// DELETED: Legacy function handle_custom_with_params removed - was completely unused legacy code

@@ -13,7 +13,10 @@ use chacha20::{
     cipher::{KeyIvInit, StreamCipher},
 };
 
-use super::config::{get_argon2_salt, get_chacha_encryption_key, get_user_id_hmac_key, get_user_id_argon2_compression};
+use super::config::{
+    get_argon2_salt, get_chacha_encryption_key, get_user_id_argon2_compression,
+    get_user_id_hmac_key,
+};
 use crate::utils::pseudonimizer::blake3_keyed_variable;
 
 /// Argon2id parameters for current security standards (2024)

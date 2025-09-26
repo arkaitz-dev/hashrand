@@ -16,6 +16,8 @@
 	import UpdateButton from '$lib/components/UpdateButton.svelte';
 	import { parseNextParameterJson } from '$lib/utils/navigation';
 	import { initializeVersionCheck, restoreSessionState } from '$lib/stores/version-update';
+	import { sessionStatusStore } from '$lib/stores/session-status';
+	import { isSessionExpired } from '$lib/session-expiry-manager';
 
 	let { children } = $props();
 
@@ -43,9 +45,13 @@
 			// Import authStore dynamically
 			const { authStore } = await import('$lib/stores/auth');
 			const { parseNextParameterJson } = await import('$lib/utils/navigation');
+			const { sessionStatusStore } = await import('$lib/stores/session-status');
 
 			// Validate the magic link (Ed25519 verification by backend)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
+
+			// Mark session as valid after successful authentication
+			sessionStatusStore.markValid();
 
 			// Clean URL after successful validation
 			const newUrl = new window.URL(window.location.href);
@@ -100,9 +106,32 @@
 		}
 	}
 
+	/**
+	 * Global session status check - runs on every route change
+	 * Updates session status store to control AuthStatusButton styling
+	 */
+	async function checkGlobalSessionStatus(): Promise<void> {
+		try {
+			const expired = await isSessionExpired();
+
+			if (expired) {
+				sessionStatusStore.markExpired();
+			} else {
+				sessionStatusStore.markValid();
+			}
+		} catch (error) {
+			console.warn('Global session check failed:', error);
+			// On error, assume expired for security
+			sessionStatusStore.markExpired();
+		}
+	}
+
 	onMount(() => {
-		const unsubscribe = page.subscribe(($page) => {
+		const unsubscribe = page.subscribe(async ($page) => {
 			currentRoute.set($page.url.pathname);
+
+			// GLOBAL SESSION CHECK: Verify session status on every route change
+			await checkGlobalSessionStatus();
 
 			// Check for magic link parameter - only process on root page to avoid interference
 			const magicToken = $page.url.searchParams.get('magiclink');
@@ -157,6 +186,9 @@
 			// Validate the magic link (Ed25519 verification by backend)
 			loginResponse = await authStore.validateMagicLink(magicToken);
 			validationSuccessful = true;
+
+			// Mark session as valid after successful authentication
+			sessionStatusStore.markValid();
 		} catch {
 			// Show error and redirect to home page (URL already cleaned)
 			// Magic link validation failed

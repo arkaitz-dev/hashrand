@@ -5,6 +5,8 @@
  * Part of auth.ts refactorization to apply SOLID principles
  */
 
+import type { LoginResponse } from '../../types/index.js';
+
 /**
  * Generate cryptographic tokens for URL parameter encryption
  * Called after successful login or when crypto tokens are missing
@@ -63,7 +65,7 @@ export async function hasValidRefreshCookie(): Promise<boolean> {
 	try {
 		// Use universal signed POST request to check if refresh cookie is valid
 		const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
-		await httpSignedPOSTRequest<Record<string, never>, any>('/api/refresh', {}, false, {
+		await httpSignedPOSTRequest<Record<string, never>, LoginResponse>('/api/refresh', {}, false, {
 			credentials: 'include'
 		});
 

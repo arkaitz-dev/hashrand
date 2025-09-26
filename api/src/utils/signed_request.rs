@@ -3,14 +3,14 @@
 //! Provides Ed25519 signature verification for all API endpoints
 //! CORRECTED: Uses deterministic JSON + Base64 URL-safe for perfect consistency
 
+use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt;
-use base64::{Engine as _, engine::general_purpose};
 
+use crate::database::operations::magic_link_ops::MagicLinkOperations;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
 use crate::utils::jwt::utils::JwtUtils;
-use crate::database::operations::magic_link_ops::MagicLinkOperations;
 use spin_sdk::http::Request;
 
 /// Universal signed request structure for all API endpoints
@@ -79,23 +79,33 @@ impl SignedRequestValidator {
 
         // Decode Base64 payload to check auth method contents
         println!("🔍 DEBUG BASE64: Decoding Base64 payload for auth method detection...");
-        let json_string = Self::decode_payload_base64(&signed_request.payload)
-            .map_err(|e| SignedRequestError::SerializationError(format!("Base64 decoding failed: {}", e)))?;
+        let json_string = Self::decode_payload_base64(&signed_request.payload).map_err(|e| {
+            SignedRequestError::SerializationError(format!("Base64 decoding failed: {}", e))
+        })?;
 
-        let payload_value: Value = serde_json::from_str(&json_string)
-            .map_err(|e| SignedRequestError::SerializationError(format!("JSON parsing failed: {}", e)))?;
+        let payload_value: Value = serde_json::from_str(&json_string).map_err(|e| {
+            SignedRequestError::SerializationError(format!("JSON parsing failed: {}", e))
+        })?;
 
         println!("🔍 DEBUG BASE64: Decoded payload: {}", payload_value);
 
         // Check what auth methods are present in payload
-        let has_pub_key = payload_value.get("pub_key").and_then(|v| v.as_str()).is_some();
-        let has_magiclink = payload_value.get("magiclink").and_then(|v| v.as_str()).is_some();
+        let has_pub_key = payload_value
+            .get("pub_key")
+            .and_then(|v| v.as_str())
+            .is_some();
+        let has_magiclink = payload_value
+            .get("magiclink")
+            .and_then(|v| v.as_str())
+            .is_some();
 
         // Check if Bearer token is present
         let has_bearer = Self::extract_pub_key_from_bearer(request).is_ok();
 
-        println!("🔍 Auth method detection - Bearer: {}, pub_key: {}, magiclink: {}",
-                 has_bearer, has_pub_key, has_magiclink);
+        println!(
+            "🔍 Auth method detection - Bearer: {}, pub_key: {}, magiclink: {}",
+            has_bearer, has_pub_key, has_magiclink
+        );
 
         // STRICT VALIDATION RULES
         if has_bearer {
@@ -109,7 +119,11 @@ impl SignedRequestValidator {
             // Use Bearer token for validation
             let pub_key_hex = Self::extract_pub_key_from_bearer(request)?;
             println!("✅ Using ONLY Bearer token (strict mode)");
-            Self::validate_base64_payload(&signed_request.payload, &signed_request.signature, &pub_key_hex)?;
+            Self::validate_base64_payload(
+                &signed_request.payload,
+                &signed_request.signature,
+                &pub_key_hex,
+            )?;
             Ok(pub_key_hex)
         } else {
             // Rule 2: No Bearer token - EXACTLY one payload auth method required
@@ -176,11 +190,9 @@ impl SignedRequestValidator {
                 SignedRequestError::MissingPublicKey("No Authorization header".to_string())
             })?;
 
-        let token = auth_header
-            .strip_prefix("Bearer ")
-            .ok_or_else(|| {
-                SignedRequestError::MissingPublicKey("Invalid Bearer token format".to_string())
-            })?;
+        let token = auth_header.strip_prefix("Bearer ").ok_or_else(|| {
+            SignedRequestError::MissingPublicKey("Invalid Bearer token format".to_string())
+        })?;
 
         let claims = JwtUtils::validate_access_token(token).map_err(|e| {
             SignedRequestError::InvalidSignature(format!("JWT validation failed: {}", e))
@@ -211,9 +223,14 @@ impl SignedRequestValidator {
 
         // Validate magiclink and extract pub_key from database
         let (_is_valid, _next_param, _user_id, pub_key_bytes) =
-            MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
-                SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
-            })?;
+            MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(
+                |e| {
+                    SignedRequestError::InvalidSignature(format!(
+                        "Magiclink validation failed: {}",
+                        e
+                    ))
+                },
+            )?;
 
         let pub_key_array = pub_key_bytes.ok_or_else(|| {
             SignedRequestError::MissingPublicKey("No pub_key found in magiclink data".to_string())
@@ -316,21 +333,19 @@ impl SignedRequestValidator {
     /// * `Result<String, String>` - Original JSON string or error
     pub fn decode_payload_base64(base64_payload: &str) -> Result<String, String> {
         // Convert Base64 URL-safe to standard Base64
-        let base64_standard = base64_payload
-            .replace('-', "+")
-            .replace('_', "/");
+        let base64_standard = base64_payload.replace('-', "+").replace('_', "/");
 
         // Add padding if needed
         let padding_len = (4 - (base64_standard.len() % 4)) % 4;
         let base64_padded = format!("{}{}", base64_standard, "=".repeat(padding_len));
 
         // Decode Base64 to bytes
-        let bytes = general_purpose::STANDARD.decode(&base64_padded)
+        let bytes = general_purpose::STANDARD
+            .decode(&base64_padded)
             .map_err(|e| format!("Base64 decoding failed: {}", e))?;
 
         // Convert bytes to UTF-8 string
-        String::from_utf8(bytes)
-            .map_err(|e| format!("UTF-8 conversion failed: {}", e))
+        String::from_utf8(bytes).map_err(|e| format!("UTF-8 conversion failed: {}", e))
     }
 
     /// Deserialize JSON payload back to typed structure
@@ -396,28 +411,7 @@ impl SignedRequestValidator {
     }
 }
 
-/// Public key extraction trait for different endpoint types
-pub trait PublicKeyExtractor {
-    /// Extract Ed25519 public key for signature validation
-    fn extract_public_key(&self) -> Result<String, SignedRequestError>;
-}
-
-/// Extract public key from payload (for /api/login/)
-pub struct PayloadPublicKeyExtractor<'a> {
-    pub payload: &'a Value,
-}
-
-impl<'a> PublicKeyExtractor for PayloadPublicKeyExtractor<'a> {
-    fn extract_public_key(&self) -> Result<String, SignedRequestError> {
-        self.payload
-            .get("pub_key")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .ok_or_else(|| {
-                SignedRequestError::MissingPublicKey("pub_key not found in payload".to_string())
-            })
-    }
-}
+// DELETED: PublicKeyExtractor trait and PayloadPublicKeyExtractor struct removed - were completely unused legacy experimental code
 
 #[cfg(test)]
 mod tests {
@@ -471,7 +465,8 @@ mod tests {
             "magiclink": "8ukaMHhcnJJSEePzD5UYaoHgWib1tr8rS6ms73pC985s"
         });
         println!("Input: {}", magic_payload);
-        let serialized = SignedRequestValidator::serialize_payload_deterministic(&magic_payload).unwrap();
+        let serialized =
+            SignedRequestValidator::serialize_payload_deterministic(&magic_payload).unwrap();
         println!("Serialized: {}", serialized);
         println!("Length: {}", serialized.len());
 
@@ -479,7 +474,8 @@ mod tests {
         println!("\n[2] Empty object");
         let empty_payload = json!({});
         println!("Input: {}", empty_payload);
-        let serialized = SignedRequestValidator::serialize_payload_deterministic(&empty_payload).unwrap();
+        let serialized =
+            SignedRequestValidator::serialize_payload_deterministic(&empty_payload).unwrap();
         println!("Serialized: {}", serialized);
         println!("Length: {}", serialized.len());
 
@@ -493,7 +489,8 @@ mod tests {
             "pub_key": "abc123"
         });
         println!("Input: {}", login_payload);
-        let serialized = SignedRequestValidator::serialize_payload_deterministic(&login_payload).unwrap();
+        let serialized =
+            SignedRequestValidator::serialize_payload_deterministic(&login_payload).unwrap();
         println!("Serialized: {}", serialized);
         println!("Length: {}", serialized.len());
 

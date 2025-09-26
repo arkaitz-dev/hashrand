@@ -71,8 +71,22 @@
 	});
 
 	// Form state managed by composable
-	let params = $derived(formParamsManager.params.value);
 	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// Reactive bindings for form inputs
+	let alphabet = $state('base58');
+	let length = $state(21);
+	let prefix = $state('');
+	let suffix = $state('');
+
+	// Initialize from params when available
+	$effect(() => {
+		const currentParams = formParamsManager.params.value;
+		if (currentParams.alphabet) alphabet = currentParams.alphabet;
+		if (currentParams.length) length = currentParams.length;
+		if (currentParams.prefix) prefix = currentParams.prefix;
+		if (currentParams.suffix) suffix = currentParams.suffix;
+	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
 	// let searchParams = $derived($page.url.searchParams);
@@ -119,9 +133,9 @@
 	// }
 
 	// Validation
-	let lengthValid = $derived(params.length && params.length >= 2 && params.length <= 128);
-	let prefixValid = $derived(!params.prefix || params.prefix.length <= 32);
-	let suffixValid = $derived(!params.suffix || params.suffix.length <= 32);
+	let lengthValid = $derived(length && length >= 2 && length <= 128);
+	let prefixValid = $derived(!prefix || prefix.length <= 32);
+	let suffixValid = $derived(!suffix || suffix.length <= 32);
 	let formValid = $derived(lengthValid && prefixValid && suffixValid);
 
 	// ENTERPRISE ARCHITECTURE: Generation workflow composable
@@ -131,10 +145,10 @@
 			return Boolean(formValid);
 		},
 		getParams: () => ({
-			length: params.length ?? 21,
-			alphabet: params.alphabet ?? 'base58',
-			...(params.prefix && { prefix: params.prefix }),
-			...(params.suffix && { suffix: params.suffix })
+			length: length ?? 21,
+			alphabet: alphabet ?? 'base58',
+			...(prefix && { prefix: prefix }),
+			...(suffix && { suffix: suffix })
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;
@@ -226,7 +240,7 @@
 							/>
 							<span
 								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
-								>{params.length}</span
+								>{length}</span
 							>
 						</div>
 						{#if !lengthValid}

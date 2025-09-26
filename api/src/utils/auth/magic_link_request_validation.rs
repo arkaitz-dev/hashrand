@@ -5,11 +5,8 @@
 
 use spin_sdk::http::{Request, Response};
 
-use super::types::{ErrorResponse, MagicLinkRequest, MagicLinkSignedRequest};
-use crate::utils::{
-    SignedRequestValidator, check_rate_limit,
-    ed25519::Ed25519Utils, extract_client_ip, validate_email,
-};
+use super::types::{ErrorResponse, MagicLinkSignedRequest};
+use crate::utils::{SignedRequestValidator, check_rate_limit, extract_client_ip, validate_email};
 
 /// Magic link request validation operations
 pub struct MagicLinkRequestValidation;
@@ -70,45 +67,8 @@ impl MagicLinkRequestValidation {
     ///
     /// # Returns
     /// * `Result<(), Response>` - Ok if signature valid, Error response if invalid
-    pub fn validate_ed25519_signature(magic_request: &MagicLinkRequest) -> Result<(), Response> {
-        let pub_key_hex = &magic_request.pub_key;
-        let signature_hex = &magic_request.signature;
-
-        println!(
-            "🔍 DEBUG Ed25519: Verifying signature for email: {}",
-            magic_request.email
-        );
-        println!("🔍 DEBUG Ed25519: Public key: {}...", &pub_key_hex[..20]);
-        println!("🔍 DEBUG Ed25519: Signature: {}...", &signature_hex[..20]);
-
-        // Verify Ed25519 signature for magic link request
-        let verification_result = Ed25519Utils::verify_magic_link_request(
-            &magic_request.email,
-            pub_key_hex,
-            magic_request.next.as_deref().unwrap_or("/"),
-            signature_hex,
-        );
-
-        if verification_result != crate::utils::ed25519::SignatureVerificationResult::Valid {
-            println!(
-                "🔍 DEBUG Ed25519: Signature verification failed: {:?}",
-                verification_result
-            );
-            return Err(Response::builder()
-                .status(400)
-                .header("content-type", "application/json")
-                .body(
-                    serde_json::to_string(&ErrorResponse {
-                        error: "Invalid Ed25519 signature: Authentication failed".to_string(),
-                    })
-                    .unwrap_or_default(),
-                )
-                .build());
-        }
-
-        println!("🔍 DEBUG Ed25519: Signature verification successful!");
-        Ok(())
-    }
+    // DELETED: Legacy function validate_ed25519_signature removed - was completely unused, replaced by universal SignedRequest validation
+    fn _deleted_validate_ed25519_signature() {}
 
     /// Validate signed request with Ed25519 signature
     ///
@@ -126,7 +86,7 @@ impl MagicLinkRequestValidation {
             Ok(pub_key_hex) => {
                 println!("✅ Universal SignedRequest validation successful (Base64 JSON payload)");
                 Ok(pub_key_hex)
-            },
+            }
             Err(e) => {
                 println!("❌ Universal SignedRequest validation failed: {}", e);
                 Err(Response::builder()

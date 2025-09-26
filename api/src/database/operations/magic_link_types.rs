@@ -3,8 +3,7 @@
 //! Contains type aliases, result types, and constants used across
 //! magic link operations modules.
 
-/// Magic link content encryption keys (cipher, nonce, salt)
-pub type MagicLinkKeys = ([u8; 32], [u8; 32], [u8; 32]);
+// DELETED: Magic link content encryption keys type removed - was completely unused
 
 /// Magic link validation result tuple
 ///

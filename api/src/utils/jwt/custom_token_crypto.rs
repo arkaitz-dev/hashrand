@@ -2,10 +2,10 @@
 //!
 //! Single Responsibility: Low-level cryptographic functions for prehash, encryption, and key derivation
 
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 use blake3;
 use chacha20::ChaCha20;
 use chacha20::cipher::{KeyIvInit, StreamCipher};
-use crate::utils::pseudonimizer::blake3_keyed_variable;
 
 /// Generate cryptographically secure prehash seed (32 bytes)
 pub fn generate_prehash_seed() -> [u8; 32] {
@@ -25,7 +25,10 @@ pub fn generate_prehash(seed: &[u8; 32], hmac_key: &[u8; 64]) -> Result<[u8; 32]
 }
 
 /// Generate prehash using Blake3-keyed with derived key (32 bytes)
-pub fn generate_prehash_from_derived(seed: &[u8; 32], hmac_key: &[u8; 32]) -> Result<[u8; 32], String> {
+pub fn generate_prehash_from_derived(
+    seed: &[u8; 32],
+    hmac_key: &[u8; 32],
+) -> Result<[u8; 32], String> {
     let mut key_64 = [0u8; 64];
     key_64[..32].copy_from_slice(hmac_key);
     let result = blake3_keyed_variable(&key_64, seed, 32);
@@ -48,7 +51,10 @@ pub fn generate_cipher_key(base_key: &[u8; 64], prehash: &[u8; 32]) -> Result<[u
 }
 
 /// Generate cipher key from derived key (32 bytes) and prehash
-pub fn generate_cipher_key_from_derived(base_key: &[u8; 32], prehash: &[u8; 32]) -> Result<[u8; 32], String> {
+pub fn generate_cipher_key_from_derived(
+    base_key: &[u8; 32],
+    prehash: &[u8; 32],
+) -> Result<[u8; 32], String> {
     let mut key_64 = [0u8; 64];
     key_64[..32].copy_from_slice(base_key);
     let result = blake3_keyed_variable(&key_64, prehash, 32);
@@ -66,7 +72,10 @@ pub fn generate_cipher_nonce(base_key: &[u8; 64], prehash: &[u8; 32]) -> Result<
 }
 
 /// Generate nonce from derived key (32 bytes) and prehash
-pub fn generate_cipher_nonce_from_derived(base_key: &[u8; 32], prehash: &[u8; 32]) -> Result<[u8; 12], String> {
+pub fn generate_cipher_nonce_from_derived(
+    base_key: &[u8; 32],
+    prehash: &[u8; 32],
+) -> Result<[u8; 12], String> {
     let mut key_64 = [0u8; 64];
     key_64[..32].copy_from_slice(base_key);
     let result = blake3_keyed_variable(&key_64, prehash, 12);

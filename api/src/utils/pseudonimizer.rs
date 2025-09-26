@@ -111,7 +111,10 @@ mod tests {
         let output1 = blake3_keyed_variable(&hmac_key1, data, 32);
         let output2 = blake3_keyed_variable(&hmac_key2, data, 32);
 
-        assert_ne!(output1, output2, "Different hmac_env_key should produce different outputs");
+        assert_ne!(
+            output1, output2,
+            "Different hmac_env_key should produce different outputs"
+        );
     }
 
     #[test]
@@ -121,7 +124,10 @@ mod tests {
         let output1 = blake3_keyed_variable(&hmac_key, b"data1", 32);
         let output2 = blake3_keyed_variable(&hmac_key, b"data2", 32);
 
-        assert_ne!(output1, output2, "Different data should produce different outputs");
+        assert_ne!(
+            output1, output2,
+            "Different data should produce different outputs"
+        );
     }
 
     #[test]
@@ -129,19 +135,30 @@ mod tests {
         let hmac_key = [6u8; 64];
 
         // Test with data < 32 bytes (should be hashed first)
-        let short_data = b"short";  // 5 bytes
+        let short_data = b"short"; // 5 bytes
         let output_short = blake3_keyed_variable(&hmac_key, short_data, 32);
 
         // Test with data >= 32 bytes (used directly)
-        let long_data = b"this is a long data string with more than 32 bytes of content";  // 62 bytes
+        let long_data = b"this is a long data string with more than 32 bytes of content"; // 62 bytes
         let output_long = blake3_keyed_variable(&hmac_key, long_data, 32);
 
         // Both should produce valid 32-byte outputs
-        assert_eq!(output_short.len(), 32, "Short data should produce 32-byte output");
-        assert_eq!(output_long.len(), 32, "Long data should produce 32-byte output");
+        assert_eq!(
+            output_short.len(),
+            32,
+            "Short data should produce 32-byte output"
+        );
+        assert_eq!(
+            output_long.len(),
+            32,
+            "Long data should produce 32-byte output"
+        );
 
         // Different inputs should produce different outputs
-        assert_ne!(output_short, output_long, "Short and long data should produce different outputs");
+        assert_ne!(
+            output_short, output_long,
+            "Short and long data should produce different outputs"
+        );
     }
 
     #[test]
@@ -149,14 +166,21 @@ mod tests {
         let hmac_key = [7u8; 64];
 
         // Test with exactly 32 bytes (boundary condition)
-        let exact_32_data = b"exactly_32_bytes_of_test_data!!!";  // 32 bytes
+        let exact_32_data = b"exactly_32_bytes_of_test_data!!!"; // 32 bytes
         let output1 = blake3_keyed_variable(&hmac_key, exact_32_data, 32);
 
         // Should use data directly without hashing
-        assert_eq!(output1.len(), 32, "Exact 32-byte data should produce 32-byte output");
+        assert_eq!(
+            output1.len(),
+            32,
+            "Exact 32-byte data should produce 32-byte output"
+        );
 
         // Test determinism with exact 32 bytes
         let output2 = blake3_keyed_variable(&hmac_key, exact_32_data, 32);
-        assert_eq!(output1, output2, "Exact 32-byte data should be deterministic");
+        assert_eq!(
+            output1, output2,
+            "Exact 32-byte data should be deterministic"
+        );
     }
 }

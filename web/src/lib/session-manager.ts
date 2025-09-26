@@ -128,7 +128,6 @@ class SessionManager {
 	async getAuthData(): Promise<{
 		user: { user_id: string; isAuthenticated: boolean } | null;
 		access_token: string | null;
-		expires_at: number | null;
 	}> {
 		return await getAuthData();
 	}
@@ -138,10 +137,9 @@ class SessionManager {
 	 */
 	async setAuthData(
 		user: { user_id: string; isAuthenticated: boolean },
-		access_token: string,
-		expires_at?: number
+		access_token: string
 	): Promise<void> {
-		return await setAuthData(user, access_token, expires_at);
+		return await setAuthData(user, access_token);
 	}
 
 	/**

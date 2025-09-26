@@ -11,8 +11,11 @@
  */
 
 import { goto } from '$app/navigation';
+import { page } from '$app/stores';
 import { authStore } from '$lib/stores/auth';
 import { createEncryptedUrl } from '$lib/crypto';
+import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+import { get } from 'svelte/store';
 
 export interface GenerationConfig<T = Record<string, unknown>> {
 	endpoint: string;
@@ -25,8 +28,8 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 	let pendingGenerationParams: Record<string, unknown> | null = null;
 
 	/**
-	 * Main generation handler - unified for all endpoints
-	 * REACTIVE APPROACH: No proactive auth checks, let HTTP calls handle authentication
+	 * Main generation handler - CHECK SESSION EXPIRATION FIRST
+	 * NEW LOGIC: Check session expiration before any generation logic
 	 */
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
@@ -35,11 +38,22 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 			return;
 		}
 
-		// REACTIVE APPROACH: Skip proactive authentication check
-		// If user isn't authenticated, the result page API call will get 401
-		// and reactive interceptor will handle refresh/login automatically
+		// Check session expiration before generation
+		const currentPage = get(page);
+		const currentRoute = currentPage.url.pathname;
 
-		// Proceed directly with generation
+		const sessionValid = await checkSessionAndHandle({
+			onExpired: 'launch-auth', // Launch auth dialog if expired
+			next: currentRoute // Current generation route as next parameter
+		});
+
+		if (!sessionValid) {
+			// Session was expired and auth dialog launched - stop generation
+			console.log('🕐 Generation cancelled due to expired session');
+			return;
+		}
+
+		// Session is valid - proceed with generation
 		await performGeneration();
 	}
 

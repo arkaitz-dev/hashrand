@@ -1,12 +1,15 @@
 //! Custom token serialization operations - Binary serialization and deserialization of token claims
 
-use chrono::DateTime;
 use crate::utils::pseudonimizer::blake3_keyed_variable;
+use chrono::DateTime;
 
 use super::custom_token_types::{CustomTokenClaims, TokenType};
 
 /// Serialize claims to bytes: user_id(16) + expires_at(4) + refresh_expires_at(4) + pub_key(32) + blake3_keyed(8) = 64 bytes
-pub fn claims_to_bytes(claims: &CustomTokenClaims, hmac_key: &[u8; 64]) -> Result<[u8; 64], String> {
+pub fn claims_to_bytes(
+    claims: &CustomTokenClaims,
+    hmac_key: &[u8; 64],
+) -> Result<[u8; 64], String> {
     // Timestamps as seconds since Unix epoch (4 bytes each, big-endian u32)
     let expires_timestamp = claims.expires_at.timestamp() as u32;
     let refresh_expires_timestamp = claims.refresh_expires_at.timestamp() as u32;
@@ -35,7 +38,10 @@ pub fn claims_to_bytes(claims: &CustomTokenClaims, hmac_key: &[u8; 64]) -> Resul
 }
 
 /// Deserialize claims from bytes and validate integrity
-pub fn claims_from_bytes(payload: &[u8; 64], hmac_key: &[u8; 64]) -> Result<CustomTokenClaims, String> {
+pub fn claims_from_bytes(
+    payload: &[u8; 64],
+    hmac_key: &[u8; 64],
+) -> Result<CustomTokenClaims, String> {
     if payload.len() != 64 {
         return Err("Invalid payload length".to_string());
     }

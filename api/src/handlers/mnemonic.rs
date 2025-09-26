@@ -1,10 +1,9 @@
 use crate::types::CustomHashResponse;
 use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
-    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator, generate_otp,
-    generate_random_seed, seed_to_base58, extract_crypto_material_from_request,
-    create_signed_endpoint_response, extract_query_params, create_error_response,
-    handle_signed_get_request,
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, create_error_response,
+    create_signed_endpoint_response, extract_crypto_material_from_request, generate_otp,
+    generate_random_seed, handle_signed_get_request, seed_to_base58,
 };
 use bip39::{Language, Mnemonic};
 use spin_sdk::http::{Request, Response};
@@ -46,7 +45,12 @@ pub async fn handle_mnemonic_post_signed(req: Request) -> anyhow::Result<Respons
     // Extract crypto material for signing response
     let crypto_material = match extract_crypto_material_from_request(&req) {
         Ok(material) => material,
-        Err(e) => return Ok(create_error_response(401, &format!("Crypto extraction failed: {}", e))),
+        Err(e) => {
+            return Ok(create_error_response(
+                401,
+                &format!("Crypto extraction failed: {}", e),
+            ));
+        }
     };
 
     // Convert payload to parameters and extract seed
@@ -66,79 +70,7 @@ pub async fn handle_mnemonic_post_signed(req: Request) -> anyhow::Result<Respons
     generate_mnemonic_signed(&params, &crypto_material)
 }
 
-/// Legacy function preserved for existing logic
-pub fn handle_mnemonic_with_params(
-    params: HashMap<String, String>,
-    provided_seed: Option<[u8; 32]>,
-) -> anyhow::Result<Response> {
-    // Set mnemonic-specific defaults
-    let mut mnemonic_params = params;
-
-    // Use DRY crypto material (create dummy for legacy compatibility)
-    let _dummy_crypto = crate::utils::CryptoMaterial {
-        user_id: vec![0; 16],
-        pub_key_hex: "".to_string(),
-    };
-
-    // Add provided seed to params if available
-    if let Some(seed) = provided_seed {
-        mnemonic_params.insert("seed".to_string(), seed_to_base58(&seed));
-    }
-
-    // Legacy direct implementation (avoid circular dependency)
-    let language = match mnemonic_params.get("language") {
-        Some(lang_str) => match parse_language(lang_str) {
-            Ok(lang) => lang,
-            Err(e) => return Ok(create_error_response(400, &e.to_string())),
-        },
-        None => Language::English,
-    };
-
-    let words = match mnemonic_params.get("words") {
-        Some(words_str) => match words_str.parse::<u32>() {
-            Ok(12) => 12,
-            Ok(24) => 24,
-            Ok(other) => {
-                return Ok(create_error_response(400,
-                    &format!("Invalid words parameter: {}. Only 12 and 24 are supported.", other)));
-            }
-            Err(_) => {
-                return Ok(create_error_response(400, "Invalid words parameter. Must be 12 or 24."));
-            }
-        },
-        None => 12,
-    };
-
-    let seed_32 = provided_seed.unwrap_or_else(generate_random_seed);
-    let seed_base58 = seed_to_base58(&seed_32);
-
-    let mnemonic = match words {
-        12 => {
-            let entropy_16: [u8; 16] = seed_32[0..16].try_into()
-                .map_err(|_| anyhow::anyhow!("Failed to extract 16 bytes from seed"))?;
-            Mnemonic::from_entropy_in(language, &entropy_16)
-                .map_err(|e| anyhow::anyhow!("Failed to generate 12-word mnemonic: {}", e))?
-        }
-        24 => {
-            Mnemonic::from_entropy_in(language, &seed_32)
-                .map_err(|e| anyhow::anyhow!("Failed to generate 24-word mnemonic: {}", e))?
-        }
-        _ => unreachable!(),
-    };
-
-    let mnemonic_phrase = mnemonic.to_string();
-    let otp = generate_otp(seed_32);
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-
-    let response = CustomHashResponse::new(mnemonic_phrase, seed_base58, otp, timestamp);
-    let json_body = serde_json::to_string(&response)?;
-
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(json_body)
-        .build())
-}
+// DELETED: Legacy function handle_mnemonic_with_params removed - was completely unused legacy code
 
 /// Generate secure mnemonic and return SignedResponse (DRY implementation)
 fn generate_mnemonic_signed(
@@ -160,11 +92,19 @@ fn generate_mnemonic_signed(
             Ok(12) => 12,
             Ok(24) => 24,
             Ok(other) => {
-                return Ok(create_error_response(400,
-                    &format!("Invalid words parameter: {}. Only 12 and 24 are supported.", other)));
+                return Ok(create_error_response(
+                    400,
+                    &format!(
+                        "Invalid words parameter: {}. Only 12 and 24 are supported.",
+                        other
+                    ),
+                ));
             }
             Err(_) => {
-                return Ok(create_error_response(400, "Invalid words parameter. Must be 12 or 24."));
+                return Ok(create_error_response(
+                    400,
+                    "Invalid words parameter. Must be 12 or 24.",
+                ));
             }
         },
         None => 12, // Default to 12 words
@@ -214,7 +154,10 @@ fn generate_mnemonic_signed(
     // Create signed response using DRY helper
     match create_signed_endpoint_response(payload, crypto_material) {
         Ok(signed_response) => Ok(signed_response),
-        Err(e) => Ok(create_error_response(500, &format!("Failed to create signed response: {}", e))),
+        Err(e) => Ok(create_error_response(
+            500,
+            &format!("Failed to create signed response: {}", e),
+        )),
     }
 }
 
@@ -237,4 +180,3 @@ fn parse_language(lang: &str) -> anyhow::Result<Language> {
         )),
     }
 }
-

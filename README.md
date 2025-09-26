@@ -44,12 +44,14 @@ just dev
 - **🌍 BIP39 Multilingual**: 10-language support (English, Spanish, Chinese, etc.)
 - **⚡ WebAssembly**: Fast, lightweight serverless architecture
 
-### Professional Web Interface  
+### Professional Web Interface
 - **🎨 Modern UI**: SvelteKit + TypeScript + TailwindCSS 4.0
 - **📱 Responsive**: Perfect on mobile, tablet, and desktop
 - **🌙 Smart Themes**: Manual dark/light mode with system preference detection
 - **🌍 Full i18n**: 13 languages with RTL support
 - **♿ Accessibility**: ARIA labels, keyboard navigation, screen reader support
+- **🔄 Seamless Updates**: Intelligent frontend version detection with zero data loss reload and spectacular visual feedback
+- **🟡 Advanced Session Management**: Global session expiration detection with eye-catching pulsing animations
 
 ### Enterprise Security
 - **🏗️ Blake2b Unified Stack**: High-performance cryptographic operations
@@ -61,6 +63,7 @@ just dev
 - **✨ Pure SignedResponse Architecture**: Complete Ed25519 digital signature system with secure HTTP cookie delivery (v1.6.11+)
 - **🍪 Secure Cookie Management**: HttpOnly refresh tokens with enterprise security attributes (Secure, SameSite=Strict)
 - **🧪 Comprehensive Testing**: 35 automated tests covering all functionality with 100% success rate
+- **🎨 Spectacular UI Animations**: Advanced yellow pulsing effects for critical user notifications and session management
 
 ## 📊 Architecture
 

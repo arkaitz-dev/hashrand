@@ -9,12 +9,12 @@ use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
 use crate::database::connection::initialize_database;
+use crate::utils::SignedRequestValidator;
+use crate::utils::auth::types::MagicLinkPayload;
 use crate::utils::auth::{
     ErrorResponse, MagicLinkSignedRequest, generate_magic_link_signed, handle_refresh_token,
     validate_magic_link_secure,
 };
-use crate::utils::auth::types::MagicLinkPayload;
-use crate::utils::SignedRequestValidator;
 
 /// Handle login authentication requests
 ///
@@ -94,19 +94,20 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
             println!("🔐 DEBUG: Received SignedRequest structure with Base64-encoded JSON payload");
 
             // CORRECTED: Deserialize Base64-encoded JSON payload to access fields
-            let deserialized_payload: MagicLinkPayload = match SignedRequestValidator::deserialize_base64_payload(&req.payload) {
-                Ok(payload) => payload,
-                Err(e) => {
-                    println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
-                    return Ok(Response::builder()
-                        .status(400)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Invalid Base64 JSON payload format".to_string(),
-                        })?)
-                        .build());
-                }
-            };
+            let deserialized_payload: MagicLinkPayload =
+                match SignedRequestValidator::deserialize_base64_payload(&req.payload) {
+                    Ok(payload) => payload,
+                    Err(e) => {
+                        println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
+                        return Ok(Response::builder()
+                            .status(400)
+                            .header("content-type", "application/json")
+                            .body(serde_json::to_string(&ErrorResponse {
+                                error: "Invalid Base64 JSON payload format".to_string(),
+                            })?)
+                            .build());
+                    }
+                };
 
             println!(
                 "DEBUG: Deserialized Payload - Email: {}, UI Host: {:?}, Email Lang: {:?}",

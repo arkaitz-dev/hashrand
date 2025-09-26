@@ -14,6 +14,7 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 	import { authStore } from '$lib/stores/auth';
+	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
 
 	let copySuccess = $state(false);
 	let copyTimeout: ReturnType<typeof setTimeout>;
@@ -41,7 +42,21 @@
 
 	// Handle result state and API calls
 	onMount(async () => {
-		// Component initialization
+		// CHECK SESSION EXPIRATION FIRST - before any result processing
+		const currentUrl = $page.url.pathname + $page.url.search;
+		const sessionValid = await checkSessionAndHandle({
+			onExpired: 'launch-auth', // Launch auth dialog if expired
+			next: currentUrl // Current result URL ("result?p=...") as next parameter
+		});
+
+		if (!sessionValid) {
+			// Session expired - cleanup done and auth dialog launched
+			console.log('🕐 Result page cancelled due to expired session');
+			return; // Stop all result processing
+		}
+
+		// Session is valid - proceed with result processing
+		console.log('✅ Session valid - proceeding with result generation');
 
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
 		if (searchParams.size > 0) {

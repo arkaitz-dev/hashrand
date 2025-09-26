@@ -1,195 +1,195 @@
 /* Email Styles - Inline CSS for maximum compatibility */
 body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f5f5f7;
-    line-height: 1.6;
-    color: #1d1d1f;
+  margin: 0;
+  padding: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  background-color: #f5f5f7;
+  line-height: 1.6;
+  color: #1d1d1f;
 }
 
 .email-container {
-    max-width: 600px;
-    margin: 40px auto;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+  max-width: 600px;
+  margin: 40px auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .email-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px 30px;
-    text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
 }
 
 .email-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .email-header p {
-    margin: 0;
-    font-size: 16px;
-    opacity: 0.9;
-    font-weight: 300;
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+  font-weight: 300;
 }
 
 .email-body {
-    padding: 40px 30px;
+  padding: 40px 30px;
 }
 
 .greeting {
-    font-size: 18px;
-    font-weight: 500;
-    color: #1d1d1f;
-    margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin: 0 0 20px 0;
 }
 
 .intro-text {
-    font-size: 16px;
-    color: #424245;
-    margin: 0 0 30px 0;
-    line-height: 1.5;
+  font-size: 16px;
+  color: #424245;
+  margin: 0 0 30px 0;
+  line-height: 1.5;
 }
 
 .action-button {
-    display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white !important;
-    text-decoration: none;
-    padding: 16px 32px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: center;
-    margin: 20px 0 30px 0;
-    transition: transform 0.2s ease;
-    line-height: 1.2;
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  text-decoration: none;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin: 20px 0 30px 0;
+  transition: transform 0.2s ease;
+  line-height: 1.2;
 }
 
 .action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .manual-link {
-    background-color: #f5f5f7;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    border-left: 4px solid #667eea;
+  background-color: #f5f5f7;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 4px solid #667eea;
 }
 
 .manual-link p {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #424245;
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #424245;
 }
 
 .manual-link code {
-    background-color: #e8e8ed;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 13px;
-    word-break: break-all;
-    display: block;
-    font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
-    color: #1d1d1f;
+  background-color: #e8e8ed;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  word-break: break-all;
+  display: block;
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  color: #1d1d1f;
 }
 
 .security-info {
-    background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    padding: 16px;
-    margin: 25px 0;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 25px 0;
 }
 
 .security-info p {
-    margin: 0;
-    font-size: 14px;
-    color: #856404;
+  margin: 0;
+  font-size: 14px;
+  color: #856404;
 }
 
 .security-notice {
-    font-size: 14px;
-    color: #6e6e73;
-    margin: 20px 0;
-    font-style: italic;
+  font-size: 14px;
+  color: #6e6e73;
+  margin: 20px 0;
+  font-style: italic;
 }
 
 .email-footer {
-    background-color: #f5f5f7;
-    padding: 30px;
-    text-align: center;
-    border-top: 1px solid #e8e8ed;
+  background-color: #f5f5f7;
+  padding: 30px;
+  text-align: center;
+  border-top: 1px solid #e8e8ed;
 }
 
 .footer-text {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #6e6e73;
-    font-weight: 500;
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #6e6e73;
+  font-weight: 500;
 }
 
 .no-reply-notice {
-    margin: 0;
-    font-size: 12px;
-    color: #8e8e93;
+  margin: 0;
+  font-size: 12px;
+  color: #8e8e93;
 }
 
 /* RTL Support for Arabic and other right-to-left languages */
 [dir="rtl"] {
-    text-align: right;
+  text-align: right;
 }
 
 [dir="rtl"] .email-header {
-    text-align: center; /* Keep header centered for all languages */
+  text-align: center; /* Keep header centered for all languages */
 }
 
 [dir="rtl"] .greeting,
 [dir="rtl"] .intro-text,
 [dir="rtl"] .security-notice {
-    text-align: right;
+  text-align: right;
 }
 
 [dir="rtl"] .manual-link {
-    border-left: none;
-    border-right: 4px solid #667eea;
+  border-left: none;
+  border-right: 4px solid #667eea;
 }
 
 [dir="rtl"] .security-info {
-    text-align: right;
+  text-align: right;
 }
 
 [dir="rtl"] .footer-text,
 [dir="rtl"] .no-reply-notice {
-    text-align: center; /* Keep footer centered for better appearance */
+  text-align: center; /* Keep footer centered for better appearance */
 }
-
-
 
 /* Dark mode support (for supporting email clients) */
 @media (prefers-color-scheme: dark) {
-    body {
-        background-color: #1c1c1e;
-    }
-    
-    .email-container {
-        background-color: #2c2c2e;
-    }
-    
-    .intro-text,
-    .greeting {
-        color: #f2f2f7;
-    }
-    
-    .email-footer {
-        background-color: #1c1c1e;
-        border-top-color: #38383a;
-    }
+  body {
+    background-color: #1c1c1e;
+  }
+
+  .email-container {
+    background-color: #2c2c2e;
+  }
+
+  .intro-text,
+  .greeting {
+    color: #f2f2f7;
+  }
+
+  .email-footer {
+    background-color: #1c1c1e;
+    border-top-color: #38383a;
+  }
 }

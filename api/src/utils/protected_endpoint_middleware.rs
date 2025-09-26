@@ -17,7 +17,6 @@ pub type ProtectedSignedRequest = SignedRequest;
 /// Protected endpoint middleware result
 pub struct ProtectedEndpointResult<T> {
     pub payload: T,
-    pub user_id: String, // Base58-encoded user_id
 }
 
 /// Protected endpoint middleware
@@ -109,7 +108,7 @@ impl ProtectedEndpointMiddleware {
         if let Err(e) = SignedRequestValidator::validate_base64_payload(
             &signed_request.payload,
             &signed_request.signature,
-            &pub_key_hex
+            &pub_key_hex,
         ) {
             println!("🔍 DEBUG: SignedRequest validation failed: {}", e);
             return Err(Response::builder()
@@ -130,28 +129,28 @@ impl ProtectedEndpointMiddleware {
         );
 
         // Step 4: Deserialize Base64-encoded JSON payload to typed structure
-        let deserialized_payload: T = match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
-            Ok(payload) => payload,
-            Err(e) => {
-                println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
-                return Err(Response::builder()
-                    .status(400)
-                    .header("content-type", "application/json")
-                    .body(
-                        serde_json::to_string(&ErrorResponse {
-                            error: format!("Invalid payload format: {}", e),
-                        })
-                        .unwrap_or_default(),
-                    )
-                    .build());
-            }
-        };
+        let deserialized_payload: T =
+            match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
+                Ok(payload) => payload,
+                Err(e) => {
+                    println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
+                    return Err(Response::builder()
+                        .status(400)
+                        .header("content-type", "application/json")
+                        .body(
+                            serde_json::to_string(&ErrorResponse {
+                                error: format!("Invalid payload format: {}", e),
+                            })
+                            .unwrap_or_default(),
+                        )
+                        .build());
+                }
+            };
 
         println!("✅ Msgpack payload deserialized successfully");
 
         Ok(ProtectedEndpointResult {
             payload: deserialized_payload,
-            user_id,
         })
     }
 

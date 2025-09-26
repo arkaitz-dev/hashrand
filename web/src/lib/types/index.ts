@@ -113,9 +113,9 @@ export interface LoginRequest {
 export interface LoginResponse {
 	access_token: string;
 	token_type: string;
-	expires_in: number; // seconds
 	user_id: string; // Base58 user_id
 	next?: string; // Optional next parameter from magic link
+	expires_at?: number; // Optional refresh cookie expiration timestamp (when new refresh cookie is set)
 }
 
 export interface MagicLinkResponse {

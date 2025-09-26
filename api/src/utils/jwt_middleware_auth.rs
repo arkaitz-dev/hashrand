@@ -54,15 +54,19 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
 
             // Check if we need proactive renewal (2/3 threshold)
             // Extract cryptographic information for signed responses
-            let user_id = bs58::decode(&claims.sub)
-                .into_vec()
-                .map_err(|_| {
-                    println!("🔍 DEBUG: Failed to decode Base58 username from access token");
-                    create_auth_error_response("Invalid username format", None)
-                })?;
+            let user_id = bs58::decode(&claims.sub).into_vec().map_err(|_| {
+                println!("🔍 DEBUG: Failed to decode Base58 username from access token");
+                create_auth_error_response("Invalid username format", None)
+            })?;
             let pub_key_hex = hex::encode(claims.pub_key);
 
-            let renewed_tokens = check_proactive_renewal(&claims.sub, refresh_expires_at, now, user_id, pub_key_hex)?;
+            let renewed_tokens = check_proactive_renewal(
+                &claims.sub,
+                refresh_expires_at,
+                now,
+                user_id,
+                pub_key_hex,
+            )?;
 
             Ok(AuthContext {
                 username: claims.sub,
@@ -195,12 +199,10 @@ fn handle_23_system_renewal(
             )?;
 
         // Extract cryptographic information for signed responses
-        let user_id = bs58::decode(&refresh_claims.sub)
-            .into_vec()
-            .map_err(|_| {
-                println!("🔍 DEBUG: Failed to decode Base58 username");
-                create_auth_error_response("Invalid username format", None)
-            })?;
+        let user_id = bs58::decode(&refresh_claims.sub).into_vec().map_err(|_| {
+            println!("🔍 DEBUG: Failed to decode Base58 username");
+            create_auth_error_response("Invalid username format", None)
+        })?;
         let pub_key_hex = hex::encode(refresh_claims.pub_key);
 
         Some(RenewedTokens {
@@ -215,12 +217,10 @@ fn handle_23_system_renewal(
             "🔍 DEBUG 2/3 System: Within first 1/3 (more than 2/3 remaining), keeping EXISTING refresh token"
         );
         // Extract cryptographic information for signed responses
-        let user_id = bs58::decode(&refresh_claims.sub)
-            .into_vec()
-            .map_err(|_| {
-                println!("🔍 DEBUG: Failed to decode Base58 username");
-                create_auth_error_response("Invalid username format", None)
-            })?;
+        let user_id = bs58::decode(&refresh_claims.sub).into_vec().map_err(|_| {
+            println!("🔍 DEBUG: Failed to decode Base58 username");
+            create_auth_error_response("Invalid username format", None)
+        })?;
         let pub_key_hex = hex::encode(refresh_claims.pub_key);
 
         Some(RenewedTokens {

@@ -58,8 +58,18 @@
 	});
 
 	// Form state managed by composable
-	let params = $derived(formParamsManager.params.value);
 	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// Reactive bindings for form inputs
+	let alphabet = $state('full-with-symbols');
+	let length = $state(21);
+
+	// Initialize from params when available
+	$effect(() => {
+		const currentParams = formParamsManager.params.value;
+		if (currentParams.alphabet) alphabet = currentParams.alphabet;
+		if (currentParams.length) length = currentParams.length;
+	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
 	// let searchParams = $derived($page.url.searchParams);
@@ -84,8 +94,8 @@
 	]);
 
 	// Dynamic minimum length based on alphabet
-	let minLength = $derived(params.alphabet === 'full-with-symbols' ? 21 : 24);
-	let lengthValid = $derived(params.length && params.length >= minLength && params.length <= 44);
+	let minLength = $derived(alphabet === 'full-with-symbols' ? 21 : 24);
+	let lengthValid = $derived(length && length >= minLength && length <= 44);
 	let formValid = $derived(lengthValid);
 
 	// ENTERPRISE ARCHITECTURE: Generation workflow composable
@@ -95,8 +105,8 @@
 			return Boolean(formValid);
 		},
 		getParams: () => ({
-			length: params.length ?? 21,
-			alphabet: params.alphabet ?? 'full-with-symbols'
+			length: length ?? 21,
+			alphabet: alphabet ?? 'full-with-symbols'
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;
@@ -121,10 +131,10 @@
 	function handleAlphabetChange() {
 		// Use setTimeout to avoid reactivity issues
 		setTimeout(() => {
-			const newMinLength = params.alphabet === 'full-with-symbols' ? 21 : 24;
-			if (params.length! < newMinLength) {
-				// Update params through the composable manager
-				formParamsManager.updateParams({ length: newMinLength });
+			const newMinLength = alphabet === 'full-with-symbols' ? 21 : 24;
+			if (length < newMinLength) {
+				// Update local state directly
+				length = newMinLength;
 			}
 		}, 0);
 	}
@@ -201,7 +211,7 @@
 							/>
 							<span
 								class="bg-blue-600 text-white px-3 py-2 rounded-md font-bold min-w-[40px] text-center"
-								>{params.length}</span
+								>{length}</span
 							>
 						</div>
 						{#if !lengthValid}
@@ -217,7 +227,7 @@
 						>
 							<p class="text-sm text-blue-800 dark:text-blue-200">
 								<strong>{$_('password.securityNote')}</strong>
-								{#if params.alphabet === 'no-look-alike'}
+								{#if alphabet === 'no-look-alike'}
 									{$_('password.noLookAlikeNote').replace('{0}', minLength.toString())}
 								{:else}
 									{$_('password.fullAlphabetNote').replace('{0}', minLength.toString())}

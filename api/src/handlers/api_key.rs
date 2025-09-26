@@ -8,15 +8,14 @@
 use crate::types::{AlphabetType, CustomHashResponse};
 use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
-    ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator, generate_otp,
-    generate_random_seed, generate_with_seed, seed_to_base58, validate_length,
-    extract_crypto_material_from_request, create_signed_endpoint_response, extract_query_params,
-    create_error_response, handle_signed_get_request,
+    ProtectedEndpointMiddleware, ProtectedEndpointResult, create_error_response,
+    create_signed_endpoint_response, extract_crypto_material_from_request, generate_otp,
+    generate_random_seed, generate_with_seed, handle_signed_get_request, seed_to_base58,
+    validate_length,
 };
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
-
 
 /// Handle API key requests (both GET and POST)
 pub async fn handle_api_key_request(req: Request) -> anyhow::Result<Response> {
@@ -50,7 +49,12 @@ pub async fn handle_api_key_post_signed(req: Request) -> anyhow::Result<Response
     // Extract crypto material for signing response
     let crypto_material = match extract_crypto_material_from_request(&req) {
         Ok(material) => material,
-        Err(e) => return Ok(create_error_response(401, &format!("Crypto extraction failed: {}", e))),
+        Err(e) => {
+            return Ok(create_error_response(
+                401,
+                &format!("Crypto extraction failed: {}", e),
+            ));
+        }
     };
 
     // Convert payload to parameters and extract seed
@@ -68,61 +72,6 @@ pub async fn handle_api_key_post_signed(req: Request) -> anyhow::Result<Response
 
     // Generate API key and create signed response
     generate_api_key_signed(&params, &crypto_material)
-}
-
-
-/// Legacy function preserved for existing logic
-fn handle_api_key_with_params(
-    params: HashMap<String, String>,
-    provided_seed: Option<[u8; 32]>,
-) -> anyhow::Result<Response> {
-    // Set API key-specific defaults
-    let mut api_key_params = params;
-
-    // Use DRY crypto material (create dummy for legacy compatibility)
-    let dummy_crypto = crate::utils::CryptoMaterial {
-        user_id: vec![0; 16],
-        pub_key_hex: "".to_string(),
-    };
-
-    // Add provided seed to params if available
-    if let Some(seed) = provided_seed {
-        api_key_params.insert("seed".to_string(), seed_to_base58(&seed));
-    }
-
-    // Legacy direct implementation (avoid circular dependency)
-    let alphabet_type = api_key_params
-        .get("alphabet")
-        .map(|s| AlphabetType::from_str(s))
-        .unwrap_or(AlphabetType::Full);
-
-    let min_length = match alphabet_type {
-        AlphabetType::Full => 44,
-        AlphabetType::NoLookAlike => 47,
-        _ => 44,
-    };
-
-    let length = api_key_params.get("length").and_then(|s| s.parse::<usize>().ok()).unwrap_or(min_length);
-    if let Err(e) = validate_length(length, min_length, 64) {
-        return Ok(create_error_response(400, &format!("API key {}", e)));
-    }
-
-    let seed_32 = provided_seed.unwrap_or_else(generate_random_seed);
-    let seed_base58 = seed_to_base58(&seed_32);
-    let alphabet = alphabet_type.as_chars();
-    let key_part = generate_with_seed(seed_32, length, &alphabet);
-    let api_key = format!("ak_{}", key_part);
-    let otp = generate_otp(seed_32);
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-
-    let response = CustomHashResponse::new(api_key, seed_base58, otp, timestamp);
-    let json_body = serde_json::to_string(&response)?;
-
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(json_body)
-        .build())
 }
 
 /// Generate secure API key and return SignedResponse (DRY implementation)
@@ -181,7 +130,9 @@ fn generate_api_key_signed(
     // Create signed response using DRY helper
     match create_signed_endpoint_response(payload, crypto_material) {
         Ok(signed_response) => Ok(signed_response),
-        Err(e) => Ok(create_error_response(500, &format!("Failed to create signed response: {}", e))),
+        Err(e) => Ok(create_error_response(
+            500,
+            &format!("Failed to create signed response: {}", e),
+        )),
     }
 }
-

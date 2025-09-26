@@ -37,9 +37,12 @@ pub fn create_error_response(status: u16, message: &str) -> Response {
     Response::builder()
         .status(status)
         .header("content-type", "application/json")
-        .body(serde_json::to_string(&ErrorResponse {
-            error: message.to_string()
-        }).unwrap_or_default())
+        .body(
+            serde_json::to_string(&ErrorResponse {
+                error: message.to_string(),
+            })
+            .unwrap_or_default(),
+        )
         .build()
 }
 
@@ -91,7 +94,7 @@ pub fn generate_avoiding_unwanted_patterns(
 pub fn generate_password_avoiding_patterns(
     length: usize,
     alphabet: &[char],
-    seed: [u8; 32]
+    seed: [u8; 32],
 ) -> String {
     generate_avoiding_unwanted_patterns(length, alphabet, "", "", seed)
 }
@@ -103,12 +106,20 @@ pub fn handle_signed_get_request<F>(
     generate_signed_fn: F,
 ) -> anyhow::Result<Response>
 where
-    F: FnOnce(&std::collections::HashMap<String, String>, &crate::utils::CryptoMaterial) -> anyhow::Result<Response>,
+    F: FnOnce(
+        &std::collections::HashMap<String, String>,
+        &crate::utils::CryptoMaterial,
+    ) -> anyhow::Result<Response>,
 {
     // Extract crypto material using DRY helper
     let crypto_material = match crate::utils::extract_crypto_material_from_request(req) {
         Ok(material) => material,
-        Err(e) => return Ok(create_auth_error_response(&format!("Authentication failed: {}", e))),
+        Err(e) => {
+            return Ok(create_auth_error_response(&format!(
+                "Authentication failed: {}",
+                e
+            )));
+        }
     };
 
     // Extract query parameters
@@ -116,8 +127,14 @@ where
 
     // Validate Ed25519 signature (GET must have signature parameter)
     let mut validated_params = params;
-    if let Err(e) = crate::utils::SignedRequestValidator::validate_query_params(&mut validated_params, &crypto_material.pub_key_hex) {
-        return Ok(create_auth_error_response(&format!("Signature validation failed: {}", e)));
+    if let Err(e) = crate::utils::SignedRequestValidator::validate_query_params(
+        &mut validated_params,
+        &crypto_material.pub_key_hex,
+    ) {
+        return Ok(create_auth_error_response(&format!(
+            "Signature validation failed: {}",
+            e
+        )));
     }
 
     // Generate fresh seed if not provided

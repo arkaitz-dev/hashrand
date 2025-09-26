@@ -5,7 +5,7 @@
 
 use spin_sdk::http::Response;
 
-use super::types::{ErrorResponse, MagicLinkValidationRequest, MagicLinkValidationPayload};
+use super::types::{ErrorResponse, MagicLinkValidationPayload, MagicLinkValidationRequest};
 use crate::utils::SignedRequestValidator;
 
 /// Parse and validate magic link validation request from JSON body
@@ -15,7 +15,9 @@ use crate::utils::SignedRequestValidator;
 ///
 /// # Returns
 /// * `Result<MagicLinkValidationRequest, Response>` - Parsed request or error response
-pub fn parse_validation_request(request_body: &[u8]) -> Result<MagicLinkValidationRequest, Response> {
+pub fn parse_validation_request(
+    request_body: &[u8],
+) -> Result<MagicLinkValidationRequest, Response> {
     match serde_json::from_slice(request_body) {
         Ok(signed_request) => {
             println!("✅ Successfully parsed SignedRequest magic link validation");
@@ -51,10 +53,13 @@ pub fn parse_validation_request(request_body: &[u8]) -> Result<MagicLinkValidati
 ///
 /// # Returns
 /// * `Result<(String, String), String>` - Tuple of (magic_token, signature_hex) or error
-pub fn extract_request_data(signed_request: &MagicLinkValidationRequest) -> Result<(String, String), String> {
+pub fn extract_request_data(
+    signed_request: &MagicLinkValidationRequest,
+) -> Result<(String, String), String> {
     // CORRECTED: Deserialize Base64-encoded JSON payload to access magiclink field
-    let payload: MagicLinkValidationPayload = SignedRequestValidator::deserialize_base64_payload(&signed_request.payload)
-        .map_err(|e| format!("Failed to deserialize Base64 payload: {}", e))?;
+    let payload: MagicLinkValidationPayload =
+        SignedRequestValidator::deserialize_base64_payload(&signed_request.payload)
+            .map_err(|e| format!("Failed to deserialize Base64 payload: {}", e))?;
 
     let magic_token = payload.magiclink.clone();
     let signature_hex = signed_request.signature.clone();

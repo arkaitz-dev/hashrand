@@ -3,9 +3,9 @@
 use spin_sdk::http::{Method, Request, Response};
 
 use super::types::ErrorResponse;
+use crate::types::responses::JwtAuthResponse;
 use crate::utils::JwtUtils;
 use crate::utils::signed_response::SignedResponseGenerator;
-use serde_json::json;
 
 /// Handle refresh token request and generate new access token
 ///
@@ -91,7 +91,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     );
     // Extract pub_key from refresh token claims (Ed25519 public key for cryptographic operations)
     let pub_key = &claims.pub_key;
-    let (access_token, expires_at) =
+    let (access_token, _expires_at) =
         match JwtUtils::create_access_token_from_username(username, pub_key) {
             Ok((token, exp)) => {
                 println!("✅ Refresh: New access token created successfully");
@@ -124,12 +124,22 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             }
         };
 
+    // Calculate refresh cookie expiration timestamp (since new refresh token is always generated)
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
+        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+
+    let expires_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("System clock error")
+        .as_secs() as i64
+        + (refresh_duration_minutes as i64 * 60);
+
     // Create signed response for token refresh (with server_pub_key)
     match create_signed_refresh_response(
         &access_token,
-        expires_at.timestamp() - chrono::Utc::now().timestamp(),
         username,
         &new_refresh_token,
+        expires_at,
         pub_key,
     ) {
         Ok(response) => {
@@ -140,29 +150,14 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             Ok(response)
         }
         Err(e) => {
-            println!("❌ Error creating signed refresh response: {}", e);
-            // Fallback to unsigned response
-            let fallback_response = json!({
-                "access_token": access_token,
-                "expires_in": (expires_at.timestamp() - chrono::Utc::now().timestamp()),
-                "user_id": username,
-                "message": "Token refreshed successfully"
-            });
-
-            let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
-                .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
-
-            let cookie_value = format!(
-                "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-                new_refresh_token,
-                refresh_duration_minutes * 60
-            );
-
+            println!("❌ CRITICAL: Cannot create signed refresh response: {}", e);
+            // SECURITY: Never fallback to unsigned response - fail secure
             Ok(Response::builder()
-                .status(200)
+                .status(500)
                 .header("content-type", "application/json")
-                .header("set-cookie", cookie_value)
-                .body(serde_json::to_string(&fallback_response)?)
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Cryptographic signature failure".to_string(),
+                })?)
                 .build())
         }
     }
@@ -186,18 +181,18 @@ fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
 ///
 /// # Arguments
 /// * `access_token` - New access token
-/// * `expires_in` - Token expiration seconds
 /// * `username` - Base58 encoded user ID
 /// * `new_refresh_token` - New refresh token
+/// * `expires_at` - Refresh cookie expiration timestamp
 /// * `pub_key` - Frontend Ed25519 public key (32 bytes)
 ///
 /// # Returns
 /// * `Result<Response, String>` - Signed HTTP response with cookies or error
 fn create_signed_refresh_response(
     access_token: &str,
-    expires_in: i64,
     username: &str,
     new_refresh_token: &str,
+    expires_at: i64,
     pub_key: &[u8; 32],
 ) -> Result<Response, String> {
     // Step 1: Convert Base58 username back to user_id bytes
@@ -208,13 +203,13 @@ fn create_signed_refresh_response(
     // Step 2: Convert pub_key bytes to hex string
     let pub_key_hex = hex::encode(pub_key);
 
-    // Step 3: Create payload with token refresh data
-    let payload = json!({
-        "access_token": access_token,
-        "expires_in": expires_in,
-        "user_id": username,
-        "message": "Token refreshed successfully"
-    });
+    // Step 3: Create payload using JwtAuthResponse for consistency
+    let payload = JwtAuthResponse::new(
+        access_token.to_string(),
+        username.to_string(),
+        None, // No next parameter for refresh
+        Some(expires_at),
+    );
 
     // Step 4: Generate signed response with server public key
     let signed_response = SignedResponseGenerator::create_signed_response_with_server_pubkey(
@@ -228,7 +223,7 @@ fn create_signed_refresh_response(
     let response_json = serde_json::to_string(&signed_response)
         .map_err(|e| format!("Failed to serialize signed response: {}", e))?;
 
-    // Step 6: Get refresh token duration and create cookie
+    // Step 6: Create refresh cookie (duration already calculated above)
     let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
         .map_err(|e| format!("Failed to get refresh token duration: {}", e))?;
 

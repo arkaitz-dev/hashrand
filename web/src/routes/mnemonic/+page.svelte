@@ -66,8 +66,18 @@
 	});
 
 	// Form state managed by composable
-	let params = $derived(formParamsManager.params.value);
 	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+
+	// Reactive bindings for form inputs
+	let language = $state('english');
+	let words = $state(12);
+
+	// Initialize from params when available
+	$effect(() => {
+		const currentParams = formParamsManager.params.value;
+		if (currentParams.language) language = currentParams.language;
+		if (currentParams.words) words = currentParams.words;
+	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
 	// let searchParams = $derived($page.url.searchParams);
@@ -153,8 +163,8 @@
 	]);
 
 	// Validation
-	let languageValid = $derived(params.language && isValidMnemonicLanguage(params.language));
-	let wordsValid = $derived(params.words && isValidMnemonicWords(params.words));
+	let languageValid = $derived(language && isValidMnemonicLanguage(language));
+	let wordsValid = $derived(words && isValidMnemonicWords(words));
 	let formValid = $derived(languageValid && wordsValid);
 
 	// ENTERPRISE ARCHITECTURE: Generation workflow composable
@@ -164,8 +174,9 @@
 			return Boolean(formValid);
 		},
 		getParams: () => ({
-			language: params.language ?? 'english',
-			words: params.words ?? 12
+			language: language ?? 'english',
+			words: words ?? 12,
+			raw: true
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;
@@ -240,7 +251,7 @@
 						</label>
 						<select
 							id="language"
-							bind:value={formParamsManager.params.value.language}
+							bind:value={language}
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
 						>
 							{#each languageOptions as option}
@@ -262,16 +273,16 @@
 						</label>
 						<select
 							id="words"
-							bind:value={formParamsManager.params.value.words}
+							bind:value={words}
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
 						>
 							{#each wordOptions as option}
 								<option value={option.value}>{option.label}</option>
 							{/each}
 						</select>
-						{#if params.words}
+						{#if words}
 							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-								{wordOptions.find((o) => o.value === params.words)?.description}
+								{wordOptions.find((o) => o.value === words)?.description}
 							</p>
 						{/if}
 					</div>

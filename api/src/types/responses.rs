@@ -44,19 +44,20 @@ pub struct CustomHashResponse {
 /// JWT authentication response structure for magic link validation endpoint
 ///
 /// Contains JWT tokens and user information for successful authentication
-#[derive(Serialize, Debug)]
+#[derive(Serialize, serde::Deserialize, Debug)]
 pub struct JwtAuthResponse {
     /// JWT access token for API authentication
     pub access_token: String,
     /// Token type (always "Bearer")
     pub token_type: String,
-    /// Token expiration time in seconds
-    pub expires_in: i64,
     /// Base58-encoded user ID for privacy-safe identification
     pub user_id: String,
     /// Optional next parameter for post-auth redirect
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next: Option<String>,
+    /// Refresh cookie expiration timestamp (only included when new refresh cookie is set)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<i64>,
 }
 
 impl JwtAuthResponse {
@@ -64,16 +65,21 @@ impl JwtAuthResponse {
     ///
     /// # Arguments
     /// * `access_token` - JWT access token string
-    /// * `expires_in` - Token expiration time in seconds
     /// * `user_id` - Base58-encoded user ID
     /// * `next` - Optional next parameter for redirect
-    pub fn new(access_token: String, expires_in: i64, user_id: String, next: Option<String>) -> Self {
+    /// * `expires_at` - Optional refresh cookie expiration timestamp (included when new refresh cookie is set)
+    pub fn new(
+        access_token: String,
+        user_id: String,
+        next: Option<String>,
+        expires_at: Option<i64>,
+    ) -> Self {
         Self {
             access_token,
             token_type: "Bearer".to_string(),
-            expires_in,
             user_id,
             next,
+            expires_at,
         }
     }
 }

@@ -13,7 +13,6 @@ use crate::utils::JwtUtils;
 /// JWT token generation result
 pub struct JwtTokens {
     pub access_token: String,
-    pub access_expires: DateTime<Utc>,
     pub refresh_token: String,
     pub username: String,
 }
@@ -42,7 +41,7 @@ pub fn generate_jwt_tokens(
     let _ = MagicLinkOperations::ensure_user_exists(user_id_bytes);
 
     // Generate access token with Ed25519 public key
-    let (access_token, access_expires) = create_access_token(&username, pub_key_bytes)?;
+    let (access_token, _access_expires) = create_access_token(&username, pub_key_bytes)?;
 
     // Generate refresh token
     let refresh_token = create_refresh_token(&username)?;
@@ -51,7 +50,6 @@ pub fn generate_jwt_tokens(
 
     Ok(JwtTokens {
         access_token,
-        access_expires,
         refresh_token,
         username,
     })

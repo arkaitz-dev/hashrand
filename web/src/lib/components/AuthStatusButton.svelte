@@ -11,6 +11,7 @@
 	import { dialogStore } from '../stores/dialog';
 	import { _ } from '../stores/i18n';
 	import Icon from './Icon.svelte';
+	import { sessionStatusStore } from '../stores/session-status';
 
 	// Component state
 	let showUserDropdown = $state(false);
@@ -18,6 +19,9 @@
 	// Reactive auth state
 	let isAuthenticated = $state(false);
 	let userId = $state('');
+
+	// Session status from global store (managed by layout)
+	let sessionExpired = $state(false);
 
 	// Subscribe to auth store
 	$effect(() => {
@@ -29,13 +33,32 @@
 		return unsubscribe;
 	});
 
+	// Subscribe to global session status store (managed by layout)
+	$effect(() => {
+		const unsubscribe = sessionStatusStore.subscribe((status) => {
+			sessionExpired = status.isExpired;
+		});
+
+		return unsubscribe;
+	});
+
 	/**
-	 * Handle main button click - REACTIVE APPROACH
+	 * Handle main button click - CHECK SESSION EXPIRATION FIRST
 	 *
-	 * NEW LOGIC: No proactive HTTP calls, only check local token existence
-	 * Actual token validation happens reactively when user performs operations
+	 * Uses global session status; if expired, launches auth dialog
 	 */
 	async function handleButtonClick() {
+		// If session is expired (per global store), launch auth dialog immediately
+		if (sessionExpired) {
+			// Launch magic link auth dialog
+			const authConfig = {
+				destination: { route: '/' }
+			};
+			dialogStore.show('auth', authConfig);
+			return;
+		}
+
+		// Session is valid - proceed with original auth button logic
 		if (isAuthenticated) {
 			// User appears authenticated locally - show dropdown
 			showUserDropdown = !showUserDropdown;
@@ -96,12 +119,13 @@
 	<button
 		class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-transparent border border-transparent shadow-none hover:bg-white hover:dark:bg-gray-800 hover:shadow-lg hover:border-gray-200 hover:dark:border-gray-700 active:bg-white active:dark:bg-gray-800 active:shadow-lg active:border-gray-200 active:dark:border-gray-700 transition-colors duration-[750ms] transition-shadow duration-[750ms] transition-border-colors duration-[750ms] transform hover:scale-105 focus:outline-none flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12 disabled:opacity-50 disabled:cursor-not-allowed"
 		disabled={$authStore.isRefreshing}
-		class:bg-white={showUserDropdown}
-		class:dark:bg-gray-800={showUserDropdown}
+		class:bg-white={showUserDropdown && !sessionExpired}
+		class:dark:bg-gray-800={showUserDropdown && !sessionExpired}
 		class:shadow-lg={showUserDropdown}
-		class:border-gray-200={showUserDropdown}
-		class:dark:border-gray-700={showUserDropdown}
+		class:border-gray-200={showUserDropdown && !sessionExpired}
+		class:dark:border-gray-700={showUserDropdown && !sessionExpired}
 		class:scale-105={showUserDropdown}
+		class:yellow-pulse-animation={sessionExpired}
 		aria-label={$authStore.isRefreshing
 			? $_('common.loading')
 			: isAuthenticated
@@ -154,3 +178,79 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* Yellow pulsing animation for expired session indicator */
+	@keyframes yellowPulse {
+		0% {
+			background-color: #713f12; /* yellow-900 */
+			border-color: #a16207; /* yellow-800 */
+			box-shadow: 0 0 10px rgba(113, 63, 18, 0.8);
+		}
+		10% {
+			background-color: #a16207; /* yellow-800 */
+			border-color: #ca8a04; /* yellow-700 */
+			box-shadow: 0 0 12px rgba(161, 98, 7, 0.8);
+		}
+		20% {
+			background-color: #ca8a04; /* yellow-700 */
+			border-color: #d97706; /* yellow-600 */
+			box-shadow: 0 0 14px rgba(202, 138, 4, 0.8);
+		}
+		30% {
+			background-color: #d97706; /* yellow-600 */
+			border-color: #f59e0b; /* yellow-500 */
+			box-shadow: 0 0 16px rgba(217, 119, 6, 0.8);
+		}
+		40% {
+			background-color: #f59e0b; /* yellow-500 */
+			border-color: #fbbf24; /* yellow-400 */
+			box-shadow: 0 0 18px rgba(245, 158, 11, 0.8);
+		}
+		45% {
+			background-color: #fbbf24; /* yellow-400 */
+			border-color: #fcd34d; /* yellow-300 */
+			box-shadow: 0 0 20px rgba(251, 191, 36, 0.9);
+		}
+		50% {
+			background-color: #fcd34d; /* yellow-300 - punto más claro */
+			border-color: #fde68a; /* yellow-200 */
+			box-shadow: 0 0 25px rgba(252, 211, 77, 1.0);
+		}
+		55% {
+			background-color: #fbbf24; /* yellow-400 */
+			border-color: #fcd34d; /* yellow-300 */
+			box-shadow: 0 0 20px rgba(251, 191, 36, 0.9);
+		}
+		60% {
+			background-color: #f59e0b; /* yellow-500 */
+			border-color: #fbbf24; /* yellow-400 */
+			box-shadow: 0 0 18px rgba(245, 158, 11, 0.8);
+		}
+		70% {
+			background-color: #d97706; /* yellow-600 */
+			border-color: #f59e0b; /* yellow-500 */
+			box-shadow: 0 0 16px rgba(217, 119, 6, 0.8);
+		}
+		80% {
+			background-color: #ca8a04; /* yellow-700 */
+			border-color: #d97706; /* yellow-600 */
+			box-shadow: 0 0 14px rgba(202, 138, 4, 0.8);
+		}
+		90% {
+			background-color: #a16207; /* yellow-800 */
+			border-color: #ca8a04; /* yellow-700 */
+			box-shadow: 0 0 12px rgba(161, 98, 7, 0.8);
+		}
+		100% {
+			background-color: #713f12; /* yellow-900 - vuelta al inicio */
+			border-color: #a16207; /* yellow-800 */
+			box-shadow: 0 0 10px rgba(113, 63, 18, 0.8);
+		}
+	}
+
+
+	.yellow-pulse-animation {
+		animation: yellowPulse 1.5s ease-in-out infinite;
+	}
+</style>

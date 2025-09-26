@@ -28,7 +28,7 @@ export async function handleSignedResponseStrict<T>(
 			throw new Error('Expected SignedResponse but received non-signed response');
 		}
 
-		let serverPubKey: string;
+		let serverPubKey: string | null;
 
 		if (isFirstSignedResponse) {
 			// First signed response: extract and store server public key
@@ -71,11 +71,7 @@ async function showSecurityErrorAndRedirect(): Promise<void> {
 		const { flashMessagesStore } = await import('./stores/flashMessages');
 
 		// Add security error message
-		flashMessagesStore.add({
-			type: 'error',
-			message: 'No se ha recibido una respuesta correcta del servidor',
-			duration: 5000
-		});
+		flashMessagesStore.addMessage('No se ha recibido una respuesta correcta del servidor');
 
 		// Import navigation utility
 		const { goto } = await import('$app/navigation');

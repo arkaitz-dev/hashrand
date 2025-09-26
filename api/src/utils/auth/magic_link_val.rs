@@ -45,11 +45,9 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
-                .body(
-                    serde_json::to_string(&ErrorResponse {
-                        error: format!("Invalid request format: {}", e),
-                    })?
-                )
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: format!("Invalid request format: {}", e),
+                })?)
                 .build());
         }
     };
@@ -70,7 +68,8 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
     }
 
     // Step 5: Generate JWT access and refresh tokens
-    let jwt_tokens = match generate_jwt_tokens(&token_data.user_id_bytes, &token_data.pub_key_bytes) {
+    let jwt_tokens = match generate_jwt_tokens(&token_data.user_id_bytes, &token_data.pub_key_bytes)
+    {
         Ok(tokens) => tokens,
         Err(error_response) => return Ok(error_response),
     };

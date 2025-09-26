@@ -11,7 +11,7 @@ email:
     security_notice: "Si no has sol·licitat aquest enllaç d'accés, si us plau ignora aquest email."
     footer_text: "HashRand - Generador de Hash Aleatori"
     no_reply_notice: "Aquest és un missatge automàtic. Si us plau no responguis a aquest email."
-    
+
     # Versions específiques per a text (per a emails de text pla)
     text_intro: "Has sol·licitat un enllaç d'accés segur. Utilitza l'enllaç de sota per autenticar-te i accedir al teu compte."
     text_access_label: "Enllaç d'Accés a HashRand"

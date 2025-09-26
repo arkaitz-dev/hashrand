@@ -5,7 +5,7 @@
 
 // use blake2::{Blake2b, Blake2bMac, digest::{Digest, KeyInit, Mac}};
 // use generic_array::typenum::{U32, U64};
-use ed25519_dalek::{SigningKey, Signer};
+use ed25519_dalek::{Signer, SigningKey};
 use hex;
 // use rand::{RngCore, SeedableRng};
 // use rand_chacha::ChaCha8Rng;
@@ -32,7 +32,6 @@ pub struct SignedResponse {
 #[allow(clippy::enum_variant_names)]
 pub enum SignedResponseError {
     KeyDerivationError(String),
-    SigningError(String),
     SerializationError(String),
     ConfigurationError(String),
 }
@@ -40,10 +39,15 @@ pub enum SignedResponseError {
 impl fmt::Display for SignedResponseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SignedResponseError::KeyDerivationError(msg) => write!(f, "Key derivation error: {}", msg),
-            SignedResponseError::SigningError(msg) => write!(f, "Signing error: {}", msg),
-            SignedResponseError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
-            SignedResponseError::ConfigurationError(msg) => write!(f, "Configuration error: {}", msg),
+            SignedResponseError::KeyDerivationError(msg) => {
+                write!(f, "Key derivation error: {}", msg)
+            }
+            SignedResponseError::SerializationError(msg) => {
+                write!(f, "Serialization error: {}", msg)
+            }
+            SignedResponseError::ConfigurationError(msg) => {
+                write!(f, "Configuration error: {}", msg)
+            }
         }
     }
 }
@@ -86,7 +90,10 @@ impl SignedResponseGenerator {
         let signing_key = SigningKey::from_bytes(&private_key);
         let public_key = signing_key.verifying_key();
 
-        println!("= Generated Ed25519 keypair - Server pub_key: {}", hex::encode(public_key.as_bytes()));
+        println!(
+            "= Generated Ed25519 keypair - Server pub_key: {}",
+            hex::encode(public_key.as_bytes())
+        );
 
         // Step 3: CORRECTED - Serialize payload to deterministic JSON for frontend consistency
         let json_string = SignedRequestValidator::serialize_payload_deterministic(&payload)
@@ -95,11 +102,10 @@ impl SignedResponseGenerator {
         // Step 4: Encode JSON as Base64 URL-safe
         let base64_payload = {
             let bytes = json_string.as_bytes();
-            let base64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes)
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes)
                 .replace('+', "-")
                 .replace('/', "_")
-                .replace('=', "");
-            base64
+                .replace('=', "")
         };
         println!(
             "🔍 DEBUG BASE64 BACKEND: JSON length: {}, Base64 length: {}",
@@ -111,7 +117,10 @@ impl SignedResponseGenerator {
         let signature_bytes = signing_key.sign(base64_payload.as_bytes());
         let signature_hex = hex::encode(signature_bytes.to_bytes());
 
-        println!("= Response signed successfully - Signature: {}...", &signature_hex[..20]);
+        println!(
+            "= Response signed successfully - Signature: {}...",
+            &signature_hex[..20]
+        );
 
         Ok(SignedResponse {
             payload: base64_payload,
@@ -140,21 +149,22 @@ impl SignedResponseGenerator {
     ) -> Result<[u8; 32], SignedResponseError> {
         // Validate pub_key format
         if pub_key_hex.len() != 64 {
-            return Err(SignedResponseError::KeyDerivationError(
-                format!("Invalid pub_key hex length: {} (expected 64)", pub_key_hex.len())
-            ));
+            return Err(SignedResponseError::KeyDerivationError(format!(
+                "Invalid pub_key hex length: {} (expected 64)",
+                pub_key_hex.len()
+            )));
         }
 
         // Decode pub_key from hex
-        let pub_key_bytes = hex::decode(pub_key_hex)
-            .map_err(|e| SignedResponseError::KeyDerivationError(
-                format!("Failed to decode pub_key hex: {}", e)
-            ))?;
+        let pub_key_bytes = hex::decode(pub_key_hex).map_err(|e| {
+            SignedResponseError::KeyDerivationError(format!("Failed to decode pub_key hex: {}", e))
+        })?;
 
         if pub_key_bytes.len() != 32 {
-            return Err(SignedResponseError::KeyDerivationError(
-                format!("Invalid pub_key byte length: {} (expected 32)", pub_key_bytes.len())
-            ));
+            return Err(SignedResponseError::KeyDerivationError(format!(
+                "Invalid pub_key byte length: {} (expected 32)",
+                pub_key_bytes.len()
+            )));
         }
 
         // Step 1: Concatenate user_id + pub_key_bytes
@@ -162,18 +172,17 @@ impl SignedResponseGenerator {
         combined_input.extend_from_slice(user_id);
         combined_input.extend_from_slice(&pub_key_bytes);
 
-        println!("= Deriving session key - user_id: {} bytes, pub_key: {} bytes",
-                 user_id.len(), pub_key_bytes.len());
+        println!(
+            "= Deriving session key - user_id: {} bytes, pub_key: {} bytes",
+            user_id.len(),
+            pub_key_bytes.len()
+        );
 
         // Get ED25519_DERIVATION_KEY[64 bytes] for Blake3 pseudonimizer
         let ed25519_derivation_key = Self::get_ed25519_derivation_key()?;
 
         // Blake3 pseudonimizer pipeline → 32 bytes Ed25519 private key
-        let private_key_vec = blake3_keyed_variable(
-            &ed25519_derivation_key,
-            &combined_input,
-            32
-        );
+        let private_key_vec = blake3_keyed_variable(&ed25519_derivation_key, &combined_input, 32);
 
         // Convert Vec<u8> to [u8; 32]
         let mut private_key = [0u8; 32];
@@ -189,26 +198,32 @@ impl SignedResponseGenerator {
     /// # Returns
     /// * `Result<[u8; 64], SignedResponseError>` - 64-byte derivation key or error
     fn get_ed25519_derivation_key() -> Result<[u8; 64], SignedResponseError> {
-        let key_hex = variables::get("ed25519_derivation_key")
-            .map_err(|e| SignedResponseError::ConfigurationError(
-                format!("ed25519_derivation_key not found: {}", e)
-            ))?;
+        let key_hex = variables::get("ed25519_derivation_key").map_err(|e| {
+            SignedResponseError::ConfigurationError(format!(
+                "ed25519_derivation_key not found: {}",
+                e
+            ))
+        })?;
 
         if key_hex.len() != 128 {
-            return Err(SignedResponseError::ConfigurationError(
-                format!("Invalid ed25519_derivation_key length: {} (expected 128 hex chars)", key_hex.len())
-            ));
+            return Err(SignedResponseError::ConfigurationError(format!(
+                "Invalid ed25519_derivation_key length: {} (expected 128 hex chars)",
+                key_hex.len()
+            )));
         }
 
-        let key_bytes = hex::decode(&key_hex)
-            .map_err(|e| SignedResponseError::ConfigurationError(
-                format!("Failed to decode ed25519_derivation_key: {}", e)
-            ))?;
+        let key_bytes = hex::decode(&key_hex).map_err(|e| {
+            SignedResponseError::ConfigurationError(format!(
+                "Failed to decode ed25519_derivation_key: {}",
+                e
+            ))
+        })?;
 
         if key_bytes.len() != 64 {
-            return Err(SignedResponseError::ConfigurationError(
-                format!("Invalid ed25519_derivation_key byte length: {} (expected 64)", key_bytes.len())
-            ));
+            return Err(SignedResponseError::ConfigurationError(format!(
+                "Invalid ed25519_derivation_key byte length: {} (expected 64)",
+                key_bytes.len()
+            )));
         }
 
         let mut derivation_key = [0u8; 64];
@@ -247,10 +262,13 @@ impl SignedResponseGenerator {
             .map_err(|e| SignedResponseError::SerializationError(e.to_string()))?;
 
         if let Value::Object(ref mut map) = payload_value {
-            map.insert("server_pub_key".to_string(), Value::String(hex::encode(public_key.as_bytes())));
+            map.insert(
+                "server_pub_key".to_string(),
+                Value::String(hex::encode(public_key.as_bytes())),
+            );
         } else {
             return Err(SignedResponseError::SerializationError(
-                "Payload must be a JSON object to add server_pub_key".to_string()
+                "Payload must be a JSON object to add server_pub_key".to_string(),
             ));
         }
 
@@ -420,7 +438,11 @@ mod tests {
 
         // Note: This test will only pass if ED25519_DERIVATION_KEY is set in environment
         if key1.is_ok() && key2.is_ok() {
-            assert_eq!(key1.unwrap(), key2.unwrap(), "Key derivation should be deterministic");
+            assert_eq!(
+                key1.unwrap(),
+                key2.unwrap(),
+                "Key derivation should be deterministic"
+            );
         }
     }
 

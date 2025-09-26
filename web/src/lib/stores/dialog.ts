@@ -1,5 +1,14 @@
 import { writable } from 'svelte/store';
 
+// Dialog type interfaces
+export interface AuthDialogProps {
+	destination: { route: string };
+}
+
+export interface SeedDialogProps {
+	onSeedChoice: (keepSeed: boolean) => void;
+}
+
 export interface DialogData {
 	type:
 		| 'auth'
@@ -9,7 +18,7 @@ export interface DialogData {
 		| 'confirmation'
 		| 'custom'
 		| 'magic-link-error';
-	props?: Record<string, unknown>;
+	props?: AuthDialogProps | SeedDialogProps | Record<string, unknown>;
 	id: string;
 }
 
