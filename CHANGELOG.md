@@ -4,6 +4,83 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.21.6] - 2025-10-01
+
+### ✅ TESTING: Playwright API-Only Test Suite (16 tests)
+
+**NEW FEATURE**: Comprehensive browser-less testing suite perfect for CI/CD environments and systems without browser dependencies (e.g., Arch Linux).
+
+#### Implementation Overview
+
+**16 API-only tests** created across 3 test files, reusing production frontend code following SOLID/DRY/KISS principles:
+
+1. **`web/tests/api/auth-api.spec.ts`** (4 tests)
+   - Magic link request with Ed25519 signature validation
+   - Unsigned request rejection (400)
+   - Invalid signature rejection (400)
+   - Multiple concurrent magic link requests
+
+2. **`web/tests/api/auth-full-flow.spec.ts`** (2 tests) - **KEY FEATURE**
+   - Complete authentication flow with magic link extraction from backend logs
+   - Multiple magic link extraction with uniqueness validation
+   - Replicates bash test pattern (`grep "Generated magic_link" .spin-dev.log`)
+
+3. **`web/tests/api/crypto-validation.spec.ts`** (10 tests)
+   - Ed25519 operations: keypair generation, signing/verification, hex conversion (3 tests)
+   - SignedRequest creation: deterministic serialization, identical signatures, query params (3 tests)
+   - Base64 and JSON: URL-safe encoding, recursive key sorting, deterministic serialization (3 tests)
+   - TestSessionManager: in-memory session state management (1 test)
+
+#### Key Features
+
+- ✅ **No browser dependencies** - Works on Arch Linux, minimal CI/CD environments
+- ✅ **Magic link extraction** - Reads backend logs (`.spin-dev.log`) matching bash test pattern
+- ✅ **Ed25519 validation** - Full cryptographic signature verification using @noble/curves
+- ✅ **Universal modules** - Reuses production frontend code (ed25519-core.ts, signedRequest-core.ts)
+- ✅ **Real timestamps** - Uses `Math.floor(Date.now() / 1000)` for realistic validation with per-test determinism
+- ✅ **Authorized emails** - Only `me@arkaitz.dev`, `arkaitzmugica@protonmail.com`, `arkaitzmugica@gmail.com`
+- ✅ **100% success rate** - All 16 tests passing consistently
+
+#### Test Commands
+
+```bash
+# Run API-only tests (no browser required)
+cd web && npm run test:api
+
+# Verbose output with detailed logs
+cd web && npm run test:api:verbose
+
+# Direct Playwright command
+cd web && npx playwright test api/
+```
+
+#### Documentation Updates
+
+- ✅ `web/tests/README.md` - Complete test suite documentation (16 API tests)
+- ✅ `README.md` - Updated test count: **55 automated tests** (35 bash + 16 Playwright API + 4 key rotation)
+- ✅ `docs/guides/testing.md` - New Playwright API test section with detailed categories
+- ✅ `docs/E2E_TESTING_IMPLEMENTATION_PLAN.md` - Phase 5 added documenting API-only tests
+
+#### Quality Improvements
+
+- **Timestamps**: Changed from hardcoded (`1234567890`) to real (`Math.floor(Date.now() / 1000)`)
+  - Maintains determinism within each test execution
+  - Provides realistic validation across different test runs
+
+- **Email Validation**: All tests use only authorized emails
+  - Prevents spam and respects privacy
+  - Consistent with production security policies
+
+#### Statistics
+
+- **Files Created**: 3 test files + 1 README = **4 new files**
+- **Total Lines**: 774 lines of test code
+- **Tests Added**: **16 API-only tests**
+- **Success Rate**: **100%** (all tests passing)
+- **Coverage**: Authentication flow, cryptographic validation, magic link extraction
+
+---
+
 ## [API v1.6.23 + Web v0.21.5] - 2025-09-30
 
 ### 🐛 CRITICAL FIX: Refresh Token Ed25519 Public Key Initialization (API v1.6.23)

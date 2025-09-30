@@ -29,7 +29,7 @@ function createSessionStatusStore() {
 		 * Mark session as expired (triggers yellow background in AuthStatus)
 		 */
 		markExpired(): void {
-			update(status => ({
+			update((status) => ({
 				...status,
 				isExpired: true,
 				lastChecked: Date.now()
@@ -41,7 +41,7 @@ function createSessionStatusStore() {
 		 * Mark session as valid (clears yellow background in AuthStatus)
 		 */
 		markValid(): void {
-			update(status => ({
+			update((status) => ({
 				...status,
 				isExpired: false,
 				lastChecked: Date.now()

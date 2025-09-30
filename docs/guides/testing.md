@@ -4,12 +4,13 @@ Comprehensive testing strategy and implementation guide for HashRand.
 
 ## Automated Test Suite
 
-### Complete Test Coverage (35 tests)
+### Complete Test Coverage (55 tests)
 
 HashRand includes a comprehensive automated test suite covering all aspects of the application with **100% success rate**:
 
+**Bash Tests (39 tests)**:
 ```bash
-# Run complete test suite
+# Run complete bash test suite (35 API + 4 key rotation)
 just test
 
 # Test with auto-managed development server
@@ -19,38 +20,77 @@ just test-dev
 cd scripts && ./final_test.sh
 ```
 
+**Playwright API Tests (16 tests)** - Browser-less, perfect for CI/CD:
+```bash
+# Run all API-only tests (no browser required)
+cd web && npm run test:api
+
+# Verbose output with detailed logs
+cd web && npm run test:api:verbose
+
+# Alternative: Direct Playwright command
+cd web && npx playwright test api/
+```
+
 ### Test Categories
 
-#### Public Endpoint Tests (1 test)
+#### Bash Test Categories (39 tests)
+
+**Public Endpoint Tests (1 test)**
 - **Version endpoint**: Public access validation with no authentication
 
-#### Authentication Required Tests (4 tests)
+**Authentication Required Tests (4 tests)**
 - **Endpoint protection**: All generation endpoints properly require Bearer tokens
 - **Error responses**: Consistent authentication error messages
 
-#### Authentication Flow Tests (7 tests)
+**Authentication Flow Tests (7 tests)**
 - **Magic link generation**: Ed25519-signed email authentication requests
 - **JWT token lifecycle**: Bearer token generation and validation
 - **Token validation**: Access token verification and expiration handling
 - **SignedResponse validation**: Server response signature verification
 
-#### Generation Endpoint Tests (18 tests)
+**Generation Endpoint Tests (18 tests)**
 - **Custom hash generation**: Multiple lengths and configurations
 - **Password generation**: Default and custom length secure passwords
 - **API key generation**: 'ak_' prefixed keys with length validation
 - **BIP39 mnemonic**: 12/24 word phrases in multiple languages (English/Spanish)
 - **SignedResponse format**: All endpoints return Ed25519-signed responses
 
-#### Error Validation Tests (5 tests)
+**Error Validation Tests (5 tests)**
 - **Parameter validation**: Length limits and format requirements
 - **Authentication errors**: Missing/invalid tokens and signatures
 - **Input validation**: Malformed requests and invalid parameters
 - **Business logic**: Password/API key length constraints, invalid mnemonic parameters
 
+**Ed25519 Key Rotation Tests (4 tests)**
+- **Token validity**: Verify fresh tokens work correctly (t=0s)
+- **Partial refresh**: Access token renewal in TRAMO 1/3 (t=62s)
+- **Key rotation**: Complete Ed25519 keypair rotation in TRAMO 2/3 (t=110s)
+- **Double expiration**: Both tokens expired handling (t=431s)
+
+#### Playwright API Test Categories (16 tests)
+
+**Authentication Tests (4 tests)** - `tests/api/auth-api.spec.ts`
+- **Magic link request**: Ed25519-signed authentication with server pub_key validation
+- **Unsigned rejection**: Verify server rejects unsigned requests (400)
+- **Invalid signature rejection**: Verify server rejects invalid Ed25519 signatures (400)
+- **Multiple requests**: Handle concurrent magic link requests correctly
+
+**Full Authentication Flow Tests (2 tests)** - `tests/api/auth-full-flow.spec.ts`
+- **Complete flow with log extraction**: Extract magic link from backend logs (matches bash pattern)
+- **Multiple extractions**: Verify unique magic tokens across multiple requests
+
+**Cryptographic Validation Tests (10 tests)** - `tests/api/crypto-validation.spec.ts`
+- **Ed25519 operations (3 tests)**: Keypair generation, signing/verification, hex conversion
+- **SignedRequest creation (3 tests)**: Deterministic serialization, identical signatures, query param signing
+- **Base64 and JSON (3 tests)**: URL-safe encoding, recursive key sorting, deterministic serialization
+- **TestSessionManager (1 test)**: In-memory session state management
+
 ## Test Architecture
 
 ### Test Script Structure
 
+**Bash Test Scripts**:
 ```bash
 scripts/
 ├── final_test.sh                    # Main test orchestrator (35 tests)
@@ -64,8 +104,26 @@ scripts/
 └── add_remaining_translations.js    # UI translation coverage
 ```
 
+**Playwright Test Structure**:
+```bash
+web/tests/
+├── api/                             # API-only tests (no browser)
+│   ├── auth-api.spec.ts            # Authentication endpoints (4 tests)
+│   ├── auth-full-flow.spec.ts      # Full auth flow with magic link extraction (2 tests)
+│   └── crypto-validation.spec.ts   # Cryptographic functions (10 tests)
+├── e2e/                            # Full E2E tests (browser required)
+│   ├── auth-flow.spec.ts           # Magic link authentication (3 tests)
+│   ├── hash-generation.spec.ts     # Hash generation flow (12 tests)
+│   ├── token-refresh.spec.ts       # Token refresh system (3 tests)
+│   └── key-rotation.spec.ts        # Ed25519 key rotation (3 tests)
+└── utils/                          # Shared test utilities
+    ├── test-session-manager.ts     # In-memory session management
+    └── test-auth-helpers.ts        # Authentication helpers
+```
+
 ### Authentication Testing Flow
 
+**Bash Tests**:
 ```bash
 # Example authentication test sequence
 1. POST /api/login/ → Generate magic link (email_lang required)
@@ -77,6 +135,24 @@ scripts/
 7. POST /api/logout → Clean session termination
 ```
 
+**Playwright API Tests**:
+```typescript
+// Example API test sequence (no browser required)
+1. Generate Ed25519 keypair using @noble/curves
+2. Create SignedRequest with deterministic serialization
+3. POST /api/login/ → Receive SignedResponse with server_pub_key
+4. Verify Ed25519 signature using server public key
+5. Extract magic link from backend logs (.spin-dev.log)
+6. Validate magic token format and uniqueness
+```
+
+**Key Features**:
+- ✅ **No browser dependencies** - Perfect for Arch Linux and CI/CD environments
+- ✅ **Magic link extraction** - Reads backend logs matching bash test pattern
+- ✅ **Ed25519 validation** - Full cryptographic signature verification
+- ✅ **Universal modules** - Reuses production frontend code (SOLID/DRY)
+- ✅ **100% success rate** - All 16 tests passing consistently
+
 ### Test Data Management
 
 #### Development Test Data
@@ -87,9 +163,13 @@ scripts/
 
 #### Test Security
 - **No PII in tests**: All test data uses cryptographic identifiers
-- **Safe email testing**: Only `me@arkaitz.dev` and `arkaitzmugica@protonmail.com`
+- **Safe email testing**: Only authorized emails:
+  - `me@arkaitz.dev`
+  - `arkaitzmugica@protonmail.com`
+  - `arkaitzmugica@gmail.com`
 - **Isolated environment**: Development database separate from production
 - **Automatic cleanup**: Expired tokens and sessions automatically purged
+- **Real timestamps**: Tests use `Math.floor(Date.now() / 1000)` for realistic validation with determinism within each test
 
 ## Manual Testing
 

@@ -65,7 +65,9 @@ export async function validateMagicLink(magicToken: string): Promise<LoginRespon
 	// Use universal signed POST request with magic link payload
 	const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
 
-	console.log('🍪 [SECURITY] validateMagicLink: Sending request WITH credentials to receive cookie');
+	console.log(
+		'🍪 [SECURITY] validateMagicLink: Sending request WITH credentials to receive cookie'
+	);
 
 	return await httpSignedPOSTRequest<{ magiclink: string }, LoginResponse>(
 		`${API_BASE}/login/magiclink/`,
@@ -118,15 +120,19 @@ export async function logout(): Promise<void> {
  * - Frontend rotates keys ONLY if server_pub_key is present in response
  */
 export async function refreshToken(): Promise<boolean> {
-	// Import flash messages for debugging
+	// Import all dependencies at the top to avoid redeclarations
 	const { flashMessagesStore } = await import('../stores/flashMessages');
+	const { sessionManager } = await import('../session-manager');
+	const { generateEd25519KeyPairFallback, publicKeyToHex } = await import('../ed25519');
+	const { privateKeyBytesToHex } = await import('../ed25519/ed25519-core');
+	const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
+	const { authStore } = await import('../stores/auth');
 
 	try {
 		console.log('🔄 [REFRESH] ===== INICIO REFRESH TOKEN =====');
 		flashMessagesStore.addMessage('🔄 Iniciando renovación de token...');
 
 		// Get OLD pub_key from IndexedDB for logging
-		const { sessionManager } = await import('../session-manager');
 		const oldPrivKey = await sessionManager.getPrivKey();
 		if (oldPrivKey) {
 			console.log('🔑 [REFRESH] OLD priv_key actual:', oldPrivKey.substring(0, 16) + '...');
@@ -134,10 +140,9 @@ export async function refreshToken(): Promise<boolean> {
 
 		// 🔑 STEP 1: Generate NEW Ed25519 keypair for potential rotation
 		console.log('🔑 [REFRESH] STEP 1: Generando nuevo keypair Ed25519...');
-		const { generateKeyPair, publicKeyToHex, privateKeyToHex } = await import('../ed25519');
-		const newKeyPair = await generateKeyPair();
+		const newKeyPair = await generateEd25519KeyPairFallback();
 		const newPubKeyHex = publicKeyToHex(newKeyPair.publicKeyBytes);
-		const newPrivKeyHex = privateKeyToHex(newKeyPair.privateKeyBytes);
+		const newPrivKeyHex = privateKeyBytesToHex(newKeyPair.privateKeyBytes!);
 
 		console.log('✅ [REFRESH] Nuevo keypair generado');
 		console.log('🔑 [REFRESH] NEW priv_key:', newPrivKeyHex.substring(0, 16) + '...');
@@ -149,7 +154,6 @@ export async function refreshToken(): Promise<boolean> {
 		console.log('📦 [REFRESH] Payload: { new_pub_key:', newPubKeyHex.substring(0, 16) + '... }');
 		flashMessagesStore.addMessage('📤 Enviando request a /api/refresh...');
 
-		const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
 		const data = await httpSignedPOSTRequest<{ new_pub_key: string }, LoginResponse>(
 			`${API_BASE}/refresh`,
 			{ new_pub_key: newPubKeyHex },
@@ -167,7 +171,6 @@ export async function refreshToken(): Promise<boolean> {
 
 		// 📝 STEP 3: Update auth store with new token
 		console.log('📝 [REFRESH] STEP 3: Actualizando store con nuevo access_token...');
-		const { authStore } = await import('../stores/auth');
 
 		const user = {
 			user_id: data.user_id,
@@ -196,10 +199,11 @@ export async function refreshToken(): Promise<boolean> {
 		if (data.server_pub_key) {
 			// ✅ TRAMO 2/3: Backend sent server_pub_key → Full key rotation
 			console.log('🔄 [REFRESH] ===== TRAMO 2/3: KEY ROTATION =====');
-			console.log('🔑 [REFRESH] server_pub_key recibido:', data.server_pub_key.substring(0, 16) + '...');
+			console.log(
+				'🔑 [REFRESH] server_pub_key recibido:',
+				data.server_pub_key.substring(0, 16) + '...'
+			);
 			flashMessagesStore.addMessage('🔄 TRAMO 2/3: Iniciando rotación de claves...');
-
-			const { sessionManager } = await import('../session-manager');
 
 			// Rotate client keypair
 			console.log('🔑 [REFRESH] Rotando client priv_key en IndexedDB...');
@@ -209,7 +213,10 @@ export async function refreshToken(): Promise<boolean> {
 			// Rotate server public key
 			console.log('🔑 [REFRESH] Rotando server_pub_key en IndexedDB...');
 			await sessionManager.setServerPubKey(data.server_pub_key);
-			console.log('✅ [REFRESH] Server pub_key rotado:', data.server_pub_key.substring(0, 16) + '...');
+			console.log(
+				'✅ [REFRESH] Server pub_key rotado:',
+				data.server_pub_key.substring(0, 16) + '...'
+			);
 
 			console.log('🎉 [REFRESH] Rotación de claves completada exitosamente');
 			flashMessagesStore.addMessage('✅ Rotación de claves completada (2/3)');
@@ -223,7 +230,6 @@ export async function refreshToken(): Promise<boolean> {
 		// Note: Crypto tokens are NOT generated during refresh
 		// They are only generated during initial login (magic link validation)
 		// If tokens are missing, it means session is corrupted and should restart
-		const { sessionManager } = await import('../session-manager');
 		const tokensExist = await sessionManager.hasCryptoTokens();
 		if (!tokensExist) {
 			console.warn('⚠️ [REFRESH] Crypto tokens missing - session may be corrupted');

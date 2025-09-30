@@ -29,9 +29,13 @@ HashRand Spin: Random hash generator con Fermyon Spin + WebAssembly. REST API co
 just dev         # PRIMARY: Entorno completo de desarrollo (API + Web + Tailscale)
 just stop        # Parar todos los servicios
 just status      # Estado de servicios
-just test        # Ejecutar 39 tests automatizados (35 API + 4 key rotation)
+just test        # Ejecutar 39 bash tests (35 API + 4 key rotation)
 just check       # Calidad código (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
+
+# Tests Playwright (browser-less, perfecto para CI/CD)
+cd web && npm run test:api          # 16 API tests sin browser
+cd web && npm run test:api:verbose  # Output detallado
 ```
 
 ## Arquitectura General
@@ -105,7 +109,105 @@ just build       # Build API (WASM) + Web (SPA)
 
 **IMPORTANT**: This rule must be copied to ALL project CLAUDE.md files. Never delete when simplifying/compacting CLAUDE.md.
 
-## Última Sesión: Critical Bug Fix + Test Automation (2025-09-30)
+## Última Sesión: Playwright API-Only Tests Implementation (2025-10-01)
+
+### ✅ Implementación Completa: 16 Tests API Playwright (v0.21.6)
+
+**NUEVO**: Suite completa de tests API-only sin dependencias de browser, perfecta para Arch Linux y CI/CD.
+
+#### Archivos Creados
+
+**Tests API (3 archivos, 774 líneas)**:
+1. **`web/tests/api/auth-api.spec.ts`** (226 líneas, 4 tests)
+   - Magic link request con validación Ed25519
+   - Rechazo de requests sin firma (400)
+   - Rechazo de firmas inválidas (400)
+   - Múltiples requests concurrentes
+
+2. **`web/tests/api/auth-full-flow.spec.ts`** (202 líneas, 2 tests) - **CLAVE**
+   - Flujo completo con extracción de magic link de logs backend
+   - Múltiples extracciones con validación de unicidad
+   - Replica patrón bash: `grep "Generated magic_link" .spin-dev.log`
+
+3. **`web/tests/api/crypto-validation.spec.ts`** (346 líneas, 10 tests)
+   - Ed25519: keypair generation, signing/verification, hex conversion (3 tests)
+   - SignedRequest: deterministic serialization, identical signatures, query params (3 tests)
+   - Base64/JSON: URL-safe encoding, recursive key sorting, deterministic serialization (3 tests)
+   - TestSessionManager: in-memory session state (1 test)
+
+**Documentación**:
+- `web/tests/README.md` - Documentación completa de test suite
+
+#### Características Clave
+
+- ✅ **Sin browser** - Funciona en Arch Linux, CI/CD minimalista
+- ✅ **Magic link extraction** - Lee logs backend (`.spin-dev.log`) matching bash pattern
+- ✅ **Validación Ed25519** - Verificación criptográfica completa con @noble/curves
+- ✅ **Módulos universales** - Reutiliza código frontend producción (SOLID/DRY/KISS)
+- ✅ **Timestamps reales** - `Math.floor(Date.now() / 1000)` con determinismo por test
+- ✅ **Emails autorizados** - Solo `me@arkaitz.dev`, `arkaitzmugica@protonmail.com`, `arkaitzmugica@gmail.com`
+- ✅ **100% success rate** - Los 16 tests pasan consistentemente
+
+#### Comandos Test
+
+```bash
+# Tests API-only (sin browser)
+cd web && npm run test:api          # Output estándar
+cd web && npm run test:api:verbose  # Logs detallados
+cd web && npx playwright test api/  # Comando directo
+```
+
+#### Mejoras de Calidad
+
+**Timestamps**: Cambiados de hardcoded (`1234567890`) a reales
+- Mantiene determinismo dentro de cada ejecución
+- Validación realista entre diferentes runs
+
+**Email Validation**: Todos los tests usan solo emails autorizados
+- Previene spam y respeta privacidad
+- Consistente con políticas de seguridad producción
+
+#### Documentación Actualizada
+
+- ✅ `README.md` - Test count: **55 automated tests** (35 bash + 16 Playwright API + 4 key rotation)
+- ✅ `docs/guides/testing.md` - Nueva sección Playwright API tests con categorías detalladas
+- ✅ `docs/E2E_TESTING_IMPLEMENTATION_PLAN.md` - Phase 5 documentando API-only tests
+- ✅ `CHANGELOG.md` - Nueva entrada v0.21.6 con implementación completa
+- ✅ `web/package.json` - Version: 0.21.4 → 0.21.6
+
+#### Estadísticas
+
+- **Archivos creados**: 3 tests + 1 README = 4 archivos nuevos
+- **Líneas totales**: 774 líneas de código test
+- **Tests añadidos**: **16 API-only tests**
+- **Success rate**: **100%** (todos los tests pasando)
+- **Coverage**: Authentication flow, validación criptográfica, extracción magic link
+
+#### Archivos Modificados
+
+**Documentación (5 archivos)**:
+- `README.md` - Test count y comandos Playwright
+- `docs/guides/testing.md` - Sección completa Playwright API tests
+- `docs/E2E_TESTING_IMPLEMENTATION_PLAN.md` - Phase 5 añadida
+- `CHANGELOG.md` - Nueva entrada v0.21.6
+- `web/package.json` - Version bump
+
+**Frontend (previo - Phase 1-4)**:
+- `web/src/lib/ed25519/ed25519-core.ts` - Módulo universal Ed25519
+- `web/src/lib/crypto/signedRequest-core.ts` - SignedRequest puro
+- `web/playwright.config.ts` - Configuración Playwright
+- `web/tests/utils/` - TestSessionManager + auth helpers
+- `web/tests/e2e/` - 21 E2E tests (requieren browser)
+
+#### Próximos Pasos Sugeridos
+
+- Integrar tests API en pipeline CI/CD (no requieren browser)
+- Considerar E2E tests para validación completa (requieren setup browser)
+- Expandir coverage a endpoints protegidos usando magic link extraction
+
+---
+
+## Sesión Anterior: Critical Bug Fix + Test Automation (2025-09-30)
 
 ### 🐛 Bug Crítico Corregido: Refresh Token Ed25519 Public Key (v1.6.23)
 

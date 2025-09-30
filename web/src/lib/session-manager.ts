@@ -20,6 +20,9 @@ import {
 	setServerPubKey,
 	getServerPubKey,
 	clearServerPubKey,
+	getPrivKey,
+	setPrivKey,
+	clearPrivKey,
 	getUserPreferences,
 	setLanguagePreference,
 	setThemePreference,
@@ -168,6 +171,27 @@ class SessionManager {
 	 */
 	async clearServerPubKey(): Promise<void> {
 		return await clearServerPubKey();
+	}
+
+	/**
+	 * Get client private key (for Ed25519 signing and key rotation)
+	 */
+	async getPrivKey(): Promise<string | null> {
+		return await getPrivKey();
+	}
+
+	/**
+	 * Set client private key (for Ed25519 key rotation)
+	 */
+	async setPrivKey(privKey: string): Promise<void> {
+		return await setPrivKey(privKey);
+	}
+
+	/**
+	 * Clear client private key (called during logout)
+	 */
+	async clearPrivKey(): Promise<void> {
+		return await clearPrivKey();
 	}
 
 	// ============================================================================

@@ -70,7 +70,7 @@ export const ca: I18nTexts = {
 		understand: 'Ho entenc',
 		// Error messages for user notifications
 		magicLinkValidationFailed: "Ha fallat la validació de l'enllaç màgic",
-		signatureValidationError: 'S'''ha rebut una resposta del servidor invàlida',
+		signatureValidationError: "S'ha rebut una resposta del servidor invàlida",
 		parameterDecryptionFailed: 'No es poden desxifrar els paràmetres',
 		parameterDecryptionError: 'Error de desxifratge de paràmetres',
 		generationError: 'Error de generació',

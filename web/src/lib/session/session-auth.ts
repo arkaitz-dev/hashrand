@@ -71,6 +71,32 @@ export async function clearServerPubKey(): Promise<void> {
 }
 
 /**
+ * Get client private key (for Ed25519 signing and key rotation)
+ */
+export async function getPrivKey(): Promise<string | null> {
+	const session = await sessionDB.getSession();
+	return session.priv_key;
+}
+
+/**
+ * Set client private key (for Ed25519 key rotation)
+ */
+export async function setPrivKey(privKey: string): Promise<void> {
+	await sessionDB.updateSession({
+		priv_key: privKey
+	});
+}
+
+/**
+ * Clear client private key (called during logout)
+ */
+export async function clearPrivKey(): Promise<void> {
+	await sessionDB.updateSession({
+		priv_key: null
+	});
+}
+
+/**
  * Clear auth data only, PRESERVE user preferences (for preventive cleanup)
  */
 export async function clearAuthData(): Promise<void> {
@@ -84,6 +110,7 @@ export async function clearAuthData(): Promise<void> {
 	session.auth_user = null;
 	session.access_token = null;
 	session.server_pub_key = null; // Clear server public key on logout
+	session.priv_key = null; // Clear client private key on logout
 	session.authFlow.pending_email = null;
 
 	// Keep userPreferences intact for UX

@@ -25,7 +25,10 @@ export {
 	clearAuthData,
 	setServerPubKey,
 	getServerPubKey,
-	clearServerPubKey
+	clearServerPubKey,
+	getPrivKey,
+	setPrivKey,
+	clearPrivKey
 } from './session-auth';
 
 // User preferences management

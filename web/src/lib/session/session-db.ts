@@ -28,6 +28,10 @@ export interface AppSessionData {
 	// Ed25519 server public key for signed response validation (cleared on auth logout)
 	server_pub_key: string | null;
 
+	// Ed25519 client private key (hex string, 64 chars) for request signing and key rotation
+	// Cleared on auth logout, rotated during 2/3 refresh window
+	priv_key: string | null;
+
 	// User Preferences (persistent across auth sessions)
 	userPreferences: {
 		language: string | null; // preferred-language (null = auto-detect)
@@ -156,6 +160,7 @@ class SessionDB {
 			auth_user: null,
 			access_token: null,
 			server_pub_key: null,
+			priv_key: null,
 			userPreferences: {
 				language: null, // Auto-detect browser language
 				theme: null // Use system preference

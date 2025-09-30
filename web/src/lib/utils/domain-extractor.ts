@@ -43,7 +43,8 @@ export function isValidDomain(domain: string): boolean {
 
 	// Basic domain validation regex
 	// Allows: localhost, subdomains, IP addresses
-	const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+	const domainRegex =
+		/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 	const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
 
 	return domainRegex.test(domain) || ipRegex.test(domain) || domain === 'localhost';

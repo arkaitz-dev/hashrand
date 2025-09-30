@@ -22,3 +22,18 @@ export { publicKeyToHex, publicKeyFromHex } from './ed25519-utils';
 
 // High-level API
 export { getOrCreateKeyPair } from './ed25519-api';
+
+// Universal Core Operations (for E2E testing and portable use)
+export {
+	generateKeyPairNoble,
+	signMessageWithKeyPair,
+	verifySignatureWithPublicKey,
+	keyPairFromHex,
+	keyPairToHex,
+	publicKeyBytesToHex,
+	privateKeyBytesToHex
+} from './ed25519-core';
+
+// Alias for backward compatibility and convenience
+export { generateEd25519KeyPairFallback as generateKeyPair } from './ed25519-keygen';
+export { privateKeyBytesToHex as privateKeyToHex } from './ed25519-core';

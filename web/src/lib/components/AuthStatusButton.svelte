@@ -215,7 +215,7 @@
 		50% {
 			background-color: #fcd34d; /* yellow-300 - punto más claro */
 			border-color: #fde68a; /* yellow-200 */
-			box-shadow: 0 0 25px rgba(252, 211, 77, 1.0);
+			box-shadow: 0 0 25px rgba(252, 211, 77, 1);
 		}
 		55% {
 			background-color: #fbbf24; /* yellow-400 */
@@ -248,7 +248,6 @@
 			box-shadow: 0 0 10px rgba(113, 63, 18, 0.8);
 		}
 	}
-
 
 	.yellow-pulse-animation {
 		animation: yellowPulse 1.5s ease-in-out infinite;

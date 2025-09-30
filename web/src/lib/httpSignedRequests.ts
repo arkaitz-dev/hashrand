@@ -342,9 +342,7 @@ export async function httpSignedDELETERequest(
  * @param url - API endpoint URL
  * @returns Promise with validated response payload
  */
-export async function httpSignedAuthenticatedDELETE<TResponse>(
-	url: string
-): Promise<TResponse> {
+export async function httpSignedAuthenticatedDELETE<TResponse>(url: string): Promise<TResponse> {
 	try {
 		// Get authentication headers
 		const { sessionManager } = await import('./session-manager');
