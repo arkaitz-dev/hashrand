@@ -7,12 +7,13 @@
 
 /// Magic link validation result tuple
 ///
-/// Returns (validation_success, next_param, user_id, pub_key)
+/// Returns (validation_success, next_param, user_id, pub_key, ui_host)
 /// - validation_success: boolean indicating if validation succeeded
 /// - next_param: optional next destination parameter
 /// - user_id: optional 16-byte user identifier
 /// - pub_key: optional 32-byte Ed25519 public key
-pub type ValidationResult = (bool, Option<String>, Option<[u8; 16]>, Option<[u8; 32]>);
+/// - ui_host: optional UI host (domain) extracted from encrypted blob
+pub type ValidationResult = (bool, Option<String>, Option<[u8; 16]>, Option<[u8; 32]>, Option<String>);
 
 /// Magic link database operations struct
 ///

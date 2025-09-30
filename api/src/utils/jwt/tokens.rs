@@ -22,9 +22,9 @@ pub fn create_refresh_token(
 /// Create refresh token from username using custom token system (with proper 9-minute duration)
 pub fn create_refresh_token_from_username(
     username: &str,
-    _session_id: Option<i64>, // Ignored - our custom system doesn't need session_id
+    pub_key: Option<&[u8; 32]>, // Ed25519 public key for /api/refresh signature validation
 ) -> Result<(String, DateTime<Utc>), String> {
-    create_custom_refresh_token_from_username(username, None)
+    create_custom_refresh_token_from_username(username, pub_key)
 }
 
 /// Validate access token using custom token system
@@ -45,5 +45,6 @@ pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String>
         token_type: access_claims.token_type,
         session_id: 0, // Fake session_id for compatibility - not used anywhere
         pub_key: access_claims.pub_key,
+        domain: None, // TODO: Extract from original token if available
     })
 }

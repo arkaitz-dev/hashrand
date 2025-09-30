@@ -47,13 +47,15 @@ export async function httpSignedPOSTRequest<TRequest, TResponse>(
 		const signedRequest = await createSignedRequest(payload);
 
 		// Send signed POST request with additional options
+		// SECURITY: credentials 'omit' by default to prevent cookie leakage to authenticated endpoints
 		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(signedRequest),
-			...fetchOptions
+			credentials: 'omit', // Default: no cookies sent
+			...fetchOptions // Can override with credentials: 'include' if needed
 		});
 
 		// Handle HTTP errors
@@ -111,7 +113,10 @@ export async function httpSignedGETRequest<TResponse>(
 		const url = `${baseUrl}?${searchParams}`;
 
 		// Send signed GET request
-		const response = await fetch(url);
+		// SECURITY: credentials 'omit' to prevent cookie leakage to authenticated endpoints
+		const response = await fetch(url, {
+			credentials: 'omit' // No cookies sent to authenticated endpoints
+		});
 
 		// Handle HTTP errors
 		if (!response.ok) {
@@ -167,13 +172,15 @@ export async function httpAuthenticatedSignedPOSTRequest<TRequest, TResponse>(
 		const signedRequest = await createSignedRequest(payload);
 
 		// Send authenticated signed POST request
+		// SECURITY: credentials 'omit' because JWT is sent via Authorization header, not cookies
 		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${authData.access_token}`
 			},
-			body: JSON.stringify(signedRequest)
+			body: JSON.stringify(signedRequest),
+			credentials: 'omit' // No cookies with JWT endpoints
 		});
 
 		// Handle HTTP errors
@@ -237,10 +244,12 @@ export async function httpAuthenticatedSignedGETRequest<TResponse>(
 		const url = `${baseUrl}?${searchParams}`;
 
 		// Send authenticated signed GET request
+		// SECURITY: credentials 'omit' because JWT is sent via Authorization header, not cookies
 		const response = await fetch(url, {
 			headers: {
 				Authorization: `Bearer ${authData.access_token}`
-			}
+			},
+			credentials: 'omit' // No cookies with JWT endpoints
 		});
 
 		// Handle HTTP errors
@@ -292,9 +301,11 @@ export async function httpSignedDELETERequest(
 		const urlWithSignature = `${url}?signature=${signature}`;
 
 		// Send signed DELETE request with additional options
+		// SECURITY: credentials 'omit' by default to prevent cookie leakage
 		const response = await fetch(urlWithSignature, {
 			method: 'DELETE',
-			...fetchOptions
+			credentials: 'omit', // Default: no cookies sent
+			...fetchOptions // Can override if needed
 		});
 
 		// Handle HTTP errors

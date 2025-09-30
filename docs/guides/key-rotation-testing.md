@@ -210,11 +210,76 @@ console.log('[REFRESH]')
 
 ---
 
-## Test Automation (Future)
+## Test Automation
 
-For automated testing, see:
-- `scripts/test_key_rotation.sh` - Bash automation (requires curl + jq)
-- `web/tests/key-rotation.spec.ts` - E2E tests (Playwright - future)
+### Automated Test Script
+
+**Production Script**: `scripts/test_2_3_system.sh`
+
+Complete automated test of the 2/3 key rotation system with Ed25519 cryptographic verification:
+
+```bash
+# Run complete automated test (takes ~7 minutes)
+timeout 480 ./scripts/test_2_3_system.sh
+```
+
+#### Test Coverage
+
+The automated script performs 4 comprehensive tests:
+
+1. **Test 1 (t=0s)**: Initial API call with valid token
+2. **Test 2 (t=62s)**: Partial refresh (TRAMO 1/3) - no rotation
+3. **Test 3 (t=110s)**: Full key rotation (TRAMO 2/3)
+4. **Test 4 (t=430s)**: Dual token expiration (401 expected)
+
+#### Implementation Details
+
+**Key Rotation Sequence** (Test 3):
+```bash
+# 1. Preserve OLD private key before generating NEW keypair
+cp .test-ed25519-private-key .test-ed25519-private-key.old
+
+# 2. Generate NEW Ed25519 keypair
+NEW_PUB_KEY=$(node scripts/generate_hash.js)
+
+# 3. Save NEW private key for later
+cp .test-ed25519-private-key .test-ed25519-private-key.new
+
+# 4. Restore OLD private key for signing
+cp .test-ed25519-private-key.old .test-ed25519-private-key
+
+# 5. Sign refresh request with OLD key (contains NEW pub_key in payload)
+REFRESH_SIGNED_REQUEST=$(node scripts/create_signed_request.js "$PAYLOAD")
+
+# 6. After successful rotation, switch to NEW private key
+cp .test-ed25519-private-key.new .test-ed25519-private-key
+```
+
+**Why This Sequence is Critical**:
+- Request MUST be signed with OLD private key (backend validates with OLD pub_key from refresh token)
+- Payload contains NEW pub_key for backend to use in new tokens
+- Only after successful rotation does client switch to NEW private key
+
+#### Test Results
+
+**100% success rate after v1.6.23 bug fix**:
+
+```bash
+🏆 RESUMEN: Sistema 2/3 funciona PERFECTAMENTE
+✅ Test 1: Token válido
+✅ Test 2: Refresh parcial (primer 1/3)
+✅ Test 3: KEY ROTATION (sistema 2/3)
+✅ Test 4: Doble expiración 401
+```
+
+#### Requirements
+
+- **Backend running**: `just dev` must be active
+- **Dependencies**: `node`, `curl`, `jq`, `bash`
+- **Test duration**: ~7 minutes (includes wait times for token expiration)
+- **Test files**: Auto-cleaned after completion
+
+**For detailed manual testing procedures**, continue reading the sections below.
 
 ---
 
@@ -229,6 +294,6 @@ After successful testing, verify:
 
 ---
 
-**Document Version**: 1.0.0
+**Document Version**: 1.1.0
 **Last Updated**: 2025-09-30
-**Related**: CHANGELOG.md v1.6.22, README.md Key Rotation section
+**Related**: CHANGELOG.md v1.6.23, README.md Key Rotation section, [Testing Guide](./testing.md)

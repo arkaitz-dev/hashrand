@@ -19,7 +19,7 @@ pub use super::magic_link_storage::MagicLinkStorage;
 pub use super::magic_link_validation::MagicLinkValidation;
 
 impl MagicLinkOperations {
-    /// Store encrypted magic token with Ed25519 public key
+    /// Store encrypted magic token with Ed25519 public key and UI host
     ///
     /// Delegates to MagicLinkStorage for backwards compatibility
     pub fn store_magic_link_encrypted(
@@ -28,6 +28,7 @@ impl MagicLinkOperations {
         expires_at_nanos: i64,
         next_param: &str,
         pub_key: &str,
+        ui_host: &str,
     ) -> Result<(), spin_sdk::sqlite::Error> {
         MagicLinkStorage::store_magic_link_encrypted(
             encrypted_token,
@@ -35,6 +36,7 @@ impl MagicLinkOperations {
             expires_at_nanos,
             next_param,
             pub_key,
+            ui_host,
         )
     }
 

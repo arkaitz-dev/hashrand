@@ -53,10 +53,15 @@ cd scripts && ./final_test.sh
 
 ```bash
 scripts/
-├── final_test.sh              # Main test orchestrator (64 tests)
-├── generate_hash.js           # Node.js utility for hash generation
+├── final_test.sh                    # Main test orchestrator (35 tests)
+├── test_2_3_system.sh               # Ed25519 key rotation 2/3 system test (4 tests)
+├── generate_hash.js                 # Ed25519 keypair generation utility
+├── create_signed_request.js         # SignedRequest creation with Ed25519
+├── verify_signed_response.js        # SignedResponse validation with Ed25519
+├── sign_query_params.js             # GET request Ed25519 signature generation
+├── signed_response_helpers.sh       # Bash helpers for signed response parsing
 ├── add_magiclink_translations.js    # Translation testing utilities
-└── add_remaining_translations.js   # UI translation coverage
+└── add_remaining_translations.js    # UI translation coverage
 ```
 
 ### Authentication Testing Flow
@@ -236,6 +241,78 @@ just test-dev   # Starts server, runs tests, stops server
 - **Network issues**: Simulate timeouts and connection drops
 - **Resource exhaustion**: Test memory and CPU limits
 - **Concurrent access**: Test race conditions and data integrity
+
+## Specialized Testing
+
+### Ed25519 Key Rotation Testing (2/3 System)
+
+**Automated Script**: `scripts/test_2_3_system.sh`
+
+Complete lifecycle test for the 2/3 time-based key rotation system with Ed25519 cryptographic verification:
+
+```bash
+# Run automated key rotation test (takes ~7 minutes)
+timeout 480 ./scripts/test_2_3_system.sh
+```
+
+#### Test Coverage (4 tests)
+
+1. **Test 1 (t=0s)**: Initial API call with valid access token
+   - Verifies fresh JWT authentication works correctly
+   - Confirms Ed25519 signature generation and validation
+   - Expected: 200 OK with generated hash
+
+2. **Test 2 (t=62s)**: Partial refresh in TRAMO 1/3
+   - Access token expired (>60s)
+   - Refresh token still in first 1/3 of lifetime (<100s)
+   - Expected: New access token only, existing refresh cookie maintained
+
+3. **Test 3 (t=110s)**: Full key rotation in TRAMO 2/3
+   - Access token expired
+   - Refresh token beyond 1/3 threshold (>100s, <200s remaining)
+   - **KEY ROTATION ACTIVATED**: New Ed25519 keypair generated
+   - Expected: New access token + new refresh token + complete key rotation
+
+4. **Test 4 (t=430s)**: Dual token expiration
+   - Both access and refresh tokens expired
+   - Expected: 401 Unauthorized (re-login required)
+
+#### Key Rotation Flow
+
+The test script implements the correct Ed25519 key rotation sequence:
+
+1. **Preserve OLD private key** before generating NEW keypair
+2. **Sign refresh request** with OLD private key (backend validates with OLD pub_key)
+3. **Include NEW pub_key** in request payload for backend token generation
+4. **Receive new tokens** signed with NEW pub_key
+5. **Switch to NEW private key** after successful rotation
+
+#### Test Architecture
+
+```bash
+# Test components
+- Cookie-based refresh token management
+- Ed25519 keypair generation and preservation
+- SignedRequest creation with proper key handling
+- SignedResponse validation
+- Time-based 2/3 system logic verification
+```
+
+#### Test Results Validation
+
+**100% success rate after v1.6.23 bug fix**:
+
+```bash
+🏆 RESUMEN: Sistema 2/3 funciona PERFECTAMENTE
+✅ Test 1: Token válido
+✅ Test 2: Refresh parcial (primer 1/3)
+✅ Test 3: KEY ROTATION (sistema 2/3)
+✅ Test 4: Doble expiración 401
+```
+
+**For manual testing procedures**, see [Key Rotation Testing Guide](./key-rotation-testing.md)
+
+---
 
 ## Test Automation
 

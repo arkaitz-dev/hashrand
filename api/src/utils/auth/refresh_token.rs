@@ -26,6 +26,15 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             .build());
     }
 
+    // Extract hostname from Host header for cookie Domain attribute
+    let domain = req.header("host")
+        .and_then(|h| h.as_str())
+        .and_then(|host_str| extract_hostname_from_host_header(host_str));
+
+    if domain.is_none() {
+        println!("⚠️ [SECURITY] No valid Host header - cookie will not have Domain attribute");
+    }
+
     // Extract refresh token from cookies
     let refresh_token = match req.header("cookie") {
         Some(cookie_header) => {
@@ -320,11 +329,23 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             }
         };
 
-        let cookie_value = format!(
-            "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-            new_refresh_token,
-            refresh_duration_minutes * 60
-        );
+        // Create cookie with Domain attribute if available
+        let cookie_value = if let Some(ref domain_str) = domain {
+            println!("🔒 [SECURITY] Creating refresh cookie with Domain: '{}'", domain_str);
+            format!(
+                "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Domain={}; Path=/",
+                new_refresh_token,
+                refresh_duration_minutes * 60,
+                domain_str
+            )
+        } else {
+            println!("⚠️ [COMPAT] Creating refresh cookie WITHOUT Domain attribute");
+            format!(
+                "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
+                new_refresh_token,
+                refresh_duration_minutes * 60
+            )
+        };
 
         println!(
             "🎉 Refresh: Key rotation completed successfully for user: {}",
@@ -447,4 +468,27 @@ fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// Extract hostname from Host header for cookie Domain attribute
+///
+/// SECURITY: Extracts only hostname (no port, no protocol) for use as cookie Domain
+///
+/// # Arguments
+/// * `host_header` - The Host header value (e.g., "localhost:5173" or "app.example.com")
+///
+/// # Returns
+/// * `Option<String>` - The hostname without port, or None if invalid
+fn extract_hostname_from_host_header(host_header: &str) -> Option<String> {
+    // Remove port if present (split by ':' and take first part)
+    let hostname = host_header.split(':').next()?.trim();
+
+    // Validate that it's a reasonable hostname (basic validation)
+    if hostname.is_empty() || hostname.contains('/') || hostname.contains('@') {
+        println!("⚠️ [SECURITY] Invalid Host header format: '{}'", host_header);
+        return None;
+    }
+
+    println!("🔒 [SECURITY] Extracted hostname for cookie Domain: '{}'", hostname);
+    Some(hostname.to_string())
 }

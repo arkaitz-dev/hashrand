@@ -34,15 +34,18 @@ export async function handleEmailConfirmation(
 	onError: (message: string) => void
 ): Promise<void> {
 	try {
-		// Get current UI host
-		const currentHost = window.location.origin;
+		// Get current UI host (domain only) for cookie Domain attribute
+		const { extractDomain } = await import('./domain-extractor');
+		const ui_host = extractDomain();
+
+		console.log(`🔒 [SECURITY] Sending domain to backend: '${ui_host}'`);
 
 		// Encode nextObject to Base58 for backend
 		const nextBase58 = encodeNextToBase58(nextObject);
 
 		const requestPayload = {
 			email: email,
-			ui_host: currentHost,
+			ui_host,
 			...(nextBase58 && { next: nextBase58 })
 		};
 

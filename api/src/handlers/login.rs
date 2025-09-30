@@ -248,10 +248,10 @@ fn handle_logout(req: Request) -> anyhow::Result<Response> {
 
     // Add cookie to SignedResponse
     Ok(Response::builder()
-        .status(signed_response.status())
+        .status(*signed_response.status())
         .header("content-type", "application/json")
         .header("set-cookie", expired_cookie)
-        .body(signed_response.body().clone())
+        .body(signed_response.body().to_vec())
         .build())
 }
 

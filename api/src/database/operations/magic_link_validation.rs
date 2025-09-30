@@ -60,7 +60,7 @@ impl MagicLinkValidation {
                 Value::Blob(blob) => blob,
                 _ => {
                     println!("Database: Invalid encrypted_payload type");
-                    return Ok((false, None, None, None));
+                    return Ok((false, None, None, None, None));
                 }
             };
 
@@ -76,7 +76,7 @@ impl MagicLinkValidation {
                 Ok(payload) => payload,
                 Err(e) => {
                     println!("Database: Encrypted payload decryption failed: {}", e);
-                    return Ok((false, None, None, None));
+                    return Ok((false, None, None, None, None));
                 }
             };
 
@@ -84,7 +84,7 @@ impl MagicLinkValidation {
             if payload_plain.len() < MIN_PAYLOAD_LENGTH {
                 // 44 + 32 bytes minimum
                 println!("Database: Invalid decrypted payload length (minimum 76 bytes)");
-                return Ok((false, None, None, None));
+                return Ok((false, None, None, None, None));
             }
 
             // Extract encryption_blob (first 44 bytes)
@@ -98,27 +98,81 @@ impl MagicLinkValidation {
 
             println!("Database: Successfully extracted Ed25519 public key from stored payload");
 
-            // Extract next_param (remaining bytes as UTF-8 string if any)
-            println!(
-                "🔍 DEBUG EXTRACT: payload_plain.len() = {}",
-                payload_plain.len()
-            );
-            let next_param = if payload_plain.len() > MIN_PAYLOAD_LENGTH {
-                match std::str::from_utf8(&payload_plain[MIN_PAYLOAD_LENGTH..]) {
-                    Ok(s) => {
-                        println!("🔍 DEBUG EXTRACT: Extracted next_param: '{}'", s);
-                        Some(s.to_string())
-                    }
-                    Err(_) => {
-                        println!("Database: Invalid UTF-8 in decrypted next_param bytes");
-                        return Ok((false, None, None, None));
-                    }
+            // Extract ui_host and next_param (remaining bytes after pub_key)
+            println!("🔍 DEBUG EXTRACT: payload_plain.len() = {}", payload_plain.len());
+
+            // Check if we have the new format with ui_host (MIN_PAYLOAD_LENGTH + at least 2 bytes for length)
+            let (ui_host, next_param) = if payload_plain.len() >= MIN_PAYLOAD_LENGTH + 2 {
+                // NEW FORMAT: Try to extract ui_host_len
+                let ui_host_len_bytes = &payload_plain[MIN_PAYLOAD_LENGTH..MIN_PAYLOAD_LENGTH + 2];
+                let ui_host_len = u16::from_be_bytes([ui_host_len_bytes[0], ui_host_len_bytes[1]]) as usize;
+
+                println!("🔍 DEBUG EXTRACT: Detected new format with ui_host_len: {}", ui_host_len);
+
+                // Verify we have enough bytes for ui_host
+                if payload_plain.len() >= MIN_PAYLOAD_LENGTH + 2 + ui_host_len {
+                    let ui_host_start = MIN_PAYLOAD_LENGTH + 2;
+                    let ui_host_end = ui_host_start + ui_host_len;
+                    let next_param_start = ui_host_end;
+
+                    // Extract ui_host
+                    let ui_host_opt = match std::str::from_utf8(&payload_plain[ui_host_start..ui_host_end]) {
+                        Ok(s) => {
+                            println!("🔒 [SECURITY] Extracted ui_host from blob: '{}'", s);
+                            Some(s.to_string())
+                        }
+                        Err(_) => {
+                            println!("❌ Database: Invalid UTF-8 in ui_host bytes");
+                            return Ok((false, None, None, None, None));
+                        }
+                    };
+
+                    // Extract next_param (remaining bytes)
+                    let next_param_opt = if payload_plain.len() > next_param_start {
+                        match std::str::from_utf8(&payload_plain[next_param_start..]) {
+                            Ok(s) => {
+                                println!("🔍 DEBUG EXTRACT: Extracted next_param: '{}'", s);
+                                Some(s.to_string())
+                            }
+                            Err(_) => {
+                                println!("❌ Database: Invalid UTF-8 in next_param bytes");
+                                return Ok((false, None, None, None, None));
+                            }
+                        }
+                    } else {
+                        println!("🔍 DEBUG EXTRACT: No next_param in new format");
+                        None
+                    };
+
+                    (ui_host_opt, next_param_opt)
+                } else {
+                    println!("❌ Database: Insufficient bytes for ui_host extraction");
+                    return Ok((false, None, None, None, None));
                 }
             } else {
-                println!("🔍 DEBUG EXTRACT: payload <= 76 bytes, next_param = None");
-                None
+                // OLD FORMAT (backward compatibility): No ui_host, everything after MIN_PAYLOAD_LENGTH is next_param
+                println!("⚠️ DEBUG EXTRACT: Old format detected (no ui_host) - backward compatibility mode");
+
+                let next_param_opt = if payload_plain.len() > MIN_PAYLOAD_LENGTH {
+                    match std::str::from_utf8(&payload_plain[MIN_PAYLOAD_LENGTH..]) {
+                        Ok(s) => {
+                            println!("🔍 DEBUG EXTRACT: Extracted next_param (old format): '{}'", s);
+                            Some(s.to_string())
+                        }
+                        Err(_) => {
+                            println!("❌ Database: Invalid UTF-8 in next_param bytes (old format)");
+                            return Ok((false, None, None, None, None));
+                        }
+                    }
+                } else {
+                    println!("🔍 DEBUG EXTRACT: No next_param (old format)");
+                    None
+                };
+
+                (None, next_param_opt) // No ui_host in old format
             };
-            println!("🔍 DEBUG EXTRACT: Final next_param: {:?}", next_param);
+
+            println!("🔍 DEBUG EXTRACT: Final ui_host: {:?}, next_param: {:?}", ui_host, next_param);
 
             // Extract nonce and secret_key from encryption_blob
             let mut nonce = [0u8; NONCE_LENGTH];
@@ -140,16 +194,16 @@ impl MagicLinkValidation {
                     )?;
 
                     println!("Database: Encrypted magic link validated and consumed");
-                    Ok((true, next_param, Some(user_id), Some(pub_key_array)))
+                    Ok((true, next_param, Some(user_id), Some(pub_key_array), ui_host))
                 }
                 Err(e) => {
                     println!("Database: Magic link internal validation failed: {}", e);
-                    Ok((false, None, None, None))
+                    Ok((false, None, None, None, None))
                 }
             }
         } else {
             println!("Database: Encrypted magic link not found in database");
-            Ok((false, None, None, None))
+            Ok((false, None, None, None, None))
         }
     }
 }

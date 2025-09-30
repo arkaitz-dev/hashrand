@@ -78,13 +78,43 @@ pub async fn generate_magic_link_signed(
         Err(response) => return Ok(response),
     };
 
-    // Step 3: Store in database and send email
+    // Step 3: Validate ui_host is provided (MANDATORY - no fallback)
+    let ui_host = match payload.ui_host.as_deref() {
+        Some(host) if !host.is_empty() => {
+            println!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
+            host
+        }
+        Some(_) => {
+            println!("❌ [SECURITY] ui_host está vacío - RECHAZADO");
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "ui_host is required and cannot be empty".to_string(),
+                })?)
+                .build());
+        }
+        None => {
+            println!("❌ [SECURITY] ui_host no proporcionado - RECHAZADO");
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "ui_host is required for secure cookie management".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    println!("🔒 [SECURITY] Storing magic link with ui_host: '{}'", ui_host);
+
     match MagicLinkOperations::store_magic_link_encrypted(
         &token_result.magic_token,
         &token_result.encryption_blob,
         token_result.expires_at_nanos,
         &payload.next,
         &payload.pub_key,
+        ui_host,
     ) {
         Ok(_) => {
             // Send email with fallback to console logging

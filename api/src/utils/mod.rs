@@ -1,6 +1,7 @@
 #[cfg(test)]
 pub mod argon2_test;
 pub mod auth;
+pub mod auth_validation_middleware;
 pub mod ed25519;
 pub mod email;
 pub mod endpoint_helpers;
@@ -44,3 +45,4 @@ pub use routing::route_request_with_req;
 pub use signed_request::{SignedRequest, SignedRequestValidator};
 pub use signed_response::{SignedResponse, SignedResponseGenerator};
 pub use validation::{validate_email, validate_length, validate_prefix_suffix};
+pub use auth_validation_middleware::validate_no_simultaneous_tokens;

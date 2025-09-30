@@ -65,9 +65,9 @@ impl JwtUtils {
 
     pub fn create_refresh_token_from_username(
         username: &str,
-        session_id: Option<i64>,
+        pub_key: Option<&[u8; 32]>,
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_refresh_token_from_username(username, session_id)
+        tokens::create_refresh_token_from_username(username, pub_key)
     }
 
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {

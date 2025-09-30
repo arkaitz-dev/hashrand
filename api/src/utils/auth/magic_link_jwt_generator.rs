@@ -43,8 +43,8 @@ pub fn generate_jwt_tokens(
     // Generate access token with Ed25519 public key
     let (access_token, _access_expires) = create_access_token(&username, pub_key_bytes)?;
 
-    // Generate refresh token
-    let refresh_token = create_refresh_token(&username)?;
+    // Generate refresh token with Ed25519 public key for /api/refresh signature validation
+    let refresh_token = create_refresh_token(&username, pub_key_bytes)?;
 
     println!("✅ JWT tokens generated successfully for user {}", username);
 
@@ -72,9 +72,9 @@ fn create_access_token(
     }
 }
 
-/// Create refresh token for session persistence
-fn create_refresh_token(username: &str) -> Result<String, Response> {
-    match JwtUtils::create_refresh_token_from_username(username, None) {
+/// Create refresh token for session persistence with Ed25519 public key
+fn create_refresh_token(username: &str, pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
+    match JwtUtils::create_refresh_token_from_username(username, Some(pub_key_bytes)) {
         Ok((token, _expires)) => {
             println!("✅ Refresh token created successfully");
             Ok(token)

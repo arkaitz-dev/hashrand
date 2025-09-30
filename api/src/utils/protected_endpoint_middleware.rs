@@ -156,6 +156,21 @@ impl ProtectedEndpointMiddleware {
 
     /// Extract JWT info (user_id + pub_key_hex) from Authorization header
     fn extract_jwt_info(req: &Request) -> Result<(String, String), Response> {
+        // SECURITY: Validate that request doesn't contain both Authorization header AND refresh cookie
+        if let Err(e) = crate::utils::validate_no_simultaneous_tokens(req) {
+            println!("🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens");
+            return Err(Response::builder()
+                .status(403)
+                .header("content-type", "application/json")
+                .body(
+                    serde_json::to_string(&ErrorResponse {
+                        error: e,
+                    })
+                    .unwrap_or_default(),
+                )
+                .build());
+        }
+
         // Get Authorization header
         let auth_header = req
             .header("authorization")

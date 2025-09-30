@@ -17,7 +17,26 @@ use super::jwt_middleware_types::{AuthContext, RenewedTokens};
 ///
 /// # Returns
 /// * `Result<AuthContext, Response>` - Either valid auth context or error response
+///
+/// # Security Note
+/// With credentials: 'omit' on frontend, auto-refresh from cookies is disabled.
+/// Clients must explicitly call /api/refresh endpoint when access token expires.
 pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
+    // SECURITY: Validate that request doesn't contain both Authorization header AND refresh cookie
+    if let Err(e) = crate::utils::validate_no_simultaneous_tokens(req) {
+        println!("🚨 [SECURITY VIOLATION] GET endpoint received request with both tokens");
+        return Err(Response::builder()
+            .status(403)
+            .header("content-type", "application/json")
+            .body(
+                serde_json::to_string(&serde_json::json!({
+                    "error": e,
+                }))
+                .unwrap_or_default(),
+            )
+            .build());
+    }
+
     // Extract Authorization header
     let auth_header = match req.header("authorization") {
         Some(header) => header.as_str().unwrap_or(""),
@@ -170,12 +189,12 @@ fn handle_23_system_renewal(
     );
 
     // Create new access token - PRESERVE refresh context for 2/3 system
-    let placeholder_pub_key = [0u8; 32];
+    // Use pub_key from refresh token claims
     let (new_access_token, access_expires) =
         JwtUtils::create_access_token_from_username_with_refresh_context(
             &refresh_claims.sub,
             refresh_expires_at,
-            &placeholder_pub_key,
+            &refresh_claims.pub_key,
         )
         .map_err(|_| {
             println!("🔍 DEBUG: Failed to create new access token");
@@ -191,7 +210,7 @@ fn handle_23_system_renewal(
             "🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)"
         );
         let (new_refresh_token, _) =
-            JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, None).map_err(
+            JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, Some(&refresh_claims.pub_key)).map_err(
                 |_| {
                     println!("🔍 DEBUG: Failed to create new refresh token");
                     create_auth_error_response("Failed to create new refresh token", None)

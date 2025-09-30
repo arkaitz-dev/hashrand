@@ -222,7 +222,7 @@ impl SignedRequestValidator {
             })?;
 
         // Validate magiclink and extract pub_key from database
-        let (_is_valid, _next_param, _user_id, pub_key_bytes) =
+        let (_is_valid, _next_param, _user_id, pub_key_bytes, _ui_host) =
             MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(
                 |e| {
                     SignedRequestError::InvalidSignature(format!(

@@ -53,13 +53,25 @@ function verifySignedResponse(responseJson, serverPubKeyHex) {
             throw new Error('Invalid response format - missing payload or signature');
         }
 
-        // Serialize payload deterministically
-        const serializedPayload = serializePayload(response.payload);
+        // Determine message to verify based on payload type
+        let messageToVerify;
+        let serializedPayload;
+
+        // Check if payload is Base64-encoded string (backend response format)
+        if (typeof response.payload === 'string' && !response.payload.includes('{')) {
+            // Backend sends Base64-encoded payload - use it directly
+            messageToVerify = response.payload;
+            serializedPayload = response.payload;
+        } else {
+            // Legacy format: payload is JSON object - serialize it
+            serializedPayload = serializePayload(response.payload);
+            messageToVerify = serializedPayload;
+        }
 
         // Convert hex strings to bytes
         const publicKeyBytes = hexToBytes(serverPubKeyHex);
         const signatureBytes = hexToBytes(response.signature);
-        const messageBytes = new TextEncoder().encode(serializedPayload);
+        const messageBytes = new TextEncoder().encode(messageToVerify);
 
         // Verify Ed25519 signature
         const isValid = ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
@@ -81,17 +93,47 @@ function verifySignedResponse(responseJson, serverPubKeyHex) {
 }
 
 /**
+ * Decode Base64 URL-safe string to JSON object
+ */
+function decodePayloadBase64(base64String) {
+    try {
+        // Restore padding and convert to standard Base64
+        let base64 = base64String
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+
+        const padding = (4 - (base64.length % 4)) % 4;
+        base64 = base64.padEnd(base64.length + padding, '=');
+
+        // Decode Base64 to string
+        const jsonString = Buffer.from(base64, 'base64').toString('utf8');
+
+        // Parse JSON
+        return JSON.parse(jsonString);
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
  * Extract server public key from signed response payload
  */
 function extractServerPubKey(responseJson) {
     try {
         const response = JSON.parse(responseJson);
 
-        if (!response.payload || !response.payload.server_pub_key) {
+        if (!response.payload) {
             return null;
         }
 
-        return response.payload.server_pub_key;
+        // Decode Base64 payload to JSON object
+        const payloadObj = decodePayloadBase64(response.payload);
+
+        if (!payloadObj || !payloadObj.server_pub_key) {
+            return null;
+        }
+
+        return payloadObj.server_pub_key;
     } catch (error) {
         return null;
     }
@@ -108,7 +150,14 @@ function extractFromPayload(responseJson, fieldName) {
             return null;
         }
 
-        return response.payload[fieldName] || null;
+        // Decode Base64 payload to JSON object
+        const payloadObj = decodePayloadBase64(response.payload);
+
+        if (!payloadObj) {
+            return null;
+        }
+
+        return payloadObj[fieldName] || null;
     } catch (error) {
         return null;
     }
@@ -181,7 +230,17 @@ if (require.main === module) {
                 }
                 const verifyResult2 = verifySignedResponse(responseJson, args[2]);
                 if (verifyResult2.valid) {
-                    const fieldValue2 = verifyResult2.payload[args[3]];
+                    // Decode Base64 payload to access fields
+                    const payloadObj2 = typeof verifyResult2.payload === 'string'
+                        ? decodePayloadBase64(verifyResult2.payload)
+                        : verifyResult2.payload;
+
+                    if (!payloadObj2) {
+                        console.error('ERROR: Failed to decode payload');
+                        process.exit(1);
+                    }
+
+                    const fieldValue2 = payloadObj2[args[3]];
                     if (fieldValue2 !== undefined) {
                         console.log(fieldValue2);
                         process.exit(0);

@@ -14,7 +14,7 @@ use spin_sdk::sqlite::{Error as SqliteError, Value};
 pub struct MagicLinkStorage;
 
 impl MagicLinkStorage {
-    /// Store encrypted magic token with Ed25519 public key
+    /// Store encrypted magic token with Ed25519 public key and UI host
     ///
     /// # Arguments
     /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
@@ -22,6 +22,7 @@ impl MagicLinkStorage {
     /// * `expires_at_nanos` - Expiration timestamp in nanoseconds (will be converted to hours for storage)
     /// * `next_param` - Next destination parameter (always provided, "/" for login)
     /// * `pub_key` - Ed25519 public key as hex string (64 chars)
+    /// * `ui_host` - UI host (domain only, e.g., "localhost" or "app.example.com")
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
@@ -31,6 +32,7 @@ impl MagicLinkStorage {
         expires_at_nanos: i64,
         next_param: &str,
         pub_key: &str,
+        ui_host: &str,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
@@ -66,11 +68,19 @@ impl MagicLinkStorage {
             )));
         }
 
-        // Create merged payload: encryption_blob[44] + auth_data[32] + next_param_bytes[variable]
-        let mut payload_plain =
-            Vec::with_capacity(ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + next_param.len());
+        // Create merged payload: encryption_blob[44] + auth_data[32] + ui_host_len[2] + ui_host[variable] + next_param[variable]
+        let ui_host_bytes = ui_host.as_bytes();
+        let ui_host_len = ui_host_bytes.len() as u16;
+
+        println!("🔒 [SECURITY] Storing ui_host in encrypted blob: '{}' (len: {})", ui_host, ui_host_len);
+
+        let mut payload_plain = Vec::with_capacity(
+            ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + 2 + ui_host_bytes.len() + next_param.len()
+        );
         payload_plain.extend_from_slice(encryption_blob);
         payload_plain.extend_from_slice(&auth_data_bytes);
+        payload_plain.extend_from_slice(&ui_host_len.to_be_bytes()); // Big-endian for consistency
+        payload_plain.extend_from_slice(ui_host_bytes);
         payload_plain.extend_from_slice(next_param.as_bytes());
 
         // Convert encrypted_data to [u8; 32] for encryption function

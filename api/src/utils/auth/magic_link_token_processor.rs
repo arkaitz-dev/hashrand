@@ -13,6 +13,7 @@ pub struct TokenValidationResult {
     pub next_param: Option<String>,
     pub user_id_bytes: [u8; 16],
     pub pub_key_bytes: [u8; 32],
+    pub ui_host: Option<String>,
 }
 
 /// Validate and decrypt magic link token, extracting embedded data
@@ -25,10 +26,10 @@ pub struct TokenValidationResult {
 pub fn validate_and_extract_token_data(
     magic_token: &str,
 ) -> Result<TokenValidationResult, Response> {
-    // Validate and consume encrypted magic token, extract next parameter, user_id, and Ed25519 pub_key
-    let (is_valid, next_param, user_id_bytes, pub_key_bytes) =
+    // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 pub_key, and ui_host
+    let (is_valid, next_param, user_id_bytes, pub_key_bytes, ui_host) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
-            Ok((valid, next, user_id, pub_key)) => (valid, next, user_id, pub_key),
+            Ok((valid, next, user_id, pub_key, ui_host)) => (valid, next, user_id, pub_key, ui_host),
             Err(error) => {
                 return Err(categorize_token_validation_error(error.into()));
             }
@@ -60,10 +61,18 @@ pub fn validate_and_extract_token_data(
 
     println!("✅ Magic token validation and data extraction successful");
 
+    // Log ui_host extraction
+    if let Some(ref host) = ui_host {
+        println!("🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'", host);
+    } else {
+        println!("⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain");
+    }
+
     Ok(TokenValidationResult {
         next_param,
         user_id_bytes: user_id_array,
         pub_key_bytes: pub_key_array,
+        ui_host,
     })
 }
 

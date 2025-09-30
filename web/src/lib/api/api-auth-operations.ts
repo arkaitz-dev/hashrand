@@ -59,14 +59,19 @@ export async function requestMagicLink(
 
 /**
  * Validate magic link and complete authentication with SignedResponse handling
+ * SECURITY: Uses credentials: 'include' to receive HttpOnly refresh token cookie
  */
 export async function validateMagicLink(magicToken: string): Promise<LoginResponse> {
 	// Use universal signed POST request with magic link payload
 	const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
+
+	console.log('🍪 [SECURITY] validateMagicLink: Sending request WITH credentials to receive cookie');
+
 	return await httpSignedPOSTRequest<{ magiclink: string }, LoginResponse>(
 		`${API_BASE}/login/magiclink/`,
 		{ magiclink: magicToken },
-		false
+		false,
+		{ credentials: 'include' } // CRITICAL: Must receive HttpOnly refresh cookie
 	);
 }
 

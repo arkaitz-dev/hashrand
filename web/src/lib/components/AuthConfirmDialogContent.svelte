@@ -29,7 +29,10 @@
 		try {
 			// Use new Ed25519-enabled API
 			const { api } = await import('$lib/api');
-			const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
+			const { extractDomain } = await import('$lib/utils/domain-extractor');
+			const ui_host = extractDomain();
+
+			console.log(`🔒 [SECURITY] Extracted domain for magic link: '${ui_host}'`);
 
 			// Build nextParam using universal DRY function
 			const nextParam = buildNextParameterFromConfig(config);

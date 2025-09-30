@@ -16,6 +16,7 @@ use crate::utils::{CryptoMaterial, create_error_response, create_signed_endpoint
 /// * `next_param` - Optional next parameter for post-auth redirect
 /// * `user_id_bytes` - Raw user ID bytes for crypto material
 /// * `pub_key_bytes` - Raw public key bytes for crypto material
+/// * `ui_host` - Optional UI host (domain) for cookie Domain attribute
 ///
 /// # Returns
 /// * `anyhow::Result<Response>` - Complete HTTP response with SignedResponse format and cookies
@@ -24,6 +25,7 @@ pub fn build_authentication_response(
     next_param: Option<String>,
     user_id_bytes: &[u8],
     pub_key_bytes: &[u8],
+    ui_host: Option<String>,
 ) -> anyhow::Result<Response> {
     // Calculate refresh cookie expiration timestamp
     let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
@@ -61,8 +63,8 @@ pub fn build_authentication_response(
         }
     };
 
-    // Add secure HttpOnly refresh token cookie to signed response
-    let cookie_value = create_secure_refresh_cookie(&jwt_tokens.refresh_token)?;
+    // Add secure HttpOnly refresh token cookie to signed response with Domain attribute
+    let cookie_value = create_secure_refresh_cookie(&jwt_tokens.refresh_token, ui_host.as_deref())?;
 
     let response_with_cookie = Response::builder()
         .status(*signed_response.status())
@@ -79,8 +81,8 @@ pub fn build_authentication_response(
     Ok(response_with_cookie)
 }
 
-/// Create secure HttpOnly refresh token cookie with proper security attributes
-fn create_secure_refresh_cookie(refresh_token: &str) -> anyhow::Result<String> {
+/// Create secure HttpOnly refresh token cookie with proper security attributes and Domain
+fn create_secure_refresh_cookie(refresh_token: &str, ui_host: Option<&str>) -> anyhow::Result<String> {
     // Get refresh token duration from configuration
     let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
         .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
@@ -90,16 +92,30 @@ fn create_secure_refresh_cookie(refresh_token: &str) -> anyhow::Result<String> {
     // - Secure: HTTPS only (when deployed)
     // - SameSite=Strict: CSRF protection
     // - Max-Age: Controlled expiration
+    // - Domain: Explicit domain scope (from ui_host)
     // - Path=/: Available for all routes
-    let cookie_value = format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-        refresh_token,
-        refresh_duration_minutes * 60 // Convert minutes to seconds
-    );
+    let cookie_value = if let Some(domain) = ui_host {
+        println!("🔒 [SECURITY] Creating refresh cookie with Domain: '{}'", domain);
+        format!(
+            "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Domain={}; Path=/",
+            refresh_token,
+            refresh_duration_minutes * 60, // Convert minutes to seconds
+            domain
+        )
+    } else {
+        // Backward compatibility: No Domain attribute (old magic links without ui_host)
+        println!("⚠️ [COMPAT] Creating refresh cookie WITHOUT Domain (old format)");
+        format!(
+            "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
+            refresh_token,
+            refresh_duration_minutes * 60
+        )
+    };
 
     println!(
-        "✅ Secure refresh cookie created with {} minute duration",
-        refresh_duration_minutes
+        "✅ Secure refresh cookie created with {} minute duration{}",
+        refresh_duration_minutes,
+        if ui_host.is_some() { " and Domain attribute" } else { " (no Domain)" }
     );
 
     Ok(cookie_value)

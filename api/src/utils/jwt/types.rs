@@ -36,4 +36,8 @@ pub struct RefreshTokenClaims {
     pub session_id: i64,
     /// Ed25519 public key (32 bytes) for cryptographic operations
     pub pub_key: [u8; 32],
+    /// Domain for cookie (hostname only, e.g., "localhost" or "app.example.com")
+    /// Used to maintain consistent Domain attribute during token refresh
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
 }

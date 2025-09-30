@@ -4,6 +4,73 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.23 + Web v0.21.5] - 2025-09-30
+
+### 🐛 CRITICAL FIX: Refresh Token Ed25519 Public Key Initialization (API v1.6.23)
+
+**BUG FIX**: Fixed critical bug where refresh tokens were being created with `pub_key = [0,0,0,0,0...]` (all zeros) instead of the user's actual Ed25519 public key, completely breaking the key rotation system.
+
+#### Root Cause Analysis
+
+The bug originated in the JWT token creation chain where the Ed25519 public key was not being properly passed through the function call hierarchy:
+
+1. **`magic_link_jwt_generator.rs:47`**: Called `create_refresh_token(&username)?` without passing `pub_key_bytes`
+2. **`jwt/utils.rs`**: Function signature used `session_id: Option<i64>` instead of `pub_key: Option<&[u8; 32]>`
+3. **`jwt/tokens.rs`**: Called `create_custom_refresh_token_from_username(username, None)` - passing None
+4. **`custom_token_api.rs`**: Used `default_pub_key = [0u8; 32]` as fallback when None received
+
+#### Backend Fixes
+
+**Modified Files (5 total)**:
+
+1. **`api/src/utils/jwt/tokens.rs`**: Changed function signature
+   ```rust
+   // OLD: session_id parameter (ignored)
+   pub fn create_refresh_token_from_username(
+       username: &str,
+       _session_id: Option<i64>,
+   ) -> Result<(String, DateTime<Utc>), String>
+
+   // NEW: pub_key parameter (used)
+   pub fn create_refresh_token_from_username(
+       username: &str,
+       pub_key: Option<&[u8; 32]>,
+   ) -> Result<(String, DateTime<Utc>), String>
+   ```
+
+2. **`api/src/utils/jwt/utils.rs`**: Updated public API wrapper
+3. **`api/src/utils/auth/magic_link_jwt_generator.rs`**: Pass pub_key to refresh token creation
+4. **`api/src/utils/jwt_middleware_renewal.rs`**: Use pub_key from refresh token claims
+5. **`api/src/utils/jwt_middleware_auth.rs`**: Use pub_key from refresh token claims
+
+#### Impact
+
+- **Before Fix**: Refresh tokens contained `pub_key: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]`
+- **After Fix**: Refresh tokens contain actual Ed25519 public key (32 bytes)
+- **Key Rotation**: Now fully functional - backend can validate Ed25519 signatures during `/api/refresh`
+- **Security**: Ed25519 signature validation in key rotation system now works correctly
+
+#### Testing
+
+**New Automated Test**: `scripts/test_2_3_system.sh`
+- Complete 2/3 system lifecycle test with Ed25519 key rotation
+- 4 tests covering: valid token, partial refresh (1/3), full rotation (2/3), dual expiration
+- **100% success rate** after fix
+
+**Test Results**:
+```bash
+✅ Test 1 (t=0s):   Token válido → Hash generado
+✅ Test 2 (t=62s):  Refresh parcial (1/3) → Solo access renovado
+✅ Test 3 (t=110s): KEY ROTATION (2/3) → Ambos tokens + nueva keypair
+✅ Test 4 (t=431s): Doble expiración → 401 correcto
+```
+
+**Files Modified**: 5 backend files in JWT token creation chain
+**Test Scripts Added**: `scripts/test_2_3_system.sh` (382 lines)
+**Scripts Removed**: `test_2_3_complete.sh`, `debug_test.sh`, `test_key_rotation.sh` (obsolete)
+
+---
+
 ## [API v1.6.22 + Web v0.21.5] - 2025-09-30
 
 ### 🔐 MAJOR: Ed25519 Key Rotation System with 2/3 Time Window (API v1.6.22 + Web v0.21.5)

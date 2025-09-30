@@ -20,12 +20,15 @@ export async function requestMagicLink(
 	email: string,
 	next: string = '/'
 ): Promise<MagicLinkResponse> {
-	// Capture current UI host for magic link generation
-	const ui_host = typeof window !== 'undefined' ? window.location.origin : '';
+	// Capture current UI host (domain only) for magic link generation and cookie Domain attribute
+	const { extractDomain } = await import('../../utils/domain-extractor');
+	const ui_host = extractDomain();
 
 	if (!ui_host) {
 		throw new Error('UI host is required for magic link generation');
 	}
+
+	console.log(`🔒 [SECURITY] Sending ui_host to backend: '${ui_host}'`);
 
 	const { api } = await import('../../api');
 	return await api.requestMagicLink(email, ui_host, next);

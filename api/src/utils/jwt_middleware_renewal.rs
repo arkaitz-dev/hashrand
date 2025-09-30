@@ -56,13 +56,21 @@ pub fn check_proactive_renewal(
         let refresh_expires_datetime = DateTime::from_timestamp(refresh_expires_at, 0)
             .ok_or("Invalid refresh token expiration timestamp")
             .map_err(|e| create_auth_error_response(e, None))?;
-        // TODO: Extract pub_key from refresh token claims instead of using placeholder
-        let placeholder_pub_key = [0u8; 32];
+
+        // Decode pub_key from hex (received from refresh token claims)
+        let pub_key_bytes = hex::decode(&pub_key_hex)
+            .map_err(|e| create_auth_error_response(&format!("Invalid pub_key hex: {}", e), None))?;
+        let mut pub_key = [0u8; 32];
+        if pub_key_bytes.len() != 32 {
+            return Err(create_auth_error_response("Invalid pub_key length", None));
+        }
+        pub_key.copy_from_slice(&pub_key_bytes);
+
         let (new_access_token, access_expires) =
             match JwtUtils::create_access_token_from_username_with_refresh_context(
                 username,
                 refresh_expires_datetime,
-                &placeholder_pub_key,
+                &pub_key,
             ) {
                 Ok((token, exp)) => (token, exp),
                 Err(e) => {
@@ -77,9 +85,9 @@ pub fn check_proactive_renewal(
                 }
             };
 
-        // Generate new refresh token
+        // Generate new refresh token with pub_key from current token
         let (new_refresh_token, _refresh_expires) =
-            match JwtUtils::create_refresh_token_from_username(username, None) {
+            match JwtUtils::create_refresh_token_from_username(username, Some(&pub_key)) {
                 Ok((token, exp)) => (token, exp),
                 Err(e) => {
                     println!(
