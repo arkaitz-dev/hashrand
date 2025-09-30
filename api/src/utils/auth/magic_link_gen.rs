@@ -105,8 +105,15 @@ pub async fn generate_magic_link_signed(
             match create_signed_magic_link_response(&payload.email, &pub_key_hex) {
                 Ok(response) => Ok(response),
                 Err(e) => {
-                    println!("❌ Error creating signed response: {}", e);
-                    Ok(MagicLinkResponseBuilder::build_success_response()) // Fallback to unsigned
+                    println!("❌ CRITICAL: Cannot create signed response: {}", e);
+                    // SECURITY: Never fallback to unsigned response - fail secure
+                    Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Cryptographic signature failure".to_string(),
+                        })?)
+                        .build())
                 }
             }
         }

@@ -68,7 +68,7 @@ pub async fn handle_login(
     // Handle default login endpoints: /api/login/
     match *req.method() {
         Method::Post => handle_magic_link_generation(req).await,
-        Method::Delete => handle_logout(),
+        Method::Delete => handle_logout(req),
         _ => Ok(Response::builder()
             .status(405)
             .header("content-type", "application/json")
@@ -134,16 +134,136 @@ async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> 
 }
 
 /// Handle DELETE /api/login/ - Clear refresh token cookie (logout)
-fn handle_logout() -> anyhow::Result<Response> {
+/// SECURITY: Validates Ed25519 signature to prevent unauthorized logout (DoS protection)
+fn handle_logout(req: Request) -> anyhow::Result<Response> {
+    // Extract refresh token from cookies to get pub_key for signature validation
+    let refresh_token = match req.header("cookie") {
+        Some(cookie_header) => {
+            let cookie_str = cookie_header.as_str().unwrap_or("");
+            extract_refresh_token_from_cookies(cookie_str)
+        }
+        None => None,
+    };
+
+    let refresh_token = match refresh_token {
+        Some(token) => token,
+        None => {
+            return Ok(Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Not authenticated".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    // Validate refresh token to extract pub_key
+    let claims = match crate::utils::JwtUtils::validate_refresh_token(&refresh_token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            println!("❌ Logout: JWT validation failed: {}", e);
+            return Ok(Response::builder()
+                .status(401)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Invalid authentication".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    // Extract pub_key for signature validation
+    let pub_key_hex = hex::encode(claims.pub_key);
+
+    // Extract and validate Ed25519 signature from query parameters
+    let uri_str = req.uri().to_string();
+    let query = if let Some(idx) = uri_str.find('?') {
+        &uri_str[idx + 1..]
+    } else {
+        ""
+    };
+
+    let mut query_params: HashMap<String, String> = query
+        .split('&')
+        .filter_map(|pair| {
+            let mut parts = pair.split('=');
+            match (parts.next(), parts.next()) {
+                (Some(key), Some(value)) => Some((key.to_string(), value.to_string())),
+                _ => None,
+            }
+        })
+        .collect();
+
+    // Validate signature (DELETE requests have empty params except signature)
+    if let Err(e) = SignedRequestValidator::validate_query_params(&mut query_params, &pub_key_hex) {
+        println!("❌ Logout: Signature validation failed: {}", e);
+        return Ok(Response::builder()
+            .status(401)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: "Invalid signature".to_string(),
+            })?)
+            .build());
+    }
+
+    println!("✅ Logout: Signature validated, clearing refresh token");
+
+    // Prepare crypto material for SignedResponse
+    let crypto_material = crate::utils::CryptoMaterial {
+        user_id: claims.sub.as_bytes().to_vec(),
+        pub_key_hex,
+    };
+
+    // Create logout success payload
+    #[derive(serde::Serialize)]
+    struct LogoutResponse {
+        message: String,
+    }
+
+    let logout_payload = LogoutResponse {
+        message: "Logged out successfully".to_string(),
+    };
+
+    // Generate SignedResponse
+    let signed_response = match crate::utils::create_signed_endpoint_response(
+        logout_payload,
+        &crypto_material,
+    ) {
+        Ok(response) => response,
+        Err(e) => {
+            println!("❌ Failed to create SignedResponse for logout: {}", e);
+            return Ok(Response::builder()
+                .status(500)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Failed to generate signed response".to_string(),
+                })?)
+                .build());
+        }
+    };
+
     // Create expired cookie to clear the refresh token
     let expired_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/";
 
+    // Add cookie to SignedResponse
     Ok(Response::builder()
-        .status(200)
+        .status(signed_response.status())
         .header("content-type", "application/json")
         .header("set-cookie", expired_cookie)
-        .body("{\"message\":\"Logged out successfully\"}")
+        .body(signed_response.body().clone())
         .build())
+}
+
+/// Extract refresh_token value from cookie header string (helper for logout)
+fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
+    for cookie in cookie_header.split(';') {
+        let cookie = cookie.trim();
+        if let Some(stripped) = cookie.strip_prefix("refresh_token=") {
+            return Some(stripped.to_string());
+        }
+    }
+    None
 }
 
 /// Public export for refresh token handling

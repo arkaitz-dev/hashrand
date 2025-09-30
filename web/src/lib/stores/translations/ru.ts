@@ -70,6 +70,7 @@ export const ru: I18nTexts = {
 		understand: 'Я понимаю',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Ошибка проверки магической ссылки',
+		signatureValidationError: 'Получен недействительный ответ сервера',
 		parameterDecryptionFailed: 'Не удается расшифровать параметры',
 		parameterDecryptionError: 'Ошибка расшифровки параметров',
 		generationError: 'Ошибка генерации',

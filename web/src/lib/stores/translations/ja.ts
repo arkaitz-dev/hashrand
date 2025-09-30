@@ -69,6 +69,7 @@ export const ja: I18nTexts = {
 		understand: '理解しました',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'マジックリンクの検証に失敗しました',
+		signatureValidationError: '無効なサーバー応答を受信しました',
 		parameterDecryptionFailed: 'パラメータの復号化ができません',
 		parameterDecryptionError: 'パラメータ復号化エラー',
 		generationError: '生成エラー',

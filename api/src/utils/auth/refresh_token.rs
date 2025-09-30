@@ -2,10 +2,10 @@
 
 use spin_sdk::http::{Method, Request, Response};
 
-use super::types::ErrorResponse;
+use super::types::{ErrorResponse, RefreshPayload, RefreshSignedRequest};
 use crate::types::responses::JwtAuthResponse;
-use crate::utils::JwtUtils;
 use crate::utils::signed_response::SignedResponseGenerator;
+use crate::utils::{JwtUtils, SignedRequestValidator};
 
 /// Handle refresh token request and generate new access token
 ///
@@ -91,10 +91,265 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     );
     // Extract pub_key from refresh token claims (Ed25519 public key for cryptographic operations)
     let pub_key = &claims.pub_key;
-    let (access_token, _expires_at) =
-        match JwtUtils::create_access_token_from_username(username, pub_key) {
+    let pub_key_hex = hex::encode(pub_key);
+    println!(
+        "🔑 Refresh: OLD pub_key from JWT: {}...",
+        &pub_key_hex[..16.min(pub_key_hex.len())]
+    );
+
+    // Parse and validate SignedRequest from body
+    let body_bytes = req.body();
+    let signed_request: RefreshSignedRequest = match serde_json::from_slice(body_bytes) {
+        Ok(req) => req,
+        Err(e) => {
+            println!("❌ Refresh: Failed to parse SignedRequest: {}", e);
+            return Ok(Response::builder()
+                .status(400)
+                .header("content-type", "application/json")
+                .body(serde_json::to_string(&ErrorResponse {
+                    error: "Invalid SignedRequest structure".to_string(),
+                })?)
+                .build());
+        }
+    };
+
+    // Validate Ed25519 signature using pub_key from refresh token JWT
+    println!("🔍 Refresh: Validating Ed25519 signature...");
+    if let Err(e) = SignedRequestValidator::validate_base64_payload(
+        &signed_request.payload,
+        &signed_request.signature,
+        &pub_key_hex,
+    ) {
+        println!("❌ Refresh: Signature validation failed: {}", e);
+        return Ok(Response::builder()
+            .status(401)
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&ErrorResponse {
+                error: format!("Invalid signature: {}", e),
+            })?)
+            .build());
+    }
+
+    // Deserialize payload to extract new_pub_key
+    let refresh_payload: RefreshPayload =
+        match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
+            Ok(payload) => payload,
+            Err(e) => {
+                println!("❌ Refresh: Failed to deserialize payload: {}", e);
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid payload format".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+    println!(
+        "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
+        &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
+    );
+
+    // Calculate if we're in 2/3 renewal window (same logic as jwt_middleware_renewal)
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("System clock error")
+        .as_secs() as i64;
+
+    let time_remaining = claims.exp - now;
+    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
+        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+    let refresh_duration_seconds = refresh_duration_minutes * 60;
+    let two_thirds_threshold = (refresh_duration_seconds * 2) / 3;
+    let is_in_renewal_window = time_remaining < two_thirds_threshold as i64;
+
+    println!("⏱️ Refresh: Expires at: {}, Now: {}", claims.exp, now);
+    println!(
+        "📊 Refresh: Time remaining: {}s, 2/3 threshold: {}s",
+        time_remaining, two_thirds_threshold
+    );
+    println!(
+        "🎯 Refresh: Decision -> {}",
+        if is_in_renewal_window {
+            "TRAMO 2/3 (KEY ROTATION)"
+        } else {
+            "TRAMO 1/3 (NO ROTATION)"
+        }
+    );
+
+    if is_in_renewal_window {
+        // ===== TRAMO 2/3: KEY ROTATION =====
+        println!("🔄 Refresh: ===== TRAMO 2/3: KEY ROTATION =====");
+        println!(
+            "🔑 Refresh: NEW pub_key: {}...",
+            &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
+        );
+
+        // Decode new_pub_key from hex
+        let new_pub_key_bytes = match hex::decode(&refresh_payload.new_pub_key) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                println!("❌ Refresh: Invalid new_pub_key hex: {}", e);
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid new_pub_key format".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+        let new_pub_key_array: [u8; 32] = match new_pub_key_bytes.try_into() {
+            Ok(arr) => arr,
+            Err(_) => {
+                println!("❌ Refresh: new_pub_key must be 32 bytes");
+                return Ok(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "new_pub_key must be 32 bytes".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+        // Create access_token with NEW pub_key
+        let (access_token, _) =
+            match JwtUtils::create_access_token_from_username(username, &new_pub_key_array) {
+                Ok((token, exp)) => {
+                    println!("✅ Refresh: Access token created with NEW pub_key");
+                    (token, exp)
+                }
+                Err(e) => {
+                    println!("❌ Refresh: Failed to create access token: {}", e);
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: format!("Failed to create access token: {}", e),
+                        })?)
+                        .build());
+                }
+            };
+
+        // Create refresh_token with NEW pub_key
+        use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_username;
+        let (new_refresh_token, _) =
+            match create_custom_refresh_token_from_username(username, Some(&new_pub_key_array)) {
+                Ok((token, exp)) => {
+                    println!("✅ Refresh: Refresh token created with NEW pub_key");
+                    (token, exp)
+                }
+                Err(e) => {
+                    println!("❌ Refresh: Failed to create refresh token: {}", e);
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: format!("Failed to create refresh token: {}", e),
+                        })?)
+                        .build());
+                }
+            };
+
+        // Calculate expires_at for new refresh cookie
+        let expires_at = now + (refresh_duration_minutes as i64 * 60);
+
+        // Create user_id bytes for signed response
+        let user_id = match bs58::decode(username).into_vec() {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                println!("❌ Refresh: Failed to decode username: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Invalid username format".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+        // Create payload with expires_at
+        let payload = JwtAuthResponse::new(
+            access_token,
+            username.to_string(),
+            None,
+            Some(expires_at),
+            None, // server_pub_key will be added by create_signed_response_with_server_pubkey
+        );
+
+        // Generate signed response WITH server_pub_key (key rotation)
+        let new_pub_key_hex = hex::encode(&new_pub_key_array);
+        println!(
+            "🔐 Refresh: Generating SignedResponse WITH server_pub_key for rotation"
+        );
+        let signed_response =
+            match SignedResponseGenerator::create_signed_response_with_server_pubkey(
+                payload,
+                &user_id,
+                &new_pub_key_hex,
+            ) {
+                Ok(response) => response,
+                Err(e) => {
+                    println!("❌ CRITICAL: Cannot create signed response: {}", e);
+                    return Ok(Response::builder()
+                        .status(500)
+                        .header("content-type", "application/json")
+                        .body(serde_json::to_string(&ErrorResponse {
+                            error: "Cryptographic signature failure".to_string(),
+                        })?)
+                        .build());
+                }
+            };
+
+        // Build response with new refresh cookie
+        let response_json = match serde_json::to_string(&signed_response) {
+            Ok(json) => json,
+            Err(e) => {
+                println!("❌ Refresh: Failed to serialize response: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Response serialization failed".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+        let cookie_value = format!(
+            "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
+            new_refresh_token,
+            refresh_duration_minutes * 60
+        );
+
+        println!(
+            "🎉 Refresh: Key rotation completed successfully for user: {}",
+            username
+        );
+
+        Ok(Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .header("set-cookie", cookie_value)
+            .body(response_json)
+            .build())
+    } else {
+        // ===== TRAMO 1/3: NO KEY ROTATION =====
+        println!("⏸️ Refresh: ===== TRAMO 1/3: NO KEY ROTATION =====");
+        println!(
+            "🔑 Refresh: Using OLD pub_key: {}...",
+            &pub_key_hex[..16.min(pub_key_hex.len())]
+        );
+
+        // Create access_token with OLD pub_key
+        let (access_token, _) = match JwtUtils::create_access_token_from_username(username, pub_key)
+        {
             Ok((token, exp)) => {
-                println!("✅ Refresh: New access token created successfully");
+                println!("✅ Refresh: Access token created with OLD pub_key");
                 (token, exp)
             }
             Err(e) => {
@@ -109,57 +364,77 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             }
         };
 
-    // REFRESH TOKEN ROTATION: Generate new refresh token preserving crypto noise ID
-    let (new_refresh_token, _refresh_expires_at) =
-        match JwtUtils::create_refresh_token_from_username(username, Some(claims.session_id)) {
-            Ok((token, exp)) => (token, exp),
+        // Create user_id bytes for signed response
+        let user_id = match bs58::decode(username).into_vec() {
+            Ok(bytes) => bytes,
             Err(e) => {
+                println!("❌ Refresh: Failed to decode username: {}", e);
                 return Ok(Response::builder()
                     .status(500)
                     .header("content-type", "application/json")
                     .body(serde_json::to_string(&ErrorResponse {
-                        error: format!("Failed to create refresh token: {}", e),
+                        error: "Invalid username format".to_string(),
                     })?)
                     .build());
             }
         };
 
-    // Calculate refresh cookie expiration timestamp (since new refresh token is always generated)
-    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
-        .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
+        // Create payload WITHOUT expires_at (no new refresh cookie)
+        let payload = JwtAuthResponse::new(
+            access_token,
+            username.to_string(),
+            None,
+            None, // No expires_at - no new refresh cookie
+            None, // No server_pub_key - no key rotation
+        );
 
-    let expires_at = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("System clock error")
-        .as_secs() as i64
-        + (refresh_duration_minutes as i64 * 60);
+        // Generate signed response WITHOUT server_pub_key (no key rotation)
+        println!(
+            "🔐 Refresh: Generating SignedResponse WITHOUT server_pub_key (no rotation)"
+        );
+        let signed_response = match SignedResponseGenerator::create_signed_response(
+            payload,
+            &user_id,
+            &pub_key_hex,
+        ) {
+            Ok(response) => response,
+            Err(e) => {
+                println!("❌ CRITICAL: Cannot create signed response: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Cryptographic signature failure".to_string(),
+                    })?)
+                    .build());
+            }
+        };
 
-    // Create signed response for token refresh (with server_pub_key)
-    match create_signed_refresh_response(
-        &access_token,
-        username,
-        &new_refresh_token,
-        expires_at,
-        pub_key,
-    ) {
-        Ok(response) => {
-            println!(
-                "🎉 Refresh: Token refresh completed successfully for user: {}",
-                username
-            );
-            Ok(response)
-        }
-        Err(e) => {
-            println!("❌ CRITICAL: Cannot create signed refresh response: {}", e);
-            // SECURITY: Never fallback to unsigned response - fail secure
-            Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: "Cryptographic signature failure".to_string(),
-                })?)
-                .build())
-        }
+        // Build response WITHOUT refresh cookie
+        let response_json = match serde_json::to_string(&signed_response) {
+            Ok(json) => json,
+            Err(e) => {
+                println!("❌ Refresh: Failed to serialize response: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Response serialization failed".to_string(),
+                    })?)
+                    .build());
+            }
+        };
+
+        println!(
+            "✅ Refresh: Token refresh completed (no rotation) for user: {}",
+            username
+        );
+
+        Ok(Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .body(response_json)
+            .build())
     }
 }
 
@@ -172,72 +447,4 @@ fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
         }
     }
     None
-}
-
-/// Create signed response for token refresh (with server_pub_key)
-///
-/// Generates a signed response using Ed25519 per-session keypair derived from
-/// user_id + frontend_pub_key, includes server public key for verification.
-///
-/// # Arguments
-/// * `access_token` - New access token
-/// * `username` - Base58 encoded user ID
-/// * `new_refresh_token` - New refresh token
-/// * `expires_at` - Refresh cookie expiration timestamp
-/// * `pub_key` - Frontend Ed25519 public key (32 bytes)
-///
-/// # Returns
-/// * `Result<Response, String>` - Signed HTTP response with cookies or error
-fn create_signed_refresh_response(
-    access_token: &str,
-    username: &str,
-    new_refresh_token: &str,
-    expires_at: i64,
-    pub_key: &[u8; 32],
-) -> Result<Response, String> {
-    // Step 1: Convert Base58 username back to user_id bytes
-    let user_id = bs58::decode(username)
-        .into_vec()
-        .map_err(|e| format!("Failed to decode Base58 username: {}", e))?;
-
-    // Step 2: Convert pub_key bytes to hex string
-    let pub_key_hex = hex::encode(pub_key);
-
-    // Step 3: Create payload using JwtAuthResponse for consistency
-    let payload = JwtAuthResponse::new(
-        access_token.to_string(),
-        username.to_string(),
-        None, // No next parameter for refresh
-        Some(expires_at),
-    );
-
-    // Step 4: Generate signed response with server public key
-    let signed_response = SignedResponseGenerator::create_signed_response_with_server_pubkey(
-        payload,
-        &user_id,
-        &pub_key_hex,
-    )
-    .map_err(|e| format!("Failed to create signed response: {}", e))?;
-
-    // Step 5: Serialize signed response to JSON
-    let response_json = serde_json::to_string(&signed_response)
-        .map_err(|e| format!("Failed to serialize signed response: {}", e))?;
-
-    // Step 6: Create refresh cookie (duration already calculated above)
-    let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
-        .map_err(|e| format!("Failed to get refresh token duration: {}", e))?;
-
-    let cookie_value = format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
-        new_refresh_token,
-        refresh_duration_minutes * 60 // Convert minutes to seconds
-    );
-
-    // Step 7: Build HTTP response with signed payload and refresh token cookie
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .header("set-cookie", cookie_value)
-        .body(response_json)
-        .build())
 }

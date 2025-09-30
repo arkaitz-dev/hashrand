@@ -69,6 +69,7 @@ export const ar: I18nTexts = {
 		understand: 'أفهم',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'فشل في التحقق من الرابط السحري',
+		signatureValidationError: 'تم تلقي استجابة خادم غير صالحة',
 		parameterDecryptionFailed: 'لا يمكن فك تشفير المعاملات',
 		parameterDecryptionError: 'خطأ في فك تشفير المعاملات',
 		generationError: 'خطأ في التوليد',

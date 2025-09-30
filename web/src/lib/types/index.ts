@@ -116,6 +116,7 @@ export interface LoginResponse {
 	user_id: string; // Base58 user_id
 	next?: string; // Optional next parameter from magic link
 	expires_at?: number; // Optional refresh cookie expiration timestamp (when new refresh cookie is set)
+	server_pub_key?: string; // Optional server public key (only in 2/3 time window for key rotation)
 }
 
 export interface MagicLinkResponse {

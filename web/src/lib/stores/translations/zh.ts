@@ -68,6 +68,7 @@ export const zh: I18nTexts = {
 		understand: '我明白了',
 		// Error messages for user notifications
 		magicLinkValidationFailed: '魔术链接验证失败',
+		signatureValidationError: '收到无效的服务器响应',
 		parameterDecryptionFailed: '无法解密参数',
 		parameterDecryptionError: '参数解密错误',
 		generationError: '生成错误',

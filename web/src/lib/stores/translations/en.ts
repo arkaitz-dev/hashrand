@@ -69,6 +69,7 @@ export const en: I18nTexts = {
 		understand: 'I understand',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Magic link validation failed',
+		signatureValidationError: 'Invalid server response received',
 		parameterDecryptionFailed: 'Unable to decrypt parameters',
 		parameterDecryptionError: 'Parameter decryption error',
 		generationError: 'Generation error',

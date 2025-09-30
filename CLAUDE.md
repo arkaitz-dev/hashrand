@@ -112,8 +112,10 @@ just build       # Build API (WASM) + Web (SPA)
 - **Enterprise Architecture**: Refactorización 3,698 líneas monolíticas → módulos <225 líneas. Arquitectura modular DRY/SOLID
 - **Blake3 Migration**: Migración completa Blake2→Blake3 con WASM SIMD optimization. Performance ~100x en magic links
 - **Ed25519 Integration**: Sistema completo frontend-backend con firmas digitales. WebCrypto + Noble fallback
+- **Ed25519 Key Rotation**: Sistema automático 2/3 time window. Rotación transparente de claves sin interrupción usuario
 - **URL Encryption**: Sistema ultra-compacto de cifrado parámetros URL (66% reducción) con FIFO rotation. ChaCha20-Poly1305
 - **Dual-Token JWT**: Auto-refresh transparente con HttpOnly cookies. Access tokens 20s dev, refresh 2min dev
+- **100% SignedResponse**: TODOS endpoints (excepto `/api/version`) validan Ed25519 y emiten SignedResponse
 - **Email System**: Mailtrap integration con templates 13 idiomas + RTL support. Custom domain `mailer.hashrand.com`
 - **Testing**: 35 tests automatizados con 100% success rate. Coverage completo auth flow + generación
 

@@ -70,6 +70,7 @@ export const de: I18nTexts = {
 		understand: 'Ich verstehe',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Magic-Link-Validierung fehlgeschlagen',
+		signatureValidationError: 'Ungültige Serverantwort empfangen',
 		parameterDecryptionFailed: 'Parameter können nicht entschlüsselt werden',
 		parameterDecryptionError: 'Parameter-Entschlüsselungsfehler',
 		generationError: 'Generierungsfehler',

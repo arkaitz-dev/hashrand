@@ -69,6 +69,7 @@ export const pt: I18nTexts = {
 		understand: 'Eu entendo',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Falha na validação do link mágico',
+		signatureValidationError: 'Resposta do servidor inválida recebida',
 		parameterDecryptionFailed: 'Não é possível descriptografar os parâmetros',
 		parameterDecryptionError: 'Erro de descriptografia de parâmetros',
 		generationError: 'Erro de geração',

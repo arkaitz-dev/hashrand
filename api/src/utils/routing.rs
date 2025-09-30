@@ -1,8 +1,8 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_from_seed, handle_login, handle_mnemonic_request,
-    handle_password_request, handle_version,
+    handle_api_key_request, handle_login, handle_mnemonic_request, handle_password_request,
+    handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
@@ -86,29 +86,8 @@ pub async fn route_request_with_req(
         }
 
         // GET-only endpoints
-        path if path.ends_with("/api/generate") => {
-            match *method {
-                Method::Get => {
-                    // Legacy alias for /api/custom - now uses SignedResponse
-                    handle_custom_request(req).await
-                }
-                _ => handle_method_not_allowed(),
-            }
-        }
         path if path.ends_with("/api/version") => match *method {
             Method::Get => handle_version(),
-            _ => handle_method_not_allowed(),
-        },
-
-        // POST-only endpoints
-        path if path.ends_with("/api/from-seed") => match *method {
-            Method::Post => {
-                if requires_authentication(path) {
-                    with_auth_and_renewal(req, |req| handle_from_seed(req.body()))
-                } else {
-                    handle_from_seed(req.body())
-                }
-            }
             _ => handle_method_not_allowed(),
         },
 
@@ -130,8 +109,7 @@ fn handle_not_found() -> anyhow::Result<Response> {
 Available endpoints:
 - GET /api/custom?length=21&alphabet=base58&prefix=&suffix=&raw=true
 - POST /api/custom (JSON body with optional seed parameter)
-- GET /api/generate?length=21&alphabet=base58&prefix=&suffix=&raw=true (alias for /api/custom)
-- GET /api/password?length=21&alphabet=full-with-symbols&raw=true  
+- GET /api/password?length=21&alphabet=full-with-symbols&raw=true
 - POST /api/password (JSON body with optional seed parameter)
 - GET /api/api-key?length=44&alphabet=full&raw=true
 - POST /api/api-key (JSON body with optional seed parameter)
@@ -140,7 +118,6 @@ Available endpoints:
 - POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
 - POST /api/login/magiclink/ (Validate magic link with Ed25519 signature and get JWT tokens)
 - GET /api/version
-- POST /api/from-seed (JSON body required)
 
 Parameters:
 - length: 2-128 (custom), 21-44 (password), 44-64 (api-key)

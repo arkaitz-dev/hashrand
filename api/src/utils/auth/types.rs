@@ -56,6 +56,15 @@ pub struct MagicLinkValidationPayload {
 /// CORRECTED: No longer generic since SignedRequest uses Base64-encoded JSON payload
 pub type MagicLinkValidationRequest = SignedRequest;
 
+/// Payload for token refresh (wrapped in SignedRequest)
+#[derive(Deserialize, Serialize)]
+pub struct RefreshPayload {
+    pub new_pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes) - REQUIRED
+}
+
+/// Unified signed request structure for token refresh
+pub type RefreshSignedRequest = SignedRequest;
+
 /// Error response structure
 #[derive(Serialize)]
 pub struct ErrorResponse {

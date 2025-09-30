@@ -18,11 +18,13 @@ use utils::{init_rate_limiter, parse_query_params, route_request_with_req};
 /// Handles all HTTP requests and routes them to the corresponding handlers.
 /// Supports the following endpoints:
 /// - GET /api/custom - Customizable hash generation
-/// - GET /api/generate - Alias for /api/custom (backward compatibility)
-/// - GET /api/password - Secure password generation  
+/// - GET /api/password - Secure password generation
 /// - GET /api/api-key - API key generation with ak_ prefix
+/// - GET /api/mnemonic - BIP39 mnemonic phrase generation
 /// - GET /api/version - Version information
-/// - POST /api/from-seed - Seed-based hash generation
+/// - POST /api/login/ - Magic link generation
+/// - POST /api/login/magiclink/ - Magic link validation
+/// - POST /api/refresh - Token refresh with key rotation
 #[http_component]
 async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
     // Initialize rate limiter on first request

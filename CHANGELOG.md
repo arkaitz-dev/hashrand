@@ -4,6 +4,186 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.22 + Web v0.21.5] - 2025-09-30
+
+### 🔐 MAJOR: Ed25519 Key Rotation System with 2/3 Time Window (API v1.6.22 + Web v0.21.5)
+
+**SECURITY ENHANCEMENT**: Complete implementation of automatic Ed25519 keypair rotation using intelligent 2/3 time-based window system, enhancing Zero Knowledge security while maintaining seamless user experience.
+
+#### 🔄 Backend: Token Refresh with Conditional Key Rotation
+
+- **2/3 Time Window Logic**: Intelligent decision system in `/api/refresh` endpoint
+  - **TRAMO 1/3 (0-40s)**: Token renewal without key rotation
+    - Generates new `access_token` using existing (OLD) `pub_key`
+    - No new `refresh_token` issued (existing cookie remains valid)
+    - SignedResponse WITHOUT `server_pub_key` field
+    - Optimized for frequent operations maintaining current keys
+
+  - **TRAMO 2/3 (40-120s)**: Full cryptographic key rotation
+    - Generates `access_token` + `refresh_token` using NEW `pub_key` from frontend
+    - Creates fresh `server_pub_key` using Blake3 Pseudonimizer
+    - SignedResponse WITH `server_pub_key` field triggers frontend rotation
+    - Issues new HttpOnly refresh cookie with updated expiration timestamp
+
+- **Request Validation**: Frontend ALWAYS sends `new_pub_key` in signed payload
+- **Response Types**:
+  - `create_signed_response()` - TRAMO 1/3 without rotation
+  - `create_signed_response_with_server_pubkey()` - TRAMO 2/3 with rotation
+
+#### 🔑 Frontend: Automatic Key Rotation Implementation
+
+- **Proactive Key Generation**: `refreshToken()` ALWAYS generates new Ed25519 keypair before request
+- **Conditional Rotation Logic**:
+  - Detects `server_pub_key` presence in `/api/refresh` response
+  - **TRAMO 2/3**: Updates both `priv_key` and `server_pub_key` in IndexedDB
+  - **TRAMO 1/3**: Maintains existing keys, only updates `access_token`
+- **Zero User Interruption**: Rotation happens transparently during normal token refresh cycles
+
+#### 📊 Type System Enhancement
+
+- **LoginResponse Extension**: Added `server_pub_key?: string` field for optional key rotation data
+- **RefreshPayload**: New type defining `{ new_pub_key: string }` request structure
+- **Type Safety**: Complete TypeScript coverage for rotation flow
+
+#### 🔐 Security Architecture Benefits
+
+- **Enhanced Forward Secrecy**: Regular Ed25519 keypair rotation limits cryptographic exposure window
+- **Proactive Rotation**: Keys rotate automatically before reaching critical expiration threshold
+- **Zero Knowledge Maintained**: All cryptographic material managed client-side with server coordination
+- **Fail-Secure Design**: Missing `server_pub_key` safely defaults to no-rotation path
+
+**Files Modified**: `refresh_token.rs`, `api-auth-operations.ts`, `types/responses.rs`, `types/index.ts`
+**Security Impact**: Automatic cryptographic key rotation without user intervention enhances long-term session security
+
+---
+
+### 🛡️ SECURITY: Complete Logout with SignedResponse Validation (API v1.6.22 + Web v0.21.5)
+
+**SECURITY FIX**: Closed Zero Knowledge chain gap by implementing SignedResponse emission and validation for `DELETE /api/login` (logout endpoint).
+
+#### Backend: Logout SignedResponse Implementation
+
+- **Cryptographic Response**: `handle_logout()` now creates SignedResponse instead of plain JSON
+- **Payload Structure**: `{ message: "Logged out successfully" }` signed with user's Ed25519 keypair
+- **Cookie Handling**: Expired refresh cookie header added to signed response
+- **Security Validation**: Complete JWT + Ed25519 signature verification before response generation
+
+#### Frontend: Authenticated DELETE with Validation
+
+- **New Function**: `httpSignedAuthenticatedDELETE<TResponse>()` for authenticated DELETE operations
+- **Complete Validation Flow**:
+  - Extracts `access_token` from IndexedDB
+  - Generates Ed25519 signature for empty DELETE payload
+  - Sends authenticated request with Bearer token + credentials
+  - **Validates SignedResponse** using `handleSignedResponseStrict()`
+- **Type Safety**: Generic response type with full TypeScript coverage
+
+#### API Consistency Achievement
+
+- **13/13 Endpoints Secure**: ALL authenticated endpoints now validate SignedRequest AND emit SignedResponse
+- **Zero Fallbacks**: No insecure fallback paths in entire API surface
+- **Single Exception**: Only `/api/version` remains public (by design)
+
+**Files Modified**: `login.rs`, `httpSignedRequests.ts`, `api-auth-operations.ts`
+**Architecture Impact**: 100% Zero Knowledge coverage across ALL authenticated operations
+
+---
+
+### 🧹 CLEANUP: Legacy Endpoint Removal (API v1.6.22)
+
+**REFACTORING**: Removed obsolete `/api/generate` endpoint completing migration to unified `/api/custom` naming convention.
+
+#### Endpoint Elimination
+
+- **Removed Route**: `GET /api/generate` (was alias for `/api/custom`)
+- **Documentation Update**: Help message and routing comments cleaned
+- **Frontend Safety**: Verified no frontend code references removed endpoint
+
+#### Architecture Benefits
+
+- **Simplified API Surface**: One less endpoint to maintain and document
+- **Clear Naming**: `/api/custom` clearly indicates customizable hash generation
+- **No Breaking Changes**: Endpoint was internal alias, never documented for external use
+
+**Files Modified**: `routing.rs`, `lib.rs`
+**Impact**: Cleaner API architecture with single source of truth for custom hash generation
+
+---
+
+### 🐛 DEBUG: Comprehensive Logging System for Key Rotation (API v1.6.22 + Web v0.21.5)
+
+**DEVELOPER EXPERIENCE**: Exhaustive debugging infrastructure for troubleshooting key rotation flow without browser DevTools access (tablet development scenario).
+
+#### Backend: Enhanced Console Logging
+
+- **Emoji-Coded Logs**: Visual categorization for quick scanning
+  - 🔑 Key information (first 16 chars of hex values)
+  - ⏱️ Timing calculations (expires_at, now, time_remaining, thresholds)
+  - 🎯 Decision points (TRAMO 1/3 vs 2/3)
+  - ✅ Success confirmations
+  - ❌ Error contexts with full details
+
+- **Critical Checkpoints**:
+  - JWT validation and pub_key extraction
+  - SignedRequest validation
+  - Time window calculation and decision
+  - Token generation (OLD vs NEW pub_key)
+  - SignedResponse creation (with/without server_pub_key)
+
+#### Frontend: Console + Flash Messages
+
+- **Dual Output Strategy**: Console.log for DevTools + flash messages for UI visibility
+- **Step-by-Step Tracking**:
+  - 🔄 Refresh initiation
+  - 🔑 Keypair generation (OLD + NEW keys shown)
+  - 📤 Request transmission
+  - 📥 Response reception with structure analysis
+  - 🔄 Rotation execution (TRAMO 2/3) or skip (TRAMO 1/3)
+  - ✅ Final success confirmation
+
+- **UI Flash Messages**: ALL critical steps visible in browser without DevTools
+  - "🔄 Iniciando renovación de token..."
+  - "🔑 Nuevo keypair generado para rotación"
+  - "📤 Enviando request a /api/refresh..."
+  - "🔄 TRAMO 2/3: Iniciando rotación de claves..."
+  - "✅ Rotación de claves completada (2/3)"
+  - "⏭️ Token renovado sin rotación (1/3)"
+
+#### Developer Benefits
+
+- **Tablet-Friendly Debugging**: Complete visibility without browser DevTools
+- **Production Safety**: Logs provide audit trail for rotation behavior analysis
+- **Troubleshooting**: Pinpoint exact failure location in multi-step flow
+- **Performance Monitoring**: Track timing thresholds and decision-making process
+
+**Files Modified**: `refresh_token.rs`, `api-auth-operations.ts`
+**Developer Impact**: Zero-friction debugging for complex cryptographic rotation flow
+
+---
+
+### 📋 Translation Coverage: Flash Messages Internationalized (Web v0.21.5)
+
+**FEATURE**: Added `signatureValidationError` translation key across all 13 supported languages for SignedResponse validation failures.
+
+#### Complete Language Coverage
+
+- **Languages Updated**: en, es, pt, fr, de, ru, zh, ar, hi, ja, eu, ca, gl
+- **Translation Key**: `common.signatureValidationError`
+- **English**: "Invalid server response received"
+- **Spanish**: "No se ha recibido una respuesta correcta del servidor"
+- *(Similar professional translations for all 11 other languages)*
+
+#### Integration Points
+
+- **universalSignedResponseHandler.ts**: Replaced hardcoded Spanish error with i18n translation
+- **User Experience**: Context-aware error messages matching user's language preference
+- **Accessibility**: Screen reader compatibility with localized content
+
+**Files Modified**: 13 translation files (`es.ts`, `en.ts`, etc.), `universalSignedResponseHandler.ts`
+**UX Impact**: Professional multilingual error feedback for cryptographic validation failures
+
+---
+
 ## [API v1.6.21 + Web v0.21.4] - 2025-09-26
 
 ### 🧹 MAJOR: Legacy Code Cleanup & Architecture Refinement (API v1.6.21)

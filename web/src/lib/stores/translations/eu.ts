@@ -69,6 +69,7 @@ export const eu: I18nTexts = {
 		understand: 'Ulertzen dut',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Esteka magikoaren balioztapenak huts egin du',
+		signatureValidationError: 'Zerbitzariaren erantzun baliogabea jaso da',
 		parameterDecryptionFailed: 'Parametroak deszifratu ezin dira',
 		parameterDecryptionError: 'Parametroen deszifratze errorea',
 		generationError: 'Sortze errorea',

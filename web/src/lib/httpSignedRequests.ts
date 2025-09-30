@@ -271,9 +271,10 @@ export async function httpAuthenticatedSignedGETRequest<TResponse>(
 }
 
 /**
- * Universal signed DELETE request
+ * Universal signed DELETE request (without authentication or response validation)
  *
- * For DELETE requests that need Ed25519 signature
+ * For DELETE requests that need Ed25519 signature but don't require JWT auth
+ * NOTE: Most DELETE endpoints should use httpSignedAuthenticatedDELETE instead
  *
  * @param url - API endpoint URL
  * @param fetchOptions - Additional fetch options (e.g., credentials)
@@ -313,6 +314,69 @@ export async function httpSignedDELETERequest(
 		}
 
 		console.error(`Signed DELETE request failed: ${url}`, error);
+		throw new HttpSignedRequestError(
+			`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			0,
+			url
+		);
+	}
+}
+
+/**
+ * Universal authenticated signed DELETE request with SignedResponse validation
+ *
+ * For DELETE endpoints that require JWT authentication + Ed25519 signature
+ * Automatically adds Authorization header and validates SignedResponse
+ *
+ * @param url - API endpoint URL
+ * @returns Promise with validated response payload
+ */
+export async function httpSignedAuthenticatedDELETE<TResponse>(
+	url: string
+): Promise<TResponse> {
+	try {
+		// Get authentication headers
+		const { sessionManager } = await import('./session-manager');
+		const authData = await sessionManager.getAuthData();
+
+		if (!authData.access_token) {
+			throw new HttpSignedRequestError('No access token available', 401, url);
+		}
+
+		// Generate Ed25519 signature for empty payload (DELETE requests have no body)
+		const signature = await signQueryParams({});
+
+		// Add signature as query parameter
+		const urlWithSignature = `${url}?signature=${signature}`;
+
+		// Send authenticated signed DELETE request with credentials for HttpOnly cookies
+		const response = await fetch(urlWithSignature, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${authData.access_token}`
+			},
+			credentials: 'include'
+		});
+
+		// Handle HTTP errors
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new HttpSignedRequestError(
+				errorText || `HTTP ${response.status}`,
+				response.status,
+				url
+			);
+		}
+
+		// Parse and validate SignedResponse
+		const responseData = await response.json();
+		return await handleSignedResponseStrict<TResponse>(responseData, false);
+	} catch (error) {
+		if (error instanceof HttpSignedRequestError) {
+			throw error;
+		}
+
+		console.error(`Authenticated signed DELETE request failed: ${url}`, error);
 		throw new HttpSignedRequestError(
 			`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			0,

@@ -41,6 +41,7 @@ pub fn build_authentication_response(
         jwt_tokens.username,
         next_param.clone(),
         Some(expires_at),
+        None, // server_pub_key will be added by create_signed_response_with_server_pubkey
     );
 
     // Build crypto material for SignedResponse generation

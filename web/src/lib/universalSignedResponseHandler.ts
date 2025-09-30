@@ -70,8 +70,17 @@ async function showSecurityErrorAndRedirect(): Promise<void> {
 		// Import flash message system
 		const { flashMessagesStore } = await import('./stores/flashMessages');
 
-		// Add security error message
-		flashMessagesStore.addMessage('No se ha recibido una respuesta correcta del servidor');
+		// Import translation system to get current language
+		const { currentLanguage, t } = await import('./stores/i18n');
+
+		// Get current language value
+		let lang = 'en';
+		const unsubscribe = currentLanguage.subscribe((l) => (lang = l));
+		unsubscribe();
+
+		// Add security error message (translated)
+		const errorMessage = t('common.signatureValidationError', lang);
+		flashMessagesStore.addMessage(errorMessage);
 
 		// Import navigation utility
 		const { goto } = await import('$app/navigation');

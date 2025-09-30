@@ -69,6 +69,7 @@ export const gl: I18nTexts = {
 		understand: 'Entendo',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'Fallou a validación da ligazón máxica',
+		signatureValidationError: 'Recibiuse unha resposta do servidor non válida',
 		parameterDecryptionFailed: 'Non se poden descifrar os parámetros',
 		parameterDecryptionError: 'Erro de descifrado de parámetros',
 		generationError: 'Erro de xeración',

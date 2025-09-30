@@ -69,6 +69,7 @@ export const hi: I18nTexts = {
 		understand: 'मैं समझ गया',
 		// Error messages for user notifications
 		magicLinkValidationFailed: 'मैजिक लिंक सत्यापन नहीं हुआ',
+		signatureValidationError: 'सर्वर से अमान्य प्रतिक्रिया प्राप्त हुई',
 		parameterDecryptionFailed: 'पैरामीटर डिक्रिप्ट नहीं हो सके',
 		parameterDecryptionError: 'पैरामीटर डिक्रिप्शन एरर',
 		generationError: 'जनरेशन एरर',

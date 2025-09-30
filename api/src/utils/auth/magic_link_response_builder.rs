@@ -11,24 +11,6 @@ use super::types::ErrorResponse;
 pub struct MagicLinkResponseBuilder;
 
 impl MagicLinkResponseBuilder {
-    /// Build success response for magic link generation
-    ///
-    /// Creates a standardized 200 OK response with CORS headers
-    /// and JSON status confirmation.
-    ///
-    /// # Returns
-    /// * `Response` - HTTP 200 response with CORS headers
-    pub fn build_success_response() -> Response {
-        Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .header("access-control-allow-origin", "*")
-            .header("access-control-allow-methods", "POST, GET, OPTIONS")
-            .header("access-control-allow-headers", "Content-Type")
-            .body("{\"status\":\"OK\"}")
-            .build()
-    }
-
     /// Build error response for database storage failure
     ///
     /// Creates a standardized 500 Internal Server Error response
