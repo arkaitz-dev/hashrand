@@ -65,3 +65,4 @@ vite.config.ts.timestamp-*
 # Playwright
 web/test-results/
 web/playwright-report/
+web/web/
