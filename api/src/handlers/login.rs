@@ -226,22 +226,20 @@ fn handle_logout(req: Request) -> anyhow::Result<Response> {
     };
 
     // Generate SignedResponse
-    let signed_response = match crate::utils::create_signed_endpoint_response(
-        logout_payload,
-        &crypto_material,
-    ) {
-        Ok(response) => response,
-        Err(e) => {
-            println!("❌ Failed to create SignedResponse for logout: {}", e);
-            return Ok(Response::builder()
-                .status(500)
-                .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse {
-                    error: "Failed to generate signed response".to_string(),
-                })?)
-                .build());
-        }
-    };
+    let signed_response =
+        match crate::utils::create_signed_endpoint_response(logout_payload, &crypto_material) {
+            Ok(response) => response,
+            Err(e) => {
+                println!("❌ Failed to create SignedResponse for logout: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Failed to generate signed response".to_string(),
+                    })?)
+                    .build());
+            }
+        };
 
     // Create expired cookie to clear the refresh token
     let expired_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/";

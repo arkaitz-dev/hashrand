@@ -58,8 +58,9 @@ pub fn check_proactive_renewal(
             .map_err(|e| create_auth_error_response(e, None))?;
 
         // Decode pub_key from hex (received from refresh token claims)
-        let pub_key_bytes = hex::decode(&pub_key_hex)
-            .map_err(|e| create_auth_error_response(&format!("Invalid pub_key hex: {}", e), None))?;
+        let pub_key_bytes = hex::decode(&pub_key_hex).map_err(|e| {
+            create_auth_error_response(&format!("Invalid pub_key hex: {}", e), None)
+        })?;
         let mut pub_key = [0u8; 32];
         if pub_key_bytes.len() != 32 {
             return Err(create_auth_error_response("Invalid pub_key length", None));

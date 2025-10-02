@@ -1,15 +1,16 @@
 /**
  * Token Refresh E2E Test
  *
- * Tests automatic JWT token refresh system:
- * - Access token expires after 20s (dev mode)
- * - Refresh token expires after 120s (dev mode)
- * - Frontend automatically refreshes access token when needed
- * - Tests TRAMO 1/3 system (0-40s: token only refresh, no key rotation)
+ * Tests automatic JWT token refresh system using DYNAMIC values from .env
  *
- * IMPORTANT: This test requires timing accuracy
- * - Must wait for access token expiration (~25s)
- * - Must NOT wait long enough for key rotation window (40s+)
+ * Token durations: Read from .env (SPIN_VARIABLE_*_TOKEN_DURATION_MINUTES)
+ * Backend config: api/src/utils/jwt/config.rs::get_*_token_duration_minutes()
+ *
+ * Tests TRAMO 1/3 system (token refresh without key rotation)
+ *
+ * IMPORTANT: This test uses real .env values - NO hardcoded timings
+ * - Waits calculated dynamically from .env
+ * - Key rotation threshold = 1/3 of refresh duration
  *
  * Replicates bash test patterns from scripts/test_2_3_system.sh
  */
@@ -21,6 +22,13 @@ import {
 	generateCustomHash,
 	waitForSeconds
 } from '../utils/test-auth-helpers';
+import {
+	getAccessTokenDurationSeconds,
+	getRefreshTokenDurationSeconds,
+	getKeyRotationThresholdSeconds,
+	getAccessTokenExpirationWaitSeconds,
+	logTestConfiguration
+} from '../utils/test-config';
 
 test.describe('Token Refresh System', () => {
 	test('should automatically refresh access token after expiration', async ({
@@ -30,9 +38,7 @@ test.describe('Token Refresh System', () => {
 	}) => {
 		console.log('🧪 TEST: Automatic token refresh (TRAMO 1/3 system)');
 		console.log('='.repeat(60));
-		console.log('⏰ ACCESS TOKEN: 20s expiry (dev mode)');
-		console.log('⏰ REFRESH TOKEN: 120s expiry (dev mode)');
-		console.log('⏰ KEY ROTATION: After 40s (TRAMO 2/3)');
+		logTestConfiguration(); // Display dynamic values from .env
 		console.log('='.repeat(60));
 
 		// PHASE 1: Initial authentication (t=0s)
@@ -45,7 +51,9 @@ test.describe('Token Refresh System', () => {
 		const initialAuthData = await session.getAuthData();
 		const initialAccessToken = initialAuthData.access_token!;
 
-		console.log(`✅ Logged in with initial access token: ${initialAccessToken.substring(0, 30)}...`);
+		console.log(
+			`✅ Logged in with initial access token: ${initialAccessToken.substring(0, 30)}...`
+		);
 
 		// PHASE 2: Generate hash with valid token (t=0s)
 		console.log('\n📍 PHASE 2: Generate hash with valid token (t=0s)');
@@ -58,13 +66,14 @@ test.describe('Token Refresh System', () => {
 
 		console.log(`✅ Hash generated successfully: ${hash1.hash.substring(0, 20)}...`);
 
-		// PHASE 3: Wait for access token expiration (20s + 5s buffer = 25s)
+		// PHASE 3: Wait for access token expiration (dynamic from .env)
 		console.log('\n📍 PHASE 3: Waiting for access token expiration...');
 		console.log('-'.repeat(60));
-		console.log('⏳ ACCESS TOKEN expires after 20s');
-		console.log('⏳ Waiting 25s to ensure expiration (20s + 5s buffer)');
+		const waitSeconds = getAccessTokenExpirationWaitSeconds();
+		console.log(`⏳ ACCESS TOKEN expires after ${getAccessTokenDurationSeconds()}s`);
+		console.log(`⏳ Waiting ${waitSeconds}s to ensure expiration (duration + 5s buffer)`);
 
-		await waitForSeconds(25, 'Access token expiration');
+		await waitForSeconds(waitSeconds, 'Access token expiration');
 
 		console.log('✅ Wait complete - access token should be expired now');
 
@@ -73,8 +82,8 @@ test.describe('Token Refresh System', () => {
 		console.log('-'.repeat(60));
 		console.log('🔄 Navigating to authenticated page to trigger refresh...');
 
-		// Navigate to generator page (requires authentication)
-		await page.goto('http://localhost:5173/generator');
+		// Navigate to custom hash page (requires authentication)
+		await page.goto('http://localhost:5173/custom');
 
 		// Wait for page to load and handle token refresh
 		await page.waitForLoadState('networkidle');
@@ -92,7 +101,9 @@ test.describe('Token Refresh System', () => {
 		// New access token should be different from initial one
 		expect(refreshedAuthData.access_token).not.toBe(initialAccessToken);
 
-		console.log(`✅ Access token refreshed: ${refreshedAuthData.access_token!.substring(0, 30)}...`);
+		console.log(
+			`✅ Access token refreshed: ${refreshedAuthData.access_token!.substring(0, 30)}...`
+		);
 		console.log('✅ New token is different from initial token');
 
 		// Update test session with new token
@@ -116,8 +127,10 @@ test.describe('Token Refresh System', () => {
 		// PHASE 6: Verify no key rotation occurred (still in TRAMO 1/3)
 		console.log('\n📍 PHASE 6: Verify no key rotation (TRAMO 1/3)');
 		console.log('-'.repeat(60));
-		console.log('⏰ Time elapsed: ~25s');
-		console.log('⏰ Key rotation window starts at 40s (TRAMO 2/3)');
+		console.log(`⏰ Time elapsed: ~${waitSeconds}s`);
+		console.log(
+			`⏰ Key rotation window starts at ${getKeyRotationThresholdSeconds()}s (TRAMO 2/3)`
+		);
 		console.log('✅ Should have only refreshed access token, NOT rotated keys');
 
 		const finalKeyPair = await session.getKeyPair();
@@ -216,12 +229,13 @@ test.describe('Token Refresh System', () => {
 
 		console.log('✅ Auth status button shows active session (green)');
 
-		// Wait for access token expiration (25s)
-		console.log('\n⏳ Waiting for access token expiration (25s)...');
-		await waitForSeconds(25, 'Access token expiration');
+		// Wait for access token expiration (dynamic from .env)
+		const waitSeconds = getAccessTokenExpirationWaitSeconds();
+		console.log(`\n⏳ Waiting for access token expiration (${waitSeconds}s)...`);
+		await waitForSeconds(waitSeconds, 'Access token expiration');
 
 		// Navigate to trigger expiration check
-		await page.goto('http://localhost:5173/generator');
+		await page.goto('http://localhost:5173/custom');
 		await page.waitForLoadState('networkidle');
 
 		// Auth status button might show warning (yellow) during refresh

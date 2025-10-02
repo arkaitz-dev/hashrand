@@ -59,7 +59,7 @@ just dev
 - **🛡️ ChaCha20 Encryption**: Stream cipher for magic link encryption
 - **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
 - **🔄 2/3 Time-Based Token Management**: Intelligent dual-token refresh system with expiration handling
-- **🔑 Automatic Ed25519 Key Rotation**: Time-window based cryptographic key rotation (v1.6.22+)
+- **🔑 Automatic Ed25519 Key Rotation**: Time-window based cryptographic key rotation with MITM protection (v1.6.24+)
 - **🛡️ SignedRequest Strict Security**: Enterprise-grade authentication method separation preventing confusion attacks (v1.6.10+)
 - **✨ Pure SignedResponse Architecture**: Complete Ed25519 digital signature system across ALL endpoints (v1.6.22+)
 - **🍪 Secure Cookie Management**: HttpOnly refresh tokens with enterprise security attributes (Secure, SameSite=Strict)

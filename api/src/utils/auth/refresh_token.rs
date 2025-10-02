@@ -27,9 +27,10 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     }
 
     // Extract hostname from Host header for cookie Domain attribute
-    let domain = req.header("host")
+    let domain = req
+        .header("host")
         .and_then(|h| h.as_str())
-        .and_then(|host_str| extract_hostname_from_host_header(host_str));
+        .and_then(extract_hostname_from_host_header);
 
     if domain.is_none() {
         println!("⚠️ [SECURITY] No valid Host header - cookie will not have Domain attribute");
@@ -291,28 +292,37 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         );
 
         // Generate signed response WITH server_pub_key (key rotation)
-        let new_pub_key_hex = hex::encode(&new_pub_key_array);
+        // SECURITY: Sign with OLD pub_key but include NEW server_pub_key in payload
+        // - Signing key derived from OLD frontend pub_key (for validation)
+        // - Payload server_pub_key derived from NEW frontend pub_key (for rotation)
+        let new_pub_key_hex = hex::encode(new_pub_key_array);
+        println!("🔐 Refresh: Generating SignedResponse WITH server_pub_key for rotation");
         println!(
-            "🔐 Refresh: Generating SignedResponse WITH server_pub_key for rotation"
+            "🔒 [SECURITY] Signing with OLD pub_key to prevent MITM: {}",
+            &pub_key_hex[..16]
         );
-        let signed_response =
-            match SignedResponseGenerator::create_signed_response_with_server_pubkey(
-                payload,
-                &user_id,
-                &new_pub_key_hex,
-            ) {
-                Ok(response) => response,
-                Err(e) => {
-                    println!("❌ CRITICAL: Cannot create signed response: {}", e);
-                    return Ok(Response::builder()
-                        .status(500)
-                        .header("content-type", "application/json")
-                        .body(serde_json::to_string(&ErrorResponse {
-                            error: "Cryptographic signature failure".to_string(),
-                        })?)
-                        .build());
-                }
-            };
+        println!(
+            "🔄 [ROTATION] NEW server_pub_key derived from NEW frontend pub_key: {}",
+            &new_pub_key_hex[..16]
+        );
+        let signed_response = match SignedResponseGenerator::create_signed_response_with_rotation(
+            payload,
+            &user_id,
+            &pub_key_hex,     // ✅ OLD: derive signing key (MITM protection)
+            &new_pub_key_hex, // ✅ NEW: derive server_pub_key for payload (rotation)
+        ) {
+            Ok(response) => response,
+            Err(e) => {
+                println!("❌ CRITICAL: Cannot create signed response: {}", e);
+                return Ok(Response::builder()
+                    .status(500)
+                    .header("content-type", "application/json")
+                    .body(serde_json::to_string(&ErrorResponse {
+                        error: "Cryptographic signature failure".to_string(),
+                    })?)
+                    .build());
+            }
+        };
 
         // Build response with new refresh cookie
         let response_json = match serde_json::to_string(&signed_response) {
@@ -331,7 +341,10 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
         // Create cookie with Domain attribute if available
         let cookie_value = if let Some(ref domain_str) = domain {
-            println!("🔒 [SECURITY] Creating refresh cookie with Domain: '{}'", domain_str);
+            println!(
+                "🔒 [SECURITY] Creating refresh cookie with Domain: '{}'",
+                domain_str
+            );
             format!(
                 "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Domain={}; Path=/",
                 new_refresh_token,
@@ -410,9 +423,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         );
 
         // Generate signed response WITHOUT server_pub_key (no key rotation)
-        println!(
-            "🔐 Refresh: Generating SignedResponse WITHOUT server_pub_key (no rotation)"
-        );
+        println!("🔐 Refresh: Generating SignedResponse WITHOUT server_pub_key (no rotation)");
         let signed_response = match SignedResponseGenerator::create_signed_response(
             payload,
             &user_id,
@@ -485,10 +496,16 @@ fn extract_hostname_from_host_header(host_header: &str) -> Option<String> {
 
     // Validate that it's a reasonable hostname (basic validation)
     if hostname.is_empty() || hostname.contains('/') || hostname.contains('@') {
-        println!("⚠️ [SECURITY] Invalid Host header format: '{}'", host_header);
+        println!(
+            "⚠️ [SECURITY] Invalid Host header format: '{}'",
+            host_header
+        );
         return None;
     }
 
-    println!("🔒 [SECURITY] Extracted hostname for cookie Domain: '{}'", hostname);
+    println!(
+        "🔒 [SECURITY] Extracted hostname for cookie Domain: '{}'",
+        hostname
+    );
     Some(hostname.to_string())
 }

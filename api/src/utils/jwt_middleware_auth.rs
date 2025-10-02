@@ -209,13 +209,14 @@ fn handle_23_system_renewal(
         println!(
             "🔍 DEBUG 2/3 System: Beyond 1/3 elapsed (2/3 remaining), creating NEW refresh token (reset)"
         );
-        let (new_refresh_token, _) =
-            JwtUtils::create_refresh_token_from_username(&refresh_claims.sub, Some(&refresh_claims.pub_key)).map_err(
-                |_| {
-                    println!("🔍 DEBUG: Failed to create new refresh token");
-                    create_auth_error_response("Failed to create new refresh token", None)
-                },
-            )?;
+        let (new_refresh_token, _) = JwtUtils::create_refresh_token_from_username(
+            &refresh_claims.sub,
+            Some(&refresh_claims.pub_key),
+        )
+        .map_err(|_| {
+            println!("🔍 DEBUG: Failed to create new refresh token");
+            create_auth_error_response("Failed to create new refresh token", None)
+        })?;
 
         // Extract cryptographic information for signed responses
         let user_id = bs58::decode(&refresh_claims.sub).into_vec().map_err(|_| {

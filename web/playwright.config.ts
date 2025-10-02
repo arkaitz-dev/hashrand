@@ -133,7 +133,7 @@ export default defineConfig({
 					stdout: 'pipe',
 					stderr: 'pipe'
 				}
-		  ]
+			]
 		: [
 				// Local development: Reuse existing servers from `just dev`
 				{
@@ -142,5 +142,5 @@ export default defineConfig({
 					reuseExistingServer: true,
 					timeout: 5_000
 				}
-		  ]
+			]
 });

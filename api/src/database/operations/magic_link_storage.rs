@@ -72,10 +72,17 @@ impl MagicLinkStorage {
         let ui_host_bytes = ui_host.as_bytes();
         let ui_host_len = ui_host_bytes.len() as u16;
 
-        println!("🔒 [SECURITY] Storing ui_host in encrypted blob: '{}' (len: {})", ui_host, ui_host_len);
+        println!(
+            "🔒 [SECURITY] Storing ui_host in encrypted blob: '{}' (len: {})",
+            ui_host, ui_host_len
+        );
 
         let mut payload_plain = Vec::with_capacity(
-            ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + 2 + ui_host_bytes.len() + next_param.len()
+            ENCRYPTION_BLOB_LENGTH
+                + ED25519_BYTES_LENGTH
+                + 2
+                + ui_host_bytes.len()
+                + next_param.len(),
         );
         payload_plain.extend_from_slice(encryption_blob);
         payload_plain.extend_from_slice(&auth_data_bytes);

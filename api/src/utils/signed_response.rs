@@ -280,6 +280,56 @@ impl SignedResponseGenerator {
         Self::create_signed_response(enhanced_payload, user_id, pub_key_hex)
     }
 
+    /// Create signed response for key rotation (TRAMO 2/3)
+    ///
+    /// SECURITY: Uses OLD pub_key to sign response (prevents MITM)
+    /// but includes NEW server_pub_key in payload (for rotation)
+    ///
+    /// # Arguments
+    /// * `payload` - Response data to be signed
+    /// * `user_id` - User ID bytes (16 bytes)
+    /// * `signing_pub_key_hex` - OLD frontend pub_key (used to derive signing key)
+    /// * `payload_pub_key_hex` - NEW frontend pub_key (used to derive server_pub_key for payload)
+    ///
+    /// # Returns
+    /// * `Result<SignedResponse, SignedResponseError>` - Signed response with NEW server_pub_key
+    pub fn create_signed_response_with_rotation<T>(
+        payload: T,
+        user_id: &[u8],
+        signing_pub_key_hex: &str,
+        payload_pub_key_hex: &str,
+    ) -> Result<SignedResponse, SignedResponseError>
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        // Derive NEW server keypair from NEW frontend pub_key (for payload)
+        let new_private_key = Self::derive_session_private_key(user_id, payload_pub_key_hex)?;
+        let new_signing_key = SigningKey::from_bytes(&new_private_key);
+        let new_public_key = new_signing_key.verifying_key();
+
+        // Add NEW server_pub_key to payload
+        let mut payload_value = serde_json::to_value(&payload)
+            .map_err(|e| SignedResponseError::SerializationError(e.to_string()))?;
+
+        if let Value::Object(ref mut map) = payload_value {
+            map.insert(
+                "server_pub_key".to_string(),
+                Value::String(hex::encode(new_public_key.as_bytes())),
+            );
+        } else {
+            return Err(SignedResponseError::SerializationError(
+                "Payload must be a JSON object to add server_pub_key".to_string(),
+            ));
+        }
+
+        // Convert back to original type
+        let enhanced_payload: T = serde_json::from_value(payload_value)
+            .map_err(|e| SignedResponseError::SerializationError(e.to_string()))?;
+
+        // Create signed response using OLD pub_key for signing (SECURITY)
+        Self::create_signed_response(enhanced_payload, user_id, signing_pub_key_hex)
+    }
+
     /// Create signed HTTP response for regular endpoints (without server_pub_key)
     ///
     /// Universal helper function that can be used by any endpoint handler

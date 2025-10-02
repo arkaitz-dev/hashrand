@@ -1,19 +1,13 @@
 /**
  * Universal signed request system for all API endpoints
  *
- * REFACTORED: Uses pure core functions from crypto/signedRequest-core
- * Browser wrapper that gets keypair from IndexedDB
- *
+ * Browser implementation using signMessage() for WebCrypto/Noble compatibility
  * Part of SOLID refactoring for E2E testing compatibility
  */
 
-import { getOrCreateKeyPair } from './ed25519';
-import {
-	createSignedRequestWithKeyPair,
-	signQueryParamsWithKeyPair
-} from './crypto/signedRequest-core';
+import { getOrCreateKeyPair, signMessage } from './ed25519';
 
-// Re-export core types and utilities for backward compatibility
+// Re-export core types and utilities for E2E testing compatibility
 export type { SignedRequest } from './crypto/signedRequest-core';
 export {
 	sortObjectKeys,
@@ -27,9 +21,10 @@ export {
 } from './crypto/signedRequest-core';
 
 /**
- * Create signed request with Ed25519 signature (Browser wrapper)
+ * Create signed request with Ed25519 signature (Browser implementation)
  *
- * Gets keypair from IndexedDB and delegates to pure core function
+ * Uses signMessage() which supports both WebCrypto and Noble keypairs
+ * This is the production browser implementation
  *
  * @param payload - Data to be sent to API
  * @returns SignedRequest with Base64 payload and signature
@@ -37,32 +32,48 @@ export {
 export async function createSignedRequest<T>(
 	payload: T
 ): Promise<import('./crypto/signedRequest-core').SignedRequest> {
+	// Import core utilities
+	const { serializePayload, encodePayloadBase64 } = await import('./crypto/signedRequest-core');
+
 	// Get or generate Ed25519 keypair from IndexedDB
 	const keyPair = await getOrCreateKeyPair();
 
-	// Delegate to pure core function
-	const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
+	// Step 1: Serialize payload to deterministic JSON
+	const jsonPayload = serializePayload(payload);
 
-	// Log for debugging
+	// Step 2: Encode JSON as Base64 URL-safe for transmission
+	const base64Payload = encodePayloadBase64(jsonPayload);
+
+	// Step 3: Sign the Base64 string using signMessage (supports WebCrypto + Noble)
+	const signature = await signMessage(base64Payload, keyPair);
+
 	console.log('✅ BASE64 FRONTEND: Created signed request');
 
-	return signedRequest;
+	return {
+		payload: base64Payload,
+		signature
+	};
 }
 
 /**
- * Sign query parameters with Ed25519 (Browser wrapper)
+ * Sign query parameters with Ed25519 (Browser implementation)
  *
- * Gets keypair from IndexedDB and delegates to pure core function
+ * Uses signMessage() which supports both WebCrypto and Noble keypairs
  *
  * @param params - Query parameters to sign
  * @returns Signature string for the JSON serialized parameters
  */
 export async function signQueryParams(params: Record<string, string>): Promise<string> {
+	// Import core utility
+	const { serializeQueryParams } = await import('./crypto/signedRequest-core');
+
 	// Get or generate Ed25519 keypair from IndexedDB
 	const keyPair = await getOrCreateKeyPair();
 
+	// Serialize parameters with deterministic JSON
+	const serializedParams = serializeQueryParams(params);
 	console.log('🔍 JSON FRONTEND: Serialized query params for signing');
 
-	// Delegate to pure core function
-	return signQueryParamsWithKeyPair(params, keyPair);
+	// Sign using signMessage (supports WebCrypto + Noble)
+	return await signMessage(serializedParams, keyPair);
 }

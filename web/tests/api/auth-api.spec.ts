@@ -155,7 +155,8 @@ test.describe('API-Only Authentication Tests', () => {
 
 		// Create SignedRequest with INVALID signature
 		const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
-		signedRequest.signature = '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'; // Invalid
+		signedRequest.signature =
+			'0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'; // Invalid
 
 		const response = await request.post('http://localhost:3000/api/login/', {
 			headers: { 'Content-Type': 'application/json' },
@@ -207,14 +208,16 @@ test.describe('API-Only Authentication Tests', () => {
 			const responsePayload = JSON.parse(jsonString);
 
 			serverPubKeys.push(responsePayload.server_pub_key);
-			console.log(`✅ Request ${i}: server_pub_key ${responsePayload.server_pub_key.substring(0, 20)}..., status: ${responsePayload.status}`);
+			console.log(
+				`✅ Request ${i}: server_pub_key ${responsePayload.server_pub_key.substring(0, 20)}..., status: ${responsePayload.status}`
+			);
 
 			await session.clear();
 		}
 
 		// All requests should succeed (server_pub_key should be consistent)
 		expect(serverPubKeys).toHaveLength(3);
-		serverPubKeys.forEach(key => {
+		serverPubKeys.forEach((key) => {
 			expect(key).toHaveLength(64);
 		});
 

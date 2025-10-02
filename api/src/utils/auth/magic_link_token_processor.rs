@@ -29,7 +29,9 @@ pub fn validate_and_extract_token_data(
     // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 pub_key, and ui_host
     let (is_valid, next_param, user_id_bytes, pub_key_bytes, ui_host) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
-            Ok((valid, next, user_id, pub_key, ui_host)) => (valid, next, user_id, pub_key, ui_host),
+            Ok((valid, next, user_id, pub_key, ui_host)) => {
+                (valid, next, user_id, pub_key, ui_host)
+            }
             Err(error) => {
                 return Err(categorize_token_validation_error(error.into()));
             }
@@ -63,9 +65,14 @@ pub fn validate_and_extract_token_data(
 
     // Log ui_host extraction
     if let Some(ref host) = ui_host {
-        println!("🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'", host);
+        println!(
+            "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
+            host
+        );
     } else {
-        println!("⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain");
+        println!(
+            "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
+        );
     }
 
     Ok(TokenValidationResult {

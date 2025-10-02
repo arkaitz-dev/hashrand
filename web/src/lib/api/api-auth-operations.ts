@@ -115,9 +115,12 @@ export async function logout(): Promise<void> {
  * 🔄 KEY ROTATION LOGIC:
  * - ALWAYS generates new Ed25519 keypair before refresh request
  * - Backend determines rotation based on 2/3 time window:
- *   - Tramo 1/3 (0-40s): Returns access_token only, NO server_pub_key → No rotation
- *   - Tramo 2/3 (40-120s): Returns both tokens + server_pub_key → Full rotation
+ *   - Tramo 1/3 (0 to 1/3 duration): Returns access_token only, NO server_pub_key → No rotation
+ *   - Tramo 2/3 (1/3 to full duration): Returns both tokens + server_pub_key → Full rotation
  * - Frontend rotates keys ONLY if server_pub_key is present in response
+ *
+ * Token durations: Configured in .env (SPIN_VARIABLE_*_TOKEN_DURATION_MINUTES)
+ * Backend: api/src/utils/jwt/config.rs::get_refresh_token_duration_minutes()
  */
 export async function refreshToken(): Promise<boolean> {
 	// Import all dependencies at the top to avoid redeclarations
@@ -195,6 +198,7 @@ export async function refreshToken(): Promise<boolean> {
 		}
 
 		// 🔄 STEP 5: CONDITIONAL KEY ROTATION
+		// NOTE: universalSignedResponseHandler already updated server_pub_key in IndexedDB (if present)
 		console.log('🔄 [REFRESH] STEP 5: Verificando server_pub_key para rotación...');
 		if (data.server_pub_key) {
 			// ✅ TRAMO 2/3: Backend sent server_pub_key → Full key rotation
@@ -205,18 +209,13 @@ export async function refreshToken(): Promise<boolean> {
 			);
 			flashMessagesStore.addMessage('🔄 TRAMO 2/3: Iniciando rotación de claves...');
 
-			// Rotate client keypair
+			// Rotate client keypair to match NEW server keypair
 			console.log('🔑 [REFRESH] Rotando client priv_key en IndexedDB...');
 			await sessionManager.setPrivKey(newPrivKeyHex);
 			console.log('✅ [REFRESH] Client priv_key rotado:', newPrivKeyHex.substring(0, 16) + '...');
 
-			// Rotate server public key
-			console.log('🔑 [REFRESH] Rotando server_pub_key en IndexedDB...');
-			await sessionManager.setServerPubKey(data.server_pub_key);
-			console.log(
-				'✅ [REFRESH] Server pub_key rotado:',
-				data.server_pub_key.substring(0, 16) + '...'
-			);
+			// server_pub_key already updated by universalSignedResponseHandler (secure validation flow)
+			console.log('✅ [REFRESH] Server pub_key ya actualizado por validador (seguro)');
 
 			console.log('🎉 [REFRESH] Rotación de claves completada exitosamente');
 			flashMessagesStore.addMessage('✅ Rotación de claves completada (2/3)');

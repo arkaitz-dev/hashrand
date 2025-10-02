@@ -82,7 +82,10 @@ pub fn build_authentication_response(
 }
 
 /// Create secure HttpOnly refresh token cookie with proper security attributes and Domain
-fn create_secure_refresh_cookie(refresh_token: &str, ui_host: Option<&str>) -> anyhow::Result<String> {
+fn create_secure_refresh_cookie(
+    refresh_token: &str,
+    ui_host: Option<&str>,
+) -> anyhow::Result<String> {
     // Get refresh token duration from configuration
     let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
         .expect("CRITICAL: SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES must be set in .env");
@@ -95,7 +98,10 @@ fn create_secure_refresh_cookie(refresh_token: &str, ui_host: Option<&str>) -> a
     // - Domain: Explicit domain scope (from ui_host)
     // - Path=/: Available for all routes
     let cookie_value = if let Some(domain) = ui_host {
-        println!("🔒 [SECURITY] Creating refresh cookie with Domain: '{}'", domain);
+        println!(
+            "🔒 [SECURITY] Creating refresh cookie with Domain: '{}'",
+            domain
+        );
         format!(
             "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Domain={}; Path=/",
             refresh_token,
@@ -115,7 +121,11 @@ fn create_secure_refresh_cookie(refresh_token: &str, ui_host: Option<&str>) -> a
     println!(
         "✅ Secure refresh cookie created with {} minute duration{}",
         refresh_duration_minutes,
-        if ui_host.is_some() { " and Domain attribute" } else { " (no Domain)" }
+        if ui_host.is_some() {
+            " and Domain attribute"
+        } else {
+            " (no Domain)"
+        }
     );
 
     Ok(cookie_value)

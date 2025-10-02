@@ -33,7 +33,7 @@ function extractMagicTokenFromLogs(): string | null {
 
 		// Extract magic link (last occurrence)
 		const lines = logContent.split('\n');
-		const magicLinkLines = lines.filter(line => line.includes('Generated magic_link'));
+		const magicLinkLines = lines.filter((line) => line.includes('Generated magic_link'));
 
 		if (magicLinkLines.length === 0) {
 			console.log('❌ No magic link found in logs');
@@ -76,7 +76,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 
 		// Clear logs before starting
 		clearBackendLogs();
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await new Promise((resolve) => setTimeout(resolve, 1000));
 
 		const session = new TestSessionManager();
 
@@ -151,7 +151,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		console.log('='.repeat(60));
 
 		clearBackendLogs();
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await new Promise((resolve) => setTimeout(resolve, 1000));
 
 		const tokens: string[] = [];
 
@@ -179,7 +179,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 			expect(response.ok()).toBeTruthy();
 
 			// Wait a bit for log to be written
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await new Promise((resolve) => setTimeout(resolve, 1500));
 
 			const magicToken = extractMagicTokenFromLogs();
 			expect(magicToken).toBeTruthy();

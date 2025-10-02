@@ -81,7 +81,11 @@ test.describe('Ed25519 Cryptographic Operations', () => {
 
 		// Test invalid signature
 		const invalidSignature = '0'.repeat(128);
-		const isInvalid = verifySignatureWithPublicKey(message, invalidSignature, keyPair.publicKeyBytes);
+		const isInvalid = verifySignatureWithPublicKey(
+			message,
+			invalidSignature,
+			keyPair.publicKeyBytes
+		);
 		expect(isInvalid).toBe(false);
 
 		console.log('✅ Invalid signature rejected');
@@ -108,7 +112,11 @@ test.describe('Ed25519 Cryptographic Operations', () => {
 		// Verify restored keypair works
 		const message = 'Test message';
 		const signature = signMessageWithKeyPair(message, restoredKeyPair);
-		const isValid = verifySignatureWithPublicKey(message, signature, restoredKeyPair.publicKeyBytes);
+		const isValid = verifySignatureWithPublicKey(
+			message,
+			signature,
+			restoredKeyPair.publicKeyBytes
+		);
 
 		expect(isValid).toBe(true);
 

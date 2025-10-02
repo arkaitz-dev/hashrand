@@ -120,11 +120,7 @@ export class TestSessionManager {
 	 * Check if crypto tokens exist
 	 */
 	async hasCryptoTokens(): Promise<boolean> {
-		return !!(
-			this.cryptoTokens.cipher &&
-			this.cryptoTokens.nonce &&
-			this.cryptoTokens.hmac
-		);
+		return !!(this.cryptoTokens.cipher && this.cryptoTokens.nonce && this.cryptoTokens.hmac);
 	}
 
 	/**

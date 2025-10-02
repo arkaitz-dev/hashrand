@@ -25,6 +25,7 @@ pub mod signed_response;
 pub mod validation;
 
 // Auth functions imported directly in routing.rs
+pub use auth_validation_middleware::validate_no_simultaneous_tokens;
 pub use email::send_magic_link_email;
 pub use endpoint_helpers::{
     create_auth_error_response, create_client_error_response, create_error_response,
@@ -45,4 +46,3 @@ pub use routing::route_request_with_req;
 pub use signed_request::{SignedRequest, SignedRequestValidator};
 pub use signed_response::{SignedResponse, SignedResponseGenerator};
 pub use validation::{validate_email, validate_length, validate_prefix_suffix};
-pub use auth_validation_middleware::validate_no_simultaneous_tokens;

@@ -11,8 +11,9 @@ import { sessionManager } from './session-manager';
 /**
  * STRICT handler for signed responses from backend
  *
- * If validation fails, redirects to "/" with error message
- * This prevents server impersonation attacks
+ * SECURITY: Always validates with stored OLD server_pub_key first
+ * Only after successful validation, accepts NEW server_pub_key from payload (if present)
+ * This prevents MITM attacks where attacker tries to inject their own server_pub_key
  *
  * @param responseData - Raw response data from backend (MUST be signed)
  * @param isFirstSignedResponse - If true, extracts and stores server_pub_key
@@ -40,7 +41,7 @@ export async function handleSignedResponseStrict<T>(
 			// Store server public key for future response validations
 			await sessionManager.setServerPubKey(serverPubKey);
 		} else {
-			// Subsequent responses: use stored server public key
+			// Subsequent responses: ALWAYS validate with stored OLD server_pub_key
 			const storedServerPubKey = await sessionManager.getServerPubKey();
 			if (!storedServerPubKey) {
 				throw new Error('No server public key available for response validation');
@@ -48,8 +49,24 @@ export async function handleSignedResponseStrict<T>(
 			serverPubKey = storedServerPubKey;
 		}
 
-		// Validate signed response with server public key
-		return await validateSignedResponse<T>(responseData, serverPubKey);
+		// Validate signed response with server public key (OLD for key rotation)
+		const validatedPayload = await validateSignedResponse<T>(responseData, serverPubKey);
+
+		// SECURITY: After validation succeeds, check if response contains NEW server_pub_key
+		// This means backend is initiating key rotation (TRAMO 2/3)
+		if (!isFirstSignedResponse) {
+			const newServerPubKey = extractServerPubKey(responseData);
+			if (newServerPubKey && newServerPubKey !== serverPubKey) {
+				// Key rotation detected: update stored server_pub_key
+				console.log('🔄 [KEY ROTATION] New server_pub_key detected after validation');
+				console.log('🔒 [SECURITY] OLD server_pub_key:', serverPubKey.substring(0, 16) + '...');
+				console.log('🔒 [SECURITY] NEW server_pub_key:', newServerPubKey.substring(0, 16) + '...');
+				await sessionManager.setServerPubKey(newServerPubKey);
+				console.log('✅ [KEY ROTATION] server_pub_key updated in IndexedDB');
+			}
+		}
+
+		return validatedPayload;
 	} catch (error) {
 		// Security violation: Invalid or missing signature
 		console.error('SignedResponse validation failed:', error);

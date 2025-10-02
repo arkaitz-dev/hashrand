@@ -106,7 +106,10 @@ pub async fn generate_magic_link_signed(
         }
     };
 
-    println!("🔒 [SECURITY] Storing magic link with ui_host: '{}'", ui_host);
+    println!(
+        "🔒 [SECURITY] Storing magic link with ui_host: '{}'",
+        ui_host
+    );
 
     match MagicLinkOperations::store_magic_link_encrypted(
         &token_result.magic_token,

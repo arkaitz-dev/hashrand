@@ -11,6 +11,7 @@ Tests that work **without browser dependencies** - perfect for Arch Linux and CI
 **Location**: `tests/api/`
 
 #### Authentication Tests (4 tests)
+
 File: `tests/api/auth-api.spec.ts`
 
 - ✅ Request magic link with Ed25519 signature
@@ -19,30 +20,36 @@ File: `tests/api/auth-api.spec.ts`
 - ✅ Handle multiple magic link requests
 
 #### Full Authentication Flow Tests (2 tests)
+
 File: `tests/api/auth-full-flow.spec.ts`
 
 - ✅ Complete full authentication flow with magic link extraction from backend logs
 - ✅ Extract multiple magic links correctly (validates uniqueness)
 
 #### Cryptographic Validation Tests (10 tests)
+
 File: `tests/api/crypto-validation.spec.ts`
 
 **Ed25519 Operations (3 tests)**:
+
 - ✅ Generate Ed25519 keypair
 - ✅ Sign and verify messages
 - ✅ Convert keypair to/from hex
 
 **SignedRequest Creation (3 tests)**:
+
 - ✅ Create SignedRequest with deterministic serialization
 - ✅ Create identical signatures for same payload
 - ✅ Sign query parameters
 
 **Base64 and JSON (3 tests)**:
+
 - ✅ Encode and decode Base64 URL-safe
 - ✅ Sort object keys recursively
 - ✅ Serialize payload deterministically
 
 **TestSessionManager (1 test)**:
+
 - ✅ Manage session state in memory
 
 ### ⚠️ E2E Tests (21 tests) - Require Browser
@@ -52,6 +59,7 @@ Full end-to-end tests with browser automation. **Requires system dependencies** 
 **Location**: `tests/e2e/`
 
 **Files**:
+
 - `auth-flow.spec.ts` (3 tests) - Magic link authentication flow
 - `hash-generation.spec.ts` (12 tests) - All generation endpoints
 - `token-refresh.spec.ts` (3 tests) - Token refresh system (~25s wait)
@@ -147,11 +155,13 @@ Running 16 tests using 1 worker
 ## 🔧 System Requirements
 
 ### For API Tests (Minimal)
+
 - ✅ Node.js 18+
 - ✅ npm packages installed
 - ✅ Backend running (`just dev`)
 
 ### For E2E Tests (Full)
+
 - ✅ Node.js 18+
 - ✅ npm packages installed
 - ✅ Backend + Frontend running
@@ -181,6 +191,7 @@ tests/
 ## 🎯 What Tests Validate
 
 ### Core Functionality
+
 - ✅ Ed25519 keypair generation (Noble curves)
 - ✅ Message signing and verification
 - ✅ SignedRequest creation with deterministic serialization
@@ -189,6 +200,7 @@ tests/
 - ✅ Recursive object key sorting
 
 ### API Endpoints
+
 - ✅ `/api/login/` - Magic link request
 - ✅ Signature validation (reject unsigned/invalid requests)
 - ✅ Magic link extraction from backend logs (matches bash test pattern)
@@ -199,6 +211,7 @@ tests/
 - ⚠️ `/api/mnemonic` - Requires full auth flow (E2E only)
 
 ### Security
+
 - ✅ Ed25519 signature creation and verification
 - ✅ Invalid signature rejection
 - ✅ Unsigned request rejection
@@ -220,6 +233,7 @@ Tests follow **SOLID/DRY/KISS principles**:
 **Error**: `Cannot find module '@playwright/test'`
 
 **Solution**: Make sure you're in the `/web` directory:
+
 ```bash
 cd /home/arkaitz/proyectos/spin/hashrand-spin/web
 npm run test:api
@@ -230,6 +244,7 @@ npm run test:api
 **Error**: `Host system is missing dependencies to run browsers`
 
 **Solution**:
+
 1. Install Chromium: `npm run test:install`
 2. Install system deps (see System Requirements above)
 3. OR use API-only tests: `npm run test:api`
@@ -239,6 +254,7 @@ npm run test:api
 **Error**: Connection refused on port 3000
 
 **Solution**:
+
 ```bash
 # Start dev servers
 just dev
@@ -255,22 +271,22 @@ just status
 import { test, expect } from '@playwright/test';
 import { TestSessionManager } from '../utils/test-session-manager';
 import {
-    createSignedRequestWithKeyPair,
-    signQueryParamsWithKeyPair
+	createSignedRequestWithKeyPair,
+	signQueryParamsWithKeyPair
 } from '../../src/lib/crypto/signedRequest-core';
 
 test('should validate something', async ({ request }) => {
-    const session = new TestSessionManager();
-    const keyPair = await session.generateKeyPair();
+	const session = new TestSessionManager();
+	const keyPair = await session.generateKeyPair();
 
-    // IMPORTANT: Only use authorized emails
-    // Allowed: me@arkaitz.dev, arkaitzmugica@protonmail.com, arkaitzmugica@gmail.com
-    const payload = {
-        email: 'me@arkaitz.dev',
-        // ... rest of payload
-    };
+	// IMPORTANT: Only use authorized emails
+	// Allowed: me@arkaitz.dev, arkaitzmugica@protonmail.com, arkaitzmugica@gmail.com
+	const payload = {
+		email: 'me@arkaitz.dev'
+		// ... rest of payload
+	};
 
-    await session.clear();
+	await session.clear();
 });
 ```
 
@@ -281,12 +297,12 @@ import { test, expect } from '../utils/test-auth-helpers';
 import { requestMagicLink, loginWithMagicLink } from '../utils/test-auth-helpers';
 
 test('should do something with authentication', async ({ page, request, session }) => {
-    // IMPORTANT: Only use authorized emails
-    // Allowed: me@arkaitz.dev, arkaitzmugica@protonmail.com, arkaitzmugica@gmail.com
-    const magicLink = await requestMagicLink(request, session, 'me@arkaitz.dev');
-    await loginWithMagicLink(page, session, magicLink);
+	// IMPORTANT: Only use authorized emails
+	// Allowed: me@arkaitz.dev, arkaitzmugica@protonmail.com, arkaitzmugica@gmail.com
+	const magicLink = await requestMagicLink(request, session, 'me@arkaitz.dev');
+	await loginWithMagicLink(page, session, magicLink);
 
-    // Your test logic here
+	// Your test logic here
 });
 ```
 
