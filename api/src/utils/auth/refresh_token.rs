@@ -40,19 +40,9 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     let refresh_token = match req.header("cookie") {
         Some(cookie_header) => {
             let cookie_str = cookie_header.as_str().unwrap_or("");
-            println!("🍪 Refresh: Cookie header received: '{}'", cookie_str);
-            let token = extract_refresh_token_from_cookies(cookie_str);
-            if token.is_some() {
-                println!("✅ Refresh: Successfully extracted refresh token");
-            } else {
-                println!("❌ Refresh: Failed to extract refresh token from cookies");
-            }
-            token
+            extract_refresh_token_from_cookies(cookie_str)
         }
-        None => {
-            println!("❌ Refresh: No cookie header found in request");
-            None
-        }
+        None => None
     };
 
     let refresh_token = match refresh_token {
@@ -69,15 +59,8 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     // Validate refresh token
-    println!("🔍 Refresh: Attempting to validate refresh token...");
     let claims = match JwtUtils::validate_refresh_token(&refresh_token) {
-        Ok(claims) => {
-            println!(
-                "✅ Refresh: Token validation successful, user: {}",
-                claims.sub
-            );
-            claims
-        }
+        Ok(claims) => claims,
         Err(e) => {
             println!("❌ Refresh: Token validation failed: {}", e);
             return Ok(Response::builder()
@@ -90,22 +73,9 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         }
     };
 
-    // Create new access token using the user_id from refresh token claims
     let username = &claims.sub;
-
-    // Convert Base58 username back to email for access token creation
-    // For simplicity, we'll use the username directly since access tokens use username as subject
-    println!(
-        "🎫 Refresh: Creating new access token for user: {}",
-        username
-    );
-    // Extract pub_key from refresh token claims (Ed25519 public key for cryptographic operations)
     let pub_key = &claims.pub_key;
     let pub_key_hex = hex::encode(pub_key);
-    println!(
-        "🔑 Refresh: OLD pub_key from JWT: {}...",
-        &pub_key_hex[..16.min(pub_key_hex.len())]
-    );
 
     // Parse and validate SignedRequest from body
     let body_bytes = req.body();
@@ -124,7 +94,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     // Validate Ed25519 signature using pub_key from refresh token JWT
-    println!("🔍 Refresh: Validating Ed25519 signature...");
     if let Err(e) = SignedRequestValidator::validate_base64_payload(
         &signed_request.payload,
         &signed_request.signature,
@@ -174,27 +143,8 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     let two_thirds_threshold = (refresh_duration_seconds * 2) / 3;
     let is_in_renewal_window = time_remaining < two_thirds_threshold as i64;
 
-    println!("⏱️ Refresh: Expires at: {}, Now: {}", claims.exp, now);
-    println!(
-        "📊 Refresh: Time remaining: {}s, 2/3 threshold: {}s",
-        time_remaining, two_thirds_threshold
-    );
-    println!(
-        "🎯 Refresh: Decision -> {}",
-        if is_in_renewal_window {
-            "TRAMO 2/3 (KEY ROTATION)"
-        } else {
-            "TRAMO 1/3 (NO ROTATION)"
-        }
-    );
-
     if is_in_renewal_window {
         // ===== TRAMO 2/3: KEY ROTATION =====
-        println!("🔄 Refresh: ===== TRAMO 2/3: KEY ROTATION =====");
-        println!(
-            "🔑 Refresh: NEW pub_key: {}...",
-            &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
-        );
 
         // Decode new_pub_key from hex
         let new_pub_key_bytes = match hex::decode(&refresh_payload.new_pub_key) {
@@ -228,10 +178,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         // Create access_token with NEW pub_key
         let (access_token, _) =
             match JwtUtils::create_access_token_from_username(username, &new_pub_key_array) {
-                Ok((token, exp)) => {
-                    println!("✅ Refresh: Access token created with NEW pub_key");
-                    (token, exp)
-                }
+                Ok((token, exp)) => (token, exp),
                 Err(e) => {
                     println!("❌ Refresh: Failed to create access token: {}", e);
                     return Ok(Response::builder()
@@ -248,10 +195,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_username;
         let (new_refresh_token, _) =
             match create_custom_refresh_token_from_username(username, &new_pub_key_array) {
-                Ok((token, exp)) => {
-                    println!("✅ Refresh: Refresh token created with NEW pub_key");
-                    (token, exp)
-                }
+                Ok((token, exp)) => (token, exp),
                 Err(e) => {
                     println!("❌ Refresh: Failed to create refresh token: {}", e);
                     return Ok(Response::builder()
@@ -293,18 +237,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
         // Generate signed response WITH server_pub_key (key rotation)
         // SECURITY: Sign with OLD pub_key but include NEW server_pub_key in payload
-        // - Signing key derived from OLD frontend pub_key (for validation)
-        // - Payload server_pub_key derived from NEW frontend pub_key (for rotation)
         let new_pub_key_hex = hex::encode(new_pub_key_array);
-        println!("🔐 Refresh: Generating SignedResponse WITH server_pub_key for rotation");
-        println!(
-            "🔒 [SECURITY] Signing with OLD pub_key to prevent MITM: {}",
-            &pub_key_hex[..16]
-        );
-        println!(
-            "🔄 [ROTATION] NEW server_pub_key derived from NEW frontend pub_key: {}",
-            &new_pub_key_hex[..16]
-        );
         let signed_response = match SignedResponseGenerator::create_signed_response_with_rotation(
             payload,
             &user_id,
@@ -341,10 +274,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
         // Create cookie with Domain attribute if available
         let cookie_value = if let Some(ref domain_str) = domain {
-            println!(
-                "🔒 [SECURITY] Creating refresh cookie with Domain: '{}'",
-                domain_str
-            );
             format!(
                 "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Domain={}; Path=/",
                 new_refresh_token,
@@ -360,32 +289,30 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             )
         };
 
-        println!(
-            "🎉 Refresh: Key rotation completed successfully for user: {}",
-            username
-        );
+        // 🍪 CRITICAL FIX: Delete OLD cookie explicitly before creating NEW one
+        // Prevents duplicate cookies (OLD + NEW) in browser after key rotation
+        // IMPORTANT: Delete cookie MUST have EXACT same Domain/Path as original cookie (RFC 6265)
+        let delete_old_cookie = if let Some(ref domain_str) = domain {
+            format!(
+                "refresh_token=; Max-Age=0; HttpOnly; Secure; SameSite=Strict; Domain={}; Path=/",
+                domain_str
+            )
+        } else {
+            "refresh_token=; Max-Age=0; HttpOnly; Secure; SameSite=Strict; Path=/".to_string()
+        };
 
         Ok(Response::builder()
             .status(200)
             .header("content-type", "application/json")
-            .header("set-cookie", cookie_value)
+            .header("set-cookie", &delete_old_cookie)  // ✅ Delete OLD cookie first (exact match)
+            .header("set-cookie", &cookie_value)        // ✅ Create NEW cookie second
             .body(response_json)
             .build())
     } else {
         // ===== TRAMO 1/3: NO KEY ROTATION =====
-        println!("⏸️ Refresh: ===== TRAMO 1/3: NO KEY ROTATION =====");
-        println!(
-            "🔑 Refresh: Using OLD pub_key: {}...",
-            &pub_key_hex[..16.min(pub_key_hex.len())]
-        );
-
-        // Create access_token with OLD pub_key
         let (access_token, _) = match JwtUtils::create_access_token_from_username(username, pub_key)
         {
-            Ok((token, exp)) => {
-                println!("✅ Refresh: Access token created with OLD pub_key");
-                (token, exp)
-            }
+            Ok((token, exp)) => (token, exp),
             Err(e) => {
                 println!("❌ Refresh: Failed to create access token: {}", e);
                 return Ok(Response::builder()
@@ -423,7 +350,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         );
 
         // Generate signed response WITHOUT server_pub_key (no key rotation)
-        println!("🔐 Refresh: Generating SignedResponse WITHOUT server_pub_key (no rotation)");
         let signed_response = match SignedResponseGenerator::create_signed_response(
             payload,
             &user_id,
@@ -457,11 +383,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             }
         };
 
-        println!(
-            "✅ Refresh: Token refresh completed (no rotation) for user: {}",
-            username
-        );
-
         Ok(Response::builder()
             .status(200)
             .header("content-type", "application/json")
@@ -471,14 +392,22 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 }
 
 /// Extract refresh_token value from cookie header string
+///
+/// CRITICAL FIX (v1.6.33): Extract LAST occurrence instead of FIRST
+/// When browser sends duplicate cookies after key rotation (OLD + NEW),
+/// the LAST cookie is always the most recent one (NEW) after Set-Cookie.
+/// This makes the system robust even if cookie deletion doesn't work perfectly.
 fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
+    let mut last_token: Option<String> = None;
+
     for cookie in cookie_header.split(';') {
         let cookie = cookie.trim();
         if let Some(stripped) = cookie.strip_prefix("refresh_token=") {
-            return Some(stripped.to_string());
+            last_token = Some(stripped.to_string());  // ← Keep updating to get LAST
         }
     }
-    None
+
+    last_token
 }
 
 /// Extract hostname from Host header for cookie Domain attribute

@@ -267,9 +267,7 @@ test.describe('Base64 and JSON Serialization', () => {
 
 		expect(keys).toEqual(['a', 'm', 'nested', 'z']);
 
-		const nestedKeys = Object.keys(
-			(sorted as Record<string, Record<string, unknown>>).nested
-		);
+		const nestedKeys = Object.keys((sorted as Record<string, Record<string, unknown>>).nested);
 		expect(nestedKeys).toEqual(['b', 'deep', 'y']);
 
 		const deepKeys = Object.keys(

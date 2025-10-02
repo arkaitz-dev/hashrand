@@ -143,15 +143,35 @@ pub fn validate_magic_token_encrypted(
     }
 }
 
-/// Create magic link URL for development logging
+/// Create magic link URL with automatic protocol detection
+///
+/// Automatically adds the appropriate protocol if not present:
+/// - localhost/127.0.0.1 → http://
+/// - Any other domain → https://
 ///
 /// # Arguments
-/// * `host_url` - Base URL from request (e.g., "http://localhost:5173")
+/// * `host_url` - Base URL from request (with or without protocol)
 /// * `magic_token` - Magic token to include in URL
 ///
 /// # Returns
-/// * `String` - Complete magic link URL
+/// * `String` - Complete magic link URL with protocol
 pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
     let base_url = host_url.trim_end_matches('/');
-    format!("{}/?magiclink={}", base_url, magic_token)
+
+    // Check if protocol is already present
+    let url_with_protocol = if base_url.starts_with("http://") || base_url.starts_with("https://") {
+        // Protocol already present - use as is
+        base_url.to_string()
+    } else {
+        // No protocol - add appropriate one based on host
+        if base_url.contains("localhost") || base_url.contains("127.0.0.1") {
+            // Development: use http://
+            format!("http://{}", base_url)
+        } else {
+            // Production/remote: use https://
+            format!("https://{}", base_url)
+        }
+    };
+
+    format!("{}/?magiclink={}", url_with_protocol, magic_token)
 }

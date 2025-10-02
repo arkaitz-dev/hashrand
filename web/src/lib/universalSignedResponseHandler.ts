@@ -58,11 +58,7 @@ export async function handleSignedResponseStrict<T>(
 			const newServerPubKey = extractServerPubKey(responseData);
 			if (newServerPubKey && newServerPubKey !== serverPubKey) {
 				// Key rotation detected: update stored server_pub_key
-				console.log('🔄 [KEY ROTATION] New server_pub_key detected after validation');
-				console.log('🔒 [SECURITY] OLD server_pub_key:', serverPubKey.substring(0, 16) + '...');
-				console.log('🔒 [SECURITY] NEW server_pub_key:', newServerPubKey.substring(0, 16) + '...');
 				await sessionManager.setServerPubKey(newServerPubKey);
-				console.log('✅ [KEY ROTATION] server_pub_key updated in IndexedDB');
 			}
 		}
 

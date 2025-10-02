@@ -52,8 +52,6 @@ async function handleRequestWithAutoRetry<TResponse>(
 	} catch (error) {
 		// Only handle 401 errors from authenticated requests
 		if (error instanceof HttpSignedRequestError && error.status === 401 && !isCurrentlyRefreshing) {
-			console.log('🔄 [AUTO-REFRESH] 401 detected, attempting token refresh...');
-
 			isCurrentlyRefreshing = true;
 			try {
 				// Attempt to refresh access token using HttpOnly refresh cookie
@@ -61,15 +59,14 @@ async function handleRequestWithAutoRetry<TResponse>(
 				const refreshSuccess = await refreshToken();
 
 				if (refreshSuccess) {
-					console.log('✅ [AUTO-REFRESH] Token refreshed, retrying original request...');
 					// Retry original request with new access token
 					return await requestFn();
 				} else {
-					console.error('❌ [AUTO-REFRESH] Token refresh failed');
+					console.error('Token refresh failed');
 					throw error; // Propagate original 401 error
 				}
 			} catch (refreshError) {
-				console.error('❌ [AUTO-REFRESH] Token refresh error:', refreshError);
+				console.error('Token refresh error:', refreshError);
 				// If refresh itself fails, propagate original 401 error
 				throw error;
 			} finally {

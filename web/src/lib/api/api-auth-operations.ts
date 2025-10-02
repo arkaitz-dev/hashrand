@@ -138,31 +138,12 @@ export async function refreshToken(): Promise<boolean> {
 	unsubscribe();
 
 	try {
-		console.log('🔄 [REFRESH] ===== INICIO REFRESH TOKEN =====');
-		flashMessagesStore.addMessage(t('auth.tokenRefreshStarting', lang));
-
-		// Get OLD pub_key from IndexedDB for logging
-		const oldPrivKey = await sessionManager.getPrivKey();
-		if (oldPrivKey) {
-			console.log('🔑 [REFRESH] OLD priv_key actual:', oldPrivKey.substring(0, 16) + '...');
-		}
-
-		// 🔑 STEP 1: Generate NEW Ed25519 keypair for potential rotation
-		console.log('🔑 [REFRESH] STEP 1: Generando nuevo keypair Ed25519...');
+		// Generate NEW Ed25519 keypair for potential rotation
 		const newKeyPair = await generateEd25519KeyPairFallback();
 		const newPubKeyHex = publicKeyToHex(newKeyPair.publicKeyBytes);
 		const newPrivKeyHex = privateKeyBytesToHex(newKeyPair.privateKeyBytes!);
 
-		console.log('✅ [REFRESH] Nuevo keypair generado');
-		console.log('🔑 [REFRESH] NEW priv_key:', newPrivKeyHex.substring(0, 16) + '...');
-		console.log('🔑 [REFRESH] NEW pub_key:', newPubKeyHex.substring(0, 16) + '...');
-		flashMessagesStore.addMessage(t('auth.newKeypairGenerated', lang));
-
-		// 🔒 STEP 2: Send refresh request with new_pub_key
-		console.log('📤 [REFRESH] STEP 2: Enviando request a /api/refresh...');
-		console.log('📦 [REFRESH] Payload: { new_pub_key:', newPubKeyHex.substring(0, 16) + '... }');
-		flashMessagesStore.addMessage(t('auth.sendingRefreshRequest', lang));
-
+		// Send refresh request with new_pub_key
 		const data = await httpSignedPOSTRequest<{ new_pub_key: string }, LoginResponse>(
 			`${API_BASE}/refresh`,
 			{ new_pub_key: newPubKeyHex },
@@ -170,30 +151,16 @@ export async function refreshToken(): Promise<boolean> {
 			{ credentials: 'include' }
 		);
 
-		console.log('📥 [REFRESH] Respuesta recibida del servidor');
-		console.log('📊 [REFRESH] Response data:', {
-			has_access_token: !!data.access_token,
-			has_server_pub_key: !!data.server_pub_key,
-			has_expires_at: !!data.expires_at
-		});
-		flashMessagesStore.addMessage(t('auth.refreshResponseReceived', lang));
-
-		// 📝 STEP 3: Update auth store with new token
-		console.log('📝 [REFRESH] STEP 3: Actualizando store con nuevo access_token...');
-
+		// Update auth store with new token
 		const user = {
 			user_id: data.user_id,
 			isAuthenticated: true
 		};
 
-		// Update store and IndexedDB
 		authStore.updateTokens(user, data.access_token);
-		console.log('✅ [REFRESH] Access token actualizado en store');
 
-		// ⏱️ STEP 4: Update session expiration timestamp if provided (new refresh cookie issued)
-		console.log('⏱️ [REFRESH] STEP 4: Verificando expires_at...');
+		// Update session expiration timestamp if provided (new refresh cookie issued)
 		if (data.expires_at) {
-			console.log('✅ [REFRESH] expires_at presente:', data.expires_at);
 			try {
 				const { storeSessionExpiration } = await import('../session-storage');
 				await storeSessionExpiration(data.expires_at);
@@ -203,33 +170,16 @@ export async function refreshToken(): Promise<boolean> {
 			}
 		}
 
-		// 🔄 STEP 5: CONDITIONAL KEY ROTATION
+		// CONDITIONAL KEY ROTATION
 		// NOTE: universalSignedResponseHandler already updated server_pub_key in IndexedDB (if present)
-		console.log('🔄 [REFRESH] STEP 5: Verificando server_pub_key para rotación...');
 		if (data.server_pub_key) {
-			// ✅ TRAMO 2/3: Backend sent server_pub_key → Full key rotation
-			console.log('🔄 [REFRESH] ===== TRAMO 2/3: KEY ROTATION =====');
-			console.log(
-				'🔑 [REFRESH] server_pub_key recibido:',
-				data.server_pub_key.substring(0, 16) + '...'
-			);
-			flashMessagesStore.addMessage(t('auth.keyRotationStarting', lang));
+			// TRAMO 2/3: Backend sent server_pub_key → Full key rotation
+			// Update FULL keypair in hashrand-ed25519 DB (used by getOrCreateKeyPair for signing)
+			const { storeKeyPair } = await import('../ed25519/ed25519-database');
+			await storeKeyPair(newKeyPair);
 
-			// Rotate client keypair to match NEW server keypair
-			console.log('🔑 [REFRESH] Rotando client priv_key en IndexedDB...');
+			// Also update priv_key in hashrand-session DB for logging/debugging
 			await sessionManager.setPrivKey(newPrivKeyHex);
-			console.log('✅ [REFRESH] Client priv_key rotado:', newPrivKeyHex.substring(0, 16) + '...');
-
-			// server_pub_key already updated by universalSignedResponseHandler (secure validation flow)
-			console.log('✅ [REFRESH] Server pub_key ya actualizado por validador (seguro)');
-
-			console.log('🎉 [REFRESH] Rotación de claves completada exitosamente');
-			flashMessagesStore.addMessage(t('auth.keyRotationCompleted', lang));
-		} else {
-			// ⏭️ TRAMO 1/3: No server_pub_key → Keep existing keys, only token renewed
-			console.log('⏭️ [REFRESH] ===== TRAMO 1/3: NO KEY ROTATION =====');
-			console.log('ℹ️ [REFRESH] No server_pub_key en respuesta - manteniendo claves existentes');
-			flashMessagesStore.addMessage(t('auth.tokenRenewedNoRotation', lang));
 		}
 
 		// Note: Crypto tokens are NOT generated during refresh
@@ -243,12 +193,10 @@ export async function refreshToken(): Promise<boolean> {
 			return false;
 		}
 
-		console.log('🎉 [REFRESH] ===== REFRESH COMPLETADO EXITOSAMENTE =====');
 		flashMessagesStore.addMessage(t('auth.tokenRefreshSuccess', lang));
 		return true;
 	} catch (error) {
-		console.error('❌ [REFRESH] ===== ERROR EN REFRESH =====');
-		console.error('❌ [REFRESH] Error:', error);
+		console.error('Token refresh failed:', error);
 		flashMessagesStore.addMessage(t('auth.tokenRefreshError', lang));
 
 		// Check for dual token expiry in the error
@@ -256,14 +204,10 @@ export async function refreshToken(): Promise<boolean> {
 			error instanceof Error &&
 			error.message.includes('Both access and refresh tokens have expired')
 		) {
-			console.error('💥 [REFRESH] DUAL EXPIRY detectado');
 			flashMessagesStore.addMessage(t('auth.sessionExpiredRequireLogin', lang));
-			// DUAL EXPIRY detected during refresh
 			await handleDualTokenExpiry();
 		}
 
-		// Token refresh failed
-		console.log('❌ [REFRESH] Token refresh failed - retornando false');
 		return false;
 	}
 }
