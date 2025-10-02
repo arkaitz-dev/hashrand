@@ -131,11 +131,6 @@ cd web && npm run test:api:verbose  # Detailed output
 - **Add this rule to global ~/.claude/CLAUDE.md** - Must be in all projects
 - **This is CRITICAL for maintainability** - Prevents CLAUDE.md bloat and information overload
 
-## Current Session: v1.7.0 + v0.22.0 - Ready to Commit (2025-10-03)
-
-✅ Enterprise-grade refactoring complete (16 files, ~800 DRY violations eliminated, 51/51 tests passing). Pending: git commit. See [CHANGELOG.md](CHANGELOG.md#api-v170--web-v0220---2025-10-03).
-
----
 
 ## Recent Session History (see CHANGELOG.md for complete details)
 
