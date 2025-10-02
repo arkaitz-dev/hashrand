@@ -6,7 +6,7 @@
 //! - SOLID/DRY/KISS architecture with <225 lines
 
 use crate::types::{AlphabetType, CustomHashResponse};
-use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
+use crate::utils::protected_endpoint::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
     ProtectedEndpointMiddleware, ProtectedEndpointResult, create_auth_error_response,
     create_client_error_response, create_server_error_response, create_signed_endpoint_response,

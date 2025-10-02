@@ -223,6 +223,7 @@ export async function loginWithMagicLink(
 
 	// Step 3: Extract auth data from page context (IndexedDB)
 	const authData = await page.evaluate(async () => {
+		// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 		const { sessionManager } = await import('/src/lib/session-manager');
 		return await sessionManager.getAuthData();
 	});

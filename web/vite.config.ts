@@ -1,9 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption, type UserConfig } from 'vite';
 import eslint from 'vite-plugin-eslint';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }): UserConfig => {
 	const isProduction = mode === 'production';
 	const isLintOnly = process.env.VITE_LINT_ONLY === 'true';
 
@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
 				failOnError: isLintOnly || isProduction,
 				failOnWarning: false
 			})
-		],
+		] as PluginOption[],
 		server: {
 			port: 5173,
 			host: '0.0.0.0',

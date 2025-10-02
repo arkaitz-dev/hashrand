@@ -83,10 +83,10 @@ test.describe('API-Only Authentication Tests', () => {
 		// Verify signature with server public key
 		const messageBytes = new TextEncoder().encode(signedResponse.payload);
 		const signatureBytes = new Uint8Array(
-			signedResponse.signature.match(/.{2}/g)?.map((byte) => parseInt(byte, 16)) || []
+			signedResponse.signature.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
 		);
 		const publicKeyBytes = new Uint8Array(
-			responsePayload.server_pub_key.match(/.{2}/g)?.map((byte) => parseInt(byte, 16)) || []
+			responsePayload.server_pub_key.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
 		);
 
 		const isValid = ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);

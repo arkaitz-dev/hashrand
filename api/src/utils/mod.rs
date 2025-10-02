@@ -14,7 +14,7 @@ pub mod jwt_middleware_core;
 pub mod jwt_middleware_errors;
 pub mod jwt_middleware_renewal;
 pub mod jwt_middleware_types;
-pub mod protected_endpoint_middleware;
+pub mod protected_endpoint;
 pub mod pseudonimizer;
 pub mod query;
 pub mod random_generator;
@@ -36,7 +36,7 @@ pub use handler_helpers::{
     CryptoMaterial, create_signed_endpoint_response, extract_crypto_material_from_request,
 };
 pub use jwt::JwtUtils;
-pub use protected_endpoint_middleware::{ProtectedEndpointMiddleware, ProtectedEndpointResult};
+pub use protected_endpoint::{ProtectedEndpointMiddleware, ProtectedEndpointResult};
 pub use query::parse_query_params;
 pub use random_generator::{
     base58_to_seed, generate_otp, generate_random_seed, generate_with_seed, seed_to_base58,

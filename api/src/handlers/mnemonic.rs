@@ -1,5 +1,5 @@
 use crate::types::CustomHashResponse;
-use crate::utils::protected_endpoint_middleware::{extract_seed_from_payload, payload_to_params};
+use crate::utils::protected_endpoint::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
     ProtectedEndpointMiddleware, ProtectedEndpointResult, create_error_response,
     create_signed_endpoint_response, extract_crypto_material_from_request, generate_otp,

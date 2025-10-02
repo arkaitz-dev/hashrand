@@ -9,3 +9,8 @@ node_modules/
 # Generated files
 package-lock.json
 .vite/
+
+# Test artifacts
+test-results/
+tests/playwright-report/
+web/

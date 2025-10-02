@@ -97,6 +97,7 @@ test.describe('Authentication Flow', () => {
 
 		// Extract auth data from IndexedDB after reload
 		const authDataAfterReload = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return await sessionManager.getAuthData();
 		});

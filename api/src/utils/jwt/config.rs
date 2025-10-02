@@ -4,6 +4,40 @@
 
 use spin_sdk::variables;
 
+/// Generic hex configuration retrieval - DRY consolidation
+///
+/// Retrieves a hex-encoded configuration value from Spin variables and converts to byte array
+///
+/// # Type Parameters
+/// * `N` - Size of the byte array to return
+///
+/// # Arguments
+/// * `var_name` - Name of the Spin variable to retrieve
+/// * `display_name` - User-friendly name for error messages
+///
+/// # Returns
+/// * `Result<[u8; N], String>` - Byte array of size N or error message
+fn get_config_bytes<const N: usize>(var_name: &str, display_name: &str) -> Result<[u8; N], String> {
+    let hex_value = variables::get(var_name)
+        .map_err(|e| format!("Failed to get {} variable: {}", var_name, e))?;
+
+    let decoded = hex::decode(&hex_value)
+        .map_err(|_| format!("{} must be a valid hex string", display_name))?;
+
+    if decoded.len() != N {
+        return Err(format!(
+            "{} must be exactly {} bytes, got {}",
+            display_name,
+            N,
+            decoded.len()
+        ));
+    }
+
+    let mut result = [0u8; N];
+    result.copy_from_slice(&decoded);
+    Ok(result)
+}
+
 /// Get JWT secret from Spin variables
 ///
 /// # Returns
@@ -18,22 +52,7 @@ pub fn get_jwt_secret() -> Result<String, String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte salt or error message
 pub fn get_argon2_salt() -> Result<[u8; 64], String> {
-    let salt_hex = variables::get("argon2_salt")
-        .map_err(|e| format!("Failed to get argon2_salt variable: {}", e))?;
-
-    let decoded =
-        hex::decode(&salt_hex).map_err(|_| "ARGON2_SALT must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "ARGON2_SALT must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut salt = [0u8; 64];
-    salt.copy_from_slice(&decoded);
-    Ok(salt)
+    get_config_bytes("argon2_salt", "ARGON2_SALT")
 }
 
 /// Get user ID Argon2 compression key from Spin variables as bytes
@@ -41,22 +60,7 @@ pub fn get_argon2_salt() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte compression key or error message
 pub fn get_user_id_argon2_compression() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("user_id_argon2_compression")
-        .map_err(|e| format!("Failed to get user_id_argon2_compression variable: {}", e))?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "USER_ID_ARGON2_COMPRESSION must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "USER_ID_ARGON2_COMPRESSION must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes("user_id_argon2_compression", "USER_ID_ARGON2_COMPRESSION")
 }
 
 /// Get magic link HMAC key from Spin variables as bytes
@@ -64,22 +68,7 @@ pub fn get_user_id_argon2_compression() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte HMAC key or error message
 pub fn get_magic_link_hmac_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("magic_link_hmac_key")
-        .map_err(|e| format!("Failed to get magic_link_hmac_key variable: {}", e))?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "MAGIC_LINK_HMAC_KEY must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "MAGIC_LINK_HMAC_KEY must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes("magic_link_hmac_key", "MAGIC_LINK_HMAC_KEY")
 }
 
 /// Get user ID HMAC key from Spin variables as bytes
@@ -87,22 +76,7 @@ pub fn get_magic_link_hmac_key() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte HMAC key or error message
 pub fn get_user_id_hmac_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("user_id_hmac_key")
-        .map_err(|e| format!("Failed to get user_id_hmac_key variable: {}", e))?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "USER_ID_HMAC_KEY must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "USER_ID_HMAC_KEY must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes("user_id_hmac_key", "USER_ID_HMAC_KEY")
 }
 
 /// Get ChaCha20 encryption key from Spin variables as bytes
@@ -110,22 +84,7 @@ pub fn get_user_id_hmac_key() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte encryption key or error message
 pub fn get_chacha_encryption_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("chacha_encryption_key")
-        .map_err(|e| format!("Failed to get chacha_encryption_key variable: {}", e))?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "CHACHA_ENCRYPTION_KEY must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "CHACHA_ENCRYPTION_KEY must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes("chacha_encryption_key", "CHACHA_ENCRYPTION_KEY")
 }
 
 /// Get encrypted magic link token hash key from Spin variables as bytes
@@ -133,26 +92,10 @@ pub fn get_chacha_encryption_key() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte hash key or error message
 pub fn get_encrypted_mlink_token_hash_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("encrypted_mlink_token_hash_key").map_err(|e| {
-        format!(
-            "Failed to get encrypted_mlink_token_hash_key variable: {}",
-            e
-        )
-    })?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "ENCRYPTED_MLINK_TOKEN_HASH_KEY must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "ENCRYPTED_MLINK_TOKEN_HASH_KEY must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes(
+        "encrypted_mlink_token_hash_key",
+        "ENCRYPTED_MLINK_TOKEN_HASH_KEY",
+    )
 }
 
 /// Get magic link payload encryption key from Spin variables as bytes
@@ -160,198 +103,57 @@ pub fn get_encrypted_mlink_token_hash_key() -> Result<[u8; 64], String> {
 /// # Returns
 /// * `Result<[u8; 64], String>` - 64-byte encryption key or error message
 pub fn get_mlink_content_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("mlink_content")
-        .map_err(|e| format!("Failed to get mlink_content variable: {}", e))?;
-
-    let decoded = hex::decode(&key_hex)
-        .map_err(|_| "MLINK_CONTENT must be a valid hex string".to_string())?;
-
-    if decoded.len() != 64 {
-        return Err(format!(
-            "MLINK_CONTENT must be exactly 64 bytes, got {}",
-            decoded.len()
-        ));
-    }
-
-    let mut key = [0u8; 64];
-    key.copy_from_slice(&decoded);
-    Ok(key)
+    get_config_bytes("mlink_content", "MLINK_CONTENT")
 }
 
 // Custom Token Security Keys
 
 /// Get access token cipher key from Spin variables as bytes (64 bytes required)
 pub fn get_access_token_cipher_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("access_token_cipher_key")
-        .map_err(|e| format!("Failed to get access_token_cipher_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_CIPHER_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "ACCESS_TOKEN_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("access_token_cipher_key", "ACCESS_TOKEN_CIPHER_KEY")
 }
 
 /// Get access token nonce key from Spin variables as bytes (64 bytes required)
 pub fn get_access_token_nonce_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("access_token_nonce_key")
-        .map_err(|e| format!("Failed to get access_token_nonce_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_NONCE_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "ACCESS_TOKEN_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("access_token_nonce_key", "ACCESS_TOKEN_NONCE_KEY")
 }
 
 /// Get access token HMAC key from Spin variables as bytes (64 bytes required)
 pub fn get_access_token_hmac_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("access_token_hmac_key")
-        .map_err(|e| format!("Failed to get access_token_hmac_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "ACCESS_TOKEN_HMAC_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "ACCESS_TOKEN_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("access_token_hmac_key", "ACCESS_TOKEN_HMAC_KEY")
 }
 
 /// Get refresh token cipher key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
 pub fn get_refresh_token_cipher_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("refresh_token_cipher_key")
-        .map_err(|e| format!("Failed to get refresh_token_cipher_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_CIPHER_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "REFRESH_TOKEN_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("refresh_token_cipher_key", "REFRESH_TOKEN_CIPHER_KEY")
 }
 
 /// Get refresh token nonce key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
 pub fn get_refresh_token_nonce_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("refresh_token_nonce_key")
-        .map_err(|e| format!("Failed to get refresh_token_nonce_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_NONCE_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "REFRESH_TOKEN_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("refresh_token_nonce_key", "REFRESH_TOKEN_NONCE_KEY")
 }
 
 /// Get refresh token HMAC key from Spin variables as bytes (64 bytes required)
 #[allow(dead_code)]
 pub fn get_refresh_token_hmac_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("refresh_token_hmac_key")
-        .map_err(|e| format!("Failed to get refresh_token_hmac_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "REFRESH_TOKEN_HMAC_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "REFRESH_TOKEN_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("refresh_token_hmac_key", "REFRESH_TOKEN_HMAC_KEY")
 }
 
 /// Get prehash cipher key from Spin variables as bytes (64 bytes required)
 pub fn get_prehash_cipher_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("prehash_cipher_key")
-        .map_err(|e| format!("Failed to get prehash_cipher_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "PREHASH_CIPHER_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "PREHASH_CIPHER_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("prehash_cipher_key", "PREHASH_CIPHER_KEY")
 }
 
 /// Get prehash nonce key from Spin variables as bytes (64 bytes required)
 pub fn get_prehash_nonce_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("prehash_nonce_key")
-        .map_err(|e| format!("Failed to get prehash_nonce_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "PREHASH_NONCE_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "PREHASH_NONCE_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("prehash_nonce_key", "PREHASH_NONCE_KEY")
 }
 
 /// Get prehash HMAC key from Spin variables as bytes (64 bytes required)
 pub fn get_prehash_hmac_key() -> Result<[u8; 64], String> {
-    let key_hex = variables::get("prehash_hmac_key")
-        .map_err(|e| format!("Failed to get prehash_hmac_key variable: {}", e))?;
-    let key_bytes = hex::decode(&key_hex)
-        .map_err(|_| "PREHASH_HMAC_KEY must be a valid hex string".to_string())?;
-
-    if key_bytes.len() != 64 {
-        return Err(format!(
-            "PREHASH_HMAC_KEY must be 64 bytes (128 hex chars), got {} bytes",
-            key_bytes.len()
-        ));
-    }
-
-    let mut key_array = [0u8; 64];
-    key_array.copy_from_slice(&key_bytes);
-    Ok(key_array)
+    get_config_bytes("prehash_hmac_key", "PREHASH_HMAC_KEY")
 }
 
 /// Get access token duration in minutes from Spin variables

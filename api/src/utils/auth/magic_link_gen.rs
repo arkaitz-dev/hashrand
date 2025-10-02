@@ -125,7 +125,7 @@ pub async fn generate_magic_link_signed(
                 &token_result.magic_link,
                 Some(&payload.email_lang),
                 payload.ui_host.as_deref(),
-                ui_host,  // Already validated above, guaranteed to exist
+                ui_host, // Already validated above, guaranteed to exist
                 token_result.magic_expires_at,
             )
             .await;

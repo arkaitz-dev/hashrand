@@ -2,6 +2,7 @@ import { writable, derived } from 'svelte/store';
 import type { I18nTexts } from '$lib/types';
 import { getSupportedLanguageCodes } from '$lib/languageConfig';
 import { sessionManager } from '$lib/session-manager';
+import { initializeDebugUtilities } from './i18n-debug';
 
 // Import individual language files
 import { en } from './translations/en';
@@ -94,53 +95,8 @@ if (typeof window !== 'undefined') {
 	loadLanguageFromIndexedDB();
 }
 
-// Debug functions for browser console (development only)
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
-	// @ts-expect-error - Adding to window for debugging
-	window.debugI18n = {
-		getCurrentLanguage: () => {
-			let current;
-			const unsubscribe = currentLanguage.subscribe((lang) => (current = lang));
-			unsubscribe();
-			return current;
-		},
-		getBrowserLanguages: () => {
-			if (typeof navigator !== 'undefined') {
-				return {
-					language: navigator.language,
-					languages: navigator.languages
-				};
-			}
-			return null;
-		},
-		getStoredLanguage: async () => {
-			const preferences = await sessionManager.getUserPreferences();
-			return preferences.language;
-		},
-		detectLanguage: () => detectBrowserLanguage(),
-		getSupportedLanguages: () => getSupportedLanguageCodes(),
-		resetLanguage: async () => {
-			await sessionManager.setLanguagePreference(null);
-			const detected = detectBrowserLanguage();
-			currentLanguage.set(detected);
-			return detected;
-		},
-		setLanguage: (lang: string) => {
-			if (getSupportedLanguageCodes().includes(lang)) {
-				currentLanguage.set(lang);
-				return lang;
-			}
-			console.error('[i18n] Unsupported language:', lang);
-			return null;
-		},
-		testRTL: () => {
-			currentLanguage.set('ar');
-		},
-		testLTR: () => {
-			currentLanguage.set('en');
-		}
-	};
-}
+// Initialize debug utilities for browser console (development only)
+initializeDebugUtilities(currentLanguage);
 
 // Comprehensive translation texts with proper grammar for all languages
 export const translations: Record<string, I18nTexts> = {

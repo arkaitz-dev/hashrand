@@ -77,7 +77,8 @@ impl MagicLinkTokenGeneration {
                     .header("content-type", "application/json")
                     .body(
                         serde_json::to_string(&crate::utils::auth::types::ErrorResponse {
-                            error: "ui_host is required - frontend must provide its URL".to_string(),
+                            error: "ui_host is required - frontend must provide its URL"
+                                .to_string(),
                         })
                         .unwrap_or_else(|_| r#"{"error":"ui_host required"}"#.to_string()),
                     )

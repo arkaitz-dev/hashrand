@@ -106,6 +106,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 
 		// Extract new auth data from browser IndexedDB
 		const rotatedAuthData = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return {
 				authData: await sessionManager.getAuthData(),
@@ -227,6 +228,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 
 		// Update session with new token
 		const authData1 = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return await sessionManager.getAuthData();
 		});
@@ -245,6 +247,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 
 		// Update session with new token
 		const authData2 = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return await sessionManager.getAuthData();
 		});
@@ -291,6 +294,7 @@ test.describe('Key Rotation Edge Cases', () => {
 
 		// Update session
 		const authData = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return {
 				authData: await sessionManager.getAuthData(),

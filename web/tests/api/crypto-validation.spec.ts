@@ -263,7 +263,7 @@ test.describe('Base64 and JSON Serialization', () => {
 		};
 
 		const sorted = sortObjectKeys(unsorted);
-		const keys = Object.keys(sorted);
+		const keys = Object.keys(sorted as Record<string, unknown>);
 
 		expect(keys).toEqual(['a', 'm', 'nested', 'z']);
 

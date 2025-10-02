@@ -91,6 +91,7 @@ test.describe('Token Refresh System', () => {
 		// Frontend should automatically refresh token
 		// Extract new access token from IndexedDB
 		const refreshedAuthData = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return await sessionManager.getAuthData();
 		});
@@ -194,6 +195,7 @@ test.describe('Token Refresh System', () => {
 
 		// Access token should still be the same (no refresh needed)
 		const finalAuthData = await page.evaluate(async () => {
+			// @ts-expect-error - Dynamic import path works in browser runtime via Vite
 			const { sessionManager } = await import('/src/lib/session-manager');
 			return await sessionManager.getAuthData();
 		});
