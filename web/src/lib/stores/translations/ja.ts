@@ -212,7 +212,25 @@ export const ja: I18nTexts = {
 		logoutConfirmMessage:
 			'ログアウトしてもよろしいですか？保護された機能にアクセスするためには、再度認証する必要があります。',
 		loggedOut: 'ログアウトが完了しました',
-		isCorrect: '正しいです'
+		isCorrect: '正しいです',
+		// 新規：セキュリティとフォールバックメッセージ
+		magicLinkValidatedSuccess: '✅ マジックリンクの検証に成功しました！',
+		tokenRefreshStarting: '🔄 トークンの更新を開始しています...',
+		newKeypairGenerated: '🔑 ローテーション用の新しいキーペアを生成しました',
+		sendingRefreshRequest: '📤 /api/refresh にリクエストを送信しています...',
+		refreshResponseReceived: '📥 サーバーからレスポンスを受信しました',
+		keyRotationStarting: '🔄 フェーズ 2/3：キーローテーションを開始しています...',
+		keyRotationCompleted: '✅ キーローテーションが完了しました (2/3)',
+		tokenRenewedNoRotation: '⏭️ ローテーションなしでトークンを更新しました (1/3)',
+		tokenRefreshSuccess: '✅ トークンの更新に成功しました',
+		tokenRefreshError: '❌ トークンの更新エラー',
+		sessionExpiredRequireLogin: '⚠️ セッションが期限切れです - 再ログインが必要です',
+		cryptoTokensMissing: '🔐 暗号化トークンがありません - 認証が必要です',
+		sessionCorrupted: '⚠️ セッションが破損しています - 再度ログインしてください',
+		storageSaveFailed:
+			'⚠️ セッションがページリロード間で保持されない可能性があります（ストレージ問題）',
+		encryptionFailed: '⚠️ パラメータを暗号化できませんでした - ホームにリダイレクトしています',
+		requiresAuthentication: '🔐 続行するには認証が必要です'
 	},
 	logout: {
 		title: 'ログアウト',
@@ -228,6 +246,16 @@ export const ja: I18nTexts = {
 		logout: 'ログアウト',
 		confirmLogout: 'ログアウトしますか？',
 		logoutDescription:
-			'ログアウトしてもよろしいですか？保護された機能にアクセスするためには、再度認証する必要があります。'
+			'ログアウトしてもよろしいですか？保護された機能にアクセスするためには、再度認証する必要があります。',
+		// 新規：ログアウトフラッシュメッセージ
+		successMessage: '✅ ログアウトが完了しました',
+		errorMessage: '❌ ログアウトエラー'
+	},
+	errors: {
+		// 新規：エラーページメッセージ
+		pageNotFoundMessage: 'ページが見つかりません (404)。ホームにリダイレクトしています...',
+		serverErrorMessage: 'サーバーエラー (500)。ホームにリダイレクトしています...',
+		clientErrorMessage: 'クライアントエラー ({status})。ホームにリダイレクトしています...',
+		genericErrorMessage: 'エラー ({status})。ホームにリダイレクトしています...'
 	}
 };

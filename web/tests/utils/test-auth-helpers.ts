@@ -16,17 +16,15 @@ import { TestSessionManager } from './test-session-manager';
 import {
 	createSignedRequestWithKeyPair,
 	signQueryParamsWithKeyPair,
-	decodePayloadBase64,
-	type SignedRequest
+	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
 import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
-import type { Ed25519KeyPair } from '../../src/lib/ed25519/ed25519-types';
 import { ed25519 } from '@noble/curves/ed25519.js';
 
 /**
  * SignedResponse structure from backend
  */
-export interface SignedResponse<T = unknown> {
+export interface SignedResponse<_T = unknown> {
 	/** Base64 URL-safe encoded deterministic JSON payload */
 	payload: string;
 	/** Ed25519 signature of the Base64 payload string */
@@ -46,7 +44,7 @@ export interface SignedResponse<T = unknown> {
  * ```
  */
 export const test = base.extend<{ session: TestSessionManager }>({
-	session: async ({}, use) => {
+	session: async (_context, use) => {
 		const session = new TestSessionManager();
 		await use(session);
 		await session.clear();
@@ -538,7 +536,7 @@ export async function isAccessTokenExpired(
 	try {
 		await generateCustomHash(request, session, {});
 		return false; // Request succeeded, token is valid
-	} catch (error) {
+	} catch {
 		// If we get a 401, token is expired
 		return true;
 	}

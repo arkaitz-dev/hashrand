@@ -221,7 +221,25 @@ export const fr: I18nTexts = {
 			securityTitle: 'Pourquoi cette mesure de sécurité ?',
 			securityExplanation:
 				"Cette validation à double facteur garantit que seule la personne qui a demandé le lien magique depuis ce navigateur spécifique peut l'utiliser."
-		}
+		},
+		// NOUVEAU : Messages de sécurité et de secours
+		magicLinkValidatedSuccess: '✅ Lien magique validé avec succès !',
+		tokenRefreshStarting: '🔄 Démarrage du renouvellement du jeton...',
+		newKeypairGenerated: '🔑 Nouvelle paire de clés générée pour la rotation',
+		sendingRefreshRequest: '📤 Envoi de la requête à /api/refresh...',
+		refreshResponseReceived: '📥 Réponse reçue du serveur',
+		keyRotationStarting: '🔄 ÉTAPE 2/3 : Démarrage de la rotation des clés...',
+		keyRotationCompleted: '✅ Rotation des clés terminée (2/3)',
+		tokenRenewedNoRotation: '⏭️ Jeton renouvelé sans rotation (1/3)',
+		tokenRefreshSuccess: '✅ Jeton renouvelé avec succès',
+		tokenRefreshError: '❌ Erreur lors du renouvellement du jeton',
+		sessionExpiredRequireLogin: '⚠️ Session expirée - nouvelle connexion requise',
+		cryptoTokensMissing: '🔐 Jetons cryptographiques manquants - authentification requise',
+		sessionCorrupted: '⚠️ Session corrompue - veuillez vous reconnecter',
+		storageSaveFailed:
+			'⚠️ La session pourrait ne pas persister entre les rechargements de page (problème de stockage)',
+		encryptionFailed: "⚠️ Impossible de chiffrer les paramètres - redirection vers l'accueil",
+		requiresAuthentication: '🔐 Authentification requise pour continuer'
 	},
 	logout: {
 		title: 'Se Déconnecter',
@@ -237,6 +255,16 @@ export const fr: I18nTexts = {
 		logout: 'Se déconnecter',
 		confirmLogout: 'Se déconnecter?',
 		logoutDescription:
-			'Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous authentifier à nouveau pour accéder aux fonctionnalités protégées.'
+			'Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous authentifier à nouveau pour accéder aux fonctionnalités protégées.',
+		// NOUVEAU : Messages flash de déconnexion
+		successMessage: '✅ Déconnexion réussie',
+		errorMessage: '❌ Erreur lors de la déconnexion'
+	},
+	errors: {
+		// NOUVEAU : Messages de la page d'erreur
+		pageNotFoundMessage: "Page introuvable (404). Redirection vers l'accueil...",
+		serverErrorMessage: "Erreur du serveur (500). Redirection vers l'accueil...",
+		clientErrorMessage: "Erreur du client ({status}). Redirection vers l'accueil...",
+		genericErrorMessage: "Erreur ({status}). Redirection vers l'accueil..."
 	}
 };

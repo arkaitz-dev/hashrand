@@ -202,7 +202,24 @@ export const zh: I18nTexts = {
 		logoutConfirmTitle: '退出登录',
 		logoutConfirmMessage: '您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。',
 		loggedOut: '成功退出登录',
-		isCorrect: '正确'
+		isCorrect: '正确',
+		// 新增：安全和备用消息
+		magicLinkValidatedSuccess: '✅ 魔法链接验证成功！',
+		tokenRefreshStarting: '🔄 正在开始令牌更新...',
+		newKeypairGenerated: '🔑 已生成新密钥对用于轮换',
+		sendingRefreshRequest: '📤 正在向 /api/refresh 发送请求...',
+		refreshResponseReceived: '📥 已收到服务器响应',
+		keyRotationStarting: '🔄 阶段 2/3：正在开始密钥轮换...',
+		keyRotationCompleted: '✅ 密钥轮换已完成 (2/3)',
+		tokenRenewedNoRotation: '⏭️ 令牌已更新，无轮换 (1/3)',
+		tokenRefreshSuccess: '✅ 令牌更新成功',
+		tokenRefreshError: '❌ 令牌更新错误',
+		sessionExpiredRequireLogin: '⚠️ 会话已过期 - 需要重新登录',
+		cryptoTokensMissing: '🔐 缺少加密令牌 - 需要身份验证',
+		sessionCorrupted: '⚠️ 会话已损坏 - 请重新登录',
+		storageSaveFailed: '⚠️ 会话可能无法在页面重新加载之间保持（存储问题）',
+		encryptionFailed: '⚠️ 无法加密参数 - 正在重定向到主页',
+		requiresAuthentication: '🔐 需要身份验证才能继续'
 	},
 	logout: {
 		title: '退出登录',
@@ -217,6 +234,16 @@ export const zh: I18nTexts = {
 		authenticatedAs: '已验证身份：',
 		logout: '退出登录',
 		confirmLogout: '退出登录？',
-		logoutDescription: '您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。'
+		logoutDescription: '您确定要退出登录吗？您需要重新验证身份才能访问受保护的功能。',
+		// 新增：退出登录闪存消息
+		successMessage: '✅ 成功退出登录',
+		errorMessage: '❌ 退出登录时出错'
+	},
+	errors: {
+		// 新增：错误页面消息
+		pageNotFoundMessage: '未找到页面 (404)。正在重定向到主页...',
+		serverErrorMessage: '服务器错误 (500)。正在重定向到主页...',
+		clientErrorMessage: '客户端错误 ({status})。正在重定向到主页...',
+		genericErrorMessage: '错误 ({status})。正在重定向到主页...'
 	}
 };

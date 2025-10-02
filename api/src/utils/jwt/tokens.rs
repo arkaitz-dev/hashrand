@@ -22,7 +22,7 @@ pub fn create_refresh_token(
 /// Create refresh token from username using custom token system (with proper 9-minute duration)
 pub fn create_refresh_token_from_username(
     username: &str,
-    pub_key: Option<&[u8; 32]>, // Ed25519 public key for /api/refresh signature validation
+    pub_key: &[u8; 32], // Ed25519 public key for /api/refresh signature validation
 ) -> Result<(String, DateTime<Utc>), String> {
     create_custom_refresh_token_from_username(username, pub_key)
 }

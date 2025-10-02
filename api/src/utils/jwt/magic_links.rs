@@ -155,27 +155,3 @@ pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
     let base_url = host_url.trim_end_matches('/');
     format!("{}/?magiclink={}", base_url, magic_token)
 }
-
-/// Extract host URL from request for magic link generation
-///
-/// # Arguments
-/// * `req` - HTTP request to extract host from
-///
-/// # Returns
-/// * `String` - Host URL (e.g., "https://example.com" or "http://localhost:5173")
-pub fn get_host_url_from_request(req: &spin_sdk::http::Request) -> String {
-    // Try to get host from headers
-    let host = req
-        .header("host")
-        .and_then(|h| h.as_str())
-        .unwrap_or("localhost:5173");
-
-    // Check if it's a development host
-    let scheme = if host.contains("localhost") || host.contains("127.0.0.1") {
-        "http"
-    } else {
-        "https"
-    };
-
-    format!("{}://{}", scheme, host)
-}

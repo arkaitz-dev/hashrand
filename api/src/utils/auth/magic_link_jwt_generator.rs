@@ -74,7 +74,7 @@ fn create_access_token(
 
 /// Create refresh token for session persistence with Ed25519 public key
 fn create_refresh_token(username: &str, pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
-    match JwtUtils::create_refresh_token_from_username(username, Some(pub_key_bytes)) {
+    match JwtUtils::create_refresh_token_from_username(username, pub_key_bytes) {
         Ok((token, _expires)) => {
             println!("✅ Refresh token created successfully");
             Ok(token)
@@ -95,7 +95,7 @@ fn create_jwt_error_response(error_message: &str) -> Response {
             serde_json::to_string(&ErrorResponse {
                 error: error_message.to_string(),
             })
-            .unwrap_or_default(),
+            .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
         )
         .build()
 }

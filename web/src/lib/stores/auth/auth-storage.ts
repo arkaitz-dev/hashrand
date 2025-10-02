@@ -59,8 +59,29 @@ export async function saveAuthToStorage(user: AuthUser, accessToken: string): Pr
 	try {
 		const { sessionManager } = await import('../../session-manager');
 		await sessionManager.setAuthData(user, accessToken);
-	} catch {
-		// Failed to save auth to IndexedDB
+	} catch (error) {
+		console.error('Failed to save auth to IndexedDB:', error);
+
+		// Show translated warning to user (silent failure is bad UX)
+		try {
+			const { flashMessagesStore } = await import('../flashMessages');
+			const { currentLanguage, t } = await import('../i18n');
+
+			// Get current language
+			let lang = 'en';
+			const unsubscribe = currentLanguage.subscribe((l) => (lang = l));
+			unsubscribe();
+
+			// Show translated warning
+			const message = t('auth.storageSaveFailed', lang);
+			flashMessagesStore.addMessage(message);
+		} catch {
+			// Fallback to English if translation fails
+			const { flashMessagesStore } = await import('../flashMessages');
+			flashMessagesStore.addMessage(
+				'⚠️ Session may not persist across page reloads (storage issue)'
+			);
+		}
 	}
 }
 

@@ -19,6 +19,9 @@ export class HttpSignedRequestError extends Error {
 	) {
 		super(message);
 		this.name = 'HttpSignedRequestError';
+		// Preserve status and url for error handling
+		this.status = status;
+		this.url = url;
 	}
 }
 

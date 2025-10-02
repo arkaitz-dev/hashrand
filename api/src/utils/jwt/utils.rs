@@ -65,7 +65,7 @@ impl JwtUtils {
 
     pub fn create_refresh_token_from_username(
         username: &str,
-        pub_key: Option<&[u8; 32]>,
+        pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
         tokens::create_refresh_token_from_username(username, pub_key)
     }
@@ -96,9 +96,5 @@ impl JwtUtils {
 
     pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
         magic_links::create_magic_link_url(host_url, magic_token)
-    }
-
-    pub fn get_host_url_from_request(req: &spin_sdk::http::Request) -> String {
-        magic_links::get_host_url_from_request(req)
     }
 }

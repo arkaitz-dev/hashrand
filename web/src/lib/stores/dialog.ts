@@ -6,7 +6,7 @@ export interface AuthDialogProps {
 }
 
 export interface SeedDialogProps {
-	onSeedChoice: (keepSeed: boolean) => void;
+	onSeedChoice: (_keepSeed: boolean) => void;
 }
 
 export interface DialogData {

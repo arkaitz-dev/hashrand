@@ -64,10 +64,19 @@ export async function parseNextParameterJson(
 				);
 				return `${cleanRoute}?p=${result.p}`;
 			} else {
-				return cleanRoute;
+				// Crypto tokens missing - use universal recovery handler
+				const { ensureCryptoTokensExist } = await import('./auth-recovery');
+				await ensureCryptoTokensExist('URL Parameter Encryption');
+				// Return home (safe abort - no unencrypted params exposed)
+				return '/';
 			}
-		} catch {
-			return cleanRoute;
+		} catch (error) {
+			// Encryption failed - use universal recovery handler
+			console.error('URL parameter encryption failed:', error);
+			const { ensureCryptoTokensExist } = await import('./auth-recovery');
+			await ensureCryptoTokensExist('URL Parameter Encryption (Error)');
+			// Return home (safe abort)
+			return '/';
 		}
 	} catch {
 		return '/';

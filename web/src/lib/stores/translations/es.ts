@@ -220,7 +220,25 @@ export const es: I18nTexts = {
 			securityTitle: '¿Por qué esta medida de seguridad?',
 			securityExplanation:
 				'Esta validación de doble factor garantiza que sólo la persona que solicitó el enlace mágico desde este navegador específico pueda utilizarlo.'
-		}
+		},
+		// NUEVO: Mensajes de seguridad y fallback
+		magicLinkValidatedSuccess: '✅ ¡Magic link validado exitosamente!',
+		tokenRefreshStarting: '🔄 Iniciando renovación de token...',
+		newKeypairGenerated: '🔑 Nuevo keypair generado para rotación',
+		sendingRefreshRequest: '📤 Enviando solicitud a /api/refresh...',
+		refreshResponseReceived: '📥 Respuesta recibida del servidor',
+		keyRotationStarting: '🔄 TRAMO 2/3: Iniciando rotación de claves...',
+		keyRotationCompleted: '✅ Rotación de claves completada (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token renovado sin rotación (1/3)',
+		tokenRefreshSuccess: '✅ Token renovado exitosamente',
+		tokenRefreshError: '❌ Error en renovación de token',
+		sessionExpiredRequireLogin: '⚠️ Sesión expirada - requiere nuevo login',
+		cryptoTokensMissing: '🔐 Tokens criptográficos ausentes - autenticación requerida',
+		sessionCorrupted: '⚠️ Sesión corrupta - por favor inicia sesión nuevamente',
+		storageSaveFailed:
+			'⚠️ La sesión puede no persistir entre recargas de página (problema de almacenamiento)',
+		encryptionFailed: '⚠️ No se pudieron encriptar los parámetros - redirigiendo a inicio',
+		requiresAuthentication: '🔐 Autenticación requerida para continuar'
 	},
 	logout: {
 		title: 'Cerrar Sesión',
@@ -236,6 +254,16 @@ export const es: I18nTexts = {
 		logout: 'Cerrar sesión',
 		confirmLogout: '¿Cerrar sesión?',
 		logoutDescription:
-			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.'
+			'¿Estás seguro de que quieres cerrar sesión? Tendrás que autenticarte de nuevo para acceder a las funciones protegidas.',
+		// NUEVO: Mensajes flash de logout
+		successMessage: '✅ Sesión cerrada correctamente',
+		errorMessage: '❌ Error al cerrar sesión'
+	},
+	errors: {
+		// NUEVO: Mensajes de página de error
+		pageNotFoundMessage: 'Página no encontrada (404). Redirigiendo a inicio...',
+		serverErrorMessage: 'Error del servidor (500). Redirigiendo a inicio...',
+		clientErrorMessage: 'Error del cliente ({status}). Redirigiendo a inicio...',
+		genericErrorMessage: 'Error ({status}). Redirigiendo a inicio...'
 	}
 };

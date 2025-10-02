@@ -221,7 +221,26 @@ export const de: I18nTexts = {
 			securityTitle: 'Warum diese Sicherheitsmaßnahme?',
 			securityExplanation:
 				'Diese Zwei-Faktor-Validierung stellt sicher, dass nur die Person, die den Magic-Link von diesem spezifischen Browser angefordert hat, ihn verwenden kann.'
-		}
+		},
+		// NEU: Sicherheits- und Fallback-Nachrichten
+		magicLinkValidatedSuccess: '✅ Magic-Link erfolgreich validiert!',
+		tokenRefreshStarting: '🔄 Token-Erneuerung wird gestartet...',
+		newKeypairGenerated: '🔑 Neues Schlüsselpaar für Rotation generiert',
+		sendingRefreshRequest: '📤 Anfrage an /api/refresh wird gesendet...',
+		refreshResponseReceived: '📥 Antwort vom Server empfangen',
+		keyRotationStarting: '🔄 PHASE 2/3: Schlüsselrotation wird gestartet...',
+		keyRotationCompleted: '✅ Schlüsselrotation abgeschlossen (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token erneuert ohne Rotation (1/3)',
+		tokenRefreshSuccess: '✅ Token erfolgreich erneuert',
+		tokenRefreshError: '❌ Fehler bei Token-Erneuerung',
+		sessionExpiredRequireLogin: '⚠️ Sitzung abgelaufen - neue Anmeldung erforderlich',
+		cryptoTokensMissing: '🔐 Kryptografische Token fehlen - Authentifizierung erforderlich',
+		sessionCorrupted: '⚠️ Sitzung beschädigt - bitte melden Sie sich erneut an',
+		storageSaveFailed:
+			'⚠️ Sitzung bleibt möglicherweise nicht zwischen Seitenladevorgängen bestehen (Speicherproblem)',
+		encryptionFailed:
+			'⚠️ Parameter konnten nicht verschlüsselt werden - Weiterleitung zur Startseite',
+		requiresAuthentication: '🔐 Authentifizierung erforderlich, um fortzufahren'
 	},
 	logout: {
 		title: 'Abmelden',
@@ -237,6 +256,16 @@ export const de: I18nTexts = {
 		logout: 'Abmelden',
 		confirmLogout: 'Abmelden?',
 		logoutDescription:
-			'Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut authentifizieren, um auf geschützte Funktionen zuzugreifen.'
+			'Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut authentifizieren, um auf geschützte Funktionen zuzugreifen.',
+		// NEU: Abmelde-Flash-Nachrichten
+		successMessage: '✅ Erfolgreich abgemeldet',
+		errorMessage: '❌ Fehler beim Abmelden'
+	},
+	errors: {
+		// NEU: Fehlerseiten-Nachrichten
+		pageNotFoundMessage: 'Seite nicht gefunden (404). Weiterleitung zur Startseite...',
+		serverErrorMessage: 'Serverfehler (500). Weiterleitung zur Startseite...',
+		clientErrorMessage: 'Client-Fehler ({status}). Weiterleitung zur Startseite...',
+		genericErrorMessage: 'Fehler ({status}). Weiterleitung zur Startseite...'
 	}
 };

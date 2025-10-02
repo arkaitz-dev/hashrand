@@ -11,10 +11,11 @@
 export class ApiError extends Error {
 	constructor(
 		message: string,
-		public readonly status: number // eslint-disable-line no-unused-vars
+		public readonly status: number
 	) {
 		super(message);
 		this.name = 'ApiError';
+		this.status = status; // Preserve status for error handling
 	}
 
 	get statusCode(): number {

@@ -21,7 +21,6 @@ import { page } from '$app/stores';
 export interface FormParamsConfig<T> {
 	endpoint: string;
 	getDefaultParams: () => T;
-	// eslint-disable-next-line no-unused-vars
 	validateAndApplyParams(urlParams: Record<string, unknown>, currentParams: T): T;
 }
 

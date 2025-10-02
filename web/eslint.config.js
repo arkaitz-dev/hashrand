@@ -48,7 +48,8 @@ export default [
 				IDBOpenDBRequest: 'readonly',
 				btoa: 'readonly',
 				atob: 'readonly',
-				EventListener: 'readonly'
+				EventListener: 'readonly',
+				process: 'readonly'
 			}
 		},
 		plugins: {
@@ -56,7 +57,11 @@ export default [
 		},
 		rules: {
 			...typescript.configs.recommended.rules,
-			'no-unused-vars': 'warn',
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+			],
 			'prefer-const': 'warn',
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/ban-ts-comment': 'warn'
@@ -101,7 +106,8 @@ export default [
 				IDBOpenDBRequest: 'readonly',
 				btoa: 'readonly',
 				atob: 'readonly',
-				EventListener: 'readonly'
+				EventListener: 'readonly',
+				process: 'readonly'
 			}
 		},
 		plugins: {
@@ -111,7 +117,10 @@ export default [
 		rules: {
 			...svelte.configs.recommended.rules,
 			'no-unused-vars': 'off',
-			'@typescript-eslint/no-unused-vars': 'warn',
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+			],
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/ban-ts-comment': 'warn'
 		}

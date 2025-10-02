@@ -165,7 +165,7 @@ test.describe('Hash Generation - Authenticated Endpoints', () => {
 		expect(result.api_key.length).toBeGreaterThanOrEqual(32);
 
 		// API key should be alphanumeric + special chars
-		expect(result.api_key).toMatch(/^[A-Za-z0-9_\-]+$/);
+		expect(result.api_key).toMatch(/^[A-Za-z0-9_-]+$/);
 
 		// Verify seed and OTP
 		expect(result.seed).toBeTruthy();
@@ -276,7 +276,7 @@ test.describe('Hash Generation - Unauthenticated (should fail)', () => {
 		console.log('='.repeat(60));
 
 		// First authenticate to get JWT token
-		const magicLink = await requestMagicLink(request, session, 'me@arkaitz.dev');
+		const _magicLink = await requestMagicLink(request, session, 'me@arkaitz.dev');
 		// Don't navigate to magic link in browser, just extract token for API request
 
 		// Extract auth data from session

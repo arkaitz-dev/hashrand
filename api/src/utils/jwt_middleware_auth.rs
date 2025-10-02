@@ -211,7 +211,7 @@ fn handle_23_system_renewal(
         );
         let (new_refresh_token, _) = JwtUtils::create_refresh_token_from_username(
             &refresh_claims.sub,
-            Some(&refresh_claims.pub_key),
+            &refresh_claims.pub_key,
         )
         .map_err(|_| {
             println!("🔍 DEBUG: Failed to create new refresh token");

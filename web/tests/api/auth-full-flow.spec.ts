@@ -11,11 +11,11 @@ import { test, expect } from '@playwright/test';
 import { TestSessionManager } from '../utils/test-session-manager';
 import {
 	createSignedRequestWithKeyPair,
-	signQueryParamsWithKeyPair,
+	signQueryParamsWithKeyPair as _signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
 import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
-import { ed25519 } from '@noble/curves/ed25519.js';
+import { ed25519 as _ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
 

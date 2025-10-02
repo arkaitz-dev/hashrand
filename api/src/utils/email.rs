@@ -50,7 +50,15 @@ fn create_email_request(
     // Generate unique Message-ID to prevent spam warnings
     let message_id = format!(
         "<{}.{}@mailer.hashrand.com>",
-        chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0),
+        chrono::Utc::now()
+            .timestamp_nanos_opt()
+            .unwrap_or_else(|| {
+                println!("⚠️ CRITICAL: timestamp_nanos_opt() overflow - server clock may be misconfigured (date > year 2262)");
+                chrono::Utc::now()
+                    .timestamp_millis()
+                    .checked_mul(1_000_000)  // Safe multiply - prevents overflow
+                    .unwrap_or(0)  // Final fallback if multiplication would overflow
+            }),
         nanoid::nanoid!(8)
     );
 

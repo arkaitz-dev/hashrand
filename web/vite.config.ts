@@ -3,7 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import eslint from 'vite-plugin-eslint';
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
 	const isProduction = mode === 'production';
 	const isLintOnly = process.env.VITE_LINT_ONLY === 'true';
 

@@ -81,6 +81,8 @@ fn generate_custom_hash_signed(
     crypto_material: &crate::utils::CryptoMaterial,
 ) -> anyhow::Result<Response> {
     // Parse parameters with default values (inline for DRY)
+    // Default length 21: Provides ~110 bits of entropy with Base58 (58^21 ≈ 2^110)
+    // Balances strong security with reasonable output length for custom hashes
     let length = params
         .get("length")
         .and_then(|s| s.parse::<usize>().ok())

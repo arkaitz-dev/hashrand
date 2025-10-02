@@ -98,7 +98,7 @@ impl ProtectedEndpointMiddleware {
                         serde_json::to_string(&ErrorResponse {
                             error: "Invalid SignedRequest structure".to_string(),
                         })
-                        .unwrap_or_default(),
+                        .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                     )
                     .build());
             }
@@ -118,7 +118,7 @@ impl ProtectedEndpointMiddleware {
                     serde_json::to_string(&ErrorResponse {
                         error: format!("Invalid signature: {}", e),
                     })
-                    .unwrap_or_default(),
+                    .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                 )
                 .build());
         }
@@ -141,7 +141,7 @@ impl ProtectedEndpointMiddleware {
                             serde_json::to_string(&ErrorResponse {
                                 error: format!("Invalid payload format: {}", e),
                             })
-                            .unwrap_or_default(),
+                            .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                         )
                         .build());
                 }
@@ -164,7 +164,7 @@ impl ProtectedEndpointMiddleware {
             return Err(Response::builder()
                 .status(403)
                 .header("content-type", "application/json")
-                .body(serde_json::to_string(&ErrorResponse { error: e }).unwrap_or_default())
+                .body(serde_json::to_string(&ErrorResponse { error: e }).unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()))
                 .build());
         }
 

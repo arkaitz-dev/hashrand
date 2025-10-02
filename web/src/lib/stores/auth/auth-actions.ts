@@ -70,7 +70,16 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	// Show flash message for successful magic link validation
 	try {
 		const { flashMessagesStore } = await import('../flashMessages');
-		flashMessagesStore.addMessage('✅ Magic link validado exitosamente!');
+		const { currentLanguage, t } = await import('../i18n');
+
+		// Get current language
+		let lang = 'en';
+		const unsubscribe = currentLanguage.subscribe((l) => (lang = l));
+		unsubscribe();
+
+		// Show translated message
+		const message = t('auth.magicLinkValidatedSuccess', lang);
+		flashMessagesStore.addMessage(message);
 	} catch {
 		// Failed to show magic link success flash message
 	}

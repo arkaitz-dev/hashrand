@@ -220,7 +220,24 @@ export const en: I18nTexts = {
 			securityTitle: 'Why this security measure?',
 			securityExplanation:
 				'This dual-factor validation ensures that only the person who requested the magic link from this specific browser can use it.'
-		}
+		},
+		// NEW: Security and fallback messages
+		magicLinkValidatedSuccess: '✅ Magic link validated successfully!',
+		tokenRefreshStarting: '🔄 Starting token renewal...',
+		newKeypairGenerated: '🔑 New keypair generated for rotation',
+		sendingRefreshRequest: '📤 Sending request to /api/refresh...',
+		refreshResponseReceived: '📥 Response received from server',
+		keyRotationStarting: '🔄 STAGE 2/3: Starting key rotation...',
+		keyRotationCompleted: '✅ Key rotation completed (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token renewed without rotation (1/3)',
+		tokenRefreshSuccess: '✅ Token renewed successfully',
+		tokenRefreshError: '❌ Error renewing token',
+		sessionExpiredRequireLogin: '⚠️ Session expired - new login required',
+		cryptoTokensMissing: '🔐 Crypto tokens missing - authentication required',
+		sessionCorrupted: '⚠️ Session corrupted - please login again',
+		storageSaveFailed: '⚠️ Session may not persist across page reloads (storage issue)',
+		encryptionFailed: '⚠️ Unable to encrypt parameters - redirecting to home',
+		requiresAuthentication: '🔐 Authentication required to continue'
 	},
 	logout: {
 		title: 'Log Out',
@@ -237,6 +254,16 @@ export const en: I18nTexts = {
 		logout: 'Log out',
 		confirmLogout: 'Log out?',
 		logoutDescription:
-			'Are you sure you want to log out? You will need to authenticate again to access protected features.'
+			'Are you sure you want to log out? You will need to authenticate again to access protected features.',
+		// NEW: Logout flash messages
+		successMessage: '✅ Successfully logged out',
+		errorMessage: '❌ Error during logout'
+	},
+	errors: {
+		// NEW: Error page messages
+		pageNotFoundMessage: 'Page not found (404). Redirecting to home...',
+		serverErrorMessage: 'Server error (500). Redirecting to home...',
+		clientErrorMessage: 'Client error ({status}). Redirecting to home...',
+		genericErrorMessage: 'Error ({status}). Redirecting to home...'
 	}
 };

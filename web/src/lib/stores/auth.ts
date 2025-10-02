@@ -69,7 +69,7 @@ export const authStore = {
 	 * Initialize the auth store by loading from IndexedDB
 	 */
 	async init(): Promise<void> {
-		// Initialize SessionManager (with automatic migration from sessionStorage)
+		// Initialize SessionManager (IndexedDB-based persistent storage)
 		const { sessionManager } = await import('../session-manager');
 		await sessionManager.init();
 

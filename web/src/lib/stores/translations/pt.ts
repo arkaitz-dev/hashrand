@@ -217,7 +217,25 @@ export const pt: I18nTexts = {
 			securityTitle: 'Por que esta medida de segurança?',
 			securityExplanation:
 				'Esta validação de dois fatores garante que apenas a pessoa que solicitou o link mágico deste navegador específico pode usá-lo.'
-		}
+		},
+		// NOVO: Mensagens de segurança e fallback
+		magicLinkValidatedSuccess: '✅ Link mágico validado com sucesso!',
+		tokenRefreshStarting: '🔄 Iniciando renovação de token...',
+		newKeypairGenerated: '🔑 Novo par de chaves gerado para rotação',
+		sendingRefreshRequest: '📤 Enviando solicitação para /api/refresh...',
+		refreshResponseReceived: '📥 Resposta recebida do servidor',
+		keyRotationStarting: '🔄 ETAPA 2/3: Iniciando rotação de chaves...',
+		keyRotationCompleted: '✅ Rotação de chaves concluída (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token renovado sem rotação (1/3)',
+		tokenRefreshSuccess: '✅ Token renovado com sucesso',
+		tokenRefreshError: '❌ Erro ao renovar token',
+		sessionExpiredRequireLogin: '⚠️ Sessão expirada - novo login necessário',
+		cryptoTokensMissing: '🔐 Tokens criptográficos ausentes - autenticação necessária',
+		sessionCorrupted: '⚠️ Sessão corrompida - por favor, faça login novamente',
+		storageSaveFailed:
+			'⚠️ A sessão pode não persistir entre recarregamentos da página (problema de armazenamento)',
+		encryptionFailed: '⚠️ Não foi possível criptografar parâmetros - redirecionando para início',
+		requiresAuthentication: '🔐 Autenticação necessária para continuar'
 	},
 	logout: {
 		title: 'Sair',
@@ -233,6 +251,16 @@ export const pt: I18nTexts = {
 		logout: 'Sair',
 		confirmLogout: 'Sair?',
 		logoutDescription:
-			'Tem certeza de que deseja sair? Você precisará se autenticar novamente para acessar recursos protegidos.'
+			'Tem certeza de que deseja sair? Você precisará se autenticar novamente para acessar recursos protegidos.',
+		// NOVO: Mensagens flash de logout
+		successMessage: '✅ Sessão encerrada com sucesso',
+		errorMessage: '❌ Erro ao encerrar sessão'
+	},
+	errors: {
+		// NOVO: Mensagens da página de erro
+		pageNotFoundMessage: 'Página não encontrada (404). Redirecionando para início...',
+		serverErrorMessage: 'Erro do servidor (500). Redirecionando para início...',
+		clientErrorMessage: 'Erro do cliente ({status}). Redirecionando para início...',
+		genericErrorMessage: 'Erro ({status}). Redirecionando para início...'
 	}
 };

@@ -24,7 +24,7 @@ import {
 } from '../utils/test-auth-helpers';
 import {
 	getAccessTokenDurationSeconds,
-	getRefreshTokenDurationSeconds,
+	getRefreshTokenDurationSeconds as _getRefreshTokenDurationSeconds,
 	getKeyRotationThresholdSeconds,
 	getAccessTokenExpirationWaitSeconds,
 	logTestConfiguration

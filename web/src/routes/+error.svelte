@@ -17,19 +17,17 @@
 
 		console.log('🚫 Error page triggered:', { status, error });
 
-		// Create appropriate error message
-		let message = 'An unexpected error occurred.';
+		// Create appropriate translated error message
+		let message = '';
 
 		if (status === 404) {
-			message = 'Page not found (404). Redirecting to home...';
+			message = $_('errors.pageNotFoundMessage');
 		} else if (status === 500) {
-			message = 'Server error (500). Redirecting to home...';
+			message = $_('errors.serverErrorMessage');
 		} else if (status >= 400 && status < 500) {
-			message = `Client error (${status}). Redirecting to home...`;
-		} else if (status >= 500) {
-			message = `Server error (${status}). Redirecting to home...`;
+			message = $_('errors.clientErrorMessage').replace('{status}', status.toString());
 		} else {
-			message = `Error (${status}). Redirecting to home...`;
+			message = $_('errors.genericErrorMessage').replace('{status}', status.toString());
 		}
 
 		// Add flash message with error details

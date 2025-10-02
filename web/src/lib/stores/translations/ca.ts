@@ -213,7 +213,25 @@ export const ca: I18nTexts = {
 		logoutConfirmMessage:
 			'Esteu segur que voleu tancar la sessió? Haureu de tornar-vos a autenticar per accedir a les funcionalitats protegides.',
 		loggedOut: 'Sessió tancada correctament',
-		isCorrect: 'És correcte'
+		isCorrect: 'És correcte',
+		// NOU: Missatges de seguretat i de reserva
+		magicLinkValidatedSuccess: '✅ Enllaç màgic validat correctament!',
+		tokenRefreshStarting: "🔄 S'està iniciant la renovació del token...",
+		newKeypairGenerated: '🔑 Nova parella de claus generada per a la rotació',
+		sendingRefreshRequest: "📤 S'està enviant la sol·licitud a /api/refresh...",
+		refreshResponseReceived: '📥 Resposta rebuda del servidor',
+		keyRotationStarting: "🔄 TRAM 2/3: S'està iniciant la rotació de claus...",
+		keyRotationCompleted: '✅ Rotació de claus completada (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token renovat sense rotació (1/3)',
+		tokenRefreshSuccess: '✅ Token renovat correctament',
+		tokenRefreshError: '❌ Error en renovar el token',
+		sessionExpiredRequireLogin: '⚠️ Sessió expirada - cal un nou inici de sessió',
+		cryptoTokensMissing: '🔐 Tokens criptogràfics absents - cal autenticació',
+		sessionCorrupted: '⚠️ Sessió corrupta - si us plau, inicieu sessió de nou',
+		storageSaveFailed:
+			"⚠️ La sessió pot no persistir entre recarregues de pàgina (problema d'emmagatzematge)",
+		encryptionFailed: "⚠️ No s'han pogut xifrar els paràmetres - es redirigeix a l'inici",
+		requiresAuthentication: '🔐 Cal autenticació per continuar'
 	},
 	logout: {
 		title: 'Tancar Sessió',
@@ -229,6 +247,16 @@ export const ca: I18nTexts = {
 		logout: 'Tancar sessió',
 		confirmLogout: 'Tancar sessió?',
 		logoutDescription:
-			'Esteu segur que voleu tancar la sessió? Haureu de tornar-vos a autenticar per accedir a les funcionalitats protegides.'
+			'Esteu segur que voleu tancar la sessió? Haureu de tornar-vos a autenticar per accedir a les funcionalitats protegides.',
+		// NOU: Missatges flash de tancament de sessió
+		successMessage: '✅ Sessió tancada correctament',
+		errorMessage: '❌ Error en tancar la sessió'
+	},
+	errors: {
+		// NOU: Missatges de pàgina d'error
+		pageNotFoundMessage: "Pàgina no trobada (404). Es redirigeix a l'inici...",
+		serverErrorMessage: "Error del servidor (500). Es redirigeix a l'inici...",
+		clientErrorMessage: "Error del client ({status}). Es redirigeix a l'inici...",
+		genericErrorMessage: "Error ({status}). Es redirigeix a l'inici..."
 	}
 };

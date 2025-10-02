@@ -209,7 +209,24 @@ export const eu: I18nTexts = {
 		logoutConfirmMessage:
 			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.',
 		loggedOut: 'Saioa ongi amaitu da',
-		isCorrect: 'Zuzena da'
+		isCorrect: 'Zuzena da',
+		// BERRIA: Segurtasun eta atzera-egite mezuak
+		magicLinkValidatedSuccess: '✅ Esteka magikoa ongi balidatua!',
+		tokenRefreshStarting: '🔄 Token berritzea hasten...',
+		newKeypairGenerated: '🔑 Gako-bikote berria sortu da biraketa egiteko',
+		sendingRefreshRequest: '📤 Eskaera bidaltzen /api/refresh-era...',
+		refreshResponseReceived: '📥 Zerbitzariaren erantzuna jasota',
+		keyRotationStarting: '🔄 2/3 ETAPA: Gakoen biraketa hasten...',
+		keyRotationCompleted: '✅ Gakoen biraketa osatua (2/3)',
+		tokenRenewedNoRotation: '⏭️ Tokena berritu da biraketagabe (1/3)',
+		tokenRefreshSuccess: '✅ Tokena ongi berritu da',
+		tokenRefreshError: '❌ Errorea tokena berritzean',
+		sessionExpiredRequireLogin: '⚠️ Saioa iraungitu da - saio-hasiera berri bat behar da',
+		cryptoTokensMissing: '🔐 Kriptografia-tokenak falta dira - autentifikazioa beharrezkoa',
+		sessionCorrupted: '⚠️ Saioa hondatuta - mesedez, hasi saioa berriro',
+		storageSaveFailed: '⚠️ Saioa ez da iraungo orriak kargatzean (biltegiratze arazoa)',
+		encryptionFailed: '⚠️ Ezin izan dira parametroak enkriptatu - hasierara birbideratzen',
+		requiresAuthentication: '🔐 Autentifikazioa beharrezkoa jarraitzeko'
 	},
 	logout: {
 		title: 'Amaitu Saioa',
@@ -225,6 +242,16 @@ export const eu: I18nTexts = {
 		logout: 'Amaitu saioa',
 		confirmLogout: 'Saioa amaitu?',
 		logoutDescription:
-			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.'
+			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.',
+		// BERRIA: Saio-amaiera flash mezuak
+		successMessage: '✅ Saioa ongi amaitu da',
+		errorMessage: '❌ Errorea saioa amaitzean'
+	},
+	errors: {
+		// BERRIA: Errore orriaren mezuak
+		pageNotFoundMessage: 'Orria ez da aurkitu (404). Hasierara birbideratzen...',
+		serverErrorMessage: 'Zerbitzari errorea (500). Hasierara birbideratzen...',
+		clientErrorMessage: 'Bezero errorea ({status}). Hasierara birbideratzen...',
+		genericErrorMessage: 'Errorea ({status}). Hasierara birbideratzen...'
 	}
 };

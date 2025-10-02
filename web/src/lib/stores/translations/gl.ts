@@ -211,7 +211,25 @@ export const gl: I18nTexts = {
 		logoutConfirmMessage:
 			'Estás seguro de que queres pechar a sesión? Necesitarás autenticarte de novo para acceder ás funcionalidades protexidas.',
 		loggedOut: 'Sesión pechada correctamente',
-		isCorrect: 'É correcto'
+		isCorrect: 'É correcto',
+		// NOVO: Mensaxes de seguridade e reserva
+		magicLinkValidatedSuccess: '✅ Ligazón máxica validada correctamente!',
+		tokenRefreshStarting: '🔄 Iniciando renovación do token...',
+		newKeypairGenerated: '🔑 Novo par de chaves xerado para rotación',
+		sendingRefreshRequest: '📤 Enviando solicitude a /api/refresh...',
+		refreshResponseReceived: '📥 Resposta recibida do servidor',
+		keyRotationStarting: '🔄 TRAMO 2/3: Iniciando rotación de chaves...',
+		keyRotationCompleted: '✅ Rotación de chaves completada (2/3)',
+		tokenRenewedNoRotation: '⏭️ Token renovado sen rotación (1/3)',
+		tokenRefreshSuccess: '✅ Token renovado correctamente',
+		tokenRefreshError: '❌ Erro na renovación do token',
+		sessionExpiredRequireLogin: '⚠️ Sesión expirada - requírese novo inicio de sesión',
+		cryptoTokensMissing: '🔐 Tokens criptográficos ausentes - requírese autenticación',
+		sessionCorrupted: '⚠️ Sesión corrompida - por favor, inicia sesión de novo',
+		storageSaveFailed:
+			'⚠️ A sesión pode non persistir entre recargas da páxina (problema de almacenamento)',
+		encryptionFailed: '⚠️ Non se puideron cifrar os parámetros - redirixindo ao inicio',
+		requiresAuthentication: '🔐 Requírese autenticación para continuar'
 	},
 	logout: {
 		title: 'Pechar Sesión',
@@ -227,6 +245,16 @@ export const gl: I18nTexts = {
 		logout: 'Pechar sesión',
 		confirmLogout: 'Pechar sesión?',
 		logoutDescription:
-			'Estás seguro de que queres pechar a sesión? Necesitarás autenticarte de novo para acceder ás funcionalidades protexidas.'
+			'Estás seguro de que queres pechar a sesión? Necesitarás autenticarte de novo para acceder ás funcionalidades protexidas.',
+		// NOVO: Mensaxes flash de peche de sesión
+		successMessage: '✅ Sesión pechada correctamente',
+		errorMessage: '❌ Erro ao pechar sesión'
+	},
+	errors: {
+		// NOVO: Mensaxes da páxina de erro
+		pageNotFoundMessage: 'Páxina non atopada (404). Redirixindo ao inicio...',
+		serverErrorMessage: 'Erro do servidor (500). Redirixindo ao inicio...',
+		clientErrorMessage: 'Erro do cliente ({status}). Redirixindo ao inicio...',
+		genericErrorMessage: 'Erro ({status}). Redirixindo ao inicio...'
 	}
 };

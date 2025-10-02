@@ -4,7 +4,7 @@
 //! secure magic link URLs with proper host determination.
 
 use chrono::{DateTime, Duration, Utc};
-use spin_sdk::http::{Request, Response};
+use spin_sdk::http::Response;
 
 use super::types::ErrorResponse;
 use crate::utils::JwtUtils;
@@ -53,25 +53,37 @@ impl MagicLinkTokenGeneration {
 
     /// Determine the appropriate host URL for magic link
     ///
-    /// Prefers ui_host from request if provided, otherwise falls back to request host
+    /// ui_host MUST be provided by frontend - no fallback to request headers.
+    /// Request header 'host' points to backend API, not frontend UI.
     ///
     /// # Arguments
-    /// * `req` - HTTP request to extract fallback host from
-    /// * `ui_host` - Optional UI host from request payload
+    /// * `ui_host` - Required UI host from request payload
     ///
     /// # Returns
-    /// * `String` - The determined host URL
-    pub fn determine_host_url(req: &Request, ui_host: Option<&str>) -> String {
-        println!("DEBUG: About to choose host URL");
+    /// * `Result<String, Response>` - Host URL or error response if ui_host is missing
+    pub fn determine_host_url(ui_host: Option<&str>) -> Result<String, Response> {
+        println!("DEBUG: Validating ui_host");
         println!("DEBUG: ui_host = {:?}", ui_host);
 
-        let fallback_host = JwtUtils::get_host_url_from_request(req);
-        println!("DEBUG: fallback_host from request = {}", fallback_host);
-
-        let host_url = ui_host.unwrap_or(&fallback_host);
-        println!("DEBUG: Final chosen host_url = {}", host_url);
-
-        host_url.to_string()
+        match ui_host {
+            Some(host) => {
+                println!("DEBUG: ui_host provided: {}", host);
+                Ok(host.to_string())
+            }
+            None => {
+                println!("❌ ERROR: ui_host is required but was not provided by frontend");
+                Err(Response::builder()
+                    .status(400)
+                    .header("content-type", "application/json")
+                    .body(
+                        serde_json::to_string(&crate::utils::auth::types::ErrorResponse {
+                            error: "ui_host is required - frontend must provide its URL".to_string(),
+                        })
+                        .unwrap_or_else(|_| r#"{"error":"ui_host required"}"#.to_string()),
+                    )
+                    .build())
+            }
+        }
     }
 
     /// Create complete magic link URL
@@ -93,15 +105,13 @@ impl MagicLinkTokenGeneration {
     /// Combines token generation, host determination, and URL creation
     ///
     /// # Arguments
-    /// * `req` - HTTP request for host determination
     /// * `email` - Email address for token generation
-    /// * `ui_host` - Optional UI host from request payload
+    /// * `ui_host` - REQUIRED UI host from request payload (no fallback)
     /// * `duration_minutes` - Token expiration duration in minutes
     ///
     /// # Returns
     /// * `Result<TokenGenerationResult, Response>` - Complete result or error response
     pub fn generate_complete_result(
-        req: &Request,
         email: &str,
         ui_host: Option<&str>,
         duration_minutes: i64,
@@ -110,8 +120,8 @@ impl MagicLinkTokenGeneration {
         let (magic_token, encryption_blob, expires_at_nanos, magic_expires_at) =
             Self::generate_encrypted_token(email, duration_minutes)?;
 
-        // Determine host URL
-        let host_url = Self::determine_host_url(req, ui_host);
+        // Determine host URL - REQUIRED, returns error if ui_host is None
+        let host_url = Self::determine_host_url(ui_host)?;
 
         // Create magic link URL
         let magic_link = Self::create_magic_link_url(&host_url, &magic_token);

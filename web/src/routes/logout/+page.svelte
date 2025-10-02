@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { _, currentLanguage } from '$lib/stores/i18n';
+	import { _ } from '$lib/stores/i18n';
 	import { authStore } from '$lib/stores/auth';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
@@ -20,10 +20,8 @@
 			// Clear authentication
 			authStore.logout();
 
-			// Add success message
-			flashMessagesStore.addMessage(
-				$currentLanguage === 'es' ? '✅ Sesión cerrada correctamente' : '✅ Successfully logged out'
-			);
+			// Add success message (translated)
+			flashMessagesStore.addMessage($_('logout.successMessage'));
 
 			// Redirect to home
 			setTimeout(() => {
@@ -31,9 +29,7 @@
 			}, 1500);
 		} catch {
 			// Error during logout
-			flashMessagesStore.addMessage(
-				$currentLanguage === 'es' ? '❌ Error al cerrar sesión' : '❌ Error during logout'
-			);
+			flashMessagesStore.addMessage($_('logout.errorMessage'));
 			isLoggingOut = false;
 		}
 	}

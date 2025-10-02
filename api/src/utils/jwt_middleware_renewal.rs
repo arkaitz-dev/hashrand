@@ -88,7 +88,7 @@ pub fn check_proactive_renewal(
 
         // Generate new refresh token with pub_key from current token
         let (new_refresh_token, _refresh_expires) =
-            match JwtUtils::create_refresh_token_from_username(username, Some(&pub_key)) {
+            match JwtUtils::create_refresh_token_from_username(username, &pub_key) {
                 Ok((token, exp)) => (token, exp),
                 Err(e) => {
                     println!(

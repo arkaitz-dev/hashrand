@@ -34,7 +34,7 @@ pub fn create_custom_refresh_token(
 /// Create refresh token from username using custom token system with optional Ed25519 public key
 pub fn create_custom_refresh_token_from_username(
     username: &str,
-    pub_key: Option<&[u8; 32]>,
+    pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
     // Convert username back to user_id bytes
     let user_id_bytes = bs58::decode(username)
@@ -49,9 +49,7 @@ pub fn create_custom_refresh_token_from_username(
     user_id.copy_from_slice(&user_id_bytes);
 
     // Create claims with proper user_id and Ed25519 public key
-    let default_pub_key = [0u8; 32]; // Fallback for compatibility
-    let pub_key_to_use = pub_key.unwrap_or(&default_pub_key);
-    let claims = CustomTokenClaims::new_from_user_id(&user_id, TokenType::Refresh, pub_key_to_use)?;
+    let claims = CustomTokenClaims::new_from_user_id(&user_id, TokenType::Refresh, pub_key)?;
 
     // Generate token manually using the same logic as generate_custom_token()
     let config = CustomTokenConfig::refresh_token()?;

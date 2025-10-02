@@ -41,7 +41,7 @@ pub fn create_error_response(status: u16, message: &str) -> Response {
             serde_json::to_string(&ErrorResponse {
                 error: message.to_string(),
             })
-            .unwrap_or_default(),
+            .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
         )
         .build()
 }

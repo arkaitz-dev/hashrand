@@ -69,7 +69,6 @@ pub async fn generate_magic_link_signed(
 
     // Step 2: Generate token and create magic link URL
     let token_result = match MagicLinkTokenGeneration::generate_complete_result(
-        req,
         &payload.email,
         payload.ui_host.as_deref(),
         15, // 15 minutes expiration
@@ -126,7 +125,7 @@ pub async fn generate_magic_link_signed(
                 &token_result.magic_link,
                 Some(&payload.email_lang),
                 payload.ui_host.as_deref(),
-                &MagicLinkTokenGeneration::determine_host_url(req, payload.ui_host.as_deref()),
+                ui_host,  // Already validated above, guaranteed to exist
                 token_result.magic_expires_at,
             )
             .await;

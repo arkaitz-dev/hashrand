@@ -130,10 +130,16 @@ export async function refreshToken(): Promise<boolean> {
 	const { privateKeyBytesToHex } = await import('../ed25519/ed25519-core');
 	const { httpSignedPOSTRequest } = await import('../httpSignedRequests');
 	const { authStore } = await import('../stores/auth');
+	const { currentLanguage, t } = await import('../stores/i18n');
+
+	// Get current language for translated flash messages
+	let lang = 'en';
+	const unsubscribe = currentLanguage.subscribe((l) => (lang = l));
+	unsubscribe();
 
 	try {
 		console.log('🔄 [REFRESH] ===== INICIO REFRESH TOKEN =====');
-		flashMessagesStore.addMessage('🔄 Iniciando renovación de token...');
+		flashMessagesStore.addMessage(t('auth.tokenRefreshStarting', lang));
 
 		// Get OLD pub_key from IndexedDB for logging
 		const oldPrivKey = await sessionManager.getPrivKey();
@@ -150,12 +156,12 @@ export async function refreshToken(): Promise<boolean> {
 		console.log('✅ [REFRESH] Nuevo keypair generado');
 		console.log('🔑 [REFRESH] NEW priv_key:', newPrivKeyHex.substring(0, 16) + '...');
 		console.log('🔑 [REFRESH] NEW pub_key:', newPubKeyHex.substring(0, 16) + '...');
-		flashMessagesStore.addMessage('🔑 Nuevo keypair generado para rotación');
+		flashMessagesStore.addMessage(t('auth.newKeypairGenerated', lang));
 
 		// 🔒 STEP 2: Send refresh request with new_pub_key
 		console.log('📤 [REFRESH] STEP 2: Enviando request a /api/refresh...');
 		console.log('📦 [REFRESH] Payload: { new_pub_key:', newPubKeyHex.substring(0, 16) + '... }');
-		flashMessagesStore.addMessage('📤 Enviando request a /api/refresh...');
+		flashMessagesStore.addMessage(t('auth.sendingRefreshRequest', lang));
 
 		const data = await httpSignedPOSTRequest<{ new_pub_key: string }, LoginResponse>(
 			`${API_BASE}/refresh`,
@@ -170,7 +176,7 @@ export async function refreshToken(): Promise<boolean> {
 			has_server_pub_key: !!data.server_pub_key,
 			has_expires_at: !!data.expires_at
 		});
-		flashMessagesStore.addMessage('📥 Respuesta recibida del servidor');
+		flashMessagesStore.addMessage(t('auth.refreshResponseReceived', lang));
 
 		// 📝 STEP 3: Update auth store with new token
 		console.log('📝 [REFRESH] STEP 3: Actualizando store con nuevo access_token...');
@@ -207,7 +213,7 @@ export async function refreshToken(): Promise<boolean> {
 				'🔑 [REFRESH] server_pub_key recibido:',
 				data.server_pub_key.substring(0, 16) + '...'
 			);
-			flashMessagesStore.addMessage('🔄 TRAMO 2/3: Iniciando rotación de claves...');
+			flashMessagesStore.addMessage(t('auth.keyRotationStarting', lang));
 
 			// Rotate client keypair to match NEW server keypair
 			console.log('🔑 [REFRESH] Rotando client priv_key en IndexedDB...');
@@ -218,29 +224,32 @@ export async function refreshToken(): Promise<boolean> {
 			console.log('✅ [REFRESH] Server pub_key ya actualizado por validador (seguro)');
 
 			console.log('🎉 [REFRESH] Rotación de claves completada exitosamente');
-			flashMessagesStore.addMessage('✅ Rotación de claves completada (2/3)');
+			flashMessagesStore.addMessage(t('auth.keyRotationCompleted', lang));
 		} else {
 			// ⏭️ TRAMO 1/3: No server_pub_key → Keep existing keys, only token renewed
 			console.log('⏭️ [REFRESH] ===== TRAMO 1/3: NO KEY ROTATION =====');
 			console.log('ℹ️ [REFRESH] No server_pub_key en respuesta - manteniendo claves existentes');
-			flashMessagesStore.addMessage('⏭️ Token renovado sin rotación (1/3)');
+			flashMessagesStore.addMessage(t('auth.tokenRenewedNoRotation', lang));
 		}
 
 		// Note: Crypto tokens are NOT generated during refresh
 		// They are only generated during initial login (magic link validation)
 		// If tokens are missing, it means session is corrupted and should restart
-		const tokensExist = await sessionManager.hasCryptoTokens();
-		if (!tokensExist) {
-			console.warn('⚠️ [REFRESH] Crypto tokens missing - session may be corrupted');
+		const { ensureCryptoTokensExist } = await import('../utils/auth-recovery');
+		const tokensValid = await ensureCryptoTokensExist('Token Refresh');
+		if (!tokensValid) {
+			// Handler already initiated recovery flow (logout + auth dialog)
+			// Return false to indicate refresh failed (user must re-authenticate)
+			return false;
 		}
 
 		console.log('🎉 [REFRESH] ===== REFRESH COMPLETADO EXITOSAMENTE =====');
-		flashMessagesStore.addMessage('✅ Token renovado exitosamente');
+		flashMessagesStore.addMessage(t('auth.tokenRefreshSuccess', lang));
 		return true;
 	} catch (error) {
 		console.error('❌ [REFRESH] ===== ERROR EN REFRESH =====');
 		console.error('❌ [REFRESH] Error:', error);
-		flashMessagesStore.addMessage('❌ Error en renovación de token');
+		flashMessagesStore.addMessage(t('auth.tokenRefreshError', lang));
 
 		// Check for dual token expiry in the error
 		if (
@@ -248,7 +257,7 @@ export async function refreshToken(): Promise<boolean> {
 			error.message.includes('Both access and refresh tokens have expired')
 		) {
 			console.error('💥 [REFRESH] DUAL EXPIRY detectado');
-			flashMessagesStore.addMessage('⚠️ Sesión expirada - requiere nuevo login');
+			flashMessagesStore.addMessage(t('auth.sessionExpiredRequireLogin', lang));
 			// DUAL EXPIRY detected during refresh
 			await handleDualTokenExpiry();
 		}

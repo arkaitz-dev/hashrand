@@ -30,7 +30,7 @@ impl MagicLinkRequestValidation {
                     serde_json::to_string(&ErrorResponse {
                         error: format!("Rate limited: {}", e),
                     })
-                    .unwrap_or_default(),
+                    .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                 )
                 .build());
         }
@@ -53,7 +53,7 @@ impl MagicLinkRequestValidation {
                     serde_json::to_string(&ErrorResponse {
                         error: format!("Invalid email: {}", e),
                     })
-                    .unwrap_or_default(),
+                    .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                 )
                 .build());
         }
@@ -96,7 +96,7 @@ impl MagicLinkRequestValidation {
                         serde_json::to_string(&ErrorResponse {
                             error: format!("Invalid Ed25519 signature: {}", e),
                         })
-                        .unwrap_or_default(),
+                        .unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string()),
                     )
                     .build())
             }

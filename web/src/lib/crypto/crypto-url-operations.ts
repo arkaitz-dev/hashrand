@@ -143,7 +143,6 @@ export async function decryptUrlParams(
 	const paramsWithSalt = JSON.parse(paramsString);
 
 	// 9. Remove internal salt and return clean params
-	// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 	const { _salt, ...params } = paramsWithSalt;
 	return params;
 }

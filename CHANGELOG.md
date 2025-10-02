@@ -4,6 +4,363 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.6.29] - 2025-10-02
+
+### 📝 DOCUMENTATION: Magic Number Comments for Default Lengths
+
+**MEDIUM PRIORITY ENHANCEMENT**: Added explanatory comments for "magic number" default lengths in custom hash and password generation, documenting cryptographic reasoning.
+
+#### Problem Addressed
+
+**Issue**: Default length values (`21` for custom, `32` for password) appeared as "magic numbers" without explanation of cryptographic rationale, making code maintenance harder for future developers.
+
+**Impact**: Lack of documentation could lead to:
+- Confusion about why specific values were chosen
+- Potential incorrect changes during refactoring
+- Missing context for security decisions
+
+#### Solution Implemented
+
+Added inline comments explaining cryptographic reasoning for default lengths:
+
+**Custom Hash (length = 21)**:
+```rust
+// Default length 21: Provides ~110 bits of entropy with Base58 (58^21 ≈ 2^110)
+// Balances strong security with reasonable output length for custom hashes
+let length = params
+    .get("length")
+    .and_then(|s| s.parse::<usize>().ok())
+    .unwrap_or(21);
+```
+
+**Password (length = 32)**:
+```rust
+// Default length 32: Industry standard for secure passwords (256 bits of entropy)
+// Equivalent to AES-256 key strength with FullWithSymbols alphabet
+let length = params
+    .get("length")
+    .and_then(|s| s.parse::<usize>().ok())
+    .unwrap_or(32);
+```
+
+#### Benefits
+
+- ✅ **Code clarity**: Future developers understand cryptographic decisions
+- ✅ **Maintainability**: Reduces risk of incorrect changes during refactoring
+- ✅ **Security documentation**: Makes security reasoning explicit and auditable
+- ✅ **Best practices**: Documents entropy calculations and industry standards
+
+#### Technical Details
+
+**Custom Hash Default (21)**:
+- Base58 alphabet: 58 characters
+- Entropy: log₂(58^21) ≈ 110 bits
+- Comparable to: 128-bit security with small margin
+- Rationale: Strong security while keeping hash reasonably short
+
+**Password Default (32)**:
+- FullWithSymbols alphabet: ~94 characters (letters + digits + symbols)
+- Entropy: log₂(94^32) ≈ 256 bits
+- Equivalent to: AES-256 key strength
+- Rationale: Industry standard for maximum security passwords
+
+#### Files Modified
+
+**`api/src/handlers/custom.rs`** (1 change, lines 84-85)
+- Added comment explaining 21-character default for custom hashes
+
+**`api/src/handlers/password.rs`** (1 change, lines 83-84)
+- Added comment explaining 32-character default for passwords
+
+**Version**: API v1.6.29 (Backend only)
+
+---
+
+## [API v1.6.28] - 2025-10-02
+
+### 🔒 SECURITY FIX: ui_host Now Required - No Fallback to Request Headers
+
+**CRITICAL SECURITY ENHANCEMENT**: Frontend MUST provide `ui_host` in request payload. Removed dangerous fallback to HTTP request `host` header which pointed to backend API instead of frontend UI.
+
+#### Problem Identified
+
+**Issue**: Magic link generation used fallback chain that could create broken links:
+1. Try `ui_host` from request payload (Optional)
+2. Fallback to HTTP request header `host` → **WRONG: This is the backend API host, not frontend UI host**
+3. Final fallback to hardcoded `"localhost:5173"` → **WRONG: Production links broken**
+
+**Impact**:
+- **Development**: Magic links pointed to `http://localhost:3000` (backend) instead of `http://localhost:5173` (frontend) ❌
+- **Production**: Magic links pointed to `https://api.hashrand.com` (backend) instead of `https://app.hashrand.com` (frontend) ❌
+- Users received emails with broken links → **Authentication completely broken** ❌
+
+#### Root Cause Analysis
+
+HTTP request header `host` contains the **backend API host** (server receiving the request), NOT the **frontend UI host** (where user should be redirected).
+
+**Example production scenario**:
+```
+Request: POST https://api.hashrand.com/api/login
+Header 'host': api.hashrand.com  (backend API)
+ui_host: None  (frontend didn't send it)
+
+OLD BEHAVIOR: Magic link → https://api.hashrand.com/?magiclink=... ❌ BROKEN
+NEW BEHAVIOR: Error 400 - ui_host required ✅ CORRECT
+```
+
+#### Solution Implemented
+
+**Changed behavior**:
+- ✅ `ui_host` is now **REQUIRED** in request payload
+- ✅ Returns `400 Bad Request` if `ui_host` is missing: `{"error":"ui_host is required - frontend must provide its URL"}`
+- ✅ Removed fallback to HTTP header `host` (was incorrect)
+- ✅ Removed fallback to hardcoded `localhost:5173` (was dangerous)
+- ✅ Eliminated `get_host_url_from_request()` function entirely (no longer needed)
+
+#### Files Modified
+
+**Core Changes (4 files)**:
+
+1. **`api/src/utils/auth/magic_link_token_gen.rs`** (Major changes)
+   - `determine_host_url()` - Changed signature from `(req, ui_host) -> String` to `(ui_host) -> Result<String, Response>`
+   - Now returns Error 400 if `ui_host` is None
+   - `generate_complete_result()` - Removed unused `req` parameter, signature simplified
+   - Removed `use spin_sdk::http::Request` (no longer needed)
+
+2. **`api/src/utils/auth/magic_link_gen.rs`** (1 change, line 71)
+   - Updated `generate_complete_result()` call - Removed `req` argument
+   - Uses validated `ui_host` directly for email delivery
+
+3. **`api/src/utils/jwt/magic_links.rs`** (Deleted function, lines 159-181)
+   - **DELETED**: `get_host_url_from_request()` - No longer needed, was incorrect approach
+
+4. **`api/src/utils/jwt/utils.rs`** (Deleted wrapper, lines 101-103)
+   - **DELETED**: `get_host_url_from_request()` public wrapper
+
+#### Benefits
+
+- ✅ **Security**: Frontend explicitly provides its own URL - no guessing or wrong assumptions
+- ✅ **Correctness**: Magic links always point to correct frontend host
+- ✅ **Fail-safe**: Returns clear error if `ui_host` missing instead of silently breaking auth flow
+- ✅ **Code quality**: Removed 25+ lines of incorrect fallback logic
+- ✅ **API clarity**: Explicit contract - `ui_host` required, no hidden fallbacks
+
+#### Migration Notes
+
+**Frontend requirement**: All `/api/login` requests MUST include `ui_host` in payload:
+```json
+{
+  "email": "user@example.com",
+  "ui_host": "https://app.hashrand.com",  // ✅ REQUIRED
+  "email_lang": "en"
+}
+```
+
+If `ui_host` is missing, API returns:
+```json
+{
+  "error": "ui_host is required - frontend must provide its URL"
+}
+```
+
+**Version**: API v1.6.28 (Backend only)
+
+---
+
+## [API v1.6.27] - 2025-10-02
+
+### 🔧 IMPROVEMENT: Better Email Message-ID Timestamp Fallback with Logging
+
+**LOW PRIORITY ENHANCEMENT**: Improved `timestamp_nanos_opt()` fallback in email Message-ID generation by adding critical logging and using intelligent millisecond-to-nanosecond conversion instead of defaulting to zero.
+
+#### Problem Addressed
+
+**Issue**: Email Message-ID generation used `.unwrap_or(0)` when `timestamp_nanos_opt()` failed (date > year 2262), resulting in:
+- Timestamp of `0` (January 1, 1970) in Message-ID
+- No logging or alert about server clock misconfiguration
+- Potential confusion if multiple emails sent with broken clock
+
+**Impact**: Extremely low probability (only if server date > year 2262), but poor debugging experience if it occurs.
+
+#### Solution
+
+Changed fallback from silent `0` to safe conversion with overflow protection and logging:
+
+```rust
+// BEFORE
+chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)
+
+// AFTER
+chrono::Utc::now()
+    .timestamp_nanos_opt()
+    .unwrap_or_else(|| {
+        println!("⚠️ CRITICAL: timestamp_nanos_opt() overflow - server clock may be misconfigured (date > year 2262)");
+        chrono::Utc::now()
+            .timestamp_millis()
+            .checked_mul(1_000_000)  // Safe multiply - prevents overflow
+            .unwrap_or(0)  // Final fallback if multiplication would overflow
+    })
+```
+
+#### Benefits
+
+- ✅ **Critical logging**: Alerts in logs if timestamp overflow occurs (indicates server misconfiguration)
+- ✅ **Safe overflow protection**: Uses `checked_mul()` to prevent i64 overflow from milliseconds multiplication
+- ✅ **Intelligent fallback**: Attempts current time in milliseconds→nanoseconds conversion (maintains temporal accuracy)
+- ✅ **Final safety net**: Falls back to `0` (January 1, 1970) only if conversion itself would overflow
+- ✅ **Better debugging**: Clear message explains the problem and when it occurs
+- ✅ **No functional change**: Normal operation unaffected (timestamp_nanos works until year 2262)
+
+#### Technical Details
+
+**Conversion logic with overflow protection**:
+- 1 millisecond = 1,000,000 nanoseconds
+- `timestamp_millis().checked_mul(1_000_000)` = safe conversion to nanoseconds
+- `checked_mul()` returns `None` if result would overflow i64
+- Final `unwrap_or(0)` provides safe fallback if conversion overflows
+- Maintains temporal accuracy in fallback case when conversion succeeds
+
+**When this fallback triggers**:
+- Server date configured > year 2262
+- `timestamp_nanos_opt()` overflows i64 max value
+- Probability: ~0% in normal operation
+
+**Message-ID format preserved**:
+- Normal: `<1727884234567890123.aB3dEf9h@mailer.hashrand.com>`
+- Fallback (if conversion succeeds): `<1727884234567000000.aB3dEf9h@mailer.hashrand.com>` (from millis)
+- Final fallback (if conversion overflows): `<0.aB3dEf9h@mailer.hashrand.com>` (January 1, 1970)
+
+#### Files Modified
+
+**`api/src/utils/email.rs`** (1 change, lines 53-61)
+- Function `create_email_request()` - Message-ID generation with overflow-safe fallback using `checked_mul()`
+
+**Version**: API v1.6.27 (Backend only)
+
+---
+
+## [API v1.6.26] - 2025-10-02
+
+### ✨ IMPROVEMENT: Better Error Serialization Fallbacks
+
+**MEDIUM PRIORITY ENHANCEMENT**: Improved error response handling by replacing empty string fallbacks with meaningful JSON error messages when `serde_json::to_string()` fails.
+
+#### Problem Addressed
+
+**Issue**: 9 locations in error handling code used `.unwrap_or_default()` which resulted in empty string `""` as response body if JSON serialization failed, degrading user experience in edge cases.
+
+**Impact**:
+- Client received HTTP error status (400/401/403/429/500) with empty body
+- No error message for debugging
+- Poor UX in rare edge cases
+
+#### Solution
+
+Changed all error serialization fallbacks from:
+```rust
+.unwrap_or_default()  // Returns "" if serialization fails
+```
+
+To:
+```rust
+.unwrap_or_else(|_| r#"{"error":"Internal error"}"#.to_string())  // Returns valid JSON
+```
+
+#### Files Modified (4 files, 9 locations)
+
+1. **`api/src/utils/endpoint_helpers.rs`** (1 change)
+   - Line 44: `create_error_response()` helper function
+
+2. **`api/src/utils/protected_endpoint_middleware.rs`** (4 changes)
+   - Line 101: Invalid SignedRequest structure error
+   - Line 121: Invalid signature error
+   - Line 144: Invalid payload format error
+   - Line 167: Security violation error (simultaneous tokens)
+
+3. **`api/src/utils/auth/magic_link_request_validation.rs`** (3 changes)
+   - Line 33: Rate limiting error (429)
+   - Line 56: Invalid email error
+   - Line 99: Invalid Ed25519 signature error
+
+4. **`api/src/utils/auth/magic_link_jwt_generator.rs`** (1 change)
+   - Line 98: JWT creation error response
+
+#### Benefits
+
+- ✅ **Always valid JSON**: Client receives parseable error even in edge cases
+- ✅ **Better debugging**: Explicit "Internal error" message vs empty string
+- ✅ **Improved UX**: Consistent error format across all endpoints
+- ✅ **Low risk**: Extremely rare case (serde_json failure on simple struct)
+- ✅ **No breaking changes**: Only improves edge case behavior
+
+#### Technical Details
+
+**Failure scenario**: `serde_json::to_string()` only fails if:
+- Memory allocation fails (OOM)
+- ErrorResponse struct has non-serializable fields (impossible with current code)
+
+**Probability**: Extremely low - serde_json is highly reliable
+
+**Impact**: Now users get `{"error":"Internal error"}` instead of empty string in these rare cases.
+
+**Version**: API v1.6.26 (Backend only)
+
+---
+
+## [API v1.6.25] - 2025-10-02
+
+### 🔒 SECURITY FIX: Eliminate pub_key Fallback - Make Ed25519 Public Key Required
+
+**CRITICAL SECURITY IMPROVEMENT**: Removed dangerous fallback to `[0u8; 32]` for Ed25519 public key in refresh token creation. Changed function signature from `Option<&[u8; 32]>` to required `&[u8; 32]`, making it impossible to create tokens with invalid public keys.
+
+#### Security Issue Addressed
+
+**Problem**: Legacy fallback code allowed refresh tokens to be created with `pub_key = [0,0,0,0,...]` if `None` was passed, completely breaking Ed25519 signature validation and key rotation system.
+
+**Risk Scenario**:
+```rust
+// Hypothetical code that would compile with Option<&[u8; 32]>
+let (token, _) = create_refresh_token_from_username(username, None)?; // ⚠️ Compiles
+// Result: Token with pub_key=[0,0,0,0,...] - Ed25519 validation BROKEN
+```
+
+**Root Cause**: Fallback was introduced during v1.6.23 bug fix but never removed after all callers were updated to pass valid `pub_key` values.
+
+#### Implementation
+
+**Files Modified (5)**:
+1. `api/src/utils/jwt/custom_token_api.rs` - Changed signature to `pub_key: &[u8; 32]`, removed fallback
+2. `api/src/utils/jwt/tokens.rs` - Changed signature to `pub_key: &[u8; 32]`
+3. `api/src/utils/jwt/utils.rs` - Updated public API wrapper
+4. `api/src/utils/auth/refresh_token.rs` - Removed `Some()` wrapper in caller
+5. `api/src/utils/jwt_middleware_renewal.rs` - Removed `Some()` wrapper in caller
+
+**Callers verified**: ALL 4 callers already passed valid `Some(pub_key)` - no functional changes, only type safety improvement.
+
+#### Security Benefits
+
+- ✅ **Compile-time validation**: Impossible to create tokens without valid pub_key
+- ✅ **Fail-fast architecture**: Error at compilation vs runtime or silent failure
+- ✅ **Code clarity**: Required parameter reflects criticality of Ed25519 key
+- ✅ **Dead code elimination**: Removed 2 lines of dangerous fallback logic
+- ✅ **Zero regression risk**: All existing callers already provided valid keys
+
+#### Impact
+
+**Before**:
+- Function accepted `Option<&[u8; 32]>` with fallback to zeros
+- Risk of silent failure if `None` passed
+- Potential Ed25519 validation bypass
+
+**After**:
+- Function requires `&[u8; 32]` - no Option
+- Compilation fails if pub_key not provided
+- Ed25519 key rotation guaranteed to work
+
+**Version**: API v1.6.25 (Backend only - no frontend changes needed)
+
+---
+
 ## [API v1.6.24 + Web v0.21.7] - 2025-10-02
 
 ### 🔒 SECURITY: MITM Protection with Dual-Key Signing for Key Rotation

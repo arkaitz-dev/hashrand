@@ -247,7 +247,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         // Create refresh_token with NEW pub_key
         use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_username;
         let (new_refresh_token, _) =
-            match create_custom_refresh_token_from_username(username, Some(&new_pub_key_array)) {
+            match create_custom_refresh_token_from_username(username, &new_pub_key_array) {
                 Ok((token, exp)) => {
                     println!("✅ Refresh: Refresh token created with NEW pub_key");
                     (token, exp)

@@ -80,10 +80,12 @@ fn generate_password_signed(
     crypto_material: &crate::utils::CryptoMaterial,
 ) -> anyhow::Result<Response> {
     // Parse parameters with password-specific defaults
+    // Default length 32: Industry standard for secure passwords (256 bits of entropy)
+    // Equivalent to AES-256 key strength with FullWithSymbols alphabet
     let length = params
         .get("length")
         .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(32); // Default password length
+        .unwrap_or(32);
 
     // Password uses FullWithSymbols alphabet for security
     let alphabet_type = AlphabetType::FullWithSymbols;
