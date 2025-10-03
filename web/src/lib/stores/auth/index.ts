@@ -22,4 +22,4 @@ export {
 export { checkSessionValidity, hasLocalAuthTokens } from './auth-session';
 
 // Authentication actions
-export { requestMagicLink, validateMagicLink, logout } from './auth-actions';
+export { requestMagicLink, validateMagicLink, logout, clearLocalAuthData } from './auth-actions';

@@ -46,26 +46,21 @@ export async function ensureCryptoTokensExist(context: string): Promise<boolean>
 /**
  * Handle session corruption by forcing complete logout and initiating re-authentication
  *
+ * UNIFIED APPROACH: Uses authStore.logout() which calls clearLocalAuthData()
+ * No need for additional cleanup - logout handles everything
+ *
  * @param translationKey - i18n key for flash message
  */
 async function handleSessionCorruption(translationKey: string): Promise<void> {
 	// Show translated flash message
 	await showTranslatedFlashMessage(translationKey);
 
-	// Force complete logout (clear ALL session data)
+	// Logout handles ALL cleanup:
+	// - Ed25519 keypairs
+	// - IndexedDB session data
+	// - Session expiration timestamp
 	const { authStore } = await import('../stores/auth');
 	await authStore.logout();
-
-	// Additional cleanup for corrupted session
-	await authStore.clearPreventiveAuthData();
-
-	// Clear session expiration timestamp
-	try {
-		const { clearSessionExpiration } = await import('../session-storage');
-		await clearSessionExpiration();
-	} catch {
-		// Non-blocking
-	}
 
 	// Initiate authentication flow
 	await initiateAuthenticationFlow('auth.sessionCorrupted');

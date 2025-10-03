@@ -63,7 +63,7 @@ just dev
 - **🛡️ SignedRequest Strict Security**: Enterprise-grade authentication method separation preventing confusion attacks (v1.6.10+)
 - **✨ Pure SignedResponse Architecture**: Complete Ed25519 digital signature system across ALL endpoints (v1.6.22+)
 - **🍪 Secure Cookie Management**: HttpOnly refresh tokens with enterprise security attributes (Secure, SameSite=Strict)
-- **🧪 Comprehensive Testing**: 55 automated tests with 100% success rate (35 bash + 16 Playwright API + 4 key rotation)
+- **🧪 Comprehensive Testing**: 51 automated tests with 100% success rate (35 bash + 16 Playwright)
 - **🎨 Spectacular UI Animations**: Advanced yellow pulsing effects for critical user notifications and session management
 
 ## 📊 Architecture
@@ -79,7 +79,6 @@ just dev
 ### API Endpoints
 - **Authentication**: `POST/GET /api/login/*` - Magic link authentication with Ed25519 signatures
 - **Generation**: `GET/POST /api/{custom,password,api-key,mnemonic}` - Secure generation with SignedResponse (JWT protected)
-- **User Management**: `GET/POST/DELETE /api/users` - User operations (JWT protected) ⚠️ **FUTURE**
 - **System**: `GET /api/version` - Public version information
 
 ## 🔧 Development Commands
@@ -88,7 +87,7 @@ just dev
 # Essential commands (using just)
 just dev         # Start complete development environment
 just stop        # Stop all services
-just test        # Run 39 bash tests (35 API + 4 key rotation) with 100% success rate
+just test        # Run 51 tests (35 bash + 16 Playwright) with 100% success rate
 just check       # Code quality (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
 just predeploy   # Production deployment with unified backend

@@ -4,13 +4,11 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.2**
-- ⚡ **Latest**: Instant UI loading in result page + cleanup (v0.23.2)
+**Last Update**: 2025-10-03 - **API v1.7.1 + Web v0.24.0**
+- 🏗️ **Latest**: Client-side logout + unified cleanup (DRY) - See CHANGELOG.md for details
+- ⚡ Instant UI loading in result page + cleanup (v0.23.2)
 - 🐛 Critical seed parameter bug fix + DRY improvements (v0.23.1)
 - 🤖 Automatic session expiration monitoring (v0.23.0)
-- 🏗️ **MAJOR REFACTORING**: Enterprise-grade architecture with SOLID/DRY/KISS principles
-- ✅ **16 files refactored** - <200 lines/module limit enforced (89.5% completion)
-- 🏆 **DRY Champions**: 16 error patterns → 1 (backend), 18 patterns → 4 (frontend)
 - ✅ **ZERO regressions** - All 51 tests passing (35 bash + 16 Playwright)
 - ✅ **Quality**: ZERO warnings/errors across entire codebase (clippy + ESLint + svelte-check)
 
@@ -44,7 +42,7 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 just dev         # PRIMARY: Complete development environment (API + Web + Tailscale)
 just stop        # Stop all services
 just status      # Services status
-just test        # Run 39 bash tests (35 API + 4 key rotation)
+just test        # Run 51 tests (35 bash + 16 Playwright)
 just check       # Code quality (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
 
@@ -61,7 +59,6 @@ cd web && npm run test:api:verbose  # Detailed output
 ## Key Endpoints
 - `POST /api/{custom,password,api-key,mnemonic}` - Generation (JWT protected)
 - `POST/GET /api/login/` - Auth flow with Zero Knowledge magic links
-- `GET/POST/DELETE /api/users` - User management (JWT protected) ⚠️ **FUTURE**
 - `GET /api/version` - Public (no auth)
 
 ## Development Rules
@@ -137,19 +134,14 @@ cd web && npm run test:api:verbose  # Detailed output
 
 ## Recent Session History
 
-**Latest versions**: API v1.7.0 + Web v0.23.2 (2025-10-03)
+**Latest versions**: API v1.7.1 + Web v0.24.0 (2025-10-03)
 
 **Recent sessions summary**:
+- **v1.7.1 + v0.24.0**: Client-side logout architecture + unified cleanup (DRY)
 - **v0.23.2**: Instant UI loading + DRY improvements + cleanup
 - **v0.23.1**: Critical seed parameter bug fix (Svelte 5 reactivity)
 - **v0.23.0**: Automatic session expiration monitoring
 - **v1.7.0 + v0.22.0**: MAJOR - Enterprise-grade SOLID/DRY/KISS refactoring (16 files, ~800 lines eliminated)
-- **v1.6.34 + v0.21.9**: Cookie extraction RFC 6265 fix + debugging cleanup
-- **v1.6.30-33**: Cookie handling improvements + magic link protocol detection
-- **v1.6.25-29**: Security fixes (pub_key required, JSON serialization, fallback improvements)
-- **v1.6.24 + v0.21.7**: MITM protection with dual-key signing
-- **v1.6.23**: Ed25519 key rotation bug fix (JWT pub_key chain)
-- **v0.21.6**: Playwright API-only tests (16 tests, CI/CD ready)
 
 **📚 For complete details**: See [CHANGELOG.md](CHANGELOG.md) - root causes, technical flows, implementation details, file modifications, and testing results.
 
@@ -176,7 +168,7 @@ cd web && npm run test:api:verbose  # Detailed output
 - Dynamic configuration via `.env`
 
 ### Testing & Quality
-- **55 automated tests** (35 bash + 16 Playwright API + 4 key rotation)
+- **51 automated tests** (35 bash + 16 Playwright)
 - 100% success rate across all suites
 - Enterprise architecture: modules <225 lines
 - DRY/SOLID/KISS principles enforced

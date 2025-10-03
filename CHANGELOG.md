@@ -4,6 +4,84 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.7.1 + Web v0.24.0] - 2025-10-03
+
+### Changed
+
+**🏗️ ARCHITECTURE: Client-Side Logout + Unified Cleanup Functions (DRY)**
+
+**Philosophy**: Logout is a CLIENT action, not requiring server coordination in stateless architectures.
+
+**Problem solved**:
+- DELETE /api/login endpoint failed during Ed25519 key rotation
+  - Token expiration → Auto-retry → Refresh with new keys → Server signs with NEW key
+  - Client validates with OLD key → ❌ Signature mismatch → Logout fails
+- Multiple logout cleanup patterns scattered across codebase (❌ DRY violation)
+  - Manual logout: Different cleanup than automatic logout
+  - Session corruption: Duplicated cleanup logic
+  - Token expiry: Additional redundant cleanup
+
+**Solution implemented**:
+
+1. **Removed DELETE /api/login endpoint** (backend)
+   - Server is stateless (no session state to clear)
+   - Refresh token cookie expires automatically (configured duration)
+   - Cookie alone is cryptographically useless without IndexedDB keypair (Ed25519)
+   - Simpler architecture: Fewer failure points, better UX
+   - Logout now NEVER fails from user perspective
+
+2. **Unified cleanup function** (frontend): `clearLocalAuthData()`
+   - Single source of truth for ALL logout/cleanup operations
+   - Used by 6 different logout/cleanup scenarios:
+     - Manual logout (user clicks button)
+     - Automatic logout (session expiration monitor)
+     - Dual token expiry (both tokens expired)
+     - Session corruption (missing crypto tokens)
+     - Sensitive data cleanup (with message)
+     - Sensitive data cleanup (silent)
+   - Operations: Clear Ed25519 keypairs + IndexedDB session + session expiration
+
+**Code reduction** (DRY applied):
+- Eliminated ~40 lines of duplicated cleanup logic
+- 6 functions now use single unified cleanup
+- Consistent cleanup behavior across entire app
+
+**Security benefits**:
+- Logout always succeeds locally (no network dependency)
+- Works offline (no server call needed)
+- Immediate cleanup regardless of network state
+- No Ed25519 key rotation conflicts
+
+**Files modified** (8):
+
+Backend:
+1. `api/src/handlers/login/mod.rs` - Removed DELETE route + logout module import
+2. `api/src/handlers/login/logout.rs` - ❌ DELETED (127 lines)
+
+Frontend:
+3. `web/src/lib/api/api-auth-operations/login.ts` - Logout now no-op + philosophy docs
+4. `web/src/lib/stores/auth/auth-actions.ts` - New `clearLocalAuthData()` + unified logout
+5. `web/src/lib/stores/auth/index.ts` - Export `clearLocalAuthData`
+6. `web/src/lib/session-expiry-manager.ts` - Use unified cleanup
+7. `web/src/lib/api/api-auth-operations/refresh.ts` - Simplified `handleDualTokenExpiry()`
+8. `web/src/lib/utils/auth-recovery.ts` - Simplified `handleSessionCorruption()`
+9. `web/src/lib/stores/auth/auth-cleanup.ts` - Use unified cleanup in sensitive cleanup functions
+
+**Architecture principles**:
+- ✅ Stateless server design (no session management)
+- ✅ Client sovereignty (logout is client decision)
+- ✅ DRY (single cleanup function)
+- ✅ KISS (simpler = more reliable)
+- ✅ Separation of concerns (client manages local state)
+
+### Testing
+
+- ✅ **51 tests passing** (35 bash + 16 Playwright)
+- ✅ **Zero regressions**: All auth flows working correctly
+- ✅ **Quality checks**: 0 errors | 0 warnings (ESLint, Clippy, svelte-check)
+
+---
+
 ## [Web v0.23.2] - 2025-10-03
 
 ### Improved

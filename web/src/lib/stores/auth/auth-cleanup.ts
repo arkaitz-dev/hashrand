@@ -33,25 +33,18 @@ export async function clearPreventiveAuthData(): Promise<void> {
 
 /**
  * Clear sensitive authentication data when session corruption is detected
+ *
+ * UNIFIED APPROACH: Uses clearLocalAuthData() for complete cleanup
+ * Silent version (no flash message) - for programmatic cleanup
  * More aggressive than preventive cleanup - used when tokens are inconsistent
  */
 export async function clearSensitiveAuthData(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		// Clear all session data including preferences (defensive security)
-		const { sessionManager } = await import('../../session-manager');
-		await sessionManager.clearSession();
-
-		// Clear Ed25519 keypairs
-		try {
-			const { clearAllKeyPairs } = await import('../../ed25519');
-			await clearAllKeyPairs();
-		} catch {
-			// Failed to clear Ed25519 keypairs during sensitive cleanup
-		}
-
-		// Sensitive auth data cleanup completed (no message shown)
+		// Use unified cleanup function (complete logout cleanup)
+		const { clearLocalAuthData } = await import('./auth-actions');
+		await clearLocalAuthData();
 	} catch {
 		// Failed to clear sensitive auth data
 	}
@@ -59,23 +52,17 @@ export async function clearSensitiveAuthData(): Promise<void> {
 
 /**
  * Clear sensitive authentication data with localized flash message
- * Used when we want to inform the user that session data was cleared
+ *
+ * UNIFIED APPROACH: Uses clearLocalAuthData() for complete cleanup
+ * Used when session corruption is detected and we want to inform the user
  */
 export async function clearSensitiveAuthDataWithMessage(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		// Clear all session data including preferences (defensive security)
-		const { sessionManager } = await import('../../session-manager');
-		await sessionManager.clearSession();
-
-		// Clear Ed25519 keypairs
-		try {
-			const { clearAllKeyPairs } = await import('../../ed25519');
-			await clearAllKeyPairs();
-		} catch {
-			// Failed to clear Ed25519 keypairs during sensitive cleanup
-		}
+		// Use unified cleanup function (complete logout cleanup)
+		const { clearLocalAuthData } = await import('./auth-actions');
+		await clearLocalAuthData();
 
 		// Show localized flash message that session data was cleared
 		try {
@@ -99,8 +86,6 @@ export async function clearSensitiveAuthDataWithMessage(): Promise<void> {
 				// Failed to show fallback message
 			}
 		}
-
-		// Sensitive auth data cleanup with message completed
 	} catch {
 		// Failed to clear sensitive auth data
 	}

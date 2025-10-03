@@ -55,15 +55,23 @@ export async function validateMagicLink(magicToken: string): Promise<LoginRespon
 }
 
 /**
- * Logout user and clear server-side session
+ * Logout user - Client-side only (stateless architecture)
+ *
+ * PHILOSOPHY:
+ * - Logout is a CLIENT action, not requiring server coordination
+ * - Server is stateless (no session state to clear)
+ * - Refresh token cookie expires automatically (configured duration)
+ * - Cookie alone is useless without IndexedDB keypair (Ed25519)
+ * - Simplicity: fewer failure points, better UX
+ *
+ * SECURITY:
+ * - Local cleanup always succeeds (IndexedDB + Ed25519 keys)
+ * - No network dependency = reliable logout even offline
+ * - Cookie expiration handled by browser (Max-Age)
  */
 export async function logout(): Promise<void> {
-	try {
-		const { httpSignedAuthenticatedDELETE } = await import('../../httpSignedRequests');
-		await httpSignedAuthenticatedDELETE<{ message: string }>(`${API_BASE}/login`);
-	} catch {
-		// Continue with logout even if cookie clearing fails
-	}
+	// No server call needed - logout is purely local
+	// All cleanup handled by auth-actions.ts::logout()
 }
 
 /**

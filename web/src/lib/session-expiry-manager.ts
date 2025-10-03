@@ -29,30 +29,18 @@ export async function isSessionExpired(): Promise<boolean> {
 }
 
 /**
- * Handle expired session cleanup - clear all auth data from IndexedDB
+ * Handle expired session cleanup - uses unified cleanup function
+ *
+ * UNIFIED APPROACH: Uses the same cleanup function as manual logout
+ * Ensures consistency between manual and automatic logout flows
  *
  * @returns Promise<void>
  */
 export async function handleExpiredSession(): Promise<void> {
 	try {
-		// Clear session expiration timestamp
-		await clearSessionExpiration();
-
-		// Clear all IndexedDB session data
-		try {
-			const { sessionManager } = await import('./session-manager');
-			await sessionManager.clearSession();
-		} catch (error) {
-			console.warn('Failed to clear session data:', error);
-		}
-
-		// Clear Ed25519 keypairs for security
-		try {
-			const { clearAllKeyPairs } = await import('./ed25519');
-			await clearAllKeyPairs();
-		} catch (error) {
-			console.warn('Failed to clear Ed25519 keypairs:', error);
-		}
+		// Use unified cleanup function (same as manual logout)
+		const { clearLocalAuthData } = await import('./stores/auth');
+		await clearLocalAuthData();
 	} catch (error) {
 		console.error('Failed to handle expired session:', error);
 		// Even if cleanup fails, continue with auth flow

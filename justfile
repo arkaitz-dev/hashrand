@@ -179,9 +179,19 @@ watch: dev
     echo "============================================================="
     tail -f .spin-dev.log .npm-dev.log
 
-# Run comprehensive test suite
+# Run comprehensive test suite (bash + Playwright)
 test:
+    #!/usr/bin/env bash
+    echo "Running comprehensive test suite..."
+    echo ""
+    # Run bash tests (35 tests)
     ./scripts/final_test.sh
+    echo ""
+    echo "Running Playwright API tests (16 tests)..."
+    echo "==========================================="
+    cd web && npm run test:api
+    echo ""
+    echo "✅ All tests completed!"
 
 # Run linting checks
 lint:

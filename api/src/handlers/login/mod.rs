@@ -3,20 +3,19 @@
 //! Handles magic link authentication flow:
 //! 1. POST /api/login/ - Generate magic link and send via email (logged in development)
 //! 2. POST /api/login/magiclink/ - Validate magic link with Ed25519 signature and get JWT tokens
-//! 3. DELETE /api/login/ - Clear refresh token cookie (logout)
+//!
+//! NOTE: No logout endpoint needed - client handles logout locally (stateless architecture)
 
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
 use crate::utils::auth::validate_magic_link_secure;
 
-mod logout;
 mod magic_link;
 mod routing;
 mod utilities;
 
 // Re-export public handler functions
-pub use logout::handle_logout;
 pub use magic_link::handle_magic_link_generation;
 
 /// Handle login authentication requests
@@ -51,7 +50,6 @@ pub async fn handle_login(
     // Handle default login endpoints: /api/login/
     match *req.method() {
         Method::Post => handle_magic_link_generation(req).await,
-        Method::Delete => handle_logout(req),
         _ => utilities::create_error_response(405, "Method not allowed"),
     }
 }

@@ -103,13 +103,20 @@ export async function validateMagicLink(magicToken: string): Promise<{
 }
 
 /**
- * Logout user and clear all authentication data
+ * Clear all local authentication data (shared between manual and automatic logout)
+ *
+ * UNIFIED CLEANUP: Used by both:
+ * - Manual logout (user clicks logout button)
+ * - Automatic logout (session expiration monitor)
+ *
+ * OPERATIONS:
+ * 1. Clear Ed25519 keypairs (security)
+ * 2. Clear ALL IndexedDB session data
+ * 3. Clear session expiration timestamp
+ *
+ * @returns Promise<void>
  */
-export async function logout(): Promise<void> {
-	// Call API logout to clear server-side session and refresh token cookie
-	const { api } = await import('../../api');
-	await api.logout();
-
+export async function clearLocalAuthData(): Promise<void> {
 	// Clear Ed25519 keypairs for security
 	try {
 		const { clearAllKeyPairs } = await import('../../ed25519');
@@ -134,4 +141,20 @@ export async function logout(): Promise<void> {
 		console.warn('Failed to clear session expiration during logout:', error);
 		// Non-blocking - logout continues
 	}
+}
+
+/**
+ * Logout user - Client-side only (stateless architecture)
+ *
+ * This is the MANUAL logout function (user-initiated)
+ * For automatic logout (session expiration), use clearLocalAuthData() directly
+ */
+export async function logout(): Promise<void> {
+	// No server call needed - server is stateless
+	// (See api/api-auth-operations/login.ts::logout() for philosophy)
+	const { api } = await import('../../api');
+	await api.logout();
+
+	// Perform unified local cleanup
+	await clearLocalAuthData();
 }

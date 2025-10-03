@@ -95,22 +95,19 @@ export async function refreshToken(): Promise<boolean> {
 
 /**
  * Handle dual token expiry scenario
+ *
+ * UNIFIED APPROACH: Uses authStore.logout() which calls clearLocalAuthData()
+ * No need for additional cleanup - logout handles everything
  */
 async function handleDualTokenExpiry(): Promise<void> {
 	const { authStore } = await import('../../stores/auth');
 	const { dialogStore } = await import('../../stores/dialog');
 
-	// Complete logout with ALL IndexedDB cleanup
+	// Logout handles ALL cleanup:
+	// - Ed25519 keypairs
+	// - IndexedDB session data
+	// - Session expiration timestamp
 	await authStore.logout();
-	await authStore.clearPreventiveAuthData();
-
-	// Clear session expiration timestamp
-	try {
-		const { clearSessionExpiration } = await import('../../session-storage');
-		await clearSessionExpiration();
-	} catch (error) {
-		console.warn('Failed to clear session expiration during dual token expiry:', error);
-	}
 
 	// Show auth dialog
 	const authConfig = {
