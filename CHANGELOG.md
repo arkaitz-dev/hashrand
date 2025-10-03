@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.23.0] - 2025-10-03
+
+### Added
+
+**🤖 Automatic Session Expiration Monitoring**
+
+- **Session monitor with background monitoring** (`sessionMonitor.ts` - 216 lines)
+  - Checks session expiration every 10 seconds when user is authenticated
+  - Visibility API integration: pauses monitoring when tab is in background (battery savings)
+  - Immediate expiration check when tab becomes visible again
+  - Shows i18n flash message (`common.sessionExpired`) in 13 languages before logout
+  - Redirects to home page (`/`) after automatic logout
+  - Cleans all session data: IndexedDB + Ed25519 keypairs
+
+- **Authentication-aware activation**
+  - `initSessionMonitor()`: Sets up infrastructure (listeners only) in root layout
+  - `startMonitoringIfAuthenticated()`: Only starts monitoring if user has valid session
+  - Called after successful magic link validation (both forced and normal paths)
+  - Called on page refresh/reload to resume monitoring for existing sessions
+  - NO false positives for unauthenticated users (pre-login navigation works normally)
+
+- **Integration in `+layout.svelte`**
+  - Initializes monitor infrastructure on mount
+  - Activates monitoring after magic link validation (2 code paths)
+  - Checks authentication state on page refresh to auto-resume monitoring
+  - Cleanup on unmount (destroySessionMonitor)
+
+### Fixed
+
+- **CRITICAL BUG: Pre-login false positives**
+  - Monitor was executing before authentication, showing "session expired" flash messages during pre-login navigation
+  - `isSessionExpired()` returned `true` for non-authenticated users → false positive logout triggers
+  - Multiple flash messages displayed ("Tu sesión ha caducado" x3) before login dialog
+  - Solution: `isUserAuthenticated()` check before ALL monitoring operations
+  - Monitor now only activates AFTER successful authentication
+
+### Technical Details
+
+**Architecture:**
+- Single Responsibility Principle: monitoring logic isolated in dedicated module
+- DRY: Reuses existing `session-expiry-manager.ts` functions
+- Reuses existing `flashMessagesStore` infrastructure
+- Reuses existing i18n translations (`common.sessionExpired` in 13 languages)
+
+**File Sizes (SOLID <225 lines compliance):**
+- `sessionMonitor.ts`: 216 lines ✅
+
+### Quality
+
+- ✅ **svelte-check**: 0 errors, 0 warnings
+- ✅ **ESLint**: 0 errors, 0 warnings
+- ✅ **Prettier**: All files formatted correctly
+- ✅ **Build**: Successful
+- ✅ **Manual testing**: Pre-login + post-login + auto-logout scenarios verified
+
+---
+
 ## [Web v0.22.1] - 2025-10-03
 
 ### Fixed

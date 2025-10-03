@@ -18,6 +18,11 @@
 	import { initializeVersionCheck, restoreSessionState } from '$lib/stores/version-update';
 	import { sessionStatusStore } from '$lib/stores/session-status';
 	import { isSessionExpired } from '$lib/session-expiry-manager';
+	import {
+		initSessionMonitor,
+		destroySessionMonitor,
+		startMonitoringIfAuthenticated
+	} from '$lib/sessionMonitor';
 
 	let { children } = $props();
 
@@ -52,6 +57,9 @@
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
+
+			// CRITICAL: Start session monitoring after successful login
+			await startMonitoringIfAuthenticated();
 
 			// Clean URL after successful validation
 			const newUrl = new window.URL(window.location.href);
@@ -169,7 +177,17 @@
 		// Restore session state if coming from update reload
 		restoreSessionState();
 
-		return unsubscribe;
+		// Initialize session monitor infrastructure (listeners only)
+		initSessionMonitor();
+
+		// Check if user is already authenticated and start monitoring if so
+		// This handles page refreshes where user already has a session
+		startMonitoringIfAuthenticated();
+
+		return () => {
+			unsubscribe();
+			destroySessionMonitor();
+		};
 	});
 
 	/**
@@ -189,6 +207,9 @@
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
+
+			// CRITICAL: Start session monitoring after successful login
+			await startMonitoringIfAuthenticated();
 		} catch {
 			// Show error and redirect to home page (URL already cleaned)
 			// Magic link validation failed

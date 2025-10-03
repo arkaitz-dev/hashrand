@@ -4,8 +4,8 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.22.1**
-- 🧹 **Latest**: Frontend cleanup & Svelte 5 reactivity fixes (v0.22.1)
+**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.0**
+- 🤖 **Latest**: Automatic session expiration monitoring (v0.23.0)
 - 🏗️ **MAJOR REFACTORING**: Enterprise-grade architecture with SOLID/DRY/KISS principles
 - ✅ **16 files refactored** - <200 lines/module limit enforced (89.5% completion)
 - 🏆 **DRY Champions**: 16 error patterns → 1 (backend), 18 patterns → 4 (frontend)
