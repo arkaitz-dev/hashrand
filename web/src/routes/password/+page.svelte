@@ -57,27 +57,22 @@
 		validateAndApplyParams: validateAndApplyPasswordParams
 	});
 
-	// Form state managed by composable
-	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+	// Destructure stores for reactivity ($store syntax requires variables, not object properties)
+	const { params: paramsStore, urlProvidedSeed: urlProvidedSeedStore } = formParamsManager;
+
+	// Form state managed by composable (using $store syntax for reactivity)
+	let urlProvidedSeed = $derived($urlProvidedSeedStore);
 
 	// Reactive bindings for form inputs
 	let alphabet = $state('full-with-symbols');
 	let length = $state(21);
 
-	// Bidirectional sync: URL params → local state
+	// URL params → local state (one-way sync for form initialization)
+	// Note: Generation reads from local variables via getParams() - no reverse sync needed
 	$effect(() => {
-		const currentParams = formParamsManager.params.value;
+		const currentParams = $paramsStore;
 		if (currentParams.alphabet) alphabet = currentParams.alphabet;
 		if (currentParams.length) length = currentParams.length;
-	});
-
-	// Bidirectional sync: local state → params (for generation)
-	$effect(() => {
-		formParamsManager.params.value = {
-			...formParamsManager.params.value,
-			alphabet: alphabet as 'full-with-symbols' | 'no-look-alike',
-			length
-		};
 	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable

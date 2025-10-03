@@ -57,16 +57,20 @@
 		validateAndApplyParams: validateAndApplyApiKeyParams
 	});
 
-	// Form state managed by composable
-	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+	// Destructure stores for reactivity ($store syntax requires variables, not object properties)
+	const { params: paramsStore, urlProvidedSeed: urlProvidedSeedStore } = formParamsManager;
+
+	// Form state managed by composable (using $store syntax for reactivity)
+	let urlProvidedSeed = $derived($urlProvidedSeedStore);
 
 	// Reactive bindings for form inputs
 	let alphabet = $state('full');
 	let length = $state(44);
 
-	// Initialize from params when available
+	// URL params → local state (one-way sync for form initialization)
+	// Note: Generation reads from local variables via getParams() - no reverse sync needed
 	$effect(() => {
-		const currentParams = formParamsManager.params.value;
+		const currentParams = $paramsStore;
 		if (currentParams.alphabet) alphabet = currentParams.alphabet;
 		if (currentParams.length) length = currentParams.length;
 	});

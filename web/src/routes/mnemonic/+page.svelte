@@ -65,16 +65,20 @@
 		validateAndApplyParams: validateAndApplyMnemonicParams
 	});
 
-	// Form state managed by composable
-	let urlProvidedSeed = $derived(formParamsManager.urlProvidedSeed.value);
+	// Destructure stores for reactivity ($store syntax requires variables, not object properties)
+	const { params: paramsStore, urlProvidedSeed: urlProvidedSeedStore } = formParamsManager;
+
+	// Form state managed by composable (using $store syntax for reactivity)
+	let urlProvidedSeed = $derived($urlProvidedSeedStore);
 
 	// Reactive bindings for form inputs
 	let language = $state('english');
 	let words = $state(12);
 
-	// Initialize from params when available
+	// URL params → local state (one-way sync for form initialization)
+	// Note: Generation reads from local variables via getParams() - no reverse sync needed
 	$effect(() => {
-		const currentParams = formParamsManager.params.value;
+		const currentParams = $paramsStore;
 		if (currentParams.language) language = currentParams.language;
 		if (currentParams.words) words = currentParams.words;
 	});

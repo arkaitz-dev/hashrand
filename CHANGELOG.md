@@ -4,6 +4,61 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.23.1] - 2025-10-03
+
+### Fixed
+
+**🐛 CRITICAL BUG: Seed parameter not appearing in forms when choosing "Keep same seed"**
+
+- **Root cause**: Store wrapper with `get()` broke Svelte 5 reactivity chain
+  - `useFormParams.ts` returned stores wrapped with getters: `get value() { return get(urlProvidedSeedStore); }`
+  - `$derived()` in components didn't detect changes because `get()` doesn't create reactive dependencies
+  - Seed value was correctly set in store but UI never updated
+- **Solution**: Expose stores directly from `useFormParams` composable for native `$store` syntax
+  - Changed return from `{ urlProvidedSeed: { get value() {...} } }` to `{ urlProvidedSeed: urlProvidedSeedStore }`
+  - Components now destructure stores: `const { urlProvidedSeed: urlProvidedSeedStore } = formParamsManager;`
+  - Reactivity works: `let urlProvidedSeed = $derived($urlProvidedSeedStore);`
+- **Affected routes**: All 4 generation routes (custom, password, api-key, mnemonic)
+- **Impact**: Seed parameter now correctly appears in form when user chooses "Keep same seed" option
+
+### Code Quality Improvements (DRY)
+
+**🧹 Eliminated ~40 lines of dead code**
+
+- **Discovery**: Some routes had unnecessary bidirectional `$effect` synchronization
+  - First `$effect`: Store → local state (needed for form initialization) ✅
+  - Second `$effect`: Local state → store (DEAD CODE - generation reads from local variables) ❌
+- **Analysis**: `useGenerationWorkflow.getParams()` reads from local variables, NOT from store
+  - Example: `getParams: () => ({ length: length ?? 21, alphabet: alphabet ?? 'base58' })`
+  - Store only used for URL parameter initialization, not for generation
+- **Cleanup**: Removed second `$effect` from `custom/+page.svelte` and `password/+page.svelte`
+- **Result**: Unified store consumption pattern across all 4 generation routes
+
+### Architecture
+
+**✅ Svelte 5 Best Practices Compliance**
+
+- **Composables (.ts)**: Use `writable/readable` stores (standard pattern)
+- **Components (.svelte)**: Use `$store` syntax + local runes (`$state`, `$derived`, `$effect`)
+- **Reactivity**: Native Svelte 5 reactivity chain preserved (no wrappers)
+
+### Testing
+
+- ✅ **Manual testing**: Complete flow "result → adjust settings → keep seed" in 4 routes
+- ✅ **Zero regressions**: Form validation and generation logic intact
+- ✅ **Compilation**: Clean build (0 errors, 0 warnings)
+- ✅ **Quality**: clippy ✅ | cargo fmt ✅ | ESLint ✅ | svelte-check ✅ | Prettier ✅
+
+### Files Modified (5)
+
+1. `web/src/lib/composables/useFormParams.ts` - Expose stores directly (-14 +3 lines)
+2. `web/src/routes/custom/+page.svelte` - Destructure stores + remove dead code (-10 +5 lines)
+3. `web/src/routes/password/+page.svelte` - Destructure stores + remove dead code (-10 +5 lines)
+4. `web/src/routes/api-key/+page.svelte` - Destructure stores (-2 +5 lines)
+5. `web/src/routes/mnemonic/+page.svelte` - Destructure stores (-2 +5 lines)
+
+---
+
 ## [Web v0.23.0] - 2025-10-03
 
 ### Added

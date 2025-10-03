@@ -105,23 +105,10 @@ export function useFormParams<T>(config: FormParamsConfig<T>) {
 	// Initialize parameters on mount
 	initializeParams();
 
+	// Return stores directly for native Svelte reactivity ($store syntax)
 	return {
-		params: {
-			get value() {
-				return get(paramsStore);
-			},
-			set value(newParams: T) {
-				paramsStore.set(newParams);
-			}
-		},
-		urlProvidedSeed: {
-			get value() {
-				return get(urlProvidedSeedStore);
-			},
-			set value(seed: string) {
-				urlProvidedSeedStore.set(seed);
-			}
-		},
+		params: paramsStore,
+		urlProvidedSeed: urlProvidedSeedStore,
 		updateParams
 	};
 }

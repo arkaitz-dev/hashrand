@@ -4,8 +4,9 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.0**
-- 🤖 **Latest**: Automatic session expiration monitoring (v0.23.0)
+**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.1**
+- 🐛 **Latest**: Critical seed parameter bug fix + DRY improvements (v0.23.1)
+- 🤖 Automatic session expiration monitoring (v0.23.0)
 - 🏗️ **MAJOR REFACTORING**: Enterprise-grade architecture with SOLID/DRY/KISS principles
 - ✅ **16 files refactored** - <200 lines/module limit enforced (89.5% completion)
 - 🏆 **DRY Champions**: 16 error patterns → 1 (backend), 18 patterns → 4 (frontend)
@@ -134,6 +135,13 @@ cd web && npm run test:api:verbose  # Detailed output
 
 
 ## Recent Session History (see CHANGELOG.md for complete details)
+
+### v0.23.1: Seed Parameter Bug Fix + DRY Improvements (2025-10-03)
+**✅ COMPLETED**: Critical fix for seed parameter not appearing in forms when choosing "Keep same seed" option
+- Root cause: Store wrapper with `get()` broke Svelte 5 reactivity chain
+- Solution: Expose stores directly from `useFormParams` for native `$store` syntax
+- Bonus: Eliminated ~40 lines of dead code (unnecessary bidirectional `$effect` sync)
+- Files: 5 modified (1 composable + 4 routes), ZERO regressions, all tests passing
 
 ### v1.7.0 + v0.22.0: Enterprise-Grade Architecture Refactoring (2025-10-03)
 **✅ COMPLETED**: SOLID/DRY/KISS architecture enforcement - 16 files refactored (13 Rust + 5 TypeScript), ~800 lines DRY violations eliminated, all modules <225 lines, ZERO regressions (51/51 tests passing). See [CHANGELOG.md](CHANGELOG.md#api-v170--web-v0220---2025-10-03) for complete implementation details.
