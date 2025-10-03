@@ -4,8 +4,9 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.1**
-- 🐛 **Latest**: Critical seed parameter bug fix + DRY improvements (v0.23.1)
+**Last Update**: 2025-10-03 - **API v1.7.0 + Web v0.23.2**
+- ⚡ **Latest**: Instant UI loading in result page + cleanup (v0.23.2)
+- 🐛 Critical seed parameter bug fix + DRY improvements (v0.23.1)
 - 🤖 Automatic session expiration monitoring (v0.23.0)
 - 🏗️ **MAJOR REFACTORING**: Enterprise-grade architecture with SOLID/DRY/KISS principles
 - ✅ **16 files refactored** - <200 lines/module limit enforced (89.5% completion)
@@ -135,6 +136,14 @@ cd web && npm run test:api:verbose  # Detailed output
 
 
 ## Recent Session History (see CHANGELOG.md for complete details)
+
+### v0.23.2: Instant UI Loading + Debug Cleanup (2025-10-03)
+**✅ COMPLETED**: Improved perceived performance in result page
+- UI shows instantly before API call (no more blank screen)
+- DRY helper: `buildParamsFromUrlParams()` extracts parameter logic
+- Consistent UX: same loading behavior as "Regenerate" button
+- Cleanup: -3 debug console.logs from sessionMonitor
+- Files: 2 modified (result: -11 lines, sessionMonitor: -5 lines)
 
 ### v0.23.1: Seed Parameter Bug Fix + DRY Improvements (2025-10-03)
 **✅ COMPLETED**: Critical fix for seed parameter not appearing in forms when choosing "Keep same seed" option

@@ -72,6 +72,23 @@
 		// Using existing result state
 	});
 
+	// Helper function to build params object from URL parameters (DRY)
+	function buildParamsFromUrlParams(
+		urlParams: Record<string, unknown>
+	): Record<string, string | number | boolean> {
+		const params: Record<string, string | number | boolean> = { raw: true };
+
+		// Convert and validate parameters
+		if (urlParams.length) params.length = parseInt(String(urlParams.length));
+		if (urlParams.alphabet) params.alphabet = String(urlParams.alphabet);
+		if (urlParams.prefix) params.prefix = String(urlParams.prefix);
+		if (urlParams.suffix) params.suffix = String(urlParams.suffix);
+		if (urlParams.language) params.language = String(urlParams.language);
+		if (urlParams.words) params.words = parseInt(String(urlParams.words));
+
+		return params;
+	}
+
 	// Function to generate result from URL parameters
 	async function generateFromParams() {
 		// REACTIVE APPROACH: No proactive auth checks
@@ -127,21 +144,25 @@
 		const hasProvidedSeed = Boolean(urlParams.seed);
 		usedProvidedSeed = hasProvidedSeed;
 
+		// Build parameters object using DRY helper function
+		const params = buildParamsFromUrlParams(urlParams);
+
+		// CREATE TEMPORARY resultState to show UI immediately (before API call)
+		// This provides instant feedback to the user instead of blank screen
+		setResult({
+			value: '', // Empty - textarea will show "Loading..." via $isLoading check
+			seed: undefined,
+			otp: undefined,
+			params: params,
+			endpoint: endpoint,
+			timestamp: new Date() // Temporary timestamp, will be updated with real one
+		});
+
+		// NOW start loading indicator and call API
 		setLoading(true);
 
 		try {
 			const { api } = await import('$lib/api');
-
-			// Build parameters object
-			const params: Record<string, string | number | boolean> = { raw: true };
-
-			// Convert and validate parameters
-			if (urlParams.length) params.length = parseInt(String(urlParams.length));
-			if (urlParams.alphabet) params.alphabet = String(urlParams.alphabet);
-			if (urlParams.prefix) params.prefix = String(urlParams.prefix);
-			if (urlParams.suffix) params.suffix = String(urlParams.suffix);
-			if (urlParams.language) params.language = String(urlParams.language);
-			if (urlParams.words) params.words = parseInt(String(urlParams.words));
 
 			const inputSeed = urlParams.seed ? String(urlParams.seed) : null;
 

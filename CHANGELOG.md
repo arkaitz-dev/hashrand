@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.23.2] - 2025-10-03
+
+### Improved
+
+**⚡ Instant UI Loading in Result Page**
+
+- **Problem**: Result page showed blank screen while waiting for API response
+  - User clicks "Generate" → decryption → validation → **API call** → UI renders
+  - Poor perceived performance (felt slow even with fast API)
+  - Inconsistent UX vs "Regenerate" button (which showed UI immediately)
+- **Solution**: Create temporary `resultState` before API call
+  - Flow: Decrypt → Validate → **Create temp state** → **Render UI** → API call → Update result
+  - UI shows immediately with "Loading..." indicator (same as regenerate)
+  - Consistent UX across all generation flows
+- **Implementation**:
+  - New DRY helper: `buildParamsFromUrlParams()` (extracts parameter building logic)
+  - Temporary state with known values: endpoint, params, timestamp
+  - `value: ''` triggers loading state in textarea
+  - API response updates state with real values
+- **Impact**: Instant visual feedback, smoother user experience
+
+### Code Quality
+
+**🧹 DRY Refactoring & Debug Cleanup**
+
+- **DRY improvement**: Extracted `buildParamsFromUrlParams()` helper function
+  - Eliminates duplicate parameter construction logic
+  - Reusable for both temp state and API call
+  - Follows Single Responsibility Principle
+- **Debug cleanup**: Removed 3 unnecessary `console.log` statements from `sessionMonitor.ts`
+  - "Session monitor initialized (listeners only, not monitoring yet)"
+  - "Session monitor: user not authenticated, not starting"
+  - "Session monitor started"
+- **Lines reduced**: -16 total (result: -11 lines, sessionMonitor: -5 lines)
+
+### Architecture
+
+**✅ SOLID/KISS Principles Applied**
+
+- **Single Responsibility**: Dedicated helper for parameter building
+- **DRY**: Eliminated code duplication
+- **KISS**: Simple, effective solution without over-engineering
+
+### Testing
+
+- ✅ **51 tests passing** (35 bash + 16 Playwright)
+- ✅ **Zero regressions**: All generation flows working correctly
+- ✅ **Quality checks**: 0 errors | 0 warnings (ESLint, Clippy, svelte-check)
+
+### Files Modified (2)
+
+1. `web/src/routes/result/+page.svelte` (894 → 883 lines, -11)
+   - Added `buildParamsFromUrlParams()` helper (DRY)
+   - Create temporary state before API call (instant UI)
+   - Removed dead commented code
+2. `web/src/lib/sessionMonitor.ts` (213 → 208 lines, -5)
+   - Removed 3 debug console.log statements
+
+---
+
 ## [Web v0.23.1] - 2025-10-03
 
 ### Fixed

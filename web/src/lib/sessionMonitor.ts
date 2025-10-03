@@ -114,8 +114,6 @@ function startMonitoring(): void {
 	// Start periodic checks
 	intervalId = setInterval(checkAndHandleExpiration, CHECK_INTERVAL_MS) as unknown as number;
 	isMonitoring = true;
-
-	console.log('Session monitor started');
 }
 
 /**
@@ -170,8 +168,6 @@ export function initSessionMonitor(): void {
 
 	// Set up visibility change listener only
 	document.addEventListener('visibilitychange', handleVisibilityChange);
-
-	console.log('Session monitor initialized (listeners only, not monitoring yet)');
 }
 
 /**
@@ -188,10 +184,6 @@ export async function startMonitoringIfAuthenticated(): Promise<void> {
 		if (!document.hidden) {
 			startMonitoring();
 		}
-		console.log('Session monitor activated for authenticated user');
-	} else {
-		// User not authenticated - don't start
-		console.log('Session monitor: user not authenticated, not starting');
 	}
 }
 

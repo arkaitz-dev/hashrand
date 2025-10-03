@@ -66,3 +66,7 @@ vite.config.ts.timestamp-*
 web/test-results/
 web/tests/playwright-report/
 web/web/
+
+# Test temporary files
+.test-*
+cookies_test_*.txt
