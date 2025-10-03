@@ -12,10 +12,7 @@
 
 	onMount(async () => {
 		// Get error information
-		const error = $page.error;
 		const status = $page.status;
-
-		console.log('🚫 Error page triggered:', { status, error });
 
 		// Create appropriate translated error message
 		let message = '';

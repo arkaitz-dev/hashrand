@@ -35,8 +35,6 @@ export async function isSessionExpired(): Promise<boolean> {
  */
 export async function handleExpiredSession(): Promise<void> {
 	try {
-		console.log('🕐 Session expired - performing complete cleanup');
-
 		// Clear session expiration timestamp
 		await clearSessionExpiration();
 
@@ -55,8 +53,6 @@ export async function handleExpiredSession(): Promise<void> {
 		} catch (error) {
 			console.warn('Failed to clear Ed25519 keypairs:', error);
 		}
-
-		console.log('✅ Expired session cleanup completed');
 	} catch (error) {
 		console.error('Failed to handle expired session:', error);
 		// Even if cleanup fails, continue with auth flow
@@ -80,7 +76,6 @@ export async function launchMagicLinkFlow(next?: string): Promise<void> {
 		};
 
 		dialogStore.show('auth', authConfig);
-		console.log('🔐 Magic link dialog launched', next ? `with next: ${next}` : '');
 	} catch (error) {
 		console.error('Failed to launch magic link flow:', error);
 		// Fallback - redirect to home if dialog fails

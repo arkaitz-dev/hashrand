@@ -47,8 +47,6 @@ export async function createSignedRequest<T>(
 	// Step 3: Sign the Base64 string using signMessage (supports WebCrypto + Noble)
 	const signature = await signMessage(base64Payload, keyPair);
 
-	console.log('✅ BASE64 FRONTEND: Created signed request');
-
 	return {
 		payload: base64Payload,
 		signature
@@ -72,7 +70,6 @@ export async function signQueryParams(params: Record<string, string>): Promise<s
 
 	// Serialize parameters with deterministic JSON
 	const serializedParams = serializeQueryParams(params);
-	console.log('🔍 JSON FRONTEND: Serialized query params for signing');
 
 	// Sign using signMessage (supports WebCrypto + Noble)
 	return await signMessage(serializedParams, keyPair);

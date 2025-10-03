@@ -79,13 +79,24 @@
 	let prefix = $state('');
 	let suffix = $state('');
 
-	// Initialize from params when available
+	// Bidirectional sync: URL params → local state
 	$effect(() => {
 		const currentParams = formParamsManager.params.value;
 		if (currentParams.alphabet) alphabet = currentParams.alphabet;
 		if (currentParams.length) length = currentParams.length;
 		if (currentParams.prefix) prefix = currentParams.prefix;
 		if (currentParams.suffix) suffix = currentParams.suffix;
+	});
+
+	// Bidirectional sync: local state → params (for generation)
+	$effect(() => {
+		formParamsManager.params.value = {
+			...formParamsManager.params.value,
+			alphabet: alphabet as AlphabetType,
+			length,
+			prefix,
+			suffix
+		};
 	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
@@ -233,7 +244,7 @@
 							<input
 								type="range"
 								id="length"
-								bind:value={formParamsManager.params.value.length}
+								bind:value={length}
 								min="2"
 								max="128"
 								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"
@@ -250,7 +261,7 @@
 
 					<!-- Alphabet -->
 					<AlphabetSelector
-						bind:value={formParamsManager.params.value.alphabet}
+						bind:value={alphabet}
 						options={alphabetOptions}
 						label={$_('custom.alphabet')}
 						id="alphabet"
@@ -265,7 +276,7 @@
 							' 32 ' +
 							$_('common.characters') +
 							')'}
-						bind:value={formParamsManager.params.value.prefix}
+						bind:value={prefix}
 						placeholder={$_('common.optionalPrefix')}
 						maxlength={32}
 						isValid={prefixValid}
@@ -281,7 +292,7 @@
 							' 32 ' +
 							$_('common.characters') +
 							')'}
-						bind:value={formParamsManager.params.value.suffix}
+						bind:value={suffix}
 						placeholder={$_('common.optionalSuffix')}
 						maxlength={32}
 						isValid={suffixValid}

@@ -53,10 +53,6 @@ export class SignedResponseValidator {
 		let originalJsonPayload: string;
 		try {
 			originalJsonPayload = decodePayloadBase64(signedResponse.payload);
-			console.log(
-				'🔓 BASE64 FRONTEND: Decoded Base64 to JSON for data extraction, length:',
-				originalJsonPayload.length
-			);
 		} catch (e) {
 			throw new SignedResponseError(`Base64 decoding failed: ${e}`);
 		}
@@ -75,9 +71,6 @@ export class SignedResponseValidator {
 		// Step 3: Parse JSON back to typed object
 		try {
 			const deserializedPayload = JSON.parse(originalJsonPayload) as T;
-			console.log(
-				'✅ BASE64 FRONTEND: Signature verified against Base64, data extracted from JSON'
-			);
 			return deserializedPayload;
 		} catch (e) {
 			throw new SignedResponseError(`JSON parsing failed: ${e}`);

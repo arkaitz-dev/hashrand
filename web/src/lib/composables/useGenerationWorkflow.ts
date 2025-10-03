@@ -49,7 +49,6 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 
 		if (!sessionValid) {
 			// Session was expired and auth dialog launched - stop generation
-			console.log('🕐 Generation cancelled due to expired session');
 			return;
 		}
 

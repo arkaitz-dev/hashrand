@@ -28,8 +28,6 @@ export async function requestMagicLink(
 		throw new Error('UI host is required for magic link generation');
 	}
 
-	console.log(`🔒 [SECURITY] Sending ui_host to backend: '${ui_host}'`);
-
 	const { api } = await import('../../api');
 	return await api.requestMagicLink(email, ui_host, next);
 }

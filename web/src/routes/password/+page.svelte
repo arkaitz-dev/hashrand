@@ -64,11 +64,20 @@
 	let alphabet = $state('full-with-symbols');
 	let length = $state(21);
 
-	// Initialize from params when available
+	// Bidirectional sync: URL params → local state
 	$effect(() => {
 		const currentParams = formParamsManager.params.value;
 		if (currentParams.alphabet) alphabet = currentParams.alphabet;
 		if (currentParams.length) length = currentParams.length;
+	});
+
+	// Bidirectional sync: local state → params (for generation)
+	$effect(() => {
+		formParamsManager.params.value = {
+			...formParamsManager.params.value,
+			alphabet: alphabet as 'full-with-symbols' | 'no-look-alike',
+			length
+		};
 	});
 
 	// REMOVED: URL parameters now handled by useFormParams composable
@@ -185,7 +194,7 @@
 				<form onsubmit={generationWorkflow.handleGenerate} class="space-y-6">
 					<!-- Alphabet -->
 					<AlphabetSelector
-						bind:value={formParamsManager.params.value.alphabet}
+						bind:value={alphabet}
 						options={alphabetOptions}
 						label={$_('password.alphabet')}
 						id="alphabet"
@@ -204,7 +213,7 @@
 							<input
 								type="range"
 								id="length"
-								bind:value={formParamsManager.params.value.length}
+								bind:value={length}
 								min={minLength}
 								max="44"
 								class="flex-1 h-2 bg-blue-600 rounded appearance-none outline-none slider"

@@ -75,7 +75,6 @@ export async function refreshToken(): Promise<boolean> {
 			return false;
 		}
 
-		flashMessagesStore.addMessage(t('auth.tokenRefreshSuccess', lang));
 		return true;
 	} catch (error) {
 		console.error('Token refresh failed:', error);

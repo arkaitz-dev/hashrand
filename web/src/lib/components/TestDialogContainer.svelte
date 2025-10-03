@@ -1,14 +1,5 @@
 <script>
 	import { dialogStore } from '$lib/stores/dialog';
-
-	console.log('[DEBUG] TestDialogContainer: Component loaded!');
-	console.log('[DEBUG] TestDialogContainer: Initial store value:', $dialogStore);
-
-	// Simple reactive statement
-	$: {
-		console.log('[DEBUG] TestDialogContainer: Store changed to:', $dialogStore);
-		console.log('[DEBUG] TestDialogContainer: Should show dialog:', $dialogStore !== null);
-	}
 </script>
 
 <div

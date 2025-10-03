@@ -65,8 +65,6 @@ export async function storeSessionExpiration(expires_at: number): Promise<void> 
 			transaction.oncomplete = () => resolve();
 			transaction.onerror = () => reject(transaction.error);
 		});
-
-		console.log('✅ Session expiration stored in IndexedDB:', new Date(expires_at * 1000));
 	} catch (error) {
 		console.warn('Failed to store session expiration:', error);
 		// Non-blocking - session continues without persistent expiration tracking
@@ -96,7 +94,6 @@ export async function getSessionExpiration(): Promise<number | null> {
 		// Check if stored expiration is still valid (not in the past)
 		const now = Math.floor(Date.now() / 1000);
 		if (result.expires_at <= now) {
-			console.log('🕐 Stored session expiration is in the past, removing');
 			await clearSessionExpiration();
 			return null;
 		}
@@ -125,8 +122,6 @@ export async function clearSessionExpiration(): Promise<void> {
 			transaction.oncomplete = () => resolve();
 			transaction.onerror = () => reject(transaction.error);
 		});
-
-		console.log('🗑️ Session expiration cleared from IndexedDB');
 	} catch (error) {
 		console.warn('Failed to clear session expiration:', error);
 		// Non-blocking

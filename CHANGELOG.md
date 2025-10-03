@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.22.1] - 2025-10-03
+
+### Fixed
+
+**🧹 Frontend Cleanup & Svelte 5 Reactivity Fixes**
+
+- **Console.log cleanup** (18 files modified)
+  - Removed ALL debug/info `console.log` statements from frontend codebase
+  - Files affected: session management (session-status, session-expiry-manager, session-storage), authentication (auth-actions, auth-recovery, login, refresh), signed requests/responses (signedRequest, validation), UI components (AuthConfirmDialogContent, TestDialogContainer), routing (result page, error page), utilities (domain-extractor, auth, useGenerationWorkflow)
+  - Removed "Token renovado exitosamente" flash message from automatic token refresh (silent refresh UX improvement)
+  - Fixed ESLint warning: unused 'error' variable in `+error.svelte`
+
+- **Svelte 5 reactivity compliance** (2 files)
+  - Fixed `binding_property_non_reactive` warnings in `custom/+page.svelte` and `password/+page.svelte`
+  - Implemented bidirectional synchronization pattern between local reactive state (`$state`) and `formParamsManager.params.value`
+  - Changed bindings from `bind:value={formParamsManager.params.value.length}` to `bind:value={length}` (local reactive variable)
+  - Two `$effect()` blocks per form: URL params → local state (read), local state → params (write for generation)
+  - Added proper TypeScript type assertions for alphabet types
+
+### Quality
+
+- ✅ **svelte-check**: 0 errors, 0 warnings
+- ✅ **ESLint**: 0 errors, 0 warnings
+- ✅ **Build**: Successful (9.43s)
+- ✅ **All tests passing**: 51/51 (35 bash + 16 Playwright)
+
+---
+
 ## [API v1.7.0 + Web v0.22.0] - 2025-10-03
 
 ### 🏗️ MAJOR REFACTORING: Enterprise-Grade Architecture with SOLID/DRY/KISS Principles

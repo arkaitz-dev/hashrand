@@ -51,12 +51,10 @@
 
 		if (!sessionValid) {
 			// Session expired - cleanup done and auth dialog launched
-			console.log('🕐 Result page cancelled due to expired session');
 			return; // Stop all result processing
 		}
 
 		// Session is valid - proceed with result processing
-		console.log('✅ Session valid - proceeding with result generation');
 
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
 		if (searchParams.size > 0) {

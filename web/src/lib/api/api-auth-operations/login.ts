@@ -46,10 +46,6 @@ export async function requestMagicLink(
 export async function validateMagicLink(magicToken: string): Promise<LoginResponse> {
 	const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
 
-	console.log(
-		'🍪 [SECURITY] validateMagicLink: Sending request WITH credentials to receive cookie'
-	);
-
 	return await httpSignedPOSTRequest<{ magiclink: string }, LoginResponse>(
 		`${API_BASE}/login/magiclink/`,
 		{ magiclink: magicToken },

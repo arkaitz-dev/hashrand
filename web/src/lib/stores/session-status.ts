@@ -34,7 +34,6 @@ function createSessionStatusStore() {
 				isExpired: true,
 				lastChecked: Date.now()
 			}));
-			console.log('🟡 Session marked as expired globally');
 		},
 
 		/**
@@ -46,7 +45,6 @@ function createSessionStatusStore() {
 				isExpired: false,
 				lastChecked: Date.now()
 			}));
-			console.log('✅ Session marked as valid globally');
 		},
 
 		/**

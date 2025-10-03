@@ -33,7 +33,6 @@ export async function ensureCryptoTokensExist(context: string): Promise<boolean>
 
 	if (!hasSession) {
 		// Expected: No session, no tokens - user needs to login
-		console.log(`🔐 [AUTH-RECOVERY] ${context}: No session - redirecting to login`);
 		await initiateAuthenticationFlow('auth.requiresAuthentication');
 		return false;
 	} else {

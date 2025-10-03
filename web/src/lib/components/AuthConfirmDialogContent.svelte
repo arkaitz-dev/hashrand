@@ -32,8 +32,6 @@
 			const { extractDomain } = await import('$lib/utils/domain-extractor');
 			const ui_host = extractDomain();
 
-			console.log(`🔒 [SECURITY] Extracted domain for magic link: '${ui_host}'`);
-
 			// Build nextParam using universal DRY function
 			const nextParam = buildNextParameterFromConfig(config);
 

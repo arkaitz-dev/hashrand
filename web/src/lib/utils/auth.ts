@@ -38,8 +38,6 @@ export async function handleEmailConfirmation(
 		const { extractDomain } = await import('./domain-extractor');
 		const ui_host = extractDomain();
 
-		console.log(`🔒 [SECURITY] Sending domain to backend: '${ui_host}'`);
-
 		// Encode nextObject to Base58 for backend
 		const nextBase58 = encodeNextToBase58(nextObject);
 

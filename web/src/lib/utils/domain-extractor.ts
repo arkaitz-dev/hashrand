@@ -25,8 +25,6 @@ export function extractDomain(): string {
 
 	const domain = window.location.hostname;
 
-	console.log(`🔒 [SECURITY] Extracted domain for API: '${domain}'`);
-
 	return domain;
 }
 
