@@ -135,83 +135,23 @@ cd web && npm run test:api:verbose  # Detailed output
 - **This is CRITICAL for maintainability** - Prevents CLAUDE.md bloat and information overload
 
 
-## Recent Session History (see CHANGELOG.md for complete details)
+## Recent Session History
 
-### v0.23.2: Instant UI Loading + Debug Cleanup (2025-10-03)
-**✅ COMPLETED**: Improved perceived performance in result page
-- UI shows instantly before API call (no more blank screen)
-- DRY helper: `buildParamsFromUrlParams()` extracts parameter logic
-- Consistent UX: same loading behavior as "Regenerate" button
-- Cleanup: -3 debug console.logs from sessionMonitor
-- Files: 2 modified (result: -11 lines, sessionMonitor: -5 lines)
+**Latest versions**: API v1.7.0 + Web v0.23.2 (2025-10-03)
 
-### v0.23.1: Seed Parameter Bug Fix + DRY Improvements (2025-10-03)
-**✅ COMPLETED**: Critical fix for seed parameter not appearing in forms when choosing "Keep same seed" option
-- Root cause: Store wrapper with `get()` broke Svelte 5 reactivity chain
-- Solution: Expose stores directly from `useFormParams` for native `$store` syntax
-- Bonus: Eliminated ~40 lines of dead code (unnecessary bidirectional `$effect` sync)
-- Files: 5 modified (1 composable + 4 routes), ZERO regressions, all tests passing
+**Recent sessions summary**:
+- **v0.23.2**: Instant UI loading + DRY improvements + cleanup
+- **v0.23.1**: Critical seed parameter bug fix (Svelte 5 reactivity)
+- **v0.23.0**: Automatic session expiration monitoring
+- **v1.7.0 + v0.22.0**: MAJOR - Enterprise-grade SOLID/DRY/KISS refactoring (16 files, ~800 lines eliminated)
+- **v1.6.34 + v0.21.9**: Cookie extraction RFC 6265 fix + debugging cleanup
+- **v1.6.30-33**: Cookie handling improvements + magic link protocol detection
+- **v1.6.25-29**: Security fixes (pub_key required, JSON serialization, fallback improvements)
+- **v1.6.24 + v0.21.7**: MITM protection with dual-key signing
+- **v1.6.23**: Ed25519 key rotation bug fix (JWT pub_key chain)
+- **v0.21.6**: Playwright API-only tests (16 tests, CI/CD ready)
 
-### v1.7.0 + v0.22.0: Enterprise-Grade Architecture Refactoring (2025-10-03)
-**✅ COMPLETED**: SOLID/DRY/KISS architecture enforcement - 16 files refactored (13 Rust + 5 TypeScript), ~800 lines DRY violations eliminated, all modules <225 lines, ZERO regressions (51/51 tests passing). See [CHANGELOG.md](CHANGELOG.md#api-v170--web-v0220---2025-10-03) for complete implementation details.
-
-### v1.6.34 + v0.21.9: CRITICAL FIX + Code Quality (2025-10-02)
-**✅ COMPLETED**: Extract LAST cookie + Debugging logs cleanup
-- Critical fix: Backend extracts LAST cookie (RFC 6265 compliant)
-- Cleanup: ~78 debugging lines removed, error logs preserved
-- Result: Key rotation 100% functional, zero session loss
-
-### v1.6.33: Extract LAST Cookie - Robust Duplicate Handling (2025-10-02)
-**✅ COMPLETED**: Defense in depth against duplicate cookies
-- Extracts LAST cookie instead of FIRST (newest wins)
-- Works even if cookie deletion fails
-- Deterministic and future-proof logic
-
-### v1.6.32: RFC 6265 Cookie Domain Matching Fix (2025-10-02)
-**✅ COMPLETED**: Cookie deletion with Domain attribute matching
-- Delete cookie with SAME Domain as create cookie
-- RFC 6265 compliance (Name + Domain + Path matching)
-- Correct OLD cookie elimination
-
-### v1.6.30 + v0.21.8: Magic Link Protocol + Keypair Rotation Fix (2025-10-02)
-**✅ COMPLETED**: Two separate critical fixes
-- **v1.6.30**: Automatic magic link protocol detection (http/https)
-- **v0.21.8**: Dual DB sync keypair rotation (hashrand-ed25519 + hashrand-session)
-
-### v1.6.26-29: Backend Fallbacks Improvements (2025-10-02)
-**✅ COMPLETED**: Exhaustive fallback improvements
-- **v1.6.26**: Valid JSON error serialization (9 locations)
-- **v1.6.27**: Timestamp nanos overflow protection
-- **v1.6.28**: ui_host required (security fix)
-- **v1.6.29**: Magic values documentation (21, 32)
-
-### v1.6.25: pub_key Required Parameter - Security Fix (2025-10-02)
-**✅ COMPLETED**: Dangerous fallback `[0u8; 32]` elimination
-- Signature change: `Option<&[u8; 32]>` → `&[u8; 32]` (required)
-- Compile-time validation, impossible to create tokens without valid pub_key
-- Improved type safety, 5 files modified
-
-### v1.6.24 + v0.21.7: MITM Protection - Dual-Key Signing (2025-10-02)
-**✅ COMPLETED**: MITM attack resistant architecture
-- Backend signs TRAMO 2/3 with OLD server_priv_key
-- Payload includes NEW server_pub_key
-- Frontend validates with OLD key BEFORE accepting NEW key
-- Zero trust window, cryptographic chain of trust
-- 28 files modified, +251 lines
-
-### v1.6.23: Refresh Token Ed25519 Public Key Bug Fix (2025-09-30)
-**✅ COMPLETED**: Critical key rotation bug resolved
-- JWT creation chain passed pub_key correctly (5 files)
-- Test automation: `test_2_3_system.sh` (4 tests, 100% success)
-- Obsolete scripts removed, documentation updated
-- Version: API v1.6.21 → v1.6.23
-
-### v0.21.6: Playwright API-Only Tests (2025-10-01)
-**✅ COMPLETED**: Complete 16 tests suite without browser
-- Auth API + Full Flow + Crypto Validation (774 lines)
-- Magic link extraction from backend logs
-- Complete Ed25519 verification
-- 100% success rate, perfect for CI/CD
+**📚 For complete details**: See [CHANGELOG.md](CHANGELOG.md) - root causes, technical flows, implementation details, file modifications, and testing results.
 
 ---
 

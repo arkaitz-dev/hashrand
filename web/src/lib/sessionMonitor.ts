@@ -75,8 +75,6 @@ async function checkAndHandleExpiration(): Promise<void> {
  * Perform automatic logout on session expiration
  */
 async function performAutoLogout(): Promise<void> {
-	console.log('Session expired - performing auto-logout...');
-
 	// Stop monitoring immediately
 	stopMonitoring();
 
@@ -124,7 +122,6 @@ function stopMonitoring(): void {
 		clearInterval(intervalId);
 		intervalId = null;
 		isMonitoring = false;
-		console.log('Session monitor stopped');
 	}
 }
 
@@ -196,8 +193,6 @@ export function destroySessionMonitor(): void {
 
 	stopMonitoring();
 	document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-	console.log('Session monitor destroyed');
 }
 
 /**
