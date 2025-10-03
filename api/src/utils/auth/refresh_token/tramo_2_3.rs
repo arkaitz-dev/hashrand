@@ -165,7 +165,6 @@ fn build_rotation_response(
             new_refresh_token, refresh_duration_seconds, domain_str
         )
     } else {
-        println!("⚠️ [COMPAT] Creating refresh cookie WITHOUT Domain attribute");
         format!(
             "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
             new_refresh_token, refresh_duration_seconds

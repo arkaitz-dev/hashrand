@@ -32,19 +32,11 @@ pub fn create_signed_response<T>(
 where
     T: Serialize,
 {
-    println!("= Generating signed response with per-session Ed25519 key...");
-
     // Step 1: Derive per-session private key
     let private_key = derive_session_private_key(user_id, pub_key_hex)?;
 
     // Step 2: Generate Ed25519 keypair
     let signing_key = SigningKey::from_bytes(&private_key);
-    let public_key = signing_key.verifying_key();
-
-    println!(
-        "= Generated Ed25519 keypair - Server pub_key: {}",
-        hex::encode(public_key.as_bytes())
-    );
 
     // Step 3: Serialize payload to deterministic JSON for frontend consistency
     let json_string = SignedRequestValidator::serialize_payload_deterministic(&payload)
@@ -58,20 +50,10 @@ where
             .replace('/', "_")
             .replace('=', "")
     };
-    println!(
-        "🔍 DEBUG BASE64 BACKEND: JSON length: {}, Base64 length: {}",
-        json_string.len(),
-        base64_payload.len()
-    );
 
     // Step 5: Sign Base64 payload with Ed25519 (same as frontend!)
     let signature_bytes = signing_key.sign(base64_payload.as_bytes());
     let signature_hex = hex::encode(signature_bytes.to_bytes());
-
-    println!(
-        "= Response signed successfully - Signature: {}...",
-        &signature_hex[..20]
-    );
 
     Ok(SignedResponse {
         payload: base64_payload,

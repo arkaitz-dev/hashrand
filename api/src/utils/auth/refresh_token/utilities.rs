@@ -88,16 +88,8 @@ pub fn extract_hostname_from_host_header(host_header: &str) -> Option<String> {
 
     // Validate that it's a reasonable hostname (basic validation)
     if hostname.is_empty() || hostname.contains('/') || hostname.contains('@') {
-        println!(
-            "⚠️ [SECURITY] Invalid Host header format: '{}'",
-            host_header
-        );
         return None;
     }
 
-    println!(
-        "🔒 [SECURITY] Extracted hostname for cookie Domain: '{}'",
-        hostname
-    );
     Some(hostname.to_string())
 }

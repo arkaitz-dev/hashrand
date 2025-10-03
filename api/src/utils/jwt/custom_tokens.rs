@@ -67,20 +67,10 @@ pub fn validate_custom_token(
     token: &str,
     token_type: TokenType,
 ) -> Result<CustomTokenClaims, String> {
-    println!(
-        "🔍 DEBUG validate_custom_token: Starting validation for token type: {:?}",
-        token_type
-    );
-
     // 1. Decode Base58 token
     let combined = bs58::decode(token)
         .into_vec()
         .map_err(|_| "Invalid Base58 token encoding")?;
-
-    println!(
-        "🔍 DEBUG validate_custom_token: Token decoded, length: {}",
-        combined.len()
-    );
 
     if combined.len() != 96 {
         return Err(format!(
@@ -97,18 +87,12 @@ pub fn validate_custom_token(
 
     // 3. ULTRA-SECURE: Decrypt prehash_seed using encrypted_payload as circular dependency
     let prehash_seed = decrypt_prehash_seed(&encrypted_prehash_seed, &encrypted_payload)?;
-    println!("🔍 DEBUG validate_custom_token: Prehash seed decrypted successfully");
 
     // 4. Get token configuration for payload decryption
     let config = match token_type {
         TokenType::Access => CustomTokenConfig::access_token()?,
         TokenType::Refresh => CustomTokenConfig::refresh_token()?,
     };
-    println!(
-        "🔍 DEBUG validate_custom_token: Got token config for {:?}",
-        token_type
-    );
-    // println!("🔍 DEBUG validate_custom_token: About to generate prehash and keys");
 
     // 5. Generate prehash from decrypted seed for payload decryption
     let prehash = generate_prehash(&prehash_seed, &config.hmac_key)?;
@@ -121,24 +105,15 @@ pub fn validate_custom_token(
     let payload = decrypt_payload(&encrypted_payload, &cipher_key, &cipher_nonce)?;
 
     // 8. Deserialize and validate claims
-    println!("🔍 DEBUG validate_custom_token: About to deserialize claims");
     let mut claims = CustomTokenClaims::from_bytes(&payload, &config.hmac_key)?;
     claims.token_type = token_type; // Set correct token type
-    println!("🔍 DEBUG validate_custom_token: Claims deserialized successfully");
 
     // 9. Check expiration
     let now = Utc::now();
-    println!(
-        "🔍 DEBUG validate_custom_token: Token expires at: {}, now: {}",
-        claims.expires_at, now
-    );
     if now > claims.expires_at {
-        println!("🔍 DEBUG validate_custom_token: Token is expired, returning error");
         return Err("Token has expired - please refresh or re-authenticate".to_string());
     }
-    // println!("🔍 DEBUG validate_custom_token: Token is valid and not expired, returning success");
 
-    println!("🔍 DEBUG validate_custom_token: Validation completed successfully");
     Ok(claims)
 }
 

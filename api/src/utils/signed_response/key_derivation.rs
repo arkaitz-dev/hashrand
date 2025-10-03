@@ -49,12 +49,6 @@ pub fn derive_session_private_key(
     combined_input.extend_from_slice(user_id);
     combined_input.extend_from_slice(&pub_key_bytes);
 
-    println!(
-        "= Deriving session key - user_id: {} bytes, pub_key: {} bytes",
-        user_id.len(),
-        pub_key_bytes.len()
-    );
-
     // Get ED25519_DERIVATION_KEY[64 bytes] for Blake3 pseudonimizer
     let ed25519_derivation_key = get_ed25519_derivation_key()?;
 
@@ -64,8 +58,6 @@ pub fn derive_session_private_key(
     // Convert Vec<u8> to [u8; 32]
     let mut private_key = [0u8; 32];
     private_key.copy_from_slice(&private_key_vec);
-
-    println!("= Session private key derived successfully");
 
     Ok(private_key)
 }

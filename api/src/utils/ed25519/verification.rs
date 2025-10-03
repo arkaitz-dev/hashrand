@@ -23,35 +23,25 @@ pub fn verify_signature(
 ) -> SignatureVerificationResult {
     // Validate message
     if message.is_empty() {
-        println!("🔍 DEBUG Ed25519: Empty message provided for verification");
         return SignatureVerificationResult::MalformedMessage;
     }
 
     // Decode and validate public key
     let public_key_bytes = match decode_public_key(public_key_hex) {
         Ok(bytes) => bytes,
-        Err(e) => {
-            println!("🔍 DEBUG Ed25519: {}", e);
-            return SignatureVerificationResult::MalformedPublicKey;
-        }
+        Err(_) => return SignatureVerificationResult::MalformedPublicKey,
     };
 
     // Decode and validate signature
     let signature_bytes = match decode_signature(signature_hex) {
         Ok(bytes) => bytes,
-        Err(e) => {
-            println!("🔍 DEBUG Ed25519: {}", e);
-            return SignatureVerificationResult::MalformedSignature;
-        }
+        Err(_) => return SignatureVerificationResult::MalformedSignature,
     };
 
     // Create Ed25519 verifying key
     let verifying_key = match VerifyingKey::from_bytes(&public_key_bytes) {
         Ok(key) => key,
-        Err(e) => {
-            println!("🔍 DEBUG Ed25519: Failed to create verifying key: {}", e);
-            return SignatureVerificationResult::MalformedPublicKey;
-        }
+        Err(_) => return SignatureVerificationResult::MalformedPublicKey,
     };
 
     // Create Ed25519 signature
@@ -59,14 +49,8 @@ pub fn verify_signature(
 
     // Verify signature
     match verifying_key.verify(message, &signature) {
-        Ok(()) => {
-            println!("🔍 DEBUG Ed25519: Signature verification successful");
-            SignatureVerificationResult::Valid
-        }
-        Err(e) => {
-            println!("🔍 DEBUG Ed25519: Signature verification failed: {}", e);
-            SignatureVerificationResult::Invalid
-        }
+        Ok(()) => SignatureVerificationResult::Valid,
+        Err(_) => SignatureVerificationResult::Invalid,
     }
 }
 

@@ -44,10 +44,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         .and_then(|h| h.as_str())
         .and_then(extract_hostname_from_host_header);
 
-    if domain.is_none() {
-        println!("⚠️ [SECURITY] No valid Host header - cookie will not have Domain attribute");
-    }
-
     // Step 3: Extract and validate refresh token
     let claims = match extract_and_validate_refresh_token(&req) {
         Ok(claims) => claims,

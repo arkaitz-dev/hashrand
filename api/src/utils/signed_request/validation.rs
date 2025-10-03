@@ -29,10 +29,7 @@ pub fn validate_universal(
     signed_request: &SignedRequest,
     request: &Request,
 ) -> Result<String, SignedRequestError> {
-    println!("🔍 Universal SignedRequest validation with strict auth separation...");
-
     // Decode Base64 payload to check auth method contents
-    println!("🔍 DEBUG BASE64: Decoding Base64 payload for auth method detection...");
     let json_string = decode_payload_base64(&signed_request.payload).map_err(|e| {
         SignedRequestError::SerializationError(format!("Base64 decoding failed: {}", e))
     })?;
@@ -40,8 +37,6 @@ pub fn validate_universal(
     let payload_value: Value = serde_json::from_str(&json_string).map_err(|e| {
         SignedRequestError::SerializationError(format!("JSON parsing failed: {}", e))
     })?;
-
-    println!("🔍 DEBUG BASE64: Decoded payload: {}", payload_value);
 
     // Check what auth methods are present in payload
     let has_pub_key = payload_value
@@ -56,11 +51,6 @@ pub fn validate_universal(
     // Check if Bearer token is present
     let has_bearer = extract_pub_key_from_bearer(request).is_ok();
 
-    println!(
-        "🔍 Auth method detection - Bearer: {}, pub_key: {}, magiclink: {}",
-        has_bearer, has_pub_key, has_magiclink
-    );
-
     // STRICT VALIDATION RULES
     if has_bearer {
         // Rule 1: Bearer token present - NO other auth methods allowed in payload
@@ -73,7 +63,6 @@ pub fn validate_universal(
 
         // Use Bearer token for validation
         let pub_key_hex = extract_pub_key_from_bearer(request)?;
-        println!("✅ Using ONLY Bearer token (strict mode)");
         validate_base64_payload(
             &signed_request.payload,
             &signed_request.signature,
@@ -89,7 +78,6 @@ pub fn validate_universal(
             (true, false) => {
                 // Use pub_key from payload
                 let pub_key_hex = extract_pub_key_from_payload(&payload_value)?;
-                println!("✅ Using ONLY pub_key from payload (strict mode)");
                 validate_base64_payload(
                     &signed_request.payload,
                     &signed_request.signature,
@@ -100,7 +88,6 @@ pub fn validate_universal(
             (false, true) => {
                 // Use magiclink from payload
                 let pub_key_hex = extract_pub_key_from_magiclink(&payload_value)?;
-                println!("✅ Using ONLY magiclink from payload (strict mode)");
                 validate_base64_payload(
                     &signed_request.payload,
                     &signed_request.signature,
@@ -132,12 +119,6 @@ pub fn validate_base64_payload(
     signature: &str,
     public_key_hex: &str,
 ) -> Result<(), SignedRequestError> {
-    println!(
-        "🔍 DEBUG BASE64: Validating signature directly against Base64 string - Length: {}, Signature: {}...",
-        base64_payload.len(),
-        &signature[..20.min(signature.len())]
-    );
-
     // Validate signature directly against the Base64 string (most deterministic approach!)
     validate_signature_string(base64_payload, signature, public_key_hex)
 }
@@ -158,12 +139,6 @@ pub fn validate_signature_string(
     signature: &str,
     public_key_hex: &str,
 ) -> Result<(), SignedRequestError> {
-    println!(
-        "🔍 Validating Ed25519 signature - Data size: {}, Signature: {}...",
-        serialized_data.len(),
-        &signature[..20.min(signature.len())]
-    );
-
     // Verify Ed25519 signature
     let verification_result =
         Ed25519Utils::verify_signature_string(serialized_data, signature, public_key_hex);
@@ -178,10 +153,7 @@ fn verify_ed25519_signature_result(
     verification_result: SignatureVerificationResult,
 ) -> Result<(), SignedRequestError> {
     match verification_result {
-        SignatureVerificationResult::Valid => {
-            println!("✅ Ed25519 signature validation successful");
-            Ok(())
-        }
+        SignatureVerificationResult::Valid => Ok(()),
         SignatureVerificationResult::Invalid => Err(SignedRequestError::InvalidSignature(
             "Ed25519 signature verification failed".to_string(),
         )),
