@@ -98,6 +98,7 @@ export interface I18nTexts {
 // Authentication types
 export interface AuthUser {
 	user_id: string; // Base58 user_id
+	email: string; // User email (for UX display, Zero Knowledge compliant)
 	isAuthenticated: boolean;
 }
 
@@ -130,18 +131,22 @@ export interface AuthError {
 
 // Shared Secret types
 export interface CreateSharedSecretRequest {
+	sender_email: string;
 	receiver_email: string;
 	secret_text: string;
 	expires_hours: number; // 1-72
 	max_reads: number; // 1-10
 	require_otp: boolean;
 	send_copy_to_sender: boolean;
+	receiver_language?: string; // Optional: language for receiver email (defaults to 'en')
+	sender_language?: string; // Optional: language for sender copy email (defaults to 'en')
+	ui_host: string; // Required: UI hostname for URL generation (e.g., "localhost" or "app.domain.com")
 }
 
 export interface CreateSharedSecretResponse {
-	sender_url: string; // Full URL with hash
-	receiver_url: string; // Full URL with hash
-	reference_hash: string; // Base58 reference hash (16 bytes)
+	url_sender: string; // Full URL with hash
+	url_receiver: string; // Full URL with hash
+	reference: string; // Base58 reference hash (16 bytes)
 	otp?: string; // 9-digit OTP if require_otp is true
 }
 

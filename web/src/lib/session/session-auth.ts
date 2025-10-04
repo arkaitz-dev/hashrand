@@ -11,7 +11,7 @@ import { sessionDB } from './session-db';
  * Get auth data
  */
 export async function getAuthData(): Promise<{
-	user: { user_id: string; isAuthenticated: boolean } | null;
+	user: { user_id: string; email: string; isAuthenticated: boolean } | null;
 	access_token: string | null;
 	server_pub_key: string | null;
 }> {
@@ -27,13 +27,22 @@ export async function getAuthData(): Promise<{
  * Set auth data
  */
 export async function setAuthData(
-	user: { user_id: string; isAuthenticated: boolean },
+	user: { user_id: string; email: string; isAuthenticated: boolean },
 	access_token: string
 ): Promise<void> {
 	await sessionDB.updateSession({
 		auth_user: user,
 		access_token
 	});
+}
+
+/**
+ * Get user email (for UX display in forms)
+ * Returns null if user is not authenticated
+ */
+export async function getUserEmail(): Promise<string | null> {
+	const session = await sessionDB.getSession();
+	return session.auth_user?.email ?? null;
 }
 
 /**

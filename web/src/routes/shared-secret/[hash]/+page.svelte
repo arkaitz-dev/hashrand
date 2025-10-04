@@ -111,8 +111,10 @@
 		}
 	}
 
-	function formatDate(timestamp: number): string {
-		return new Date(timestamp * 1000).toLocaleString();
+	function formatDate(timestampHours: number): string {
+		// Backend stores expires_at in HOURS (timestamp / 3600)
+		// Convert hours to milliseconds: hours * 3600 * 1000
+		return new Date(timestampHours * 3600 * 1000).toLocaleString();
 	}
 
 	onMount(async () => {
@@ -261,9 +263,7 @@
 								{$_('sharedSecret.pendingReads')}
 							</label>
 							<p class="text-gray-900 dark:text-white">
-								{secret.pending_reads === -1
-									? $_('common.yes') + ' (' + $_('sharedSecret.roleSender') + ')'
-									: secret.pending_reads}
+								{secret.pending_reads === -1 ? $_('sharedSecret.unlimited') : secret.pending_reads}
 							</p>
 						</div>
 

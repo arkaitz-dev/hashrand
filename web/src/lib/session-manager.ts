@@ -129,8 +129,9 @@ class SessionManager {
 	 * Get auth data
 	 */
 	async getAuthData(): Promise<{
-		user: { user_id: string; isAuthenticated: boolean } | null;
+		user: { user_id: string; email: string; isAuthenticated: boolean } | null;
 		access_token: string | null;
+		server_pub_key: string | null;
 	}> {
 		return await getAuthData();
 	}
@@ -139,7 +140,7 @@ class SessionManager {
 	 * Set auth data
 	 */
 	async setAuthData(
-		user: { user_id: string; isAuthenticated: boolean },
+		user: { user_id: string; email: string; isAuthenticated: boolean },
 		access_token: string
 	): Promise<void> {
 		return await setAuthData(user, access_token);

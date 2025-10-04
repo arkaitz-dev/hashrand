@@ -1,15 +1,19 @@
 <script lang="ts">
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
-	import { _ } from '$lib/stores/i18n';
+	import { _, currentLanguage } from '$lib/stores/i18n';
+	import { languages } from '$lib/languageConfig';
 	import { api } from '$lib/api';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+	import { getUserEmail } from '$lib/session';
 	import { onMount } from 'svelte';
 	import type { CreateSharedSecretResponse } from '$lib/types';
 
 	// Form state
+	let senderEmail = $state('');
 	let receiverEmail = $state('');
+	let receiverLanguage = $state($currentLanguage); // Default to current UI language
 	let secretText = $state('');
 	let expiresHours = $state(24);
 	let maxReads = $state(3);
@@ -18,10 +22,20 @@
 
 	// UI state
 	let isCreating = $state(false);
+	let isLoadingEmail = $state(true);
 	let createdSecret: CreateSharedSecretResponse | null = $state(null);
 
+	// Load user email from IndexedDB on mount
+	onMount(async () => {
+		const email = await getUserEmail();
+		if (email) {
+			senderEmail = email;
+		}
+		isLoadingEmail = false;
+	});
+
 	// Validation
-	let emailError = $derived(
+	let receiverEmailError = $derived(
 		receiverEmail && !isValidEmail(receiverEmail) ? $_('sharedSecret.emailInvalid') : ''
 	);
 	let secretTextError = $derived(
@@ -37,7 +51,9 @@
 	let readsError = $derived(maxReads < 1 || maxReads > 10 ? $_('sharedSecret.readsInvalid') : '');
 
 	let formValid = $derived(
-		receiverEmail.length > 0 &&
+		senderEmail.length > 0 &&
+			isValidEmail(senderEmail) &&
+			receiverEmail.length > 0 &&
 			isValidEmail(receiverEmail) &&
 			secretText.length > 0 &&
 			secretText.length <= 512 &&
@@ -69,16 +85,29 @@
 			return;
 		}
 
+		// Extract ui_host (same logic as magic link)
+		const { extractDomain } = await import('$lib/utils/domain-extractor');
+		const ui_host = extractDomain();
+
+		if (!ui_host) {
+			flashMessagesStore.addMessage('UI host is required for URL generation');
+			return;
+		}
+
 		isCreating = true;
 
 		try {
 			const response = await api.createSharedSecret({
+				sender_email: senderEmail,
 				receiver_email: receiverEmail,
 				secret_text: secretText,
 				expires_hours: expiresHours,
 				max_reads: maxReads,
 				require_otp: requireOtp,
-				send_copy_to_sender: sendCopyToSender
+				send_copy_to_sender: sendCopyToSender,
+				receiver_language: receiverLanguage,
+				sender_language: $currentLanguage,
+				ui_host
 			});
 
 			createdSecret = response;
@@ -153,6 +182,28 @@
 				<!-- Creation Form -->
 				<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
 					<form onsubmit={handleCreate}>
+						<!-- Sender Email (Display Only) -->
+						<div class="mb-4">
+							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+								{$_('sharedSecret.senderEmail')}
+							</label>
+							{#if isLoadingEmail}
+								<p class="text-gray-500 dark:text-gray-400 italic">
+									{$_('common.loading')}...
+								</p>
+							{:else if senderEmail}
+								<p
+									class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white font-medium"
+								>
+									{senderEmail}
+								</p>
+							{:else}
+								<p class="text-red-600 dark:text-red-400">
+									{$_('sharedSecret.emailNotAvailable')}
+								</p>
+							{/if}
+						</div>
+
 						<!-- Receiver Email -->
 						<div class="mb-4">
 							<label
@@ -169,9 +220,28 @@
 								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 								required
 							/>
-							{#if emailError}
-								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>
+							{#if receiverEmailError}
+								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{receiverEmailError}</p>
 							{/if}
+						</div>
+
+						<!-- Receiver Language -->
+						<div class="mb-4">
+							<label
+								for="receiver-language"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+							>
+								{$_('common.selectLanguage')} ({$_('sharedSecret.receiverEmail')})
+							</label>
+							<select
+								id="receiver-language"
+								bind:value={receiverLanguage}
+								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+							>
+								{#each languages as lang}
+									<option value={lang.code}>{lang.flag} {lang.name}</option>
+								{/each}
+							</select>
 						</div>
 
 						<!-- Secret Text -->
@@ -296,11 +366,11 @@
 							<input
 								type="text"
 								readonly
-								value={createdSecret.sender_url}
+								value={createdSecret.url_sender}
 								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white"
 							/>
 							<button
-								onclick={() => copyToClipboard(createdSecret!.sender_url, 'url')}
+								onclick={() => copyToClipboard(createdSecret!.url_sender, 'url')}
 								class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
 							>
 								{$_('sharedSecret.copyUrl')}
@@ -317,11 +387,11 @@
 							<input
 								type="text"
 								readonly
-								value={createdSecret.receiver_url}
+								value={createdSecret.url_receiver}
 								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white"
 							/>
 							<button
-								onclick={() => copyToClipboard(createdSecret!.receiver_url, 'url')}
+								onclick={() => copyToClipboard(createdSecret!.url_receiver, 'url')}
 								class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
 							>
 								{$_('sharedSecret.copyUrl')}
@@ -338,11 +408,11 @@
 							<input
 								type="text"
 								readonly
-								value={createdSecret.reference_hash}
+								value={createdSecret.reference}
 								class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white font-mono"
 							/>
 							<button
-								onclick={() => copyToClipboard(createdSecret!.reference_hash, 'reference')}
+								onclick={() => copyToClipboard(createdSecret!.reference, 'reference')}
 								class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
 							>
 								{$_('sharedSecret.copyReference')}

@@ -21,6 +21,7 @@ export interface AppSessionData {
 	// Auth tokens (cleared on auth logout)
 	auth_user: {
 		user_id: string;
+		email: string; // User email address (for UX display, Zero Knowledge compliant)
 		isAuthenticated: boolean;
 	} | null;
 	access_token: string | null;

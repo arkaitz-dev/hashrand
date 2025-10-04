@@ -212,6 +212,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Create shared secret
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'Test secret message from Playwright',
 			expires_hours: 24,
@@ -270,6 +271,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 		const keyPair = sharedKeyPair;
 
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'OTP-protected secret',
 			expires_hours: 12,
@@ -316,6 +318,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Create secret first
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'Sender view test',
 			expires_hours: 24,
@@ -386,6 +389,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Create secret
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'Receiver view test',
 			expires_hours: 24,
@@ -457,6 +461,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Create OTP-protected secret
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'OTP-protected message',
 			expires_hours: 24,
@@ -542,6 +547,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Create secret
 		const createPayload = {
+			sender_email: 'me@arkaitz.dev',
 			receiver_email: 'arkaitzmugica@protonmail.com',
 			secret_text: 'Secret to be deleted',
 			expires_hours: 24,

@@ -42,9 +42,14 @@ export async function refreshToken(): Promise<boolean> {
 			{ credentials: 'include' }
 		);
 
+		// Get current user email from session (preserve it during refresh - Zero Knowledge)
+		const currentAuthData = await sessionManager.getAuthData();
+		const userEmail = currentAuthData.user?.email ?? '';
+
 		// Update auth store with new token
 		const user = {
 			user_id: data.user_id,
+			email: userEmail,
 			isAuthenticated: true
 		};
 

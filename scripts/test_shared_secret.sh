@@ -323,6 +323,7 @@ echo "JWT Token: ${JWT_TOKEN:0:30}..."
 echo -e "\n${YELLOW}=== STEP 2: Create Shared Secret (No OTP) ===${NC}"
 
 CREATE_PAYLOAD='{
+  "sender_email": "me@arkaitz.dev",
   "receiver_email": "arkaitzmugica@protonmail.com",
   "secret_text": "This is a test secret message from bash script",
   "expires_hours": 24,
@@ -396,6 +397,7 @@ fi
 echo -e "\n${YELLOW}=== STEP 5: Create Shared Secret (With OTP) ===${NC}"
 
 CREATE_OTP_PAYLOAD='{
+  "sender_email": "me@arkaitz.dev",
   "receiver_email": "arkaitzmugica@protonmail.com",
   "secret_text": "Secret with OTP protection",
   "expires_hours": 12,

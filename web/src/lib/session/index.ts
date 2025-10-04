@@ -22,6 +22,7 @@ export {
 	getAuthData,
 	setAuthData,
 	isAuthenticated,
+	getUserEmail,
 	clearAuthData,
 	setServerPubKey,
 	getServerPubKey,

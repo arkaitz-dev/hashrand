@@ -27,15 +27,13 @@
 		isSubmitting = true;
 
 		try {
-			// Use new Ed25519-enabled API
-			const { api } = await import('$lib/api');
-			const { extractDomain } = await import('$lib/utils/domain-extractor');
-			const ui_host = extractDomain();
+			// Use authStore.requestMagicLink (saves email to IndexedDB before API call)
+			const { authStore } = await import('$lib/stores/auth');
 
 			// Build nextParam using universal DRY function
 			const nextParam = buildNextParameterFromConfig(config);
 
-			await api.requestMagicLink(config.email || '', ui_host, nextParam);
+			await authStore.requestMagicLink(config.email || '', nextParam);
 
 			// Add success flash message
 			flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));

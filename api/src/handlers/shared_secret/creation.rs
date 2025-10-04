@@ -19,6 +19,7 @@ use spin_sdk::http::{Request, Response};
 /// Request payload for creating a shared secret
 #[derive(Debug, Deserialize, Serialize)]
 struct CreateSecretRequest {
+    sender_email: String,
     receiver_email: String,
     secret_text: String,
     #[serde(default = "default_expires_hours")]
@@ -29,6 +30,11 @@ struct CreateSecretRequest {
     require_otp: bool,
     #[serde(default)]
     send_copy_to_sender: bool,
+    #[serde(default)]
+    receiver_language: Option<String>,
+    #[serde(default)]
+    sender_language: Option<String>,
+    ui_host: String, // Required: UI hostname for URL generation
 }
 
 fn default_expires_hours() -> i64 {
@@ -37,6 +43,40 @@ fn default_expires_hours() -> i64 {
 
 fn default_max_reads() -> i64 {
     DEFAULT_READS
+}
+
+/// Build complete URL with protocol based on hostname
+///
+/// Logic:
+/// - localhost or 127.0.0.1 → http://
+/// - Other domains → https://
+///
+/// # Arguments
+/// * `ui_host` - Hostname from frontend (e.g., "localhost", "app.domain.com")
+/// * `path` - Path to append (e.g., "/shared-secret/abc123")
+///
+/// # Returns
+/// Complete URL with protocol (e.g., "http://localhost/shared-secret/abc123")
+fn build_complete_url(ui_host: &str, path: &str) -> String {
+    let base_url = ui_host.trim_end_matches('/');
+    let clean_path = path.trim_start_matches('/');
+
+    // Check if protocol is already present
+    let url_with_protocol = if base_url.starts_with("http://") || base_url.starts_with("https://") {
+        // Protocol already present - use as is
+        base_url.to_string()
+    } else {
+        // No protocol - add appropriate one based on host
+        if base_url.contains("localhost") || base_url.contains("127.0.0.1") {
+            // Development: use http://
+            format!("http://{}", base_url)
+        } else {
+            // Production/remote: use https://
+            format!("https://{}", base_url)
+        }
+    };
+
+    format!("{}/{}", url_with_protocol, clean_path)
 }
 
 /// Response payload for created shared secret
@@ -92,6 +132,19 @@ async fn create_shared_secret(
     sender_user_id: &[u8; USER_ID_LENGTH],
     crypto_material: &CryptoMaterial,
 ) -> Result<Response, String> {
+    // Validate sender email
+    if validate_email(&request.sender_email).is_err() {
+        return Err("Invalid sender email format".to_string());
+    }
+
+    // Validate that sender_email matches sender_user_id from JWT (Zero Knowledge verification)
+    let calculated_sender_id = SharedSecretCrypto::calculate_user_id(&request.sender_email)
+        .map_err(|e| format!("Failed to calculate sender user_id: {}", e))?;
+
+    if calculated_sender_id != *sender_user_id {
+        return Err("Sender email does not match authenticated user".to_string());
+    }
+
     // Validate receiver email
     if validate_email(&request.receiver_email).is_err() {
         return Err("Invalid receiver email format".to_string());
@@ -159,12 +212,9 @@ async fn create_shared_secret(
     let mut receiver_id = [0u8; ENCRYPTED_ID_LENGTH];
     receiver_id.copy_from_slice(&receiver_id_hash.as_bytes()[0..ENCRYPTED_ID_LENGTH]);
 
-    // Get sender email from crypto material (TODO: improve this)
-    let sender_email = "sender@example.com"; // Placeholder
-
     // Create secret pair using SharedSecretOps
     let reference_hash = SharedSecretOps::create_secret_pair(
-        sender_email,
+        &request.sender_email,
         &request.receiver_email,
         &request.secret_text,
         otp.clone(),
@@ -178,15 +228,48 @@ async fn create_shared_secret(
     // Convert reference_hash to Base58
     let reference_base58 = bs58::encode(&reference_hash).into_string();
 
-    // Generate URLs
-    let url_sender = format!("/shared-secret/{}", bs58::encode(&sender_id).into_string());
-    let url_receiver = format!(
-        "/shared-secret/{}",
-        bs58::encode(&receiver_id).into_string()
-    );
+    // Generate complete URLs with protocol and domain
+    let sender_path = format!("shared-secret/{}", bs58::encode(&sender_id).into_string());
+    let receiver_path = format!("shared-secret/{}", bs58::encode(&receiver_id).into_string());
 
-    // TODO: Send emails to receiver (always) and sender (if requested)
-    // Will be implemented in email templates phase
+    let url_sender = build_complete_url(&request.ui_host, &sender_path);
+    let url_receiver = build_complete_url(&request.ui_host, &receiver_path);
+
+    // Send email to receiver (always)
+    let receiver_email_result = crate::utils::email::send_shared_secret_receiver_email(
+        &request.receiver_email,
+        &url_receiver,
+        &reference_base58,
+        otp.as_deref(),
+        &request.sender_email,
+        request.expires_hours,
+        request.max_reads,
+        request.receiver_language.as_deref(),
+    )
+    .await;
+
+    if let Err(e) = receiver_email_result {
+        println!("⚠️  Warning: Failed to send receiver email: {}", e);
+        // Don't fail the entire operation, just log the error
+    }
+
+    // Send email to sender (optional)
+    if request.send_copy_to_sender {
+        let sender_email_result = crate::utils::email::send_shared_secret_sender_email(
+            &request.sender_email,
+            &url_sender,
+            &reference_base58,
+            &request.receiver_email,
+            request.expires_hours,
+            request.sender_language.as_deref(),
+        )
+        .await;
+
+        if let Err(e) = sender_email_result {
+            println!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
+            // Don't fail the entire operation, just log the error
+        }
+    }
 
     // Create response
     let response_data = CreateSecretResponse {

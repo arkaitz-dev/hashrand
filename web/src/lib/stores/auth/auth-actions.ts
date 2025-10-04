@@ -28,6 +28,10 @@ export async function requestMagicLink(
 		throw new Error('UI host is required for magic link generation');
 	}
 
+	// Save email to IndexedDB for Zero Knowledge UX (will be retrieved during validateMagicLink)
+	const { sessionManager } = await import('../../session-manager');
+	await sessionManager.setPendingAuthEmail(email);
+
 	const { api } = await import('../../api');
 	return await api.requestMagicLink(email, ui_host, next);
 }
@@ -46,8 +50,13 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	const { api } = await import('../../api');
 	const loginResponse = await api.validateMagicLink(magicToken);
 
+	// Get pending email before clearing it (needed for Zero Knowledge UX)
+	const { sessionManager } = await import('../../session-manager');
+	const userEmail = (await sessionManager.getPendingAuthEmail()) ?? '';
+
 	const user: AuthUser = {
 		user_id: loginResponse.user_id, // Base58 user_id
+		email: userEmail, // User email for UX display (Zero Knowledge compliant)
 		isAuthenticated: true
 	};
 
