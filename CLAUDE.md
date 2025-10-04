@@ -132,6 +132,14 @@ cd web && npm run test:api:verbose  # Detailed output
 - **This is CRITICAL for maintainability** - Prevents CLAUDE.md bloat and information overload
 
 
+## 🚧 Current Work in Progress
+
+**Shared Secret Feature** (Target: API v1.8.0 + Web v0.25.0)
+- **Status**: Planning complete, implementation starting
+- **TODO Tracker**: See [SHARED_SECRET_TODO.md](SHARED_SECRET_TODO.md) for detailed implementation checklist
+- **Feature**: Secure text sharing with encryption, dual-URL system (sender/receiver), OTP protection, tracking
+- **Critical**: ALL API calls Ed25519 signed, maximum UX coherence, NO changes outside shared_secret scope
+
 ## Recent Session History
 
 **Latest versions**: API v1.7.1 + Web v0.24.0 (2025-10-03)

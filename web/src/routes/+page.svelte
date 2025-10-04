@@ -53,6 +53,8 @@
 				return $_('apiKey.title');
 			case 'mnemonic':
 				return $_('mnemonic.title');
+			case 'shared-secret':
+				return $_('sharedSecret.title');
 			default:
 				return '';
 		}
@@ -68,6 +70,8 @@
 				return $_('apiKey.description');
 			case 'mnemonic':
 				return $_('mnemonic.description');
+			case 'shared-secret':
+				return $_('sharedSecret.description');
 			default:
 				return '';
 		}

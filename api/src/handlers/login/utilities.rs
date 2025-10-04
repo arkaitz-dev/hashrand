@@ -28,6 +28,7 @@ pub fn create_error_response(status: u16, error_message: &str) -> anyhow::Result
 ///
 /// Parses the Cookie header to find the refresh_token value
 /// Returns None if the cookie is not found
+#[allow(dead_code)]
 pub fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String> {
     for cookie in cookie_header.split(';') {
         let cookie = cookie.trim();
@@ -42,6 +43,7 @@ pub fn extract_refresh_token_from_cookies(cookie_header: &str) -> Option<String>
 ///
 /// Extracts and parses query parameters from a URI string
 /// Returns empty HashMap if no query string found
+#[allow(dead_code)]
 pub fn parse_query_params(uri_str: &str) -> HashMap<String, String> {
     let query = if let Some(idx) = uri_str.find('?') {
         &uri_str[idx + 1..]

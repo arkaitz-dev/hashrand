@@ -17,7 +17,11 @@ import type {
 	SeedMnemonicRequest,
 	CustomHashResponse,
 	LoginResponse,
-	MagicLinkResponse
+	MagicLinkResponse,
+	CreateSharedSecretRequest,
+	CreateSharedSecretResponse,
+	ViewSharedSecretRequest,
+	ViewSharedSecretResponse
 } from './types';
 
 import {
@@ -34,7 +38,10 @@ import {
 	validateMagicLink as validateMagicLinkAuth,
 	checkAuthStatus as checkAuthStatusAuth,
 	logout as logoutAuth,
-	refreshToken as refreshTokenAuth
+	refreshToken as refreshTokenAuth,
+	createSharedSecret as createSharedSecretAPI,
+	viewSharedSecret as viewSharedSecretAPI,
+	deleteSharedSecret as deleteSharedSecretAPI
 } from './api/index';
 
 const API_BASE = '/api';
@@ -115,6 +122,24 @@ export const api = {
 
 	async refreshToken(): Promise<boolean> {
 		return await refreshTokenAuth();
+	},
+
+	// Shared Secret endpoints
+	async createSharedSecret(
+		request: CreateSharedSecretRequest
+	): Promise<CreateSharedSecretResponse> {
+		return await createSharedSecretAPI(request);
+	},
+
+	async viewSharedSecret(
+		hash: string,
+		otpRequest?: ViewSharedSecretRequest
+	): Promise<ViewSharedSecretResponse> {
+		return await viewSharedSecretAPI(hash, otpRequest);
+	},
+
+	async deleteSharedSecret(hash: string): Promise<void> {
+		return await deleteSharedSecretAPI(hash);
 	}
 };
 

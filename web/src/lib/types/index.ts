@@ -127,3 +127,41 @@ export interface MagicLinkResponse {
 export interface AuthError {
 	error: string;
 }
+
+// Shared Secret types
+export interface CreateSharedSecretRequest {
+	receiver_email: string;
+	secret_text: string;
+	expires_hours: number; // 1-72
+	max_reads: number; // 1-10
+	require_otp: boolean;
+	send_copy_to_sender: boolean;
+}
+
+export interface CreateSharedSecretResponse {
+	sender_url: string; // Full URL with hash
+	receiver_url: string; // Full URL with hash
+	reference_hash: string; // Base58 reference hash (16 bytes)
+	otp?: string; // 9-digit OTP if require_otp is true
+}
+
+export interface SharedSecretPayload {
+	sender_email: string;
+	receiver_email: string;
+	secret_text: string;
+	otp?: string; // 9-digit OTP if required
+	created_at: number; // Unix timestamp
+}
+
+export interface ViewSharedSecretRequest {
+	otp?: string; // Required only if secret requires OTP
+}
+
+export interface ViewSharedSecretResponse {
+	secret_text: string;
+	sender_email: string;
+	receiver_email: string;
+	pending_reads: number; // -1 for sender (unlimited), positive for receiver
+	expires_at: number; // Unix timestamp
+	role: 'sender' | 'receiver';
+}

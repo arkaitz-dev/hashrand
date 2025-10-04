@@ -1,7 +1,8 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_login, handle_mnemonic_request, handle_password_request,
+    handle_api_key_request, handle_confirm_read, handle_create_secret, handle_delete_secret,
+    handle_login, handle_mnemonic_request, handle_password_request, handle_retrieve_secret,
     handle_version,
 };
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
@@ -97,6 +98,31 @@ pub async fn route_request_with_req(
         // Token refresh endpoint
         path if path.ends_with("/api/refresh") => handle_refresh(req).await,
 
+        // Shared Secret endpoints
+        path if path.ends_with("/api/shared-secret/create") => match *method {
+            Method::Post => handle_create_secret(req).await,
+            _ => handle_method_not_allowed(),
+        },
+        path if path.starts_with("/api/shared-secret/confirm-read") => match *method {
+            Method::Get => {
+                let hash = query_params.get("hash").map(|s| s.as_str()).unwrap_or("");
+                handle_confirm_read(req, hash).await
+            }
+            _ => handle_method_not_allowed(),
+        },
+        path if path.starts_with("/api/shared-secret/") => {
+            // Extract hash from path: /api/shared-secret/{hash}
+            let hash = path.trim_start_matches("/api/shared-secret/");
+            if hash.is_empty() {
+                return handle_not_found();
+            }
+            match *method {
+                Method::Get | Method::Post => handle_retrieve_secret(req, hash).await,
+                Method::Delete => handle_delete_secret(req, hash).await,
+                _ => handle_method_not_allowed(),
+            }
+        }
+
         // Not found
         _ => handle_not_found(),
     }
@@ -117,6 +143,11 @@ Available endpoints:
 - POST /api/mnemonic (JSON body with seed parameter)
 - POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
 - POST /api/login/magiclink/ (Validate magic link with Ed25519 signature and get JWT tokens)
+- POST /api/shared-secret/create (Create shared secret with dual-URL system)
+- GET /api/shared-secret/{hash} (Retrieve shared secret, returns OTP_REQUIRED if needed)
+- POST /api/shared-secret/{hash} (Retrieve shared secret with OTP validation)
+- DELETE /api/shared-secret/{hash} (Delete shared secret if not fully consumed)
+- GET /api/shared-secret/confirm-read?hash={hash} (Confirm read tracking)
 - GET /api/version
 
 Parameters:

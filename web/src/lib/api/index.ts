@@ -27,3 +27,6 @@ export {
 	logout,
 	refreshToken
 } from './api-auth-operations';
+
+// Shared Secret operations
+export { createSharedSecret, viewSharedSecret, deleteSharedSecret } from './api-shared-secret';

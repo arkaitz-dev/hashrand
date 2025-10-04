@@ -32,6 +32,13 @@ export const navigationItems: NavItem[] = [
 		description: 'Generate BIP39 mnemonic phrases for cryptocurrency wallets',
 		path: '/mnemonic',
 		icon: '💾'
+	},
+	{
+		id: 'shared-secret',
+		title: 'Shared Secret',
+		description: 'Share secure messages with automatic expiration and read limits',
+		path: '/shared-secret',
+		icon: '📬'
 	}
 ];
 
