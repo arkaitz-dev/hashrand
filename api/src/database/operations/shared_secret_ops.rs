@@ -269,11 +269,11 @@ impl SharedSecretOps {
     /// * `decrement` - Whether to decrement pending_reads (false for sender)
     ///
     /// # Returns
-    /// * `Result<(SharedSecretPayload, i64, SecretRole), SqliteError>` - (payload, pending_reads, role) or error
+    /// * `Result<(SharedSecretPayload, i64, i64, SecretRole), SqliteError>` - (payload, pending_reads, expires_at, role) or error
     pub fn read_secret(
         id: &[u8; ENCRYPTED_ID_LENGTH],
         decrement: bool,
-    ) -> Result<(SharedSecretPayload, i64, SecretRole), SqliteError> {
+    ) -> Result<(SharedSecretPayload, i64, i64, SecretRole), SqliteError> {
         // Retrieve from database
         let (encrypted_payload, expires_at, pending_reads, role) =
             SharedSecretStorage::retrieve_secret(id)?
@@ -299,7 +299,7 @@ impl SharedSecretOps {
             pending_reads
         };
 
-        Ok((payload, final_reads, role))
+        Ok((payload, final_reads, expires_at, role))
     }
 
     /// Validate OTP against stored OTP in payload

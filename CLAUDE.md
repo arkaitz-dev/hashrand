@@ -4,13 +4,13 @@ HashRand Spin: Random hash generator with Fermyon Spin + WebAssembly. Complete R
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-03 - **API v1.7.1 + Web v0.24.0**
-- 🏗️ **Latest**: Client-side logout + unified cleanup (DRY) - See CHANGELOG.md for details
-- ⚡ Instant UI loading in result page + cleanup (v0.23.2)
-- 🐛 Critical seed parameter bug fix + DRY improvements (v0.23.1)
-- 🤖 Automatic session expiration monitoring (v0.23.0)
-- ✅ **ZERO regressions** - All 51 tests passing (35 bash + 16 Playwright)
-- ✅ **Quality**: ZERO warnings/errors across entire codebase (clippy + ESLint + svelte-check)
+**Last Update**: 2025-10-05 - **API v1.8.4 + Web v0.27.1**
+- 🐛 **Latest**: CRITICAL FIX - Expiration date showing year 1970 (backend returning hardcoded expires_at:0) - v1.8.4
+- 🎨 **Latest**: UI simplification - Removed redundant "(lecturas limitadas)" from receiver role in all 13 languages - v0.27.1
+- 🐛 CRITICAL FIX - Incomplete URLs in shared secret emails/response (added ui_host + protocol logic) - v1.8.3/v0.27.0
+- 🌐 Multi-language email support - Fixed placeholders + language selector for shared secret emails (13 languages) - v0.26.0
+- 🔐 Shared Secret Feature - Secure text sharing with encryption, dual-URL system, OTP protection (v1.8.0 + v0.25.0)
+- ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)
 - `SPIN_VARIABLE_ACCESS_TOKEN_DURATION_MINUTES` (dev: 1min, prod: 15min)
@@ -134,22 +134,18 @@ cd web && npm run test:api:verbose  # Detailed output
 
 ## 🚧 Current Work in Progress
 
-**Shared Secret Feature** (Target: API v1.8.0 + Web v0.25.0)
-- **Status**: Planning complete, implementation starting
-- **TODO Tracker**: See [SHARED_SECRET_TODO.md](SHARED_SECRET_TODO.md) for detailed implementation checklist
-- **Feature**: Secure text sharing with encryption, dual-URL system (sender/receiver), OTP protection, tracking
-- **Critical**: ALL API calls Ed25519 signed, maximum UX coherence, NO changes outside shared_secret scope
+**No active work in progress** - Codebase stable at v1.8.0 + v0.25.1
 
 ## Recent Session History
 
-**Latest versions**: API v1.7.1 + Web v0.24.0 (2025-10-03)
+**Latest versions**: API v1.8.0 + Web v0.25.1 (2025-10-04)
 
 **Recent sessions summary**:
+- **v0.25.1**: 🎨 UX - Automatic email display in Shared Secret (readonly, from IndexedDB)
+- **v1.8.0 + v0.25.0**: 🔐 Shared Secret Feature - Complete encrypted text sharing system
 - **v1.7.1 + v0.24.0**: Client-side logout architecture + unified cleanup (DRY)
 - **v0.23.2**: Instant UI loading + DRY improvements + cleanup
-- **v0.23.1**: Critical seed parameter bug fix (Svelte 5 reactivity)
-- **v0.23.0**: Automatic session expiration monitoring
-- **v1.7.0 + v0.22.0**: MAJOR - Enterprise-grade SOLID/DRY/KISS refactoring (16 files, ~800 lines eliminated)
+- **v1.7.0 + v0.22.0**: MAJOR - Enterprise-grade SOLID/DRY/KISS refactoring
 
 **📚 For complete details**: See [CHANGELOG.md](CHANGELOG.md) - root causes, technical flows, implementation details, file modifications, and testing results.
 

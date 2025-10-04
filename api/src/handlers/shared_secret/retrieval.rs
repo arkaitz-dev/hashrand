@@ -172,7 +172,7 @@ fn retrieve_and_respond(
     // For now, just proceed with retrieval
 
     // Read secret (will decrement if should_decrement=true and role=receiver)
-    let (payload, pending_reads, role) =
+    let (payload, pending_reads, expires_at, role) =
         SharedSecretOps::read_secret(encrypted_id, should_decrement)
             .map_err(|e| format!("Failed to read secret: {}", e))?;
 
@@ -208,7 +208,7 @@ fn retrieve_and_respond(
         sender_email: payload.sender_email,
         receiver_email: payload.receiver_email,
         pending_reads,
-        expires_at: 0, // TODO: Get from storage
+        expires_at,
         reference: reference_base58,
         role: role.to_str().to_string(),
     };
