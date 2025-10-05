@@ -117,6 +117,28 @@
 		return new Date(timestampHours * 3600 * 1000).toLocaleString();
 	}
 
+	function formatTimeRemaining(expiresAtHours: number): string {
+		const expiresAtMs = expiresAtHours * 3600 * 1000;
+		const nowMs = Date.now();
+		const diffMs = expiresAtMs - nowMs;
+
+		if (diffMs <= 0) {
+			return $_('sharedSecret.expired'); // "Expired"
+		}
+
+		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+		const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+		if (diffHours >= 24) {
+			const days = Math.floor(diffHours / 24);
+			return `${days} ${days === 1 ? $_('common.day') : $_('common.days')}`;
+		} else if (diffHours > 0) {
+			return `${diffHours}h ${diffMinutes}min`;
+		} else {
+			return `${diffMinutes} ${$_('common.minutes')}`;
+		}
+	}
+
 	onMount(async () => {
 		// Check session expiration before loading
 		const sessionValid = await checkSessionAndHandle({
@@ -257,14 +279,49 @@
 							</p>
 						</div>
 
-						<!-- Pending Reads -->
+						<!-- Pending Reads - Enhanced -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 								{$_('sharedSecret.pendingReads')}
 							</label>
-							<p class="text-gray-900 dark:text-white">
-								{secret.pending_reads === -1 ? $_('sharedSecret.unlimited') : secret.pending_reads}
-							</p>
+
+								{#if secret.pending_reads === -1}
+								<!-- Sender: Unlimited reads -->
+								<span class="text-lg font-semibold text-green-600 dark:text-green-400 flex items-center gap-2">
+									<span class="text-2xl">♾️</span>
+									{$_('sharedSecret.unlimited')}
+								</span>
+								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									{$_('sharedSecret.unlimitedHint')}
+								</p>
+							{:else if secret.pending_reads === 0}
+								<!-- Consumed / Deleted -->
+								<span class="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+									<span class="text-2xl">🔒</span>
+									{$_('sharedSecret.consumed')}
+								</span>
+								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									{$_('sharedSecret.consumedHint')}
+								</p>
+							{:else if secret.pending_reads === 1}
+								<!-- Last read warning -->
+								<span class="text-lg font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+									<span class="text-2xl">⚠️</span>
+									{secret.pending_reads} {$_('sharedSecret.readRemaining')}
+								</span>
+								<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
+									{$_('sharedSecret.lastReadHint')}
+								</p>
+							{:else}
+								<!-- Normal state (2-10 reads) -->
+								<span class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+									<span class="text-2xl">📖</span>
+									{secret.pending_reads} {$_('sharedSecret.readsRemaining')}
+								</span>
+								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									{$_('sharedSecret.multipleReadsHint')}
+								</p>
+							{/if}
 						</div>
 
 						<!-- Expires At -->
@@ -272,7 +329,15 @@
 							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								{$_('sharedSecret.expiresAt')}
 							</label>
-							<p class="text-gray-900 dark:text-white">{formatDate(secret.expires_at)}</p>
+							<div class="flex flex-col gap-1">
+							<p class="text-gray-900 dark:text-white font-medium">
+								{formatDate(secret.expires_at)}
+							</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">
+								⏱️ {$_('sharedSecret.timeRemaining')}:
+								<span class="font-semibold">{formatTimeRemaining(secret.expires_at)}</span>
+							</p>
+						</div>
 						</div>
 					</div>
 
