@@ -230,6 +230,29 @@
 						{$_('sharedSecret.secretContent')}
 					</h2>
 
+					<!-- ⚠️ Last Read Warning Banner -->
+					{#if secret.pending_reads === 1 && secret.role === 'receiver'}
+						<div
+							class="mb-6 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 dark:border-amber-600 rounded-r-lg shadow-sm"
+						>
+							<div class="flex p-4">
+								<div class="flex-shrink-0">
+									<span class="text-3xl" aria-hidden="true">⚠️</span>
+								</div>
+								<div class="ml-4 flex-1">
+									<h3 class="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">
+										{$_('sharedSecret.lastReadWarningTitle')}
+									</h3>
+									<p class="text-sm text-amber-700 dark:text-amber-300">
+										{$_('sharedSecret.lastReadWarningMessage')}
+									</p>
+									<p class="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
+										💡 {$_('sharedSecret.lastReadWarningTip')}
+									</p>
+								</div>
+							</div>
+						</div>
+					{/if}
 					<!-- Secret Text -->
 					<div class="mb-6">
 						<div class="relative">
@@ -285,9 +308,11 @@
 								{$_('sharedSecret.pendingReads')}
 							</label>
 
-								{#if secret.pending_reads === -1}
+							{#if secret.pending_reads === -1}
 								<!-- Sender: Unlimited reads -->
-								<span class="text-lg font-semibold text-green-600 dark:text-green-400 flex items-center gap-2">
+								<span
+									class="text-lg font-semibold text-green-600 dark:text-green-400 flex items-center gap-2"
+								>
 									<span class="text-2xl">♾️</span>
 									{$_('sharedSecret.unlimited')}
 								</span>
@@ -296,7 +321,9 @@
 								</p>
 							{:else if secret.pending_reads === 0}
 								<!-- Consumed / Deleted -->
-								<span class="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+								<span
+									class="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center gap-2"
+								>
 									<span class="text-2xl">🔒</span>
 									{$_('sharedSecret.consumed')}
 								</span>
@@ -305,18 +332,24 @@
 								</p>
 							{:else if secret.pending_reads === 1}
 								<!-- Last read warning -->
-								<span class="text-lg font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+								<span
+									class="text-lg font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2"
+								>
 									<span class="text-2xl">⚠️</span>
-									{secret.pending_reads} {$_('sharedSecret.readRemaining')}
+									{secret.pending_reads}
+									{$_('sharedSecret.readRemaining')}
 								</span>
 								<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
 									{$_('sharedSecret.lastReadHint')}
 								</p>
 							{:else}
 								<!-- Normal state (2-10 reads) -->
-								<span class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+								<span
+									class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2"
+								>
 									<span class="text-2xl">📖</span>
-									{secret.pending_reads} {$_('sharedSecret.readsRemaining')}
+									{secret.pending_reads}
+									{$_('sharedSecret.readsRemaining')}
 								</span>
 								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
 									{$_('sharedSecret.multipleReadsHint')}
@@ -330,14 +363,14 @@
 								{$_('sharedSecret.expiresAt')}
 							</label>
 							<div class="flex flex-col gap-1">
-							<p class="text-gray-900 dark:text-white font-medium">
-								{formatDate(secret.expires_at)}
-							</p>
-							<p class="text-sm text-gray-600 dark:text-gray-400">
-								⏱️ {$_('sharedSecret.timeRemaining')}:
-								<span class="font-semibold">{formatTimeRemaining(secret.expires_at)}</span>
-							</p>
-						</div>
+								<p class="text-gray-900 dark:text-white font-medium">
+									{formatDate(secret.expires_at)}
+								</p>
+								<p class="text-sm text-gray-600 dark:text-gray-400">
+									⏱️ {$_('sharedSecret.timeRemaining')}:
+									<span class="font-semibold">{formatTimeRemaining(secret.expires_at)}</span>
+								</p>
+							</div>
 						</div>
 					</div>
 

@@ -4,6 +4,95 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.3] - 2025-10-05
+
+### Improved
+
+**✨ UX IMPROVEMENT: Last Read Warning Banner (M1)**
+
+**Changes**:
+- Added prominent warning banner for receivers with exactly 1 read remaining
+- Banner displays BEFORE secret content to maximize visibility
+- Prevents accidental secret consumption due to tab close/reload
+- Multi-language support (English + Spanish)
+
+**Banner Features**:
+- **Visual Impact**: Amber/yellow background with ⚠️ emoji and left border
+- **Title**: "⚠️ Last Read Available" (prominent, semibold)
+- **Message**: Explains auto-deletion on close/reload
+- **Tip**: "💡 Save the information now if you need to keep it."
+- **Conditional Display**: Only shows when `pending_reads === 1` AND `role === 'receiver'`
+
+**Design Tokens**:
+- Light mode: `bg-amber-50`, `border-amber-500`, `text-amber-700/800`
+- Dark mode: `bg-amber-900/20`, `border-amber-600`, `text-amber-200/300`
+- Accessibility: `aria-hidden="true"` on emoji, semantic HTML (`<h3>`)
+
+**Files Modified** (Total: 4 files):
+- `web/src/routes/shared-secret/[hash]/+page.svelte` (lines 233-255: warning banner)
+- `web/src/lib/stores/translations/en.ts` (3 new keys: lastReadWarningTitle, Message, Tip)
+- `web/src/lib/stores/translations/es.ts` (Spanish translations)
+- `web/package.json` (version bump: 0.27.2 → 0.27.3)
+
+**Impact**:
+- ✅ Clear, unavoidable warning prevents user surprise
+- ✅ Complements M3 metadata display (double reinforcement)
+- ✅ Reduces support requests from confused users
+- ✅ Fully responsive and accessible (mobile + screen readers)
+
+**Testing**:
+- ✅ Zero linting/type errors (just check passed)
+- ✅ Dark mode support verified
+- ✅ Conditional rendering works correctly
+
+**Part of**: Sprint 1 - Shared Secret UX Improvements (plans/M1_warning_ultima_lectura.md)
+
+## [Web v0.27.2] - 2025-10-05
+
+### Improved
+
+**✨ UX IMPROVEMENT: Enhanced Metadata Display for Shared Secrets (M3)**
+
+**Changes**:
+- Enhanced pending_reads display with color-coded, icon-based conditional rendering
+- Added human-readable time remaining display (days/hours/minutes)
+- Improved visual hierarchy with emojis and contextual hints
+- Multi-language support (English + Spanish translations)
+
+**Pending Reads Display States**:
+1. **Unlimited (Sender)**: Green text + ♾️ emoji + "As sender, unlimited views" hint
+2. **Consumed (0 reads)**: Red text + 🔒 emoji + "All reads used" hint
+3. **Last Read (1 read)**: Amber text + ⚠️ emoji + "Last read warning" hint
+4. **Normal (2-10 reads)**: Blue text + 📖 emoji + count display
+5. **Multiple Reads Hint**: Additional context for receivers
+
+**Time Remaining Display**:
+- Days: "5 days" (when >= 24 hours)
+- Hours + Minutes: "3h 45min" (when < 24 hours, > 1 hour)
+- Minutes only: "25 minutes" (when < 1 hour)
+- Expired: "Expired" (when time <= 0)
+- Visual indicator: ⏱️ emoji + bold formatting
+
+**Files Modified** (Total: 4 files):
+- `web/src/routes/shared-secret/[hash]/+page.svelte` (lines 120-140: formatTimeRemaining(), lines 282-324: pending_reads display, lines 332-340: expires_at display)
+- `web/src/lib/stores/translations/en.ts` (9 new keys: unlimitedHint, consumed, readRemaining, etc. + day/days/minutes)
+- `web/src/lib/stores/translations/es.ts` (Spanish translations for all new keys)
+- `web/package.json` (version bump: 0.27.1 → 0.27.2)
+
+**Impact**:
+- ✅ Users immediately understand their access level
+- ✅ Clear visual feedback for different states
+- ✅ Warnings prevent accidental last-read consumption
+- ✅ Time remaining is human-readable at a glance
+- ✅ Consistent dark mode support
+
+**Testing**:
+- ✅ Regression suite: 45/45 bash tests passed
+- ✅ Playwright tests: 16/22 passed (6 pre-existing failures unrelated to M3)
+- ✅ Zero linting/type errors (svelte-check)
+
+**Part of**: Sprint 1 - Shared Secret UX Improvements (plans/M3_metadata_enriquecida.md)
+
 ## [API v1.8.4 + Web v0.27.1] - 2025-10-05
 
 ### Fixed

@@ -81,7 +81,10 @@ export const en: I18nTexts = {
 		redirectingToHome: 'Redirecting to home...',
 		update: 'Update',
 		updating: 'Updating',
-		updateAvailable: 'Update available'
+		updateAvailable: 'Update available',
+		day: 'day',
+		days: 'days',
+		minutes: 'minutes'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -292,7 +295,22 @@ export const en: I18nTexts = {
 		readsInvalid: 'Max reads must be between 1 and 10',
 		creationError: 'Error creating secret',
 		retrievalError: 'Error retrieving secret',
-		deletionError: 'Error deleting secret'
+		deletionError: 'Error deleting secret',
+		// M3: Enhanced metadata
+		unlimitedHint: 'As the sender, you can view this secret unlimited times',
+		consumed: 'Consumed',
+		consumedHint: 'All reads have been used',
+		readRemaining: 'read remaining',
+		readsRemaining: 'reads remaining',
+		lastReadHint: '⚠️ This is your last available read. The secret will self-destruct after.',
+		multipleReadsHint: 'You can access this secret multiple more times',
+		timeRemaining: 'Time remaining',
+		expired: 'Expired',
+		// M1: Last read warning banner
+		lastReadWarningTitle: '⚠️ Last Read Available',
+		lastReadWarningMessage:
+			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		lastReadWarningTip: 'Save the information now if you need to keep it.'
 	},
 	logout: {
 		title: 'Log Out',

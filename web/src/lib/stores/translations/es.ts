@@ -81,7 +81,10 @@ export const es: I18nTexts = {
 		redirectingToHome: 'Redirigiendo al inicio...',
 		update: 'Actualizar',
 		updating: 'Actualizando',
-		updateAvailable: 'Nueva versión disponible'
+		updateAvailable: 'Nueva versión disponible',
+		day: 'día',
+		days: 'días',
+		minutes: 'minutos'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -293,7 +296,22 @@ export const es: I18nTexts = {
 		readsInvalid: 'Las lecturas máximas deben estar entre 1 y 10',
 		creationError: 'Error al crear el secreto',
 		retrievalError: 'Error al recuperar el secreto',
-		deletionError: 'Error al eliminar el secreto'
+		deletionError: 'Error al eliminar el secreto',
+		// M3: Metadata enriquecida
+		unlimitedHint: 'Como remitente, puedes ver este secreto ilimitadas veces',
+		consumed: 'Consumido',
+		consumedHint: 'Todas las lecturas han sido utilizadas',
+		readRemaining: 'lectura restante',
+		readsRemaining: 'lecturas restantes',
+		lastReadHint: '⚠️ Esta es tu última lectura disponible. El secreto se autodestruirá después.',
+		multipleReadsHint: 'Puedes acceder a este secreto varias veces más',
+		timeRemaining: 'Tiempo restante',
+		expired: 'Expirado',
+		// M1: Banner de advertencia última lectura
+		lastReadWarningTitle: '⚠️ Última Lectura Disponible',
+		lastReadWarningMessage:
+			'Este es tu último acceso a este secreto. Una vez que cierres o recargues esta página, el secreto se autodestruirá permanentemente.',
+		lastReadWarningTip: 'Guarda la información ahora si necesitas conservarla.'
 	},
 	logout: {
 		title: 'Cerrar Sesión',
