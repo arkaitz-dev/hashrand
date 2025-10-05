@@ -143,7 +143,13 @@ export const api = {
 		return await deleteSharedSecretAPI(hash);
 	},
 
-	async confirmRead(hash: string): Promise<void> {
+	async confirmRead(hash: string): Promise<{
+		success: boolean;
+		pending_reads: number;
+		read_confirmed: boolean;
+		role: string;
+		message: string;
+	}> {
 		return await confirmReadAPI(hash);
 	}
 };

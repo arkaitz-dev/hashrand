@@ -65,17 +65,24 @@ export async function deleteSharedSecret(hash: string): Promise<void> {
 /**
  * Confirm read of a shared secret (GET)
  * Requires authentication and Ed25519 signature
- * Updates read_at timestamp in tracking table
+ * Updates read_at timestamp and decrements pending_reads in tracking table
  * Idempotent: multiple calls are safe
  *
  * @param hash - Base58 encoded shared secret hash
- * @returns Promise<void>
+ * @returns Promise with new pending_reads count
  */
-export async function confirmRead(hash: string): Promise<void> {
+export async function confirmRead(hash: string): Promise<{
+	success: boolean;
+	pending_reads: number;
+	read_confirmed: boolean;
+	role: string;
+	message: string;
+}> {
 	const { httpAuthenticatedSignedGETRequest } = await import('../httpSignedRequests');
-	await httpAuthenticatedSignedGETRequest<{
+	return await httpAuthenticatedSignedGETRequest<{
 		success: boolean;
-		updated: boolean;
+		pending_reads: number;
+		read_confirmed: boolean;
 		role: string;
 		message: string;
 	}>(`${API_BASE}/shared-secret/confirm-read?hash=${hash}`);

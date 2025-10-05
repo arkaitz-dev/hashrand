@@ -46,14 +46,32 @@
 			secret = response;
 			otpRequired = false;
 
-			// Confirm read in background (only for receiver)
+			// Confirm read and update pending_reads (only for receiver)
 			if (response.role === 'receiver') {
-				// Fire-and-forget: no await, no error handling
-				// This is tracking only, should not block UI or show errors
-				api.confirmRead(hash).catch((err: unknown) => {
-					// Silent failure: log for debugging but don't alert user
-					console.warn('[SharedSecret] Failed to confirm read (non-critical):', err);
-				});
+				// Await confirmation to get updated pending_reads
+				try {
+					const confirmResult = await api.confirmRead(hash);
+					// Update pending_reads with new value from backend
+					secret.pending_reads = confirmResult.pending_reads;
+					console.info(
+						'[SharedSecret] Confirmed read, new pending_reads:',
+						confirmResult.pending_reads
+					);
+				} catch (err: unknown) {
+					// Retry once on failure
+					console.warn('[SharedSecret] Failed to confirm read, retrying...', err);
+					try {
+						const retryResult = await api.confirmRead(hash);
+						secret.pending_reads = retryResult.pending_reads;
+						console.info(
+							'[SharedSecret] Retry successful, new pending_reads:',
+							retryResult.pending_reads
+						);
+					} catch (retryErr: unknown) {
+						// Silent failure after retry: log for debugging but don't alert user
+						console.error('[SharedSecret] Retry failed (non-critical):', retryErr);
+					}
+				}
 			}
 		} catch (error: unknown) {
 			// Check if error is OTP required (400 with specific message)
