@@ -59,6 +59,8 @@ pub struct SharedSecretPayload {
     pub created_at: i64,
     /// Reference hash for tracking ([u8;16] as Base58)
     pub reference_hash: Vec<u8>,
+    /// Maximum reads allowed (stored in encrypted payload, used for validation & UI)
+    pub max_reads: i64,
 }
 
 /// Shared secret database operations struct

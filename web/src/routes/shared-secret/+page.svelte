@@ -1,8 +1,8 @@
 <script lang="ts">
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import LanguageSelect from '$lib/components/LanguageSelect.svelte';
 	import { _, currentLanguage } from '$lib/stores/i18n';
-	import { languages } from '$lib/languageConfig';
 	import { api } from '$lib/api';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
@@ -233,15 +233,7 @@
 							>
 								{$_('common.selectLanguage')} ({$_('sharedSecret.receiverEmail')})
 							</label>
-							<select
-								id="receiver-language"
-								bind:value={receiverLanguage}
-								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-							>
-								{#each languages as lang}
-									<option value={lang.code}>{lang.flag} {lang.name}</option>
-								{/each}
-							</select>
+							<LanguageSelect id="receiver-language" bind:value={receiverLanguage} />
 						</div>
 
 						<!-- Secret Text -->

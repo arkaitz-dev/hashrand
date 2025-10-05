@@ -167,6 +167,8 @@ export interface ViewSharedSecretResponse {
 	sender_email: string;
 	receiver_email: string;
 	pending_reads: number; // -1 for sender (unlimited), positive for receiver
+	max_reads: number; // Maximum reads allowed (from encrypted payload)
 	expires_at: number; // Unix timestamp
+	reference: string; // Base58 reference hash
 	role: 'sender' | 'receiver';
 }

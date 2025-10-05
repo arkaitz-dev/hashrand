@@ -89,7 +89,7 @@ fn confirm_read_validated(
     let secret_data = SharedSecretStorage::retrieve_secret(encrypted_id)
         .map_err(|e| format!("Failed to retrieve secret: {}", e))?;
 
-    let (encrypted_payload, _, _, role) = match secret_data {
+    let (encrypted_payload, _, role) = match secret_data {
         Some(data) => data,
         None => {
             return Err("Secret not found".to_string());
@@ -115,19 +115,38 @@ fn confirm_read_validated(
     let mut reference_hash = [0u8; REFERENCE_HASH_LENGTH];
     reference_hash.copy_from_slice(&payload.reference_hash);
 
-    // Update tracking record (only if receiver)
-    let updated = SharedSecretOps::confirm_read(&reference_hash)
+    // VALIDATION: Check for manual DB tampering (pending_reads should never exceed max_reads)
+    let current_pending_reads =
+        SharedSecretStorage::get_pending_reads_from_tracking(&reference_hash)
+            .map_err(|e| format!("Failed to get pending_reads: {}", e))?
+            .unwrap_or(0);
+
+    if current_pending_reads > payload.max_reads {
+        println!(
+            "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
+            current_pending_reads, payload.max_reads
+        );
+        // Continue anyway - don't block legitimate users
+    }
+
+    // Decrement pending_reads in tracking table
+    let new_pending_reads = SharedSecretStorage::decrement_tracking_reads(&reference_hash)
+        .map_err(|e| format!("Failed to decrement pending_reads: {}", e))?;
+
+    // Update tracking record with read timestamp (only if receiver and not already set)
+    let read_confirmed = SharedSecretOps::confirm_read(&reference_hash)
         .map_err(|e| format!("Failed to confirm read: {}", e))?;
 
     // Create response
     let response_json = json!({
         "success": true,
-        "updated": updated,
+        "pending_reads": new_pending_reads,
+        "read_confirmed": read_confirmed,
         "role": role.to_str(),
-        "message": if updated {
-            "Read confirmation updated"
+        "message": if read_confirmed {
+            "Read confirmed and counter decremented"
         } else {
-            "Already confirmed or not found"
+            "Counter decremented (read already confirmed)"
         }
     });
 

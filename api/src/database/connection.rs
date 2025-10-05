@@ -53,9 +53,8 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         r#"
         CREATE TABLE IF NOT EXISTS shared_secrets (
             id BLOB PRIMARY KEY,              -- Encrypted ID (similar to magic_link hash)
-            encrypted_payload BLOB NOT NULL,  -- ChaCha20(sender_email || receiver_email || text || otp || created_at || reference_hash)
+            encrypted_payload BLOB NOT NULL,  -- ChaCha20(sender_email || receiver_email || text || otp || created_at || reference_hash || max_reads)
             expires_at INTEGER NOT NULL,      -- Expiration timestamp in hours since Unix epoch (for cleanup)
-            pending_reads INTEGER NOT NULL,   -- Countdown reads counter (-1 = unlimited for sender)
             role TEXT NOT NULL                -- 'sender' or 'receiver'
         )
         "#,
@@ -67,6 +66,7 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         r#"
         CREATE TABLE IF NOT EXISTS shared_secrets_tracking (
             reference_hash BLOB PRIMARY KEY,  -- Random [u8;16] identifier (same for sender/receiver pair)
+            pending_reads INTEGER NOT NULL,   -- Countdown reads counter (moved from shared_secrets)
             read_at INTEGER,                  -- Timestamp of first read by receiver (NULL if unread)
             expires_at INTEGER NOT NULL,      -- Expiration timestamp (matches shared_secrets.expires_at)
             created_at INTEGER NOT NULL       -- Creation timestamp

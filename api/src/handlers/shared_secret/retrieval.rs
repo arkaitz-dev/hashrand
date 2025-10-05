@@ -29,6 +29,7 @@ struct RetrieveSecretResponse {
     sender_email: String,
     receiver_email: String,
     pending_reads: i64,
+    max_reads: i64,
     expires_at: i64,
     reference: String,
     role: String,
@@ -87,7 +88,7 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     user_id.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret (without decrementing first, to check for OTP)
-    match retrieve_and_respond(&encrypted_id, &user_id, None, &crypto_material, false) {
+    match retrieve_and_respond(&encrypted_id, &user_id, None, &crypto_material) {
         Ok(response) => Ok(response),
         Err(e) => Ok(create_server_error_response(&e)),
     }
@@ -134,7 +135,6 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
         &user_id,
         Some(&result.payload.otp),
         &crypto_material,
-        true,
     ) {
         Ok(response) => Ok(response),
         Err(e) => Ok(create_server_error_response(&e)),
@@ -166,15 +166,13 @@ fn retrieve_and_respond(
     _user_id: &[u8; USER_ID_LENGTH],
     provided_otp: Option<&str>,
     crypto_material: &CryptoMaterial,
-    should_decrement: bool,
 ) -> Result<Response, String> {
     // TODO: Validate that user_id from JWT matches user_id encrypted in hash
     // For now, just proceed with retrieval
 
-    // Read secret (will decrement if should_decrement=true and role=receiver)
-    let (payload, pending_reads, expires_at, role) =
-        SharedSecretOps::read_secret(encrypted_id, should_decrement)
-            .map_err(|e| format!("Failed to read secret: {}", e))?;
+    // Read secret (no decrement - that happens in confirm-read endpoint)
+    let (payload, pending_reads, expires_at, role) = SharedSecretOps::read_secret(encrypted_id)
+        .map_err(|e| format!("Failed to read secret: {}", e))?;
 
     // Validate OTP if present
     if payload.otp.is_some() && provided_otp.is_none() {
@@ -208,6 +206,7 @@ fn retrieve_and_respond(
         sender_email: payload.sender_email,
         receiver_email: payload.receiver_email,
         pending_reads,
+        max_reads: payload.max_reads,
         expires_at,
         reference: reference_base58,
         role: role.to_str().to_string(),

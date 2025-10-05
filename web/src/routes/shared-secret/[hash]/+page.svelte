@@ -400,8 +400,8 @@
 									class="text-lg font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2"
 								>
 									<span class="text-2xl">⚠️</span>
-									{secret.pending_reads}
-									{$_('sharedSecret.readRemaining')}
+									{secret.pending_reads} / {secret.max_reads}
+									{$_('sharedSecret.readsRemaining')}
 								</span>
 								<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
 									{$_('sharedSecret.lastReadHint')}
@@ -412,7 +412,7 @@
 									class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2"
 								>
 									<span class="text-2xl">📖</span>
-									{secret.pending_reads}
+									{secret.pending_reads} / {secret.max_reads}
 									{$_('sharedSecret.readsRemaining')}
 								</span>
 								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">

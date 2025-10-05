@@ -8,8 +8,8 @@ use crate::database::get_database_connection;
 use chrono::Utc;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
 
-/// Type alias for secret retrieval result tuple: (encrypted_payload, expires_at, pending_reads, role)
-type SecretData = (Vec<u8>, i64, i64, SecretRole);
+/// Type alias for secret retrieval result tuple: (encrypted_payload, expires_at, role)
+type SecretData = (Vec<u8>, i64, SecretRole);
 
 /// Shared secret storage operations
 pub struct SharedSecretStorage;
@@ -21,7 +21,6 @@ impl SharedSecretStorage {
     /// * `id` - Encrypted ID (32 bytes)
     /// * `encrypted_payload` - Encrypted payload blob
     /// * `expires_at` - Expiration timestamp in hours since Unix epoch
-    /// * `pending_reads` - Number of reads allowed (-1 for unlimited)
     /// * `role` - 'sender' or 'receiver'
     ///
     /// # Returns
@@ -30,25 +29,22 @@ impl SharedSecretStorage {
         id: &[u8; ENCRYPTED_ID_LENGTH],
         encrypted_payload: &[u8],
         expires_at: i64,
-        pending_reads: i64,
         role: SecretRole,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
         println!(
-            "🔒 SharedSecret: Storing secret with role '{}', pending_reads={}, expires_at={}",
+            "🔒 SharedSecret: Storing secret with role '{}', expires_at={}",
             role.to_str(),
-            pending_reads,
             expires_at
         );
 
         connection.execute(
-            "INSERT INTO shared_secrets (id, encrypted_payload, expires_at, pending_reads, role) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO shared_secrets (id, encrypted_payload, expires_at, role) VALUES (?, ?, ?, ?)",
             &[
                 Value::Blob(id.to_vec()),
                 Value::Blob(encrypted_payload.to_vec()),
                 Value::Integer(expires_at),
-                Value::Integer(pending_reads),
                 Value::Text(role.to_str().to_string()),
             ],
         )?;
@@ -63,14 +59,14 @@ impl SharedSecretStorage {
     /// * `id` - Encrypted ID (32 bytes)
     ///
     /// # Returns
-    /// * `Result<Option<SecretData>, SqliteError>` - (encrypted_payload, expires_at, pending_reads, role) or None
+    /// * `Result<Option<SecretData>, SqliteError>` - (encrypted_payload, expires_at, role) or None
     pub fn retrieve_secret(
         id: &[u8; ENCRYPTED_ID_LENGTH],
     ) -> Result<Option<SecretData>, SqliteError> {
         let connection = get_database_connection()?;
 
         let result = connection.execute(
-            "SELECT encrypted_payload, expires_at, pending_reads, role FROM shared_secrets WHERE id = ?",
+            "SELECT encrypted_payload, expires_at, role FROM shared_secrets WHERE id = ?",
             &[Value::Blob(id.to_vec())],
         )?;
 
@@ -89,12 +85,7 @@ impl SharedSecretStorage {
                 _ => return Err(SqliteError::Io("Invalid expires_at type".to_string())),
             };
 
-            let pending_reads = match &row.values[2] {
-                Value::Integer(val) => *val,
-                _ => return Err(SqliteError::Io("Invalid pending_reads type".to_string())),
-            };
-
-            let role_str = match &row.values[3] {
+            let role_str = match &row.values[2] {
                 Value::Text(val) => val.clone(),
                 _ => return Err(SqliteError::Io("Invalid role type".to_string())),
             };
@@ -103,13 +94,12 @@ impl SharedSecretStorage {
                 .ok_or_else(|| SqliteError::Io(format!("Invalid role value: {}", role_str)))?;
 
             println!(
-                "🔍 SharedSecret: Retrieved (role={}, pending_reads={}, expires_at={})",
+                "🔍 SharedSecret: Retrieved (role={}, expires_at={})",
                 role.to_str(),
-                pending_reads,
                 expires_at
             );
 
-            Ok(Some((encrypted_payload, expires_at, pending_reads, role)))
+            Ok(Some((encrypted_payload, expires_at, role)))
         } else {
             println!("⚠️  SharedSecret: Not found in database");
             Ok(None)
@@ -140,55 +130,82 @@ impl SharedSecretStorage {
         Ok(true)
     }
 
-    /// Decrement pending_reads counter and auto-delete if reaches 0
+    /// Get pending_reads from tracking table by reference_hash
     ///
     /// # Arguments
-    /// * `id` - Encrypted ID (32 bytes)
+    /// * `reference_hash` - Reference hash (16 bytes)
     ///
     /// # Returns
-    /// * `Result<i64, SqliteError>` - Remaining pending_reads (or error)
-    pub fn decrement_pending_reads(id: &[u8; ENCRYPTED_ID_LENGTH]) -> Result<i64, SqliteError> {
+    /// * `Result<Option<i64>, SqliteError>` - pending_reads or None if not found
+    pub fn get_pending_reads_from_tracking(
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+    ) -> Result<Option<i64>, SqliteError> {
+        let connection = get_database_connection()?;
+
+        let result = connection.execute(
+            "SELECT pending_reads FROM shared_secrets_tracking WHERE reference_hash = ?",
+            &[Value::Blob(reference_hash.to_vec())],
+        )?;
+
+        if let Some(row) = result.rows.first() {
+            let pending_reads = match &row.values[0] {
+                Value::Integer(val) => *val,
+                _ => return Err(SqliteError::Io("Invalid pending_reads type".to_string())),
+            };
+            Ok(Some(pending_reads))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Decrement pending_reads in tracking table
+    ///
+    /// # Arguments
+    /// * `reference_hash` - Reference hash (16 bytes)
+    ///
+    /// # Returns
+    /// * `Result<i64, SqliteError>` - New pending_reads value
+    pub fn decrement_tracking_reads(
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+    ) -> Result<i64, SqliteError> {
         let connection = get_database_connection()?;
 
         // Get current pending_reads
-        let (_, _, pending_reads, role) = Self::retrieve_secret(id)?
-            .ok_or_else(|| SqliteError::Io("Secret not found".to_string()))?;
+        let pending_reads = Self::get_pending_reads_from_tracking(reference_hash)?
+            .ok_or_else(|| SqliteError::Io("Tracking record not found".to_string()))?;
 
-        // Don't decrement if sender (unlimited reads)
-        if role == SecretRole::Sender {
+        // Don't decrement if sender (unlimited reads = -1)
+        if pending_reads == UNLIMITED_READS {
             println!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
             return Ok(UNLIMITED_READS);
         }
 
         // Don't decrement if already at 0 or negative
         if pending_reads <= 0 {
-            println!("⚠️  SharedSecret: Already at 0 reads, deleting");
-            Self::delete_secret(id)?;
+            println!("⚠️  SharedSecret: Already at 0 reads");
             return Ok(0);
         }
 
         let new_reads = pending_reads - 1;
 
-        if new_reads == 0 {
-            // Auto-delete when reaches 0
-            println!("🗑️  SharedSecret: Reached 0 reads, auto-deleting");
-            Self::delete_secret(id)?;
-            Ok(0)
-        } else {
-            // Update counter
-            connection.execute(
-                "UPDATE shared_secrets SET pending_reads = ? WHERE id = ?",
-                &[Value::Integer(new_reads), Value::Blob(id.to_vec())],
-            )?;
-            println!("📖 SharedSecret: Decremented to {} reads", new_reads);
-            Ok(new_reads)
-        }
+        // Update counter
+        connection.execute(
+            "UPDATE shared_secrets_tracking SET pending_reads = ? WHERE reference_hash = ?",
+            &[
+                Value::Integer(new_reads),
+                Value::Blob(reference_hash.to_vec()),
+            ],
+        )?;
+
+        println!("📖 SharedSecret: Decremented to {} reads", new_reads);
+        Ok(new_reads)
     }
 
     /// Store tracking record for a shared secret
     ///
     /// # Arguments
     /// * `reference_hash` - Reference hash (16 bytes)
+    /// * `pending_reads` - Initial pending_reads counter
     /// * `expires_at` - Expiration timestamp in hours
     /// * `created_at` - Creation timestamp in seconds
     ///
@@ -196,20 +213,22 @@ impl SharedSecretStorage {
     /// * `Result<(), SqliteError>` - Success or error
     pub fn store_tracking(
         reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+        pending_reads: i64,
         expires_at: i64,
         created_at: i64,
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
         println!(
-            "📊 SharedSecret: Storing tracking record (expires_at={}, created_at={})",
-            expires_at, created_at
+            "📊 SharedSecret: Storing tracking record (pending_reads={}, expires_at={}, created_at={})",
+            pending_reads, expires_at, created_at
         );
 
         connection.execute(
-            "INSERT INTO shared_secrets_tracking (reference_hash, read_at, expires_at, created_at) VALUES (?, NULL, ?, ?)",
+            "INSERT INTO shared_secrets_tracking (reference_hash, pending_reads, read_at, expires_at, created_at) VALUES (?, ?, NULL, ?, ?)",
             &[
                 Value::Blob(reference_hash.to_vec()),
+                Value::Integer(pending_reads),
                 Value::Integer(expires_at),
                 Value::Integer(created_at),
             ],

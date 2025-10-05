@@ -5,7 +5,8 @@
 //! Only allows deletion if pending_reads > 0
 
 use crate::database::operations::{
-    shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
+    shared_secret_ops::SharedSecretOps, shared_secret_storage::SharedSecretStorage,
+    shared_secret_types::constants::*,
 };
 use crate::utils::{
     CryptoMaterial, SignedRequestValidator, create_auth_error_response,
@@ -88,18 +89,11 @@ fn delete_secret_validated(
 ) -> Result<Response, String> {
     // TODO: Validate that user_id from JWT matches user_id encrypted in hash
 
-    // Retrieve secret first to check pending_reads
-    let secret_data = SharedSecretStorage::retrieve_secret(encrypted_id)
-        .map_err(|e| format!("Failed to retrieve secret: {}", e))?;
+    // Read secret to get pending_reads from tracking
+    let (_, pending_reads, _, role) = SharedSecretOps::read_secret(encrypted_id)
+        .map_err(|e| format!("Failed to read secret: {}", e))?;
 
-    let (_, _, pending_reads, role) = match secret_data {
-        Some(data) => data,
-        None => {
-            return Err("Secret not found or already deleted".to_string());
-        }
-    };
-
-    // Check if deletion is allowed
+    // Check if deletion is allowed (pending_reads > 0 or sender with unlimited reads)
     if pending_reads <= 0 {
         return Err(
             "Cannot delete secret: all reads have been consumed or it's already deleted"

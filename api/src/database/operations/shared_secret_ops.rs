@@ -76,7 +76,7 @@ impl SharedSecretOps {
         let created_at = Utc::now().timestamp();
         let mut payload = Vec::new();
 
-        // Serialize: sender_email_len[2] + sender_email + receiver_email_len[2] + receiver_email + text_len[4] + text + otp_len[1] + otp + created_at[8] + reference_hash[16]
+        // Serialize: sender_email_len[2] + sender_email + receiver_email_len[2] + receiver_email + text_len[4] + text + otp_len[1] + otp + created_at[8] + reference_hash[16] + max_reads[8]
         let sender_email_bytes = sender_email.as_bytes();
         let receiver_email_bytes = receiver_email.as_bytes();
         let text_bytes = secret_text.as_bytes();
@@ -97,6 +97,7 @@ impl SharedSecretOps {
 
         payload.extend_from_slice(&created_at.to_be_bytes());
         payload.extend_from_slice(&reference_hash);
+        payload.extend_from_slice(&max_reads.to_be_bytes());
 
         // Encrypt payload for sender
         let encrypted_payload_sender = SharedSecretCrypto::encrypt_payload(sender_id, &payload)?;
@@ -113,7 +114,6 @@ impl SharedSecretOps {
             sender_id,
             &encrypted_payload_sender,
             expires_at,
-            UNLIMITED_READS,
             SecretRole::Sender,
         )?;
 
@@ -122,12 +122,11 @@ impl SharedSecretOps {
             receiver_id,
             &encrypted_payload_receiver,
             expires_at,
-            max_reads,
             SecretRole::Receiver,
         )?;
 
-        // Store tracking record
-        SharedSecretStorage::store_tracking(&reference_hash, expires_at, created_at)?;
+        // Store tracking record (with max_reads as initial pending_reads)
+        SharedSecretStorage::store_tracking(&reference_hash, max_reads, expires_at, created_at)?;
 
         println!(
             "✅ SharedSecret: Created pair (sender + receiver) with reference_hash (expires in {}h)",
@@ -251,6 +250,24 @@ impl SharedSecretOps {
             ));
         }
         let reference_hash = payload[offset..offset + REFERENCE_HASH_LENGTH].to_vec();
+        offset += REFERENCE_HASH_LENGTH;
+
+        // Read max_reads
+        if payload.len() < offset + 8 {
+            return Err(SqliteError::Io(
+                "Payload too short for max_reads".to_string(),
+            ));
+        }
+        let max_reads = i64::from_be_bytes([
+            payload[offset],
+            payload[offset + 1],
+            payload[offset + 2],
+            payload[offset + 3],
+            payload[offset + 4],
+            payload[offset + 5],
+            payload[offset + 6],
+            payload[offset + 7],
+        ]);
 
         Ok(SharedSecretPayload {
             sender_email,
@@ -259,25 +276,23 @@ impl SharedSecretOps {
             otp,
             created_at,
             reference_hash,
+            max_reads,
         })
     }
 
-    /// Read a secret, decrypt, validate, and optionally decrement reads
+    /// Read a secret, decrypt, and get pending_reads from tracking
     ///
     /// # Arguments
     /// * `id` - Encrypted ID (32 bytes)
-    /// * `decrement` - Whether to decrement pending_reads (false for sender)
     ///
     /// # Returns
     /// * `Result<(SharedSecretPayload, i64, i64, SecretRole), SqliteError>` - (payload, pending_reads, expires_at, role) or error
     pub fn read_secret(
         id: &[u8; ENCRYPTED_ID_LENGTH],
-        decrement: bool,
     ) -> Result<(SharedSecretPayload, i64, i64, SecretRole), SqliteError> {
         // Retrieve from database
-        let (encrypted_payload, expires_at, pending_reads, role) =
-            SharedSecretStorage::retrieve_secret(id)?
-                .ok_or_else(|| SqliteError::Io("Secret not found".to_string()))?;
+        let (encrypted_payload, expires_at, role) = SharedSecretStorage::retrieve_secret(id)?
+            .ok_or_else(|| SqliteError::Io("Secret not found".to_string()))?;
 
         // Check expiration
         let now_hours = Utc::now().timestamp() / 3600;
@@ -292,14 +307,17 @@ impl SharedSecretOps {
         // Deserialize
         let payload = Self::deserialize_payload(&decrypted)?;
 
-        // Decrement if requested and role is receiver
-        let final_reads = if decrement && role == SecretRole::Receiver {
-            SharedSecretStorage::decrement_pending_reads(id)?
-        } else {
-            pending_reads
-        };
+        // Get pending_reads from tracking table
+        let reference_hash: [u8; REFERENCE_HASH_LENGTH] = payload
+            .reference_hash
+            .as_slice()
+            .try_into()
+            .map_err(|_| SqliteError::Io("Invalid reference_hash length".to_string()))?;
 
-        Ok((payload, final_reads, expires_at, role))
+        let pending_reads =
+            SharedSecretStorage::get_pending_reads_from_tracking(&reference_hash)?.unwrap_or(0);
+
+        Ok((payload, pending_reads, expires_at, role))
     }
 
     /// Validate OTP against stored OTP in payload
