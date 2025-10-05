@@ -84,7 +84,8 @@ export const en: I18nTexts = {
 		updateAvailable: 'Update available',
 		day: 'day',
 		days: 'days',
-		minutes: 'minutes'
+		minutes: 'minutes',
+		of: 'of'
 	},
 	menu: {
 		title: 'Hash Generator',
@@ -310,6 +311,11 @@ export const en: I18nTexts = {
 		lastReadWarningTitle: '⚠️ Last Read Available',
 		lastReadWarningMessage:
 			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		// M4: Pre-submit confirmation
+		confirmLastRead:
+			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
+		confirmReadConsumption: 'Reading this secret will consume 1 read.',
+		readsRemainingAfter: 'You will have',
 		lastReadWarningTip: 'Save the information now if you need to keep it.'
 	},
 	logout: {

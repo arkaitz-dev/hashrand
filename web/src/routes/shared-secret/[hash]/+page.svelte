@@ -78,11 +78,47 @@
 	async function handleOtpSubmit(event: Event) {
 		event.preventDefault();
 
+		// Validate hash parameter
+		if (!hash) {
+			flashMessagesStore.addMessage($_('sharedSecret.invalidHash'));
+			return;
+		}
+
+		// Validate OTP format
 		if (otpInput.length !== 9 || !/^\d{9}$/.test(otpInput)) {
 			flashMessagesStore.addMessage($_('sharedSecret.invalidOtp'));
 			return;
 		}
 
+		// Get current pending_reads via preview (GET without OTP)
+		let currentReads = 0;
+		try {
+			const preview = await api.viewSharedSecret(hash); // GET request, no OTP
+			currentReads = preview.pending_reads;
+		} catch (error: unknown) {
+			// If preview fails, continue anyway (don't block submission)
+			console.warn('[SharedSecret] Preview failed, skipping confirmation:', error);
+			isSubmittingOtp = true;
+			await loadSecret(otpInput);
+			isSubmittingOtp = false;
+			return;
+		}
+
+		// Show confirmation dialog
+		const remainingAfter = currentReads - 1;
+		const confirmMessage =
+			currentReads === 1
+				? $_('sharedSecret.confirmLastRead')
+				: `${$_('sharedSecret.confirmReadConsumption')}\n\n${$_('sharedSecret.readsRemainingAfter')}: ${remainingAfter} ${$_('common.of')} ${currentReads}`;
+
+		const confirmed = globalThis.confirm(confirmMessage);
+
+		if (!confirmed) {
+			// User cancelled
+			return;
+		}
+
+		// Proceed with submission
 		isSubmittingOtp = true;
 		await loadSecret(otpInput);
 		isSubmittingOtp = false;

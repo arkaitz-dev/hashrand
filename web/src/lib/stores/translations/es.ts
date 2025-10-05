@@ -84,7 +84,8 @@ export const es: I18nTexts = {
 		updateAvailable: 'Nueva versión disponible',
 		day: 'día',
 		days: 'días',
-		minutes: 'minutos'
+		minutes: 'minutos',
+		of: 'de'
 	},
 	menu: {
 		title: 'Generador de Hash',
@@ -315,6 +316,11 @@ export const es: I18nTexts = {
 	},
 	logout: {
 		title: 'Cerrar Sesión',
+		// M4: Confirmación pre-submit
+		confirmLastRead:
+			'⚠️ Esto consumirá tu última lectura disponible. El secreto se autodestruirá después.\n\n¿Estás seguro de que deseas continuar?',
+		confirmReadConsumption: 'Leer este secreto consumirá 1 lectura.',
+		readsRemainingAfter: 'Te quedarán',
 		description: '¿Estás seguro de que quieres cerrar tu sesión?',
 		confirm: 'Cerrar Sesión',
 		cancel: 'Cancelar',

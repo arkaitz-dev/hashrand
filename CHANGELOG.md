@@ -4,6 +4,64 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.5] - 2025-10-05
+
+### Improved
+
+**✨ UX IMPROVEMENT: Pre-Submit Confirmation for OTP (M4)**
+
+**Changes**:
+- Added confirmation dialog BEFORE submitting OTP to access shared secrets
+- Informs users that reading will consume 1 read from their quota
+- Shows remaining reads after consumption (e.g., "4 of 5 remaining")
+- Special warning for last read to prevent accidental secret destruction
+- Graceful fallback: continues without dialog if preview fails
+
+**Implementation Details**:
+- **Preview GET**: Fetches `pending_reads` via GET request (no OTP, no decrement)
+- **Confirmation Dialog**: Native `confirm()` with conditional messaging
+- **Last Read Warning**: Different message when `pending_reads === 1`
+- **Fallback**: Silent console.warn if preview fails, continues normally
+
+**User Flow**:
+1. Receiver enters 9-digit OTP
+2. System makes preview GET (fetches metadata, no decrement)
+3. Shows confirm dialog: "Reading will consume 1 read. You'll have X of Y remaining. Continue?"
+4. User can cancel (returns to form) or accept (proceeds with POST)
+
+**Files Modified** (Total: 5 files):
+- `web/src/routes/shared-secret/[hash]/+page.svelte` (lines 78-119: handleOtpSubmit with preview + confirm)
+- `web/src/lib/stores/translations/en.ts` (3 new keys: confirmLastRead, confirmReadConsumption, readsRemainingAfter + common.of)
+- `web/src/lib/stores/translations/es.ts` (Spanish translations for all new keys)
+- `web/package.json` (version bump: 0.27.4 → 0.27.5)
+
+**i18n Keys Added**:
+- `confirmLastRead`: "⚠️ This will consume your last available read..."
+- `confirmReadConsumption`: "Reading this secret will consume 1 read."
+- `readsRemainingAfter`: "You will have" / "Te quedarán"
+- `common.of`: "of" / "de"
+
+**Impact**:
+- ✅ Prevents accidental secret consumption from users not understanding the system
+- ✅ Clear visibility of quota before committing to read
+- ✅ Last-read special warning prevents surprise auto-deletion
+- ✅ Cancellable: users can change their mind without penalty
+- ✅ Non-blocking: graceful fallback if preview fails
+
+**Testing**:
+- ✅ Zero linting/type errors (`just check` passed)
+- ✅ Hash validation added (prevents undefined access)
+- ✅ Conditional messaging (last read vs multiple reads)
+- ✅ Fallback path tested (preview failure)
+
+**Technical Notes**:
+- Preview GET uses existing `api.viewSharedSecret(hash)` (no OTP parameter)
+- Backend returns metadata without decrementing (GET = no decrement, POST = decrement)
+- Dialog uses native `confirm()` for MVP (future: custom modal component)
+- Error handling: try/catch with silent console.warn, no user-facing errors
+
+**Part of**: Sprint 1 - Shared Secret UX Improvements (plans/M4_presubmit_confirmation.md)
+
 ## [Web v0.27.4] - 2025-10-05
 
 ### Improved
