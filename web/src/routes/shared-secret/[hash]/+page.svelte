@@ -45,6 +45,16 @@
 			const response = await api.viewSharedSecret(hash, otpRequest);
 			secret = response;
 			otpRequired = false;
+
+			// Confirm read in background (only for receiver)
+			if (response.role === 'receiver') {
+				// Fire-and-forget: no await, no error handling
+				// This is tracking only, should not block UI or show errors
+				api.confirmRead(hash).catch((err: unknown) => {
+					// Silent failure: log for debugging but don't alert user
+					console.warn('[SharedSecret] Failed to confirm read (non-critical):', err);
+				});
+			}
 		} catch (error: unknown) {
 			// Check if error is OTP required (400 with specific message)
 			const err = error as { status?: number; message?: string };

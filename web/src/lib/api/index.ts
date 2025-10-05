@@ -29,4 +29,9 @@ export {
 } from './api-auth-operations';
 
 // Shared Secret operations
-export { createSharedSecret, viewSharedSecret, deleteSharedSecret } from './api-shared-secret';
+export {
+	createSharedSecret,
+	viewSharedSecret,
+	deleteSharedSecret,
+	confirmRead
+} from './api-shared-secret';

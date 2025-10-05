@@ -41,7 +41,8 @@ import {
 	refreshToken as refreshTokenAuth,
 	createSharedSecret as createSharedSecretAPI,
 	viewSharedSecret as viewSharedSecretAPI,
-	deleteSharedSecret as deleteSharedSecretAPI
+	deleteSharedSecret as deleteSharedSecretAPI,
+	confirmRead as confirmReadAPI
 } from './api/index';
 
 const API_BASE = '/api';
@@ -140,6 +141,10 @@ export const api = {
 
 	async deleteSharedSecret(hash: string): Promise<void> {
 		return await deleteSharedSecretAPI(hash);
+	},
+
+	async confirmRead(hash: string): Promise<void> {
+		return await confirmReadAPI(hash);
 	}
 };
 

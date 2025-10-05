@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.4] - 2025-10-05
+
+### Improved
+
+**✨ UX IMPROVEMENT: Automatic Read Tracking for Shared Secrets (M2)**
+
+**Changes**:
+- Implemented automatic read confirmation tracking via background API call
+- Receiver views are now properly tracked in `shared_secrets_tracking` table
+- Non-blocking, fire-and-forget pattern ensures zero UI disruption
+- Enables future sender dashboard (M5) with accurate read statistics
+
+**Implementation Details**:
+- **API Function**: Added `confirmRead(hash)` to `web/src/lib/api/api-shared-secret.ts`
+- **Integration**: Called in `loadSecret()` after successful secret retrieval (only for receivers)
+- **Pattern**: Fire-and-forget with silent failure (console.warn only, no user alerts)
+- **Idempotency**: Backend ensures multiple calls are safe
+- **Role-Based**: Sender (unlimited) never calls confirm-read, only receiver
+
+**Files Modified** (Total: 4 files):
+- `web/src/lib/api/api-shared-secret.ts` (lines 74-82: confirmRead function)
+- `web/src/lib/api/index.ts` (export confirmRead)
+- `web/src/lib/api.ts` (import + api.confirmRead method)
+- `web/src/routes/shared-secret/[hash]/+page.svelte` (lines 49-57: background call)
+- `web/package.json` (version bump: 0.27.3 → 0.27.4)
+
+**Backend Endpoint** (already exists):
+- `GET /api/shared-secret/confirm-read?hash={hash}`
+- Updates `read_at` timestamp in `shared_secrets_tracking` table
+- Idempotent: multiple calls update same timestamp
+
+**Impact**:
+- ✅ Accurate tracking of when secrets are actually viewed
+- ✅ Non-blocking: users never experience delays or errors from tracking
+- ✅ Foundation for M5 dashboard showing read statistics to senders
+- ✅ Zero breaking changes to existing functionality
+
+**Testing**:
+- ✅ All 35 bash tests passing
+- ✅ 16/22 Playwright tests passing (6 pre-existing failures unrelated to M2)
+- ✅ Zero linting/type errors (`just check` passed)
+- ✅ Fire-and-forget pattern verified (no await, silent catch)
+
+**Technical Notes**:
+- Uses existing Ed25519 signed GET request infrastructure
+- Backend returns `{success, updated, role, message}` (ignored by client)
+- Console.warn for debugging but no user-facing errors
+- Only triggers when `response.role === 'receiver'`
+
+**Part of**: Sprint 1 - Shared Secret UX Improvements (plans/M2_confirm_read_automatico.md)
+
 ## [Web v0.27.3] - 2025-10-05
 
 ### Improved
