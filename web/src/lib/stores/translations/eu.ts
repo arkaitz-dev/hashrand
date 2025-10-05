@@ -281,7 +281,27 @@ export const eu: I18nTexts = {
 		readsInvalid: 'Irakurketa maximoak 1 eta 10 artean egon behar dira',
 		creationError: 'Errorea sekretua sortzerakoan',
 		retrievalError: 'Errorea sekretua eskuratzerakoan',
-		deletionError: 'Errorea sekretua ezabatzerakoan'
+		deletionError: 'Errorea sekretua ezabatzerakoan',
+		// M3: Enhanced metadata
+		unlimitedHint: 'As the sender, you can view this secret unlimited times',
+		consumed: 'Consumed',
+		consumedHint: 'All reads have been used',
+		readRemaining: 'read remaining',
+		readsRemaining: 'reads remaining',
+		lastReadHint: '⚠️ This is your last available read. The secret will self-destruct after.',
+		multipleReadsHint: 'You can access this secret multiple more times',
+		timeRemaining: 'Time remaining',
+		expired: 'Expired',
+		// M1: Last read warning banner
+		lastReadWarningTitle: '⚠️ Last Read Available',
+		lastReadWarningMessage:
+			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		lastReadWarningTip: 'Save the information now if you need to keep it.',
+		// M4: Pre-submit confirmation
+		confirmLastRead:
+			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
+		confirmReadConsumption: 'Reading this secret will consume 1 read.',
+		readsRemainingAfter: 'You will have'
 	},
 	logout: {
 		title: 'Amaitu Saioa',
@@ -293,6 +313,7 @@ export const eu: I18nTexts = {
 		accessDenied: 'Sarbidea ukatua. Autentifikazioa beharrezkoa.',
 		userMenu: 'Erabiltzaile menua',
 		login: 'Hasi saioa',
+		authenticating: 'Authenticating...',
 		authenticatedAs: 'Autentifikatuta honela:',
 		logout: 'Amaitu saioa',
 		confirmLogout: 'Saioa amaitu?',

@@ -312,15 +312,15 @@ export const es: I18nTexts = {
 		lastReadWarningTitle: '⚠️ Última Lectura Disponible',
 		lastReadWarningMessage:
 			'Este es tu último acceso a este secreto. Una vez que cierres o recargues esta página, el secreto se autodestruirá permanentemente.',
-		lastReadWarningTip: 'Guarda la información ahora si necesitas conservarla.'
-	},
-	logout: {
-		title: 'Cerrar Sesión',
+		lastReadWarningTip: 'Guarda la información ahora si necesitas conservarla.',
 		// M4: Confirmación pre-submit
 		confirmLastRead:
 			'⚠️ Esto consumirá tu última lectura disponible. El secreto se autodestruirá después.\n\n¿Estás seguro de que deseas continuar?',
 		confirmReadConsumption: 'Leer este secreto consumirá 1 lectura.',
-		readsRemainingAfter: 'Te quedarán',
+		readsRemainingAfter: 'Te quedarán'
+	},
+	logout: {
+		title: 'Cerrar Sesión',
 		description: '¿Estás seguro de que quieres cerrar tu sesión?',
 		confirm: 'Cerrar Sesión',
 		cancel: 'Cancelar',
@@ -329,6 +329,7 @@ export const es: I18nTexts = {
 		accessDenied: 'Acceso denegado. Se requiere autenticación.',
 		userMenu: 'Menú de usuario',
 		login: 'Iniciar sesión',
+		authenticating: 'Autenticando...',
 		authenticatedAs: 'Autenticado como:',
 		logout: 'Cerrar sesión',
 		confirmLogout: '¿Cerrar sesión?',

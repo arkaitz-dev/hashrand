@@ -295,7 +295,27 @@ export const de: I18nTexts = {
 		readsInvalid: 'Die maximalen Lesevorgänge müssen zwischen 1 und 10 liegen',
 		creationError: 'Fehler beim Erstellen des Geheimnisses',
 		retrievalError: 'Fehler beim Abrufen des Geheimnisses',
-		deletionError: 'Fehler beim Löschen des Geheimnisses'
+		deletionError: 'Fehler beim Löschen des Geheimnisses',
+		// M3: Enhanced metadata
+		unlimitedHint: 'As the sender, you can view this secret unlimited times',
+		consumed: 'Consumed',
+		consumedHint: 'All reads have been used',
+		readRemaining: 'read remaining',
+		readsRemaining: 'reads remaining',
+		lastReadHint: '⚠️ This is your last available read. The secret will self-destruct after.',
+		multipleReadsHint: 'You can access this secret multiple more times',
+		timeRemaining: 'Time remaining',
+		expired: 'Expired',
+		// M1: Last read warning banner
+		lastReadWarningTitle: '⚠️ Last Read Available',
+		lastReadWarningMessage:
+			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		lastReadWarningTip: 'Save the information now if you need to keep it.',
+		// M4: Pre-submit confirmation
+		confirmLastRead:
+			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
+		confirmReadConsumption: 'Reading this secret will consume 1 read.',
+		readsRemainingAfter: 'You will have'
 	},
 	logout: {
 		title: 'Abmelden',
@@ -307,6 +327,7 @@ export const de: I18nTexts = {
 		accessDenied: 'Zugang verweigert. Authentifizierung erforderlich.',
 		userMenu: 'Benutzermenü',
 		login: 'Anmelden',
+		authenticating: 'Authenticating...',
 		authenticatedAs: 'Authentifiziert als:',
 		logout: 'Abmelden',
 		confirmLogout: 'Abmelden?',

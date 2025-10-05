@@ -290,7 +290,27 @@ export const pt: I18nTexts = {
 		readsInvalid: 'As leituras máximas devem estar entre 1 e 10',
 		creationError: 'Erro ao criar o segredo',
 		retrievalError: 'Erro ao recuperar o segredo',
-		deletionError: 'Erro ao excluir o segredo'
+		deletionError: 'Erro ao excluir o segredo',
+		// M3: Enhanced metadata
+		unlimitedHint: 'As the sender, you can view this secret unlimited times',
+		consumed: 'Consumed',
+		consumedHint: 'All reads have been used',
+		readRemaining: 'read remaining',
+		readsRemaining: 'reads remaining',
+		lastReadHint: '⚠️ This is your last available read. The secret will self-destruct after.',
+		multipleReadsHint: 'You can access this secret multiple more times',
+		timeRemaining: 'Time remaining',
+		expired: 'Expired',
+		// M1: Last read warning banner
+		lastReadWarningTitle: '⚠️ Last Read Available',
+		lastReadWarningMessage:
+			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		lastReadWarningTip: 'Save the information now if you need to keep it.',
+		// M4: Pre-submit confirmation
+		confirmLastRead:
+			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
+		confirmReadConsumption: 'Reading this secret will consume 1 read.',
+		readsRemainingAfter: 'You will have'
 	},
 	logout: {
 		title: 'Sair',
@@ -302,6 +322,7 @@ export const pt: I18nTexts = {
 		accessDenied: 'Acesso negado. Autenticação necessária.',
 		userMenu: 'Menu do usuário',
 		login: 'Entrar',
+		authenticating: 'Authenticating...',
 		authenticatedAs: 'Autenticado como:',
 		logout: 'Sair',
 		confirmLogout: 'Sair?',

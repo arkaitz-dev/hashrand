@@ -286,7 +286,27 @@ export const ca: I18nTexts = {
 		readsInvalid: "Les lectures màximes han d'estar entre 1 i 10",
 		creationError: 'Error en crear el secret',
 		retrievalError: 'Error en recuperar el secret',
-		deletionError: 'Error en eliminar el secret'
+		deletionError: 'Error en eliminar el secret',
+		// M3: Enhanced metadata
+		unlimitedHint: 'As the sender, you can view this secret unlimited times',
+		consumed: 'Consumed',
+		consumedHint: 'All reads have been used',
+		readRemaining: 'read remaining',
+		readsRemaining: 'reads remaining',
+		lastReadHint: '⚠️ This is your last available read. The secret will self-destruct after.',
+		multipleReadsHint: 'You can access this secret multiple more times',
+		timeRemaining: 'Time remaining',
+		expired: 'Expired',
+		// M1: Last read warning banner
+		lastReadWarningTitle: '⚠️ Last Read Available',
+		lastReadWarningMessage:
+			'This is your last access to this secret. Once you close or reload this page, the secret will be permanently auto-deleted.',
+		lastReadWarningTip: 'Save the information now if you need to keep it.',
+		// M4: Pre-submit confirmation
+		confirmLastRead:
+			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
+		confirmReadConsumption: 'Reading this secret will consume 1 read.',
+		readsRemainingAfter: 'You will have'
 	},
 	logout: {
 		title: 'Tancar Sessió',
@@ -298,6 +318,7 @@ export const ca: I18nTexts = {
 		accessDenied: 'Accés denegat. Cal autenticació.',
 		userMenu: "Menú d'usuari",
 		login: 'Iniciar sessió',
+		authenticating: 'Authenticating...',
 		authenticatedAs: 'Autenticat com a:',
 		logout: 'Tancar sessió',
 		confirmLogout: 'Tancar sessió?',
