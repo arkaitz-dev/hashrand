@@ -3,6 +3,7 @@
  */
 
 import { ed25519 } from '@noble/curves/ed25519.js';
+import { base58 } from '@scure/base';
 
 /**
  * Convert hex string to Uint8Array (DRY utility)
@@ -18,21 +19,22 @@ export function hexToBytes(hex: string): Uint8Array {
  * Verify Ed25519 signature using @noble/curves
  *
  * @param message - Message that was signed
- * @param signatureHex - Ed25519 signature as hex string
+ * @param signatureBase58 - Ed25519 signature as base58 string (~88 chars)
  * @param publicKeyHex - Ed25519 public key as hex string
  * @returns True if signature is valid
  */
 export async function verifyEd25519Signature(
 	message: string,
-	signatureHex: string,
+	signatureBase58: string,
 	publicKeyHex: string
 ): Promise<boolean> {
 	try {
 		// Convert message to bytes
 		const messageBytes = new TextEncoder().encode(message);
 
-		// Convert hex strings to bytes (DRY utility)
-		const signatureBytes = hexToBytes(signatureHex);
+		// Convert base58 signature and hex public key to bytes
+		// const signatureBytes = hexToBytes(signatureHex);
+		const signatureBytes = base58.decode(signatureBase58);
 		const publicKeyBytes = hexToBytes(publicKeyHex);
 
 		// Verify signature using @noble/curves Ed25519
@@ -51,4 +53,22 @@ export async function verifyEd25519Signature(
  */
 export function isValidHexKey(hex: string, expectedLength: number): boolean {
 	return typeof hex === 'string' && hex.length === expectedLength && /^[0-9a-fA-F]+$/.test(hex);
+}
+
+/**
+ * Validate base58 signature format (Bitcoin alphabet, variable length ~87-88 chars for Ed25519)
+ *
+ * @param signature - Base58 signature string to validate
+ * @returns True if valid base58 string with expected length range
+ */
+export function isValidBase58Signature(signature: string): boolean {
+	if (typeof signature !== 'string') return false;
+
+	// Ed25519 signatures: 64 bytes → ~87-88 base58 chars
+	if (signature.length < 87 || signature.length > 88) return false;
+
+	// Base58 alphabet: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+	// (excludes 0, O, I, l to avoid confusion)
+	const base58Regex = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/;
+	return base58Regex.test(signature);
 }

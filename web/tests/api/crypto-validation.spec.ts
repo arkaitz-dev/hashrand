@@ -69,7 +69,10 @@ test.describe('Ed25519 Cryptographic Operations', () => {
 		// Sign message
 		const signature = signMessageWithKeyPair(message, keyPair);
 		expect(signature).toBeDefined();
-		expect(signature).toHaveLength(128); // 64 bytes = 128 hex chars
+		// expect(signature).toHaveLength(128); // Old hex: 64 bytes = 128 hex chars (fixed)
+		// expect(signature).toHaveLength(88); // Base58: variable length ~87-88 chars
+		expect(signature.length).toBeGreaterThanOrEqual(87); // Base58: 64 bytes ≈ 87-88 chars
+		expect(signature.length).toBeLessThanOrEqual(88);
 
 		console.log(`✅ Signature: ${signature.substring(0, 40)}...`);
 
@@ -79,8 +82,10 @@ test.describe('Ed25519 Cryptographic Operations', () => {
 
 		console.log('✅ Signature verified successfully');
 
-		// Test invalid signature
-		const invalidSignature = '0'.repeat(128);
+		// Test invalid signature (modify valid signature to make it invalid)
+		// const invalidSignature = '0'.repeat(128); // Old hex
+		// const invalidSignature = '1'.repeat(88); // Base58: '1' = 0x00 in base58 (decodes to 88 bytes, not 64)
+		const invalidSignature = signature.substring(0, signature.length - 1) + 'Z'; // Change last char
 		const isInvalid = verifySignatureWithPublicKey(
 			message,
 			invalidSignature,
@@ -201,7 +206,10 @@ test.describe('SignedRequest Creation', () => {
 		const signature = signQueryParamsWithKeyPair(params, keyPair);
 
 		expect(signature).toBeDefined();
-		expect(signature).toHaveLength(128); // Ed25519 signature
+		// expect(signature).toHaveLength(128); // Old hex: Ed25519 signature (fixed)
+		// expect(signature).toHaveLength(88); // Base58: variable length ~87-88 chars
+		expect(signature.length).toBeGreaterThanOrEqual(87); // Base58: 64 bytes ≈ 87-88 chars
+		expect(signature.length).toBeLessThanOrEqual(88);
 
 		console.log(`✅ Query params signature: ${signature.substring(0, 40)}...`);
 

@@ -3,7 +3,7 @@
  */
 
 import { decodePayloadBase64, sortObjectKeys } from '../signedRequest';
-import { verifyEd25519Signature, isValidHexKey } from './crypto';
+import { verifyEd25519Signature, isValidHexKey, isValidBase58Signature } from './crypto';
 import { parseResponseData, isSignedResponse as checkSignedResponse } from './parsing';
 import { SignedResponseError } from './types';
 
@@ -44,9 +44,14 @@ export class SignedResponseValidator {
 			throw new SignedResponseError('Invalid server public key format (expected 64 hex chars)');
 		}
 
-		// Validate signature format
-		if (!isValidHexKey(signedResponse.signature, 128)) {
-			throw new SignedResponseError('Invalid signature format (expected 128 hex chars)');
+		// Validate signature format (now base58, ~87-88 chars)
+		// if (!isValidHexKey(signedResponse.signature, 128)) {
+		// 	throw new SignedResponseError('Invalid signature format (expected 128 hex chars)');
+		// }
+		if (!isValidBase58Signature(signedResponse.signature)) {
+			throw new SignedResponseError(
+				'Invalid signature format (expected base58 string, 87-88 chars)'
+			);
 		}
 
 		// Step 1: Decode Base64 to JSON (only for data extraction, NOT for verification!)
