@@ -15,7 +15,7 @@ use crate::utils::signed_request::SignedRequestValidator;
 /// 1. user_id_bytes + pub_key_bytes → Blake3 pseudonimizer → Ed25519 private key (32 bytes)
 /// 2. Ed25519 keypair generation from private key
 /// 3. Deterministic JSON serialization (matching frontend)
-/// 4. Ed25519 signature of serialized payload
+/// 4. Ed25519 signature of serialized payload (base58-encoded, ~88 chars)
 ///
 /// # Arguments
 /// * `payload` - Response data to be signed
@@ -23,7 +23,7 @@ use crate::utils::signed_request::SignedRequestValidator;
 /// * `pub_key_hex` - Frontend Ed25519 public key as hex string
 ///
 /// # Returns
-/// * `Result<SignedResponse, SignedResponseError>` - Signed response or error
+/// * `Result<SignedResponse, SignedResponseError>` - Signed response with base58 signature
 pub fn create_signed_response<T>(
     payload: T,
     user_id: &[u8],
@@ -53,11 +53,12 @@ where
 
     // Step 5: Sign Base64 payload with Ed25519 (same as frontend!)
     let signature_bytes = signing_key.sign(base64_payload.as_bytes());
-    let signature_hex = hex::encode(signature_bytes.to_bytes());
+    // let signature_hex = hex::encode(signature_bytes.to_bytes());
+    let signature_base58 = bs58::encode(signature_bytes.to_bytes()).into_string();
 
     Ok(SignedResponse {
         payload: base64_payload,
-        signature: signature_hex,
+        signature: signature_base58,
     })
 }
 

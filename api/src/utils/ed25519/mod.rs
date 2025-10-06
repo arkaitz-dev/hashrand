@@ -24,34 +24,34 @@ impl Ed25519Utils {
     ///
     /// # Arguments
     /// * `message` - The original message that was signed (as bytes)
-    /// * `signature_hex` - The Ed25519 signature as hex string (128 chars)
+    /// * `signature_base58` - The Ed25519 signature as base58 string (~88 chars)
     /// * `public_key_hex` - The Ed25519 public key as hex string (64 chars)
     ///
     /// # Returns
     /// * `SignatureVerificationResult` - Verification result
     pub fn verify_signature(
         message: &[u8],
-        signature_hex: &str,
+        signature_base58: &str,
         public_key_hex: &str,
     ) -> SignatureVerificationResult {
-        verification::verify_signature(message, signature_hex, public_key_hex)
+        verification::verify_signature(message, signature_base58, public_key_hex)
     }
 
     /// Verify Ed25519 signature for string message
     ///
     /// # Arguments
     /// * `message` - The original message that was signed (as string)
-    /// * `signature_hex` - The Ed25519 signature as hex string (128 chars)
+    /// * `signature_base58` - The Ed25519 signature as base58 string (~88 chars)
     /// * `public_key_hex` - The Ed25519 public key as hex string (64 chars)
     ///
     /// # Returns
     /// * `SignatureVerificationResult` - Verification result
     pub fn verify_signature_string(
         message: &str,
-        signature_hex: &str,
+        signature_base58: &str,
         public_key_hex: &str,
     ) -> SignatureVerificationResult {
-        verification::verify_signature_string(message, signature_hex, public_key_hex)
+        verification::verify_signature_string(message, signature_base58, public_key_hex)
     }
 
     /// Convert public key bytes to hex string
@@ -112,13 +112,15 @@ mod tests {
     fn test_signature_format_validation() {
         let valid_data = Ed25519SignatureData {
             public_key: "0".repeat(64),
-            signature: "0".repeat(128),
+            // signature: "0".repeat(128), // Old hex format
+            signature: "1".repeat(88), // Base58 format (~88 chars for 64 bytes)
         };
         assert!(Ed25519Utils::validate_signature_format(&valid_data).is_ok());
 
         let invalid_data = Ed25519SignatureData {
             public_key: "0".repeat(63), // Too short
-            signature: "0".repeat(128),
+            // signature: "0".repeat(128),
+            signature: "1".repeat(88),
         };
         assert!(Ed25519Utils::validate_signature_format(&invalid_data).is_err());
     }

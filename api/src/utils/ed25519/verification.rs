@@ -11,14 +11,14 @@ use super::types::SignatureVerificationResult;
 ///
 /// # Arguments
 /// * `message` - The original message that was signed (as bytes)
-/// * `signature_hex` - The Ed25519 signature as hex string (128 chars)
+/// * `signature_base58` - The Ed25519 signature as base58 string (~88 chars)
 /// * `public_key_hex` - The Ed25519 public key as hex string (64 chars)
 ///
 /// # Returns
 /// * `SignatureVerificationResult` - Verification result
 pub fn verify_signature(
     message: &[u8],
-    signature_hex: &str,
+    signature_base58: &str,
     public_key_hex: &str,
 ) -> SignatureVerificationResult {
     // Validate message
@@ -32,8 +32,8 @@ pub fn verify_signature(
         Err(_) => return SignatureVerificationResult::MalformedPublicKey,
     };
 
-    // Decode and validate signature
-    let signature_bytes = match decode_signature(signature_hex) {
+    // Decode and validate signature (now base58)
+    let signature_bytes = match decode_signature(signature_base58) {
         Ok(bytes) => bytes,
         Err(_) => return SignatureVerificationResult::MalformedSignature,
     };
@@ -58,16 +58,16 @@ pub fn verify_signature(
 ///
 /// # Arguments
 /// * `message` - The original message that was signed (as string)
-/// * `signature_hex` - The Ed25519 signature as hex string (128 chars)
+/// * `signature_base58` - The Ed25519 signature as base58 string (~88 chars)
 /// * `public_key_hex` - The Ed25519 public key as hex string (64 chars)
 ///
 /// # Returns
 /// * `SignatureVerificationResult` - Verification result
 pub fn verify_signature_string(
     message: &str,
-    signature_hex: &str,
+    signature_base58: &str,
     public_key_hex: &str,
 ) -> SignatureVerificationResult {
     let message_bytes = message.as_bytes();
-    verify_signature(message_bytes, signature_hex, public_key_hex)
+    verify_signature(message_bytes, signature_base58, public_key_hex)
 }

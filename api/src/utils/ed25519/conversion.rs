@@ -1,6 +1,6 @@
-//! Ed25519 Hex Conversion Utilities
+//! Ed25519 Conversion Utilities
 //!
-//! DRY-unified hex encoding/decoding with validation
+//! DRY-unified hex and base58 encoding/decoding with validation
 
 use hex;
 
@@ -103,16 +103,47 @@ pub(super) fn decode_public_key(public_key_hex: &str) -> Result<[u8; 32], String
     Ok(public_key_bytes)
 }
 
-/// Decode and validate signature hex for verification
+/// Decode base58 string to bytes with validation
 ///
 /// # Arguments
-/// * `signature_hex` - Ed25519 signature as hex string (128 chars)
+/// * `base58_str` - Base58 string to decode
+/// * `expected_byte_len` - Expected byte length
+/// * `name` - Name for error messages
+///
+/// # Returns
+/// * `Result<Vec<u8>, String>` - Decoded bytes or error message
+fn decode_base58_with_validation(
+    base58_str: &str,
+    expected_byte_len: usize,
+    name: &str,
+) -> Result<Vec<u8>, String> {
+    let bytes = bs58::decode(base58_str)
+        .into_vec()
+        .map_err(|e| format!("Failed to decode {} base58: {}", name, e))?;
+
+    if bytes.len() != expected_byte_len {
+        return Err(format!(
+            "Invalid {} byte length after base58 decode: {} (expected {})",
+            name,
+            bytes.len(),
+            expected_byte_len
+        ));
+    }
+
+    Ok(bytes)
+}
+
+/// Decode and validate signature base58 for verification
+///
+/// # Arguments
+/// * `signature_base58` - Ed25519 signature as base58 string (~88 chars)
 ///
 /// # Returns
 /// * `Result<[u8; 64], String>` - Signature bytes or error
-pub(super) fn decode_signature(signature_hex: &str) -> Result<[u8; 64], String> {
-    validate_hex_length(signature_hex, 128, "signature")?;
-    let bytes = decode_hex_with_validation(signature_hex, 64, "signature")?;
+pub(super) fn decode_signature(signature_base58: &str) -> Result<[u8; 64], String> {
+    // validate_hex_length(signature_hex, 128, "signature")?;
+    // let bytes = decode_hex_with_validation(signature_hex, 64, "signature")?;
+    let bytes = decode_base58_with_validation(signature_base58, 64, "signature")?;
 
     let mut signature_bytes = [0u8; 64];
     signature_bytes.copy_from_slice(&bytes);
@@ -123,21 +154,31 @@ pub(super) fn decode_signature(signature_hex: &str) -> Result<[u8; 64], String> 
 ///
 /// # Arguments
 /// * `public_key_hex` - Ed25519 public key as hex string
-/// * `signature_hex` - Ed25519 signature as hex string
+/// * `signature_base58` - Ed25519 signature as base58 string
 ///
 /// # Returns
 /// * `Result<(), String>` - Ok if format is valid, error message otherwise
 pub fn validate_signature_data_format(
     public_key_hex: &str,
-    signature_hex: &str,
+    signature_base58: &str,
 ) -> Result<(), String> {
-    // Validate public key format
+    // Validate public key format (still hex)
     validate_hex_length(public_key_hex, 64, "public key")?;
     hex::decode(public_key_hex).map_err(|_| "Invalid public key hex format".to_string())?;
 
-    // Validate signature format
-    validate_hex_length(signature_hex, 128, "signature")?;
-    hex::decode(signature_hex).map_err(|_| "Invalid signature hex format".to_string())?;
+    // Validate signature format (now base58)
+    // validate_hex_length(signature_hex, 128, "signature")?;
+    // hex::decode(signature_hex).map_err(|_| "Invalid signature hex format".to_string())?;
+    let decoded = bs58::decode(signature_base58)
+        .into_vec()
+        .map_err(|_| "Invalid signature base58 format".to_string())?;
+
+    if decoded.len() != 64 {
+        return Err(format!(
+            "Invalid signature byte length: {} (expected 64)",
+            decoded.len()
+        ));
+    }
 
     Ok(())
 }

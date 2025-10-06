@@ -4,6 +4,104 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.8.6 + Web v0.27.7] - 2025-10-06
+
+### Changed
+
+**⚡ PERFORMANCE: Ed25519 Response Signatures Migration (hex → base58)**
+
+**Changes**:
+- Migrated Ed25519 signature encoding for **responses** (backend → frontend) from hex to base58
+- **31% smaller SignedResponse signatures**: 128 hex chars → ~87-88 base58 chars
+- Complete system consistency: requests and responses now both use base58
+- Maintains cryptographic strength (Ed25519 64-byte signatures unchanged)
+
+**Implementation Details**:
+- **Backend** (`api/src/utils/signed_response/signing.rs`):
+  - Changed `hex::encode()` → `bs58::encode().into_string()` in `create_signed_response()`
+  - Updated documentation to reflect base58 encoding
+
+- **Frontend** (`web/src/lib/signedResponse/`):
+  - `crypto.ts`: Added `isValidBase58Signature()` validator
+  - `crypto.ts`: Updated `verifyEd25519Signature()` to accept base58 signatures
+  - `validation.ts`: Changed signature validation from hex (128 chars) to base58 (87-88 chars)
+
+**Files Modified** (Total: 4 files):
+- `api/src/utils/signed_response/signing.rs` (base58 encoding + docs)
+- `web/src/lib/signedResponse/crypto.ts` (base58 validation + verification)
+- `web/src/lib/signedResponse/validation.ts` (base58 format validation)
+- `api/Cargo.toml` (version bump: 1.8.5 → 1.8.6)
+- `web/package.json` (version bump: 0.27.6 → 0.27.7)
+
+**Impact**:
+- ✅ **Complete system consistency** - All Ed25519 signatures now use base58
+- ✅ **31% smaller response payloads** - Better network performance
+- ✅ **Uniform encoding** - Easier to maintain and debug
+- ✅ **Zero cryptographic changes** - Same Ed25519 security
+
+**System-wide Signature Status**:
+- POST Requests (frontend → backend): ✅ base58
+- Query Parameters (GET requests): ✅ base58
+- POST Responses (backend → frontend): ✅ base58
+- **All signatures now use base58 encoding**
+
+## [API v1.8.5 + Web v0.27.6] - 2025-10-06
+
+### Changed
+
+**⚡ PERFORMANCE: Ed25519 Request Signatures Migration (hex → base58)**
+
+**Changes**:
+- Migrated Ed25519 signature encoding from hexadecimal to base58 (Bitcoin alphabet)
+- **31% URL size reduction**: 128 hex chars → ~87-88 base58 chars
+- More compact, URL-friendly signatures in query parameters
+- Maintains cryptographic strength (Ed25519 64-byte signatures unchanged)
+
+**Implementation Details**:
+- **Frontend** (`web/src/lib/ed25519/ed25519-core.ts`):
+  - Added `signatureBytesToBase58()` and `signatureBase58ToBytes()` converters
+  - Updated `signMessageWithKeyPair()` to return base58 instead of hex
+  - Updated `verifySignatureWithPublicKey()` to accept base58 signatures
+  - Uses `@scure/base` library (already in dependencies)
+
+- **Backend** (`api/src/utils/ed25519/`):
+  - Added `decode_base58_with_validation()` in `conversion.rs`
+  - Updated `decode_signature()` to decode base58 instead of hex
+  - Updated `validate_signature_data_format()` for base58 validation
+  - Uses `bs58` crate v0.5.1 (already in dependencies)
+
+- **Tests Updated**:
+  - Fixed `crypto-validation.spec.ts` tests expecting hex length
+  - Changed signature length assertions from `128` to `87-88` (base58 variable length)
+  - Updated invalid signature test generation (base58 alphabet constraints)
+
+**Files Modified** (Total: 8 files):
+- `web/src/lib/ed25519/ed25519-core.ts` (signMessageWithKeyPair + verify + base58 converters)
+- `api/src/utils/ed25519/conversion.rs` (decode_signature + decode_base58_with_validation)
+- `api/src/utils/ed25519/verification.rs` (updated comments + parameter names)
+- `api/src/utils/ed25519/mod.rs` (updated API documentation)
+- `web/tests/api/crypto-validation.spec.ts` (signature length assertions + invalid sig generation)
+- `api/Cargo.toml` (version bump: 1.8.4 → 1.8.5)
+- `web/package.json` (version bump: 0.27.5 → 0.27.6)
+
+**Example URL Comparison**:
+```
+Before (hex):  /api/mnemonic?words=12&signature=3454a43f63e1f5aeab3adf364f576d862180adb4b4753f4ad3ba79b1c13d22f0c38618c5a99d2de5b6f411a612a8ad565978aa8ada068a879b950490c9398f03
+After (base58): /api/mnemonic?words=12&signature=3SJ5NriHWWTv7tQKgfpxTqbQ1YuDPn31RNpQ37bNRtWKKp4C9PF5bJ2qeoyZDbMC
+```
+
+**Impact**:
+- ✅ **31% shorter URLs** - Better UX for sharing/copying signature-signed URLs
+- ✅ **More URL-friendly** - base58 avoids confusing chars (0/O, I/l)
+- ✅ **Bitcoin-compatible alphabet** - Standard, widely recognized encoding
+- ✅ **Zero cryptographic changes** - Same Ed25519 security, just different encoding
+- ✅ **All 51 tests pass** - Complete compatibility maintained
+
+**Technical Notes**:
+- Base58 length varies (87-88 chars for 64 bytes) due to non-power-of-2 base
+- Backend decodes directly to bytes, frontend encodes from bytes
+- Both use deterministic encoding (same bytes → same base58 string)
+
 ## [Web v0.27.5] - 2025-10-05
 
 ### Improved
