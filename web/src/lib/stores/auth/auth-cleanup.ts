@@ -5,6 +5,8 @@
  * Part of auth.ts refactorization to apply SOLID principles
  */
 
+import { clearLocalAuthData } from './auth-actions';
+
 /**
  * Clear all authentication data preventively before showing login dialog
  * Ensures clean state regardless of how previous session ended
@@ -43,7 +45,6 @@ export async function clearSensitiveAuthData(): Promise<void> {
 
 	try {
 		// Use unified cleanup function (complete logout cleanup)
-		const { clearLocalAuthData } = await import('./auth-actions');
 		await clearLocalAuthData();
 	} catch {
 		// Failed to clear sensitive auth data
@@ -61,7 +62,6 @@ export async function clearSensitiveAuthDataWithMessage(): Promise<void> {
 
 	try {
 		// Use unified cleanup function (complete logout cleanup)
-		const { clearLocalAuthData } = await import('./auth-actions');
 		await clearLocalAuthData();
 
 		// Show localized flash message that session data was cleared

@@ -6,6 +6,11 @@
  */
 
 import { getOrCreateKeyPair, signMessage } from './ed25519';
+import {
+	serializePayload,
+	encodePayloadBase64,
+	serializeQueryParams
+} from './crypto/signedRequest-core';
 
 // Re-export core types and utilities for E2E testing compatibility
 export type { SignedRequest } from './crypto/signedRequest-core';
@@ -32,9 +37,6 @@ export {
 export async function createSignedRequest<T>(
 	payload: T
 ): Promise<import('./crypto/signedRequest-core').SignedRequest> {
-	// Import core utilities
-	const { serializePayload, encodePayloadBase64 } = await import('./crypto/signedRequest-core');
-
 	// Get or generate Ed25519 keypair from IndexedDB
 	const keyPair = await getOrCreateKeyPair();
 
@@ -62,9 +64,6 @@ export async function createSignedRequest<T>(
  * @returns Signature string for the JSON serialized parameters
  */
 export async function signQueryParams(params: Record<string, string>): Promise<string> {
-	// Import core utility
-	const { serializeQueryParams } = await import('./crypto/signedRequest-core');
-
 	// Get or generate Ed25519 keypair from IndexedDB
 	const keyPair = await getOrCreateKeyPair();
 

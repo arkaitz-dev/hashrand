@@ -6,6 +6,7 @@
  */
 
 import { getSessionExpiration } from './session-storage';
+import { clearLocalAuthData } from './stores/auth/auth-actions';
 
 /**
  * Check if current session has expired based on stored timestamp
@@ -39,7 +40,6 @@ export async function isSessionExpired(): Promise<boolean> {
 export async function handleExpiredSession(): Promise<void> {
 	try {
 		// Use unified cleanup function (same as manual logout)
-		const { clearLocalAuthData } = await import('./stores/auth/auth-actions');
 		await clearLocalAuthData();
 	} catch (error) {
 		console.error('Failed to handle expired session:', error);

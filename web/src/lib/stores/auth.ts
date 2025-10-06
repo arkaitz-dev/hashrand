@@ -15,8 +15,10 @@ import {
 	requestMagicLink as requestMagicLinkAction,
 	validateMagicLink as validateMagicLinkAction,
 	logout as logoutAction,
-	generateCryptoTokens as generateCryptoTokensAction
+	generateCryptoTokens as generateCryptoTokensAction,
+	saveAuthToStorage
 } from './auth/index';
+import { sessionManager } from '../session-manager';
 
 interface AuthState {
 	user: AuthUser | null;
@@ -240,21 +242,17 @@ export const authStore = {
 		}));
 
 		// Save to IndexedDB asynchronously (no await to maintain sync interface)
-		import('./auth/auth-storage')
-			.then(({ saveAuthToStorage }) => saveAuthToStorage(user, accessToken))
-			.catch(() => {
-				// Failed to save auth tokens to IndexedDB
-			});
+		saveAuthToStorage(user, accessToken).catch(() => {
+			// Failed to save auth tokens to IndexedDB
+		});
 
 		// Note: Crypto tokens are NOT regenerated during refresh
 		// They persist throughout the session for URL parameter encryption consistency
 
 		// Clear pending auth email - no longer needed after successful token update (fire-and-forget)
-		import('../session-manager')
-			.then(({ sessionManager }) => sessionManager.clearPendingAuthEmail())
-			.catch(() => {
-				// Failed to clear pending auth email from IndexedDB
-			});
+		sessionManager.clearPendingAuthEmail().catch(() => {
+			// Failed to clear pending auth email from IndexedDB
+		});
 	},
 
 	/**

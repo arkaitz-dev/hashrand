@@ -47,11 +47,6 @@
 		lastProcessedToken = magicToken;
 
 		try {
-			// Import authStore dynamically
-			const { authStore } = await import('$lib/stores/auth');
-			const { parseNextParameterJson } = await import('$lib/utils/navigation');
-			const { sessionStatusStore } = await import('$lib/stores/session-status');
-
 			// Validate the magic link (Ed25519 verification by backend)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
 
@@ -64,8 +59,6 @@
 			// Clean URL after successful validation
 			const newUrl = new window.URL(window.location.href);
 			newUrl.searchParams.delete('magiclink');
-			// Import replaceState dynamically to avoid SSR issues
-			const { replaceState } = await import('$app/navigation');
 			replaceState(newUrl.toString(), {});
 
 			// Handle next parameter from response if present
@@ -74,15 +67,12 @@
 				const navigationUrl = await parseNextParameterJson(loginResponse.next);
 
 				if (navigationUrl !== '/') {
-					const { goto } = await import('$app/navigation');
 					await goto(navigationUrl);
 				}
 			}
 		} catch {
 			try {
 				// Magic link validation failed
-
-				const { goto } = await import('$app/navigation');
 				goto('/');
 			} catch {
 				// Fallback for debugging

@@ -6,7 +6,7 @@
  */
 
 import { writable, derived, type Readable } from 'svelte/store';
-import { getVersionWithCache } from '$lib/version-cache';
+import { getVersionWithCache, writeCache } from '$lib/version-cache';
 import type { VersionResponse } from '$lib/types';
 
 // Session backup interface
@@ -91,7 +91,6 @@ export async function acceptUpdate(): Promise<void> {
 		cachedVersions.set(current);
 
 		// Update the persistent cache with new version
-		const { writeCache } = await import('$lib/version-cache');
 		await writeCache(current);
 
 		// Reload the entire frontend
