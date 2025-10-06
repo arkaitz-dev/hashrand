@@ -51,9 +51,9 @@
 </script>
 
 <div>
-	<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+	<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 		{$_('sharedSecret.pendingReads')}
-	</label>
+	</div>
 
 	{#if pendingReads === -1}
 		<!-- Sender: Unlimited reads -->

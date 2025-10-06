@@ -184,9 +184,9 @@
 					<form onsubmit={handleCreate}>
 						<!-- Sender Email (Display Only) -->
 						<div class="mb-4">
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+							<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 								{$_('sharedSecret.senderEmail')}
-							</label>
+							</div>
 							{#if isLoadingEmail}
 								<p class="text-gray-500 dark:text-gray-400 italic">
 									{$_('common.loading')}...
@@ -351,11 +351,15 @@
 
 					<!-- Sender URL -->
 					<div class="mb-4">
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							for="sender-url"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							{$_('sharedSecret.yourUrl')}
 						</label>
 						<div class="flex gap-2">
 							<input
+								id="sender-url"
 								type="text"
 								readonly
 								value={createdSecret.url_sender}
@@ -372,11 +376,15 @@
 
 					<!-- Receiver URL -->
 					<div class="mb-4">
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							for="receiver-url"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							{$_('sharedSecret.receiverUrl')}
 						</label>
 						<div class="flex gap-2">
 							<input
+								id="receiver-url"
 								type="text"
 								readonly
 								value={createdSecret.url_receiver}
@@ -393,11 +401,15 @@
 
 					<!-- Reference Hash -->
 					<div class="mb-4">
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							for="reference-hash"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							{$_('sharedSecret.reference')}
 						</label>
 						<div class="flex gap-2">
 							<input
+								id="reference-hash"
 								type="text"
 								readonly
 								value={createdSecret.reference}
@@ -415,11 +427,15 @@
 					<!-- OTP (if required) -->
 					{#if createdSecret.otp}
 						<div class="mb-6">
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+							<label
+								for="otp-code"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+							>
 								{$_('sharedSecret.otpCode')}
 							</label>
 							<div class="flex gap-2">
 								<input
+									id="otp-code"
 									type="text"
 									readonly
 									value={createdSecret.otp}

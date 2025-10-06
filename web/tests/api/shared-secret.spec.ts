@@ -385,7 +385,9 @@ test.describe('API-Only Shared Secret Tests', () => {
 		await session.clear();
 	});
 
-	test.skip('should view secret as receiver and decrement reads (DEPRECATED - use dual-session tests)', async ({ request }) => {
+	test.skip('should view secret as receiver and decrement reads (DEPRECATED - use dual-session tests)', async ({
+		request
+	}) => {
 		console.log('🧪 TEST: View secret as receiver');
 		console.log('='.repeat(60));
 
@@ -458,7 +460,9 @@ test.describe('API-Only Shared Secret Tests', () => {
 		await session.clear();
 	});
 
-	test.skip('should require OTP for protected secrets (DEPRECATED - needs dual-session)', async ({ request }) => {
+	test.skip('should require OTP for protected secrets (DEPRECATED - needs dual-session)', async ({
+		request
+	}) => {
 		console.log('🧪 TEST: OTP protection flow');
 		console.log('='.repeat(60));
 
@@ -545,7 +549,9 @@ test.describe('API-Only Shared Secret Tests', () => {
 		await session.clear();
 	});
 
-	test.skip('should delete secret successfully (DEPRECATED - needs dual-session)', async ({ request }) => {
+	test.skip('should delete secret successfully (DEPRECATED - needs dual-session)', async ({
+		request
+	}) => {
 		console.log('🧪 TEST: Delete secret');
 		console.log('='.repeat(60));
 

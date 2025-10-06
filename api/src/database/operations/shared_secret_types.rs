@@ -94,6 +94,7 @@ pub mod constants {
     pub const ENCRYPTED_ID_LENGTH: usize = 32;
 
     /// URL hash length (reference_hash + user_id + checksum + role)
+    #[allow(dead_code)]
     pub const URL_HASH_LENGTH: usize = 40;
 
     /// Database index length (for PRIMARY KEY)

@@ -35,9 +35,9 @@ impl SharedSecretOps {
         otp: Option<String>,
         expires_hours: i64,
         max_reads: i64,
-        sender_db_index: &[u8; 32],  // DB_INDEX_LENGTH
-        receiver_db_index: &[u8; 32],  // DB_INDEX_LENGTH
-        reference_hash: &[u8; REFERENCE_HASH_LENGTH],  // Pre-generated reference hash
+        sender_db_index: &[u8; 32],                   // DB_INDEX_LENGTH
+        receiver_db_index: &[u8; 32],                 // DB_INDEX_LENGTH
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH], // Pre-generated reference hash
     ) -> Result<[u8; REFERENCE_HASH_LENGTH], SqliteError> {
         // Validate inputs
         if secret_text.chars().count() > MAX_TEXT_LENGTH {
@@ -95,7 +95,7 @@ impl SharedSecretOps {
         }
 
         payload.extend_from_slice(&created_at.to_be_bytes());
-        payload.extend_from_slice(reference_hash);  // Already a reference
+        payload.extend_from_slice(reference_hash); // Already a reference
         payload.extend_from_slice(&max_reads.to_be_bytes());
 
         // ============================================================================
@@ -137,7 +137,7 @@ impl SharedSecretOps {
             expires_hours
         );
 
-        Ok(*reference_hash)  // Dereference to return owned array
+        Ok(*reference_hash) // Dereference to return owned array
     }
 
     /// Deserialize payload bytes into SharedSecretPayload

@@ -4,8 +4,9 @@
 //! Requires JWT authentication and Ed25519 signature validation
 
 use crate::database::operations::{
-    shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
-    shared_secret_types::{constants::*, SecretRole},
+    shared_secret_crypto::SharedSecretCrypto,
+    shared_secret_ops::SharedSecretOps,
+    shared_secret_types::{SecretRole, constants::*},
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult,
@@ -222,8 +223,9 @@ async fn create_shared_secret(
     let sender_db_index = SharedSecretCrypto::generate_db_index(&reference_hash, sender_user_id)
         .map_err(|e| format!("Failed to generate sender db_index: {}", e))?;
 
-    let receiver_db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &receiver_user_id)
-        .map_err(|e| format!("Failed to generate receiver db_index: {}", e))?;
+    let receiver_db_index =
+        SharedSecretCrypto::generate_db_index(&reference_hash, &receiver_user_id)
+            .map_err(|e| format!("Failed to generate receiver db_index: {}", e))?;
 
     // Create secret pair using SharedSecretOps (pass pre-generated reference_hash)
     let _created_reference = SharedSecretOps::create_secret_pair(
@@ -235,7 +237,7 @@ async fn create_shared_secret(
         request.max_reads,
         &sender_db_index,
         &receiver_db_index,
-        &reference_hash,  // Pass the already-generated reference_hash
+        &reference_hash, // Pass the already-generated reference_hash
     )
     .map_err(|e| format!("Failed to create secret: {}", e))?;
 
@@ -243,8 +245,14 @@ async fn create_shared_secret(
     let reference_base58 = bs58::encode(&reference_hash).into_string();
 
     // Generate complete URLs with encrypted hashes (Base58 encoded)
-    let sender_path = format!("shared-secret/{}", bs58::encode(&sender_encrypted).into_string());
-    let receiver_path = format!("shared-secret/{}", bs58::encode(&receiver_encrypted).into_string());
+    let sender_path = format!(
+        "shared-secret/{}",
+        bs58::encode(&sender_encrypted).into_string()
+    );
+    let receiver_path = format!(
+        "shared-secret/{}",
+        bs58::encode(&receiver_encrypted).into_string()
+    );
 
     let url_sender = build_complete_url(&request.ui_host, &sender_path);
     let url_receiver = build_complete_url(&request.ui_host, &receiver_path);

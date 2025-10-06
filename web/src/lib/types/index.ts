@@ -172,3 +172,20 @@ export interface ViewSharedSecretResponse {
 	reference: string; // Base58 reference hash
 	role: 'sender' | 'receiver';
 }
+
+// Shared Secret Error Responses (returned as HTTP 200 with error field in SignedResponse)
+export interface SharedSecretOtpRequiredError {
+	error: 'OTP_REQUIRED';
+	message: string;
+}
+
+export interface SharedSecretInvalidOtpError {
+	error: 'INVALID_OTP';
+	message: string;
+}
+
+// Union type for viewSharedSecret response (success or error)
+export type ViewSharedSecretResult =
+	| ViewSharedSecretResponse
+	| SharedSecretOtpRequiredError
+	| SharedSecretInvalidOtpError;

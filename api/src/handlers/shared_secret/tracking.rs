@@ -9,10 +9,9 @@ use crate::database::operations::{
     shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
 };
 use crate::utils::{
-    CryptoMaterial, SignedRequestValidator,
-    create_auth_error_response, create_client_error_response, create_server_error_response,
-    create_signed_endpoint_response, endpoint_helpers::extract_query_params,
-    extract_crypto_material_from_request,
+    CryptoMaterial, SignedRequestValidator, create_auth_error_response,
+    create_client_error_response, create_server_error_response, create_signed_endpoint_response,
+    endpoint_helpers::extract_query_params, extract_crypto_material_from_request,
 };
 use serde_json::json;
 use spin_sdk::http::{Request, Response};

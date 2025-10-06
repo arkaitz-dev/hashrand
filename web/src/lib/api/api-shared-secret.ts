@@ -9,7 +9,7 @@ import type {
 	CreateSharedSecretRequest,
 	CreateSharedSecretResponse,
 	ViewSharedSecretRequest,
-	ViewSharedSecretResponse
+	ViewSharedSecretResult
 } from '../types';
 
 const API_BASE = '/api';
@@ -31,22 +31,25 @@ export async function createSharedSecret(
 /**
  * View a shared secret (GET with optional OTP in POST body)
  * Requires authentication and Ed25519 signature
+ *
+ * NOTE: Backend returns errors (OTP_REQUIRED, INVALID_OTP) as HTTP 200 with error field
+ * Caller must check for 'error' field in response to detect these cases
  */
 export async function viewSharedSecret(
 	hash: string,
 	otpRequest?: ViewSharedSecretRequest
-): Promise<ViewSharedSecretResponse> {
+): Promise<ViewSharedSecretResult> {
 	if (otpRequest && otpRequest.otp) {
 		// POST request with OTP in body
 		const { httpAuthenticatedSignedPOSTRequest } = await import('../httpSignedRequests');
 		return await httpAuthenticatedSignedPOSTRequest<
 			ViewSharedSecretRequest,
-			ViewSharedSecretResponse
+			ViewSharedSecretResult
 		>(`${API_BASE}/shared-secret/${hash}`, otpRequest);
 	} else {
 		// GET request without OTP
 		const { httpAuthenticatedSignedGETRequest } = await import('../httpSignedRequests');
-		return await httpAuthenticatedSignedGETRequest<ViewSharedSecretResponse>(
+		return await httpAuthenticatedSignedGETRequest<ViewSharedSecretResult>(
 			`${API_BASE}/shared-secret/${hash}`
 		);
 	}

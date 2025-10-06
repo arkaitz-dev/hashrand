@@ -12,6 +12,7 @@ use spin_sdk::sqlite::{Error as SqliteError, Value};
 type SecretData = (Vec<u8>, i64, SecretRole);
 
 /// Type alias for secret retrieval result tuple v2: (encrypted_payload, expires_at) - NO ROLE
+#[allow(dead_code)]
 type SecretDataV2 = (Vec<u8>, i64);
 
 /// Shared secret storage operations

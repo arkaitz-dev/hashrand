@@ -21,7 +21,7 @@ import type {
 	CreateSharedSecretRequest,
 	CreateSharedSecretResponse,
 	ViewSharedSecretRequest,
-	ViewSharedSecretResponse
+	ViewSharedSecretResult
 } from './types';
 
 import {
@@ -135,7 +135,7 @@ export const api = {
 	async viewSharedSecret(
 		hash: string,
 		otpRequest?: ViewSharedSecretRequest
-	): Promise<ViewSharedSecretResponse> {
+	): Promise<ViewSharedSecretResult> {
 		return await viewSharedSecretAPI(hash, otpRequest);
 	},
 

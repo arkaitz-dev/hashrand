@@ -44,6 +44,24 @@
 		try {
 			const otpRequest = otp ? { otp } : undefined;
 			const response = await api.viewSharedSecret(hash, otpRequest);
+
+			// CRITICAL: Backend returns OTP errors as HTTP 200 with 'error' field in SignedResponse
+			// Check for error field AFTER SignedResponse validation passes
+			if ('error' in response) {
+				if (response.error === 'OTP_REQUIRED') {
+					// OTP required but not provided
+					otpRequired = true;
+					isLoading = false;
+					return;
+				} else if (response.error === 'INVALID_OTP') {
+					// Invalid OTP provided
+					flashMessagesStore.addMessage($_('sharedSecret.invalidOtp'));
+					isLoading = false;
+					return;
+				}
+			}
+
+			// If we reach here, response is valid ViewSharedSecretResponse
 			secret = response;
 			otpRequired = false;
 
@@ -75,11 +93,9 @@
 			// 	}
 			// }
 		} catch (error: unknown) {
-			// Check if error is OTP required (400 with specific message)
+			// Handle HTTP errors (404, 410, network errors, etc.)
 			const err = error as { status?: number; message?: string };
-			if (err.status === 400 && err.message?.includes('OTP')) {
-				otpRequired = true;
-			} else if (err.status === 404) {
+			if (err.status === 404) {
 				flashMessagesStore.addMessage($_('sharedSecret.secretNotFound'));
 				setTimeout(() => goto('/'), 2000);
 			} else if (err.status === 410) {
@@ -113,6 +129,17 @@
 		let currentReads = 0;
 		try {
 			const preview = await api.viewSharedSecret(hash); // GET request, no OTP
+
+			// Check if preview contains error field (OTP_REQUIRED expected here)
+			if ('error' in preview) {
+				// OTP is required (expected), skip preview and proceed directly
+				isSubmittingOtp = true;
+				await loadSecret(otpInput);
+				isSubmittingOtp = false;
+				return;
+			}
+
+			// Preview succeeded (no OTP required - unexpected but handle it)
 			currentReads = preview.pending_reads;
 		} catch (error: unknown) {
 			// If preview fails, continue anyway (don't block submission)
@@ -341,25 +368,25 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 						<!-- From -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								{$_('sharedSecret.from')}
-							</label>
+							</div>
 							<p class="text-gray-900 dark:text-white font-mono">{secret.sender_email}</p>
 						</div>
 
 						<!-- To -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								{$_('sharedSecret.to')}
-							</label>
+							</div>
 							<p class="text-gray-900 dark:text-white font-mono">{secret.receiver_email}</p>
 						</div>
 
 						<!-- Role -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								{$_('sharedSecret.role')}
-							</label>
+							</div>
 							<p class="text-gray-900 dark:text-white">
 								{secret.role === 'sender'
 									? $_('sharedSecret.roleSender')
@@ -377,9 +404,9 @@
 
 						<!-- Expires At -->
 						<div class="md:col-span-2">
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								{$_('sharedSecret.expiresAt')}
-							</label>
+							</div>
 							<div class="flex flex-col gap-1">
 								<p class="text-gray-900 dark:text-white font-medium">
 									{formatDate(secret.expires_at)}

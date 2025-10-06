@@ -84,6 +84,7 @@ impl SharedSecretCrypto {
     ///
     /// # Returns
     /// * `Result<Vec<u8>, SqliteError>` - Encrypted payload or error
+    #[allow(dead_code)]
     pub fn encrypt_payload(
         encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
         payload: &[u8],
@@ -299,7 +300,8 @@ impl SharedSecretCrypto {
         combined.extend_from_slice(user_id);
 
         // Generate 7-byte checksum using blake3_keyed_variable
-        let checksum_base = crate::utils::pseudonimizer::blake3_keyed_variable(&checksum_key, &combined, 7);
+        let checksum_base =
+            crate::utils::pseudonimizer::blake3_keyed_variable(&checksum_key, &combined, 7);
 
         // Determine role byte
         let role_byte = match role {
@@ -371,7 +373,11 @@ impl SharedSecretCrypto {
             .map_err(|e| SqliteError::Io(format!("Failed to get URL cipher key: {}", e)))?;
 
         // Derive cipher key (32 bytes) + nonce (12 bytes) using Blake3 KDF
-        let derived = crate::utils::pseudonimizer::blake3_keyed_variable(&url_cipher_key, b"URL_CIPHER_V1", 44);
+        let derived = crate::utils::pseudonimizer::blake3_keyed_variable(
+            &url_cipher_key,
+            b"URL_CIPHER_V1",
+            44,
+        );
 
         let cipher_key: [u8; 32] = derived[0..32]
             .try_into()
@@ -409,7 +415,11 @@ impl SharedSecretCrypto {
             .map_err(|e| SqliteError::Io(format!("Failed to get URL cipher key: {}", e)))?;
 
         // Derive cipher key (32 bytes) + nonce (12 bytes) using Blake3 KDF
-        let derived = crate::utils::pseudonimizer::blake3_keyed_variable(&url_cipher_key, b"URL_CIPHER_V1", 44);
+        let derived = crate::utils::pseudonimizer::blake3_keyed_variable(
+            &url_cipher_key,
+            b"URL_CIPHER_V1",
+            44,
+        );
 
         let cipher_key: [u8; 32] = derived[0..32]
             .try_into()
@@ -439,7 +449,14 @@ impl SharedSecretCrypto {
     /// * `Result<([u8; 16], [u8; 16], SecretRole), SqliteError>` - (reference_hash, user_id, role) or error
     pub fn validate_and_extract_hash(
         hash_40: &[u8; 40],
-    ) -> Result<([u8; REFERENCE_HASH_LENGTH], [u8; USER_ID_LENGTH], super::shared_secret_types::SecretRole), SqliteError> {
+    ) -> Result<
+        (
+            [u8; REFERENCE_HASH_LENGTH],
+            [u8; USER_ID_LENGTH],
+            super::shared_secret_types::SecretRole,
+        ),
+        SqliteError,
+    > {
         use crate::utils::jwt::config::get_shared_secret_checksum_key;
 
         // Extract components
@@ -460,7 +477,12 @@ impl SharedSecretCrypto {
         let role = match role_byte {
             0x01 => super::shared_secret_types::SecretRole::Sender,
             0x02 => super::shared_secret_types::SecretRole::Receiver,
-            _ => return Err(SqliteError::Io(format!("Invalid role indicator: 0x{:02x}", role_byte))),
+            _ => {
+                return Err(SqliteError::Io(format!(
+                    "Invalid role indicator: 0x{:02x}",
+                    role_byte
+                )));
+            }
         };
 
         // Verify checksum (first 7 bytes)
@@ -471,13 +493,19 @@ impl SharedSecretCrypto {
         combined.extend_from_slice(&reference_hash);
         combined.extend_from_slice(&user_id);
 
-        let calculated_checksum_base = crate::utils::pseudonimizer::blake3_keyed_variable(&checksum_key, &combined, 7);
+        let calculated_checksum_base =
+            crate::utils::pseudonimizer::blake3_keyed_variable(&checksum_key, &combined, 7);
 
         if provided_checksum[0..7] != calculated_checksum_base[0..7] {
-            return Err(SqliteError::Io("Invalid hash checksum - URL may be manipulated".to_string()));
+            return Err(SqliteError::Io(
+                "Invalid hash checksum - URL may be manipulated".to_string(),
+            ));
         }
 
-        println!("✅ SharedSecret: Validated checksum and extracted role {:?}", role);
+        println!(
+            "✅ SharedSecret: Validated checksum and extracted role {:?}",
+            role
+        );
         Ok((reference_hash, user_id, role))
     }
 
@@ -506,7 +534,8 @@ impl SharedSecretCrypto {
         combined.extend_from_slice(user_id);
 
         // Generate 32-byte db_index
-        let db_index_vec = crate::utils::pseudonimizer::blake3_keyed_variable(&db_index_key, &combined, 32);
+        let db_index_vec =
+            crate::utils::pseudonimizer::blake3_keyed_variable(&db_index_key, &combined, 32);
 
         let mut db_index = [0u8; 32];
         db_index.copy_from_slice(&db_index_vec[0..32]);

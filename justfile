@@ -198,8 +198,8 @@ lint:
     cd api && cargo clippy -- -D warnings
     cd web && npm run lint
 
-# Format code
-fmt:
+# Format code (Rust + TypeScript/JavaScript/HTML)
+format:
     cd api && cargo fmt
     cd web && npm run format
 
@@ -384,5 +384,6 @@ alias d := dev
 alias t := test
 alias b := build
 alias c := check
-alias f := fmt
+alias f := format
+alias fmt := format
 alias l := lint
