@@ -71,5 +71,19 @@ web/web/
 .test-*
 cookies_test_*.txt
 
+# Debug scripts and files (root level)
+debug_*.rs
+debug_*.js
+debug_*.html
+debug_*.sh
+test_*.sh
+simple_test.sh
+
 # Planning and development notes (not tracked in git)
 plans/
+*_TODO.md
+*_PLAN.md
+GENERATED_*.txt
+
+# Backup files
+*.backup
