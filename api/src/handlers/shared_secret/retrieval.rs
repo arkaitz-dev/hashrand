@@ -4,7 +4,8 @@
 //! Requires JWT authentication and Ed25519 signature validation
 
 use crate::database::operations::{
-    shared_secret_ops::SharedSecretOps, shared_secret_types::constants::*,
+    shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
+    shared_secret_types::constants::*,
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
@@ -74,21 +75,21 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
         )));
     }
 
-    // Decode hash from Base58
-    let encrypted_id = match decode_hash(hash) {
-        Ok(id) => id,
+    // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
+    let encrypted_hash = match decode_hash_v2(hash) {
+        Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
 
-    // Extract user_id from crypto material
-    let mut user_id = [0u8; USER_ID_LENGTH];
+    // Extract user_id from crypto material (JWT)
+    let mut user_id_from_jwt = [0u8; USER_ID_LENGTH];
     if crypto_material.user_id.len() != USER_ID_LENGTH {
         return Ok(create_auth_error_response("Invalid user_id length in JWT"));
     }
-    user_id.copy_from_slice(&crypto_material.user_id);
+    user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
-    // Retrieve secret (without decrementing first, to check for OTP)
-    match retrieve_and_respond(&encrypted_id, &user_id, None, &crypto_material) {
+    // Retrieve secret with 3-layer validation (checksum → ownership → database)
+    match retrieve_and_respond_v2(&encrypted_hash, &user_id_from_jwt, None, &crypto_material) {
         Ok(response) => Ok(response),
         Err(e) => Ok(create_server_error_response(&e)),
     }
@@ -116,23 +117,23 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
         }
     };
 
-    // Decode hash
-    let encrypted_id = match decode_hash(hash) {
-        Ok(id) => id,
+    // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
+    let encrypted_hash = match decode_hash_v2(hash) {
+        Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
 
-    // Extract user_id from crypto material
-    let mut user_id = [0u8; USER_ID_LENGTH];
+    // Extract user_id from crypto material (JWT)
+    let mut user_id_from_jwt = [0u8; USER_ID_LENGTH];
     if crypto_material.user_id.len() != USER_ID_LENGTH {
         return Ok(create_auth_error_response("Invalid user_id length in JWT"));
     }
-    user_id.copy_from_slice(&crypto_material.user_id);
+    user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
-    // Retrieve secret with OTP validation
-    match retrieve_and_respond(
-        &encrypted_id,
-        &user_id,
+    // Retrieve secret with OTP validation and 3-layer validation
+    match retrieve_and_respond_v2(
+        &encrypted_hash,
+        &user_id_from_jwt,
         Some(&result.payload.otp),
         &crypto_material,
     ) {
@@ -141,7 +142,26 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     }
 }
 
-/// Decode Base58 hash to encrypted ID
+/// Decode Base58 hash to encrypted 40-byte hash (v2 - NEW)
+fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
+    let decoded = bs58::decode(hash)
+        .into_vec()
+        .map_err(|_| "Invalid Base58 hash".to_string())?;
+
+    if decoded.len() != 40 {
+        return Err(format!(
+            "Invalid hash length: expected 40, got {}",
+            decoded.len()
+        ));
+    }
+
+    let mut encrypted_hash = [0u8; 40];
+    encrypted_hash.copy_from_slice(&decoded);
+    Ok(encrypted_hash)
+}
+
+/// Decode Base58 hash to encrypted ID (OLD - deprecated)
+#[allow(dead_code)]
 fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
     let decoded = bs58::decode(hash)
         .into_vec()
@@ -160,7 +180,92 @@ fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
     Ok(id)
 }
 
-/// Retrieve secret and create response
+/// Retrieve secret and create response (v2 - NEW with 3-layer validation)
+fn retrieve_and_respond_v2(
+    encrypted_hash: &[u8; 40],
+    user_id_from_jwt: &[u8; USER_ID_LENGTH],
+    provided_otp: Option<&str>,
+    crypto_material: &CryptoMaterial,
+) -> Result<Response, String> {
+    // ============================================================================
+    // 3-LAYER VALIDATION: Checksum → Ownership → Database
+    // ============================================================================
+
+    // Layer 1: Decrypt ChaCha20 hash
+    let decrypted_hash = SharedSecretCrypto::decrypt_url_hash(encrypted_hash)
+        .map_err(|e| format!("Failed to decrypt hash: {}", e))?;
+
+    // Layer 2: Validate checksum + Extract components (reference_hash, user_id, role)
+    let (reference_hash, user_id_from_hash, role) =
+        SharedSecretCrypto::validate_and_extract_hash(&decrypted_hash)
+            .map_err(|e| format!("Invalid hash checksum: {}", e))?;
+
+    // Layer 3: CRITICAL - Validate ownership (user_id from JWT must match user_id from hash)
+    if user_id_from_jwt != &user_id_from_hash {
+        return Err(
+            "Access denied: You cannot access a shared secret that doesn't belong to you"
+                .to_string(),
+        );
+    }
+
+    // Generate db_index for database lookup
+    let db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &user_id_from_hash)
+        .map_err(|e| format!("Failed to generate db_index: {}", e))?;
+
+    // Read secret from database (no decrement - that happens in confirm-read endpoint)
+    let (payload, pending_reads, expires_at, _role_from_db) =
+        SharedSecretOps::read_secret(&db_index)
+            .map_err(|e| format!("Failed to read secret: {}", e))?;
+
+    // Note: We use 'role' from hash (validated via checksum), not from database
+
+    // Validate OTP if present
+    if payload.otp.is_some() && provided_otp.is_none() {
+        // OTP required but not provided
+        let error_json = json!({
+            "error": "OTP_REQUIRED",
+            "message": "This secret requires a 9-digit OTP"
+        });
+        return create_signed_endpoint_response(&error_json, crypto_material)
+            .map_err(|e| format!("Failed to create error response: {}", e));
+    }
+
+    if let Some(stored_otp) = &payload.otp
+        && let Some(provided) = provided_otp
+        && stored_otp != provided
+    {
+        let error_json = json!({
+            "error": "INVALID_OTP",
+            "message": "Invalid OTP provided"
+        });
+        return create_signed_endpoint_response(&error_json, crypto_material)
+            .map_err(|e| format!("Failed to create error response: {}", e));
+    }
+
+    // Convert reference_hash to Base58
+    let reference_base58 = bs58::encode(&payload.reference_hash).into_string();
+
+    // Create response
+    let response_data = RetrieveSecretResponse {
+        secret_text: payload.secret_text,
+        sender_email: payload.sender_email,
+        receiver_email: payload.receiver_email,
+        pending_reads,
+        max_reads: payload.max_reads,
+        expires_at,
+        reference: reference_base58,
+        role: role.to_str().to_string(),
+    };
+
+    let response_json = json!(response_data);
+
+    // Create signed response
+    create_signed_endpoint_response(&response_json, crypto_material)
+        .map_err(|e| format!("Failed to create signed response: {}", e))
+}
+
+/// Retrieve secret and create response (OLD - deprecated)
+#[allow(dead_code)]
 fn retrieve_and_respond(
     encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
     _user_id: &[u8; USER_ID_LENGTH],

@@ -183,3 +183,28 @@ pub fn get_refresh_token_duration_minutes() -> Result<u64, String> {
         .parse::<u64>()
         .map_err(|_| "REFRESH_TOKEN_DURATION_MINUTES must be a valid number".to_string())
 }
+
+// Shared Secret Security Keys
+
+/// Get shared secret URL cipher key from Spin variables as bytes (64 bytes required)
+pub fn get_shared_secret_url_cipher_key() -> Result<[u8; 64], String> {
+    get_config_bytes(
+        "shared_secret_url_cipher_key",
+        "SHARED_SECRET_URL_CIPHER_KEY",
+    )
+}
+
+/// Get shared secret content encryption key from Spin variables as bytes (64 bytes required)
+pub fn get_shared_secret_content_key() -> Result<[u8; 64], String> {
+    get_config_bytes("shared_secret_content_key", "SHARED_SECRET_CONTENT_KEY")
+}
+
+/// Get shared secret checksum key from Spin variables as bytes (64 bytes required)
+pub fn get_shared_secret_checksum_key() -> Result<[u8; 64], String> {
+    get_config_bytes("shared_secret_checksum_key", "SHARED_SECRET_CHECKSUM_KEY")
+}
+
+/// Get shared secret database index key from Spin variables as bytes (64 bytes required)
+pub fn get_shared_secret_db_index_key() -> Result<[u8; 64], String> {
+    get_config_bytes("shared_secret_db_index_key", "SHARED_SECRET_DB_INDEX_KEY")
+}

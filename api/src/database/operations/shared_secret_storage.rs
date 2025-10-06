@@ -11,11 +11,52 @@ use spin_sdk::sqlite::{Error as SqliteError, Value};
 /// Type alias for secret retrieval result tuple: (encrypted_payload, expires_at, role)
 type SecretData = (Vec<u8>, i64, SecretRole);
 
+/// Type alias for secret retrieval result tuple v2: (encrypted_payload, expires_at) - NO ROLE
+type SecretDataV2 = (Vec<u8>, i64);
+
 /// Shared secret storage operations
 pub struct SharedSecretStorage;
 
 impl SharedSecretStorage {
-    /// Store a shared secret entry in the database
+    /// Store a shared secret entry in the database (v2 - with db_index)
+    ///
+    /// # Arguments
+    /// * `db_index` - Database index (32 bytes) - PRIMARY KEY
+    /// * `encrypted_payload` - Encrypted payload blob
+    /// * `expires_at` - Expiration timestamp in hours since Unix epoch
+    /// * `role` - 'sender' or 'receiver' (TEMPORARY - will be removed when schema updated)
+    ///
+    /// # Returns
+    /// * `Result<(), SqliteError>` - Success or database error
+    pub fn store_shared_secret(
+        db_index: &[u8; DB_INDEX_LENGTH],
+        encrypted_payload: &[u8],
+        expires_at: i64,
+        role: SecretRole,
+    ) -> Result<(), SqliteError> {
+        let connection = get_database_connection()?;
+
+        println!(
+            "🔒 SharedSecret: Storing secret with role '{}', expires_at={} (using db_index)",
+            role.to_str(),
+            expires_at
+        );
+
+        connection.execute(
+            "INSERT INTO shared_secrets (id, encrypted_payload, expires_at, role) VALUES (?, ?, ?, ?)",
+            &[
+                Value::Blob(db_index.to_vec()),
+                Value::Blob(encrypted_payload.to_vec()),
+                Value::Integer(expires_at),
+                Value::Text(role.to_str().to_string()),
+            ],
+        )?;
+
+        println!("✅ SharedSecret: Stored successfully with db_index");
+        Ok(())
+    }
+
+    /// Store a shared secret entry in the database (OLD - deprecated)
     ///
     /// # Arguments
     /// * `id` - Encrypted ID (32 bytes)
@@ -25,7 +66,8 @@ impl SharedSecretStorage {
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
-    pub fn store_shared_secret(
+    #[allow(dead_code)]
+    pub fn store_shared_secret_old(
         id: &[u8; ENCRYPTED_ID_LENGTH],
         encrypted_payload: &[u8],
         expires_at: i64,
@@ -53,14 +95,70 @@ impl SharedSecretStorage {
         Ok(())
     }
 
-    /// Retrieve a shared secret by encrypted ID
+    /// Retrieve a shared secret by db_index (v2 - with db_index)
+    ///
+    /// # Arguments
+    /// * `db_index` - Database index (32 bytes) - PRIMARY KEY
+    ///
+    /// # Returns
+    /// * `Result<Option<SecretData>, SqliteError>` - (encrypted_payload, expires_at, role) or None
+    ///
+    /// Note: Role is still returned for backward compatibility but will be removed in future
+    pub fn retrieve_secret(
+        db_index: &[u8; DB_INDEX_LENGTH],
+    ) -> Result<Option<SecretData>, SqliteError> {
+        let connection = get_database_connection()?;
+
+        let result = connection.execute(
+            "SELECT encrypted_payload, expires_at, role FROM shared_secrets WHERE id = ?",
+            &[Value::Blob(db_index.to_vec())],
+        )?;
+
+        if let Some(row) = result.rows.first() {
+            let encrypted_payload = match &row.values[0] {
+                Value::Blob(data) => data.clone(),
+                _ => {
+                    return Err(SqliteError::Io(
+                        "Invalid encrypted_payload type".to_string(),
+                    ));
+                }
+            };
+
+            let expires_at = match &row.values[1] {
+                Value::Integer(val) => *val,
+                _ => return Err(SqliteError::Io("Invalid expires_at type".to_string())),
+            };
+
+            let role_str = match &row.values[2] {
+                Value::Text(val) => val.clone(),
+                _ => return Err(SqliteError::Io("Invalid role type".to_string())),
+            };
+
+            let role = SecretRole::from_str(&role_str)
+                .ok_or_else(|| SqliteError::Io(format!("Invalid role value: {}", role_str)))?;
+
+            println!(
+                "🔍 SharedSecret: Retrieved with db_index (role={}, expires_at={})",
+                role.to_str(),
+                expires_at
+            );
+
+            Ok(Some((encrypted_payload, expires_at, role)))
+        } else {
+            println!("🔍 SharedSecret: Not found (db_index)");
+            Ok(None)
+        }
+    }
+
+    /// Retrieve a shared secret by encrypted ID (OLD - deprecated)
     ///
     /// # Arguments
     /// * `id` - Encrypted ID (32 bytes)
     ///
     /// # Returns
     /// * `Result<Option<SecretData>, SqliteError>` - (encrypted_payload, expires_at, role) or None
-    pub fn retrieve_secret(
+    #[allow(dead_code)]
+    pub fn retrieve_secret_old(
         id: &[u8; ENCRYPTED_ID_LENGTH],
     ) -> Result<Option<SecretData>, SqliteError> {
         let connection = get_database_connection()?;
@@ -106,18 +204,43 @@ impl SharedSecretStorage {
         }
     }
 
-    /// Delete a shared secret by encrypted ID
+    /// Delete a shared secret by db_index (v2 - with db_index)
+    ///
+    /// # Arguments
+    /// * `db_index` - Database index (32 bytes) - PRIMARY KEY
+    ///
+    /// # Returns
+    /// * `Result<bool, SqliteError>` - true if deleted, false if not found
+    pub fn delete_secret(db_index: &[u8; DB_INDEX_LENGTH]) -> Result<bool, SqliteError> {
+        let connection = get_database_connection()?;
+
+        // Check if exists first
+        if Self::retrieve_secret(db_index)?.is_none() {
+            return Ok(false);
+        }
+
+        connection.execute(
+            "DELETE FROM shared_secrets WHERE id = ?",
+            &[Value::Blob(db_index.to_vec())],
+        )?;
+
+        println!("🗑️  SharedSecret: Deleted successfully (db_index)");
+        Ok(true)
+    }
+
+    /// Delete a shared secret by encrypted ID (OLD - deprecated)
     ///
     /// # Arguments
     /// * `id` - Encrypted ID (32 bytes)
     ///
     /// # Returns
     /// * `Result<bool, SqliteError>` - true if deleted, false if not found
-    pub fn delete_secret(id: &[u8; ENCRYPTED_ID_LENGTH]) -> Result<bool, SqliteError> {
+    #[allow(dead_code)]
+    pub fn delete_secret_old(id: &[u8; ENCRYPTED_ID_LENGTH]) -> Result<bool, SqliteError> {
         let connection = get_database_connection()?;
 
         // Check if exists first
-        if Self::retrieve_secret(id)?.is_none() {
+        if Self::retrieve_secret_old(id)?.is_none() {
             return Ok(false);
         }
 

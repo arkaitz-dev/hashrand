@@ -71,7 +71,7 @@ impl ProtectedEndpointMiddleware {
                 }
             };
 
-        println!("✅ Msgpack payload deserialized successfully");
+        println!("✅ Base64-encoded JSON payload deserialized successfully");
 
         Ok(ProtectedEndpointResult {
             payload: deserialized_payload,

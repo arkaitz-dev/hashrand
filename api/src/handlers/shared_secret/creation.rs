@@ -5,7 +5,7 @@
 
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
-    shared_secret_types::constants::*,
+    shared_secret_types::{constants::*, SecretRole},
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult,
@@ -189,48 +189,62 @@ async fn create_shared_secret(
         None
     };
 
-    // Generate unique encrypted IDs for sender and receiver (must be unique for each secret)
-    // Using timestamp + random data to ensure uniqueness
-    use chrono::Utc;
+    // ============================================================================
+    // NEW ZERO KNOWLEDGE HASH GENERATION (v2.0)
+    // ============================================================================
 
-    let timestamp = Utc::now().timestamp_nanos_opt().unwrap_or(0);
-    let random_sender = SharedSecretCrypto::generate_reference_hash();
-    let sender_id_material = format!(
-        "sender_{:?}_{}_{:?}",
-        sender_user_id, timestamp, random_sender
-    );
-    let sender_id_hash = blake3::hash(sender_id_material.as_bytes());
-    let mut sender_id = [0u8; ENCRYPTED_ID_LENGTH];
-    sender_id.copy_from_slice(&sender_id_hash.as_bytes()[0..ENCRYPTED_ID_LENGTH]);
+    // Generate random reference hash (shared between sender and receiver)
+    let reference_hash = SharedSecretCrypto::generate_reference_hash();
 
-    let random_receiver = SharedSecretCrypto::generate_reference_hash();
-    let receiver_id_material = format!(
-        "receiver_{:?}_{}_{:?}",
-        receiver_user_id, timestamp, random_receiver
-    );
-    let receiver_id_hash = blake3::hash(receiver_id_material.as_bytes());
-    let mut receiver_id = [0u8; ENCRYPTED_ID_LENGTH];
-    receiver_id.copy_from_slice(&receiver_id_hash.as_bytes()[0..ENCRYPTED_ID_LENGTH]);
+    // Generate 40-byte hashes with Zero Knowledge user_id derivation
+    let sender_hash_40 = SharedSecretCrypto::generate_shared_secret_hash(
+        &reference_hash,
+        &request.sender_email,
+        SecretRole::Sender,
+    )
+    .map_err(|e| format!("Failed to generate sender hash: {}", e))?;
 
-    // Create secret pair using SharedSecretOps
-    let reference_hash = SharedSecretOps::create_secret_pair(
+    let receiver_hash_40 = SharedSecretCrypto::generate_shared_secret_hash(
+        &reference_hash,
+        &request.receiver_email,
+        SecretRole::Receiver,
+    )
+    .map_err(|e| format!("Failed to generate receiver hash: {}", e))?;
+
+    // Encrypt hashes with ChaCha20
+    let sender_encrypted = SharedSecretCrypto::encrypt_url_hash(&sender_hash_40)
+        .map_err(|e| format!("Failed to encrypt sender hash: {}", e))?;
+
+    let receiver_encrypted = SharedSecretCrypto::encrypt_url_hash(&receiver_hash_40)
+        .map_err(|e| format!("Failed to encrypt receiver hash: {}", e))?;
+
+    // Generate db_index for database storage (PRIMARY KEY)
+    let sender_db_index = SharedSecretCrypto::generate_db_index(&reference_hash, sender_user_id)
+        .map_err(|e| format!("Failed to generate sender db_index: {}", e))?;
+
+    let receiver_db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &receiver_user_id)
+        .map_err(|e| format!("Failed to generate receiver db_index: {}", e))?;
+
+    // Create secret pair using SharedSecretOps (pass pre-generated reference_hash)
+    let _created_reference = SharedSecretOps::create_secret_pair(
         &request.sender_email,
         &request.receiver_email,
         &request.secret_text,
         otp.clone(),
         request.expires_hours,
         request.max_reads,
-        &sender_id,
-        &receiver_id,
+        &sender_db_index,
+        &receiver_db_index,
+        &reference_hash,  // Pass the already-generated reference_hash
     )
     .map_err(|e| format!("Failed to create secret: {}", e))?;
 
-    // Convert reference_hash to Base58
+    // Convert reference_hash to Base58 for response
     let reference_base58 = bs58::encode(&reference_hash).into_string();
 
-    // Generate complete URLs with protocol and domain
-    let sender_path = format!("shared-secret/{}", bs58::encode(&sender_id).into_string());
-    let receiver_path = format!("shared-secret/{}", bs58::encode(&receiver_id).into_string());
+    // Generate complete URLs with encrypted hashes (Base58 encoded)
+    let sender_path = format!("shared-secret/{}", bs58::encode(&sender_encrypted).into_string());
+    let receiver_path = format!("shared-secret/{}", bs58::encode(&receiver_encrypted).into_string());
 
     let url_sender = build_complete_url(&request.ui_host, &sender_path);
     let url_receiver = build_complete_url(&request.ui_host, &receiver_path);

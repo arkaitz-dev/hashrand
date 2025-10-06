@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import PendingReadsCounter from '$lib/components/PendingReadsCounter.svelte';
 	import { _ } from '$lib/stores/i18n';
 	import { api } from '$lib/api';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
@@ -46,33 +47,33 @@
 			secret = response;
 			otpRequired = false;
 
-			// Confirm read and update pending_reads (only for receiver)
-			if (response.role === 'receiver') {
-				// Await confirmation to get updated pending_reads
-				try {
-					const confirmResult = await api.confirmRead(hash);
-					// Update pending_reads with new value from backend
-					secret.pending_reads = confirmResult.pending_reads;
-					console.info(
-						'[SharedSecret] Confirmed read, new pending_reads:',
-						confirmResult.pending_reads
-					);
-				} catch (err: unknown) {
-					// Retry once on failure
-					console.warn('[SharedSecret] Failed to confirm read, retrying...', err);
-					try {
-						const retryResult = await api.confirmRead(hash);
-						secret.pending_reads = retryResult.pending_reads;
-						console.info(
-							'[SharedSecret] Retry successful, new pending_reads:',
-							retryResult.pending_reads
-						);
-					} catch (retryErr: unknown) {
-						// Silent failure after retry: log for debugging but don't alert user
-						console.error('[SharedSecret] Retry failed (non-critical):', retryErr);
-					}
-				}
-			}
+			// NOTE: Confirm read logic moved to PendingReadsCounter component
+			// if (response.role === 'receiver') {
+			// 	// Await confirmation to get updated pending_reads
+			// 	try {
+			// 		const confirmResult = await api.confirmRead(hash);
+			// 		// Update pending_reads with new value from backend
+			// 		secret.pending_reads = confirmResult.pending_reads;
+			// 		console.info(
+			// 			'[SharedSecret] Confirmed read, new pending_reads:',
+			// 			confirmResult.pending_reads
+			// 		);
+			// 	} catch (err: unknown) {
+			// 		// Retry once on failure
+			// 		console.warn('[SharedSecret] Failed to confirm read, retrying...', err);
+			// 		try {
+			// 			const retryResult = await api.confirmRead(hash);
+			// 			secret.pending_reads = retryResult.pending_reads;
+			// 			console.info(
+			// 				'[SharedSecret] Retry successful, new pending_reads:',
+			// 				retryResult.pending_reads
+			// 			);
+			// 		} catch (retryErr: unknown) {
+			// 			// Silent failure after retry: log for debugging but don't alert user
+			// 			console.error('[SharedSecret] Retry failed (non-critical):', retryErr);
+			// 		}
+			// 	}
+			// }
 		} catch (error: unknown) {
 			// Check if error is OTP required (400 with specific message)
 			const err = error as { status?: number; message?: string };
@@ -366,60 +367,13 @@
 							</p>
 						</div>
 
-						<!-- Pending Reads - Enhanced -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-								{$_('sharedSecret.pendingReads')}
-							</label>
-
-							{#if secret.pending_reads === -1}
-								<!-- Sender: Unlimited reads -->
-								<span
-									class="text-lg font-semibold text-green-600 dark:text-green-400 flex items-center gap-2"
-								>
-									<span class="text-2xl">♾️</span>
-									{$_('sharedSecret.unlimited')}
-								</span>
-								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-									{$_('sharedSecret.unlimitedHint')}
-								</p>
-							{:else if secret.pending_reads === 0}
-								<!-- Consumed / Deleted -->
-								<span
-									class="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center gap-2"
-								>
-									<span class="text-2xl">🔒</span>
-									{$_('sharedSecret.consumed')}
-								</span>
-								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-									{$_('sharedSecret.consumedHint')}
-								</p>
-							{:else if secret.pending_reads === 1}
-								<!-- Last read warning -->
-								<span
-									class="text-lg font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2"
-								>
-									<span class="text-2xl">⚠️</span>
-									{secret.pending_reads} / {secret.max_reads}
-									{$_('sharedSecret.readsRemaining')}
-								</span>
-								<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
-									{$_('sharedSecret.lastReadHint')}
-								</p>
-							{:else}
-								<!-- Normal state (2-10 reads) -->
-								<span
-									class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2"
-								>
-									<span class="text-2xl">📖</span>
-									{secret.pending_reads} / {secret.max_reads}
-									{$_('sharedSecret.readsRemaining')}
-								</span>
-								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-									{$_('sharedSecret.multipleReadsHint')}
-								</p>
-							{/if}
-						</div>
+						<!-- Pending Reads - Reactive Component -->
+						<PendingReadsCounter
+							initialPendingReads={secret.pending_reads}
+							maxReads={secret.max_reads}
+							{hash}
+							role={secret.role}
+						/>
 
 						<!-- Expires At -->
 						<div class="md:col-span-2">

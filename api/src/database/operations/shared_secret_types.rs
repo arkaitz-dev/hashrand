@@ -93,6 +93,12 @@ pub mod constants {
     /// Encrypted ID length (similar to magic links)
     pub const ENCRYPTED_ID_LENGTH: usize = 32;
 
+    /// URL hash length (reference_hash + user_id + checksum + role)
+    pub const URL_HASH_LENGTH: usize = 40;
+
+    /// Database index length (for PRIMARY KEY)
+    pub const DB_INDEX_LENGTH: usize = 32;
+
     /// Minimum expiration hours
     pub const MIN_EXPIRES_HOURS: i64 = 1;
 
