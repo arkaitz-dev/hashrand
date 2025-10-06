@@ -31,7 +31,7 @@ just dev
 
 ### Zero Knowledge Privacy Architecture
 - **🛡️ Complete Privacy**: Server never stores emails or personal information
-- **🔐 Cryptographic User IDs**: Blake2b-based multi-layer security for user identification
+- **🔐 Cryptographic User IDs**: Blake3-based multi-layer security for user identification
 - **🎫 Magic Link Authentication**: Passwordless authentication with cryptographic integrity
 - **✍️ Ed25519 Digital Signatures**: Frontend-backend cryptographic authentication with universal browser compatibility
 - **🔒 JWT Protection**: Bearer token authentication for all sensitive operations
@@ -54,7 +54,7 @@ just dev
 - **🟡 Advanced Session Management**: Global session expiration detection with eye-catching pulsing animations
 
 ### Enterprise Security
-- **🏗️ Blake2b Unified Stack**: High-performance cryptographic operations
+- **🏗️ Blake3 Unified Stack**: Modern cryptographic foundation with KDF + XOF for variable-length operations (~100x performance with WASM SIMD)
 - **🔐 Argon2id**: Memory-hard user ID derivation following OWASP 2024 standards
 - **🛡️ ChaCha20 Encryption**: Stream cipher for magic link encryption
 - **🔒 URL Parameter Encryption**: Advanced ChaCha20-Poly1305 encryption system for URL privacy protection
@@ -71,8 +71,8 @@ just dev
 ### Technology Stack
 - **Backend**: Rust + Fermyon Spin + WebAssembly + SQLite
 - **Frontend**: SvelteKit + TypeScript + TailwindCSS + Vite
-- **Security**: Blake2b + Argon2id + ChaCha20-Poly1305 + JWT + URL Encryption + Ed25519
-- **Cryptography**: @noble/hashes + @noble/ciphers (enterprise-grade)
+- **Security**: Blake3 + Argon2id + ChaCha20-Poly1305 + JWT + URL Encryption + Ed25519
+- **Cryptography**: @noble/hashes (Blake3 + Ed25519) + @noble/ciphers (ChaCha20-Poly1305)
 - **Session Management**: IndexedDB with cross-tab synchronization
 - **Database**: SQLite with Zero Knowledge schema
 
@@ -122,7 +122,7 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 HashRand implements **true Zero Knowledge architecture**:
 
 - **No Personal Data**: Server databases contain zero personal information
-- **Cryptographic Identity**: Users identified by Blake2b-derived 16-byte hashes
+- **Cryptographic Identity**: Users identified by Blake3-derived 16-byte hashes
 - **GDPR/CCPA Compliant**: No personal data to manage or delete
 - **Enterprise Security**: Multi-layer cryptographic protection with industry standards
 - **Audit-Safe**: All logs use Base58 usernames, safe for analysis

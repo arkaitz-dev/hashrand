@@ -7,12 +7,14 @@ Complete overview of HashRand's technology stack, dependencies, and third-party 
 ### Backend Technology Stack
 
 #### Rust Ecosystem
+
 - **Rust 2024 Edition**: Modern systems programming language
 - **Target Architecture**: `wasm32-wasi` for WebAssembly deployment
 - **Memory Safety**: Zero-cost abstractions with compile-time guarantees
 - **Performance**: Near-native performance in WebAssembly runtime
 
 #### Fermyon Spin Platform
+
 - **Spin SDK 3.1.0**: WebAssembly serverless framework
 - **Component Model**: Modular WebAssembly component architecture
 - **HTTP Triggers**: Native HTTP request/response handling
@@ -21,12 +23,14 @@ Complete overview of HashRand's technology stack, dependencies, and third-party 
 ### Frontend Technology Stack
 
 #### Modern Web Framework
+
 - **SvelteKit 2.x**: Full-stack web framework with SPA capabilities
 - **TypeScript 5.x**: Type-safe JavaScript with strict configuration
 - **Vite 7.x**: Fast build tool with Hot Module Replacement
 - **Static Adapter**: Generates optimized SPA build for production
 
 #### Styling and UI
+
 - **TailwindCSS 4.0**: Utility-first CSS framework with modern features
 - **Custom CSS**: Additional styling for specialized components
 - **SVG Icons**: Professional icon sprite system (189KB sprite)
@@ -36,23 +40,25 @@ Complete overview of HashRand's technology stack, dependencies, and third-party 
 
 ### Core Dependencies
 
-#### Cryptographic Stack (Hybrid Blake2b + Blake3)
+#### Cryptographic Stack (Blake3)
+
 ```toml
 [dependencies]
-# Hybrid Blake2b + Blake3 cryptographic operations (v1.6.12+)
-blake2 = "0.10"                    # Blake2b/Blake2b-keyed/Blake2b-variable (fixed-length)
-blake3 = "1.8.2"                   # Blake3 KDF + XOF (unlimited variable-length)
+# Blake3 unified cryptographic foundation (v1.6.12+)
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }  # Blake3 KDF + XOF with WASM SIMD
 argon2 = "0.5.3"                   # Memory-hard user ID derivation
-chacha20poly1305 = "0.10.1"        # Stream cipher for magic link encryption
+chacha20poly1305 = "0.10.1"        # AEAD cipher for encryption
 ```
 
 **Security Properties:**
-- **Blake2b**: RFC 7693 compliant, faster than SHA3, equivalent security (fixed-length operations)
-- **Blake3**: KDF with domain separation + XOF for unlimited variable-length outputs (1 to 2^64 bytes)
+
+- **Blake3**: Modern cryptographic hash with KDF (domain separation) + XOF for unlimited variable-length outputs (1 to 2^64 bytes)
+- **WASM SIMD**: ~100x performance improvement with SIMD optimization in WebAssembly
 - **Argon2id**: Winner of Password Hashing Competition, OWASP 2024 parameters
-- **ChaCha20**: Industry-standard stream cipher, TLS 1.3 approved
+- **ChaCha20-Poly1305**: Industry-standard AEAD cipher, TLS 1.3 approved
 
 #### Spin Framework Integration
+
 ```toml
 # Fermyon Spin WebAssembly framework
 spin-sdk = "3.1.0"                 # Core Spin SDK for HTTP handlers
@@ -61,6 +67,7 @@ anyhow = "1.0"                     # Error handling and context
 ```
 
 #### Database Layer
+
 ```toml
 # SQLite database with Zero Knowledge schema
 spin-sqlite = "3.1.0"              # Spin-native SQLite integration
@@ -69,6 +76,7 @@ rusqlite = { version = "0.32.1", features = ["bundled"] }  # Embedded SQLite
 ```
 
 #### JSON and Serialization
+
 ```toml
 # JSON handling and serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -77,9 +85,10 @@ jsonwebtoken = "9.3.0"             # JWT token generation and validation
 ```
 
 #### Utilities and Helpers
+
 ```toml
 # Utility libraries
-nanoid = "0.4.0"                   # Secure random ID generation  
+nanoid = "0.4.0"                   # Secure random ID generation
 bs58 = "0.5.1"                     # Base58 encoding (Bitcoin-style)
 bip39 = { version = "2.2.0", features = ["all-languages"] }  # BIP39 mnemonic (10 languages)
 rand = { version = "0.8.5", features = ["getrandom"] }       # Random number generation
@@ -87,6 +96,7 @@ rand_chacha = "0.3.1"              # ChaCha random number generator
 ```
 
 #### Email Integration
+
 ```toml
 # Mailtrap REST API integration
 reqwest = { version = "0.12.8", features = ["json"] }  # HTTP client
@@ -111,8 +121,8 @@ resolver = "2"
 
 # Unified dependency management
 [workspace.dependencies]
-blake2 = "0.10"
-argon2 = "0.5.3"  
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }
+argon2 = "0.5.3"
 chacha20poly1305 = "0.10.1"
 spin-sdk = "3.1.0"
 bip39 = { version = "2.2.0", features = ["all-languages"] }
@@ -133,13 +143,43 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 ```
 
 #### SvelteKit Ecosystem
+
 - **@sveltejs/kit**: Core SvelteKit framework
 - **@sveltejs/adapter-static**: Static site generation for SPA
 - **svelte**: Core Svelte compiler and runtime
 
+### Cryptographic Dependencies
+
+```json
+{
+  "dependencies": {
+    "@noble/hashes": "^2.0.0",
+    "@noble/ciphers": "^2.0.0",
+    "@noble/curves": "^2.0.0",
+    "@scure/base": "^2.0.0"
+  }
+}
+```
+
+#### Cryptographic Stack (100% Backend Compatible)
+
+- **@noble/hashes**: Blake3 cryptographic hashing (exact port of backend `blake3_keyed_variable`)
+- **@noble/ciphers**: ChaCha20-Poly1305 AEAD encryption for URL parameters
+- **@noble/curves**: Ed25519 digital signatures for authentication
+- **@scure/base**: Base58 and Base64URL encoding utilities
+
+**Security Properties:**
+
+- **Blake3 KDF + XOF**: Exact TypeScript implementation matching Rust backend
+- **Streaming API**: Uses `blake3.create().update().xof()` for perfect backend compatibility
+- **64-byte Keys**: Same security level as backend (validated at runtime)
+- **Domain Separation**: Base58 context encoding for cryptographic namespace isolation
+- **Variable Output**: Support for 1 byte to practical limits (tested up to 128 bytes)
+
 ### Development Dependencies
 
 #### TypeScript Stack
+
 ```json
 {
   "devDependencies": {
@@ -151,6 +191,7 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 ```
 
 #### Build Tools
+
 ```json
 {
   "devDependencies": {
@@ -161,6 +202,7 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 ```
 
 #### Code Quality Tools
+
 ```json
 {
   "devDependencies": {
@@ -176,6 +218,7 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 ```
 
 #### Styling Dependencies
+
 ```json
 {
   "devDependencies": {
@@ -196,6 +239,7 @@ cargo install just          # Cross-platform
 ```
 
 **Justfile Configuration:**
+
 - **Development commands**: `dev`, `stop`, `status`, `watch`
 - **Build commands**: `build`, `clean`, `rebuild`
 - **Quality commands**: `check`, `fmt`, `lint`, `test`
@@ -204,6 +248,7 @@ cargo install just          # Cross-platform
 ### Version Management
 
 #### Node.js Version Management
+
 ```json
 {
   "engines": {
@@ -214,6 +259,7 @@ cargo install just          # Cross-platform
 ```
 
 #### Rust Toolchain
+
 ```toml
 [toolchain]
 channel = "stable"
@@ -226,12 +272,14 @@ components = ["rustfmt", "clippy"]
 ### Email Service (Mailtrap)
 
 #### Production Configuration
+
 - **Service**: Mailtrap Email API
 - **Custom Domain**: `mailer.hashrand.com`
 - **Endpoint**: `send.api.mailtrap.io`
 - **Authentication**: API token (environment variable)
 
 #### Email Templates
+
 - **Languages**: 13 languages supported
 - **Format**: HTML + Plain text
 - **RTL Support**: Arabic language support
@@ -240,7 +288,8 @@ components = ["rustfmt", "clippy"]
 ### Remote Access (Tailscale)
 
 #### Development Integration
-- **Service**: Tailscale VPN mesh network  
+
+- **Service**: Tailscale VPN mesh network
 - **Usage**: Remote development access
 - **HTTPS**: Automatic HTTPS certificates
 - **Mobile Testing**: Easy mobile device testing
@@ -249,17 +298,12 @@ components = ["rustfmt", "clippy"]
 
 ### Cryptographic Libraries
 
-#### Blake2b Implementation
-- **Library**: `blake2` crate (RustCrypto)
-- **Algorithms**: Blake2b-512, Blake2b-keyed, Blake2b-variable
-- **Performance**: SIMD-optimized implementations
-- **Security**: RFC 7693 compliant, extensively analyzed
-- **Usage**: Fixed-length operations (8-64 bytes)
-
 #### Blake3 Implementation (v1.6.12+)
+
 - **Library**: `blake3` crate (official implementation)
-- **Algorithms**: Blake3 standard hash, Blake3 KDF, Blake3 XOF
-- **Performance**: Parallelizable SIMD architecture for maximum throughput
+- **Algorithms**: Blake3 standard hash, Blake3 KDF (domain separation), Blake3 XOF (variable output)
+- **Performance**: Parallelizable SIMD architecture with WASM optimization (~100x improvement)
+- **Features**: `wasm32_simd` for WebAssembly SIMD acceleration
 - **Security**: Based on BLAKE2 foundation with improved cryptographic properties
 - **Usage**: Variable-length operations (1 to 2^64 bytes), domain separation
 - **Key Features**:
@@ -268,12 +312,14 @@ components = ["rustfmt", "clippy"]
   - **Keyed Mode**: MAC functionality with 32-byte keys
 
 #### Password Hashing
+
 - **Library**: `argon2` crate
 - **Algorithm**: Argon2id (memory-hard function)
 - **Parameters**: OWASP 2024 recommendations (19456KB memory)
 - **Resistance**: Rainbow table, brute force, parallel attacks
 
 #### Stream Cipher
+
 - **Library**: `chacha20poly1305` crate
 - **Algorithm**: ChaCha20 (without Poly1305 for magic links)
 - **Key Size**: 256-bit keys
@@ -282,6 +328,7 @@ components = ["rustfmt", "clippy"]
 ### Random Number Generation
 
 #### Cryptographic RNG
+
 ```rust
 // Secure random generation stack
 use rand::{RngCore, SeedableRng};
@@ -300,16 +347,19 @@ let random_id = nanoid!(128);  // 128 characters of entropy
 ### SQLite Integration
 
 #### Spin-Native SQLite
+
 - **Primary**: `spin-sqlite` crate for Spin framework integration
 - **Runtime**: Built-in SQLite runtime in Spin environment
 - **Configuration**: `runtime-config.toml` for database paths
 
 #### Fallback SQLite (Development)
+
 - **Library**: `rusqlite` with bundled SQLite
 - **Features**: Embedded SQLite for development environment
 - **Backup**: Alternative when Spin SQLite unavailable
 
 ### Zero Knowledge Schema
+
 ```sql
 -- Users table (no PII)
 CREATE TABLE users (
@@ -319,7 +369,7 @@ CREATE TABLE users (
 
 -- Magic links table (encrypted)
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- Blake2b-variable hash
+    token_hash BLOB PRIMARY KEY,        -- Blake3 keyed hash
     timestamp INTEGER NOT NULL,         -- Unix timestamp
     encryption_blob BLOB NOT NULL,      -- ChaCha20 encrypted data
     next_param TEXT,                    -- Optional redirect
@@ -332,6 +382,7 @@ CREATE TABLE magiclinks (
 ### System Requirements
 
 #### Arch Linux (Recommended)
+
 ```bash
 # Core development tools
 sudo pacman -S rust nodejs npm just git
@@ -345,6 +396,7 @@ sudo pacman -S curl apache             # Testing tools
 ```
 
 #### Cross-Platform Alternatives
+
 ```bash
 # Rust toolchain
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -364,12 +416,14 @@ cargo install just
 ### IDE and Editor Support
 
 #### Recommended Extensions
+
 - **Rust**: rust-analyzer, CodeLLDB
 - **Svelte**: Svelte for VS Code, Svelte Intellisense
 - **TypeScript**: Built-in VS Code support
 - **Tailwind**: Tailwind CSS IntelliSense
 
 #### Configuration Files
+
 ```json
 // .vscode/settings.json
 {
@@ -384,12 +438,14 @@ cargo install just
 ### Production Environment
 
 #### Fermyon Cloud
+
 - **Runtime**: Fermyon Cloud WebAssembly runtime
 - **Scaling**: Automatic scaling based on demand
 - **Geographic**: Global edge deployment
 - **Monitoring**: Built-in observability and metrics
 
 #### Self-Hosted Deployment
+
 - **Spin CLI**: Self-hosted Spin runtime
 - **Docker**: Containerized deployment option
 - **Kubernetes**: Orchestrated deployment with Helm charts
@@ -398,6 +454,7 @@ cargo install just
 ### CI/CD Dependencies
 
 #### GitHub Actions
+
 ```yaml
 # .github/workflows/ci.yml
 - uses: actions/checkout@v4
@@ -408,6 +465,7 @@ cargo install just
 ```
 
 #### Quality Gates
+
 - **Rust**: `cargo clippy --deny warnings`, `cargo fmt --check`
 - **TypeScript**: `npm run check`, `npm run lint`, `npm run format`
 - **Testing**: `just test` (64 comprehensive tests)
@@ -418,6 +476,7 @@ cargo install just
 ### Update Strategy
 
 #### Rust Dependencies
+
 ```bash
 # Check for updates
 cargo outdated
@@ -430,6 +489,7 @@ cargo audit
 ```
 
 #### Node.js Dependencies
+
 ```bash
 # Check for updates
 npm outdated
@@ -444,11 +504,13 @@ npm audit
 ### Version Pinning Strategy
 
 #### Critical Dependencies (Pin Major Version)
+
 - **Spin SDK**: Pin to 3.x for stability
 - **Cryptographic libraries**: Pin to avoid breaking changes
 - **SvelteKit**: Pin major version for API stability
 
 #### Development Dependencies (Allow Updates)
+
 - **Build tools**: Vite, TypeScript, ESLint
 - **Formatters**: Prettier, Rustfmt
 - **Testing utilities**: Allow minor updates for improvements
@@ -456,6 +518,7 @@ npm audit
 ### Security Maintenance
 
 #### Regular Security Updates
+
 - **Monthly**: Check for security advisories
 - **Automated**: Dependabot for security updates
 - **Critical**: Immediate updates for critical vulnerabilities
@@ -463,6 +526,6 @@ npm audit
 
 ---
 
-*For development setup, see [Development Guide](../deployment/development.md)*  
-*For testing information, see [Testing Guide](./testing.md)*  
-*For contribution guidelines, see [Contributing Guide](./contributing.md)*
+_For development setup, see [Development Guide](../deployment/development.md)_  
+_For testing information, see [Testing Guide](./testing.md)_  
+_For contribution guidelines, see [Contributing Guide](./contributing.md)_

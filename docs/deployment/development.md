@@ -29,7 +29,7 @@ just predeploy    # Complete production deployment with unified backend
 
 ```bash
 just tailscale-front-start  # Expose web interface via Tailscale
-just tailscale-back-start   # Expose API backend via Tailscale  
+just tailscale-back-start   # Expose API backend via Tailscale
 just tailscale-front-stop   # Stop Tailscale serve (frontend)
 just tailscale-back-stop    # Stop Tailscale serve (backend)
 just check-tailscale        # Verify Tailscale CLI availability
@@ -161,14 +161,16 @@ hashrand/
 ### Technology Stack
 
 #### Backend (Rust + Spin)
+
 - **Rust 2024**: Modern systems programming language
 - **Fermyon Spin**: WebAssembly serverless platform
-- **Blake2b**: Unified cryptographic operations
+- **Blake3**: Unified cryptographic foundation (with wasm32_simd)
 - **SQLite**: Zero Knowledge database system
 - **ChaCha20**: Stream cipher encryption
 - **Argon2id**: Password hashing and user ID derivation
 
 #### Frontend (SvelteKit + TypeScript)
+
 - **SvelteKit 2.x**: Modern web framework
 - **TypeScript**: Type-safe JavaScript
 - **TailwindCSS 4.0**: Utility-first CSS
@@ -178,6 +180,7 @@ hashrand/
 ### Development Services
 
 #### API Backend (Port 3000)
+
 - **Spin Watch Mode**: Automatic recompilation on changes
 - **Hot Reload**: Instant updates during development
 - **Console Logging**: Magic links logged to console
@@ -185,6 +188,7 @@ hashrand/
 - **CORS Enabled**: Cross-origin requests allowed for development
 
 #### Web Interface (Port 5173)
+
 - **Vite Dev Server**: Fast development server with HMR
 - **API Proxy**: Automatic proxy to backend API
 - **Hot Module Replacement**: Instant UI updates
@@ -192,6 +196,7 @@ hashrand/
 - **ESLint Integration**: Live linting feedback
 
 #### Remote Access (Tailscale)
+
 - **Automatic Setup**: Tailscale serve configured automatically
 - **HTTPS Access**: Secure remote access via Tailscale
 - **Mobile Testing**: Easy mobile device testing
@@ -204,18 +209,20 @@ hashrand/
 The project includes **enterprise-grade code quality tools**:
 
 #### Integrated Quality Pipeline
+
 ```bash
 just check    # Complete quality verification
 ├── Rust (API Backend)
 │   ├── cargo clippy --deny warnings  # Strict linting
 │   └── cargo fmt --check            # Format verification
-└── TypeScript/Svelte/JavaScript (Web Interface)  
+└── TypeScript/Svelte/JavaScript (Web Interface)
     ├── prettier --check .            # Format verification
     ├── ESLint via Vite integration    # Code quality + consistency
     └── svelte-check                  # TypeScript validation
 ```
 
 #### Real-Time Development Integration
+
 - **Live Linting**: ESLint runs automatically during development
 - **Instant Feedback**: Warnings and errors in terminal and browser
 - **Smart Builds**: Production builds fail only on errors
@@ -224,10 +231,11 @@ just check    # Complete quality verification
 ### Dependencies
 
 #### API Backend (Rust)
+
 ```toml
 [dependencies]
 spin-sdk = "3.1.0"          # Core Spin framework
-blake2 = "0.10"             # Unified cryptographic operations
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }  # Unified cryptographic foundation
 argon2 = "0.5.3"            # User ID derivation
 chacha20poly1305 = "0.10.1" # Magic link encryption
 jsonwebtoken = "9.3.0"      # JWT tokens
@@ -235,6 +243,7 @@ bip39 = "2.2.0"            # Mnemonic generation (10 languages)
 ```
 
 #### Web Interface (Node.js)
+
 ```json
 {
   "dependencies": {
@@ -295,6 +304,7 @@ ab -n 1000 -c 10 "http://localhost:3000/api/version"
 ### Git Workflow
 
 #### Efficient Commit Process
+
 **Always use `git add .`** for all commits:
 
 ```bash
@@ -305,6 +315,7 @@ git push
 ```
 
 #### Why This Approach
+
 - ✅ **Prevents missing files**: Git catches ALL relevant changes
 - ✅ **Massive time savings**: Single command vs multiple selective adds
 - ✅ **Error elimination**: Removes human error from file selection
@@ -313,12 +324,14 @@ git push
 ### Code Standards
 
 #### Rust Development
+
 - **Zero Warnings**: All code must compile without warnings
 - **Format Consistency**: Use `cargo fmt` before commits
 - **Lint Compliance**: Pass `cargo clippy --deny warnings`
 - **Documentation**: Document all public APIs
 
 #### Frontend Development
+
 - **TypeScript Strict**: All code must pass strict type checking
 - **ESLint Compliance**: Follow ESLint rules for consistency
 - **Prettier Formatting**: Consistent code formatting
@@ -333,6 +346,6 @@ git push
 
 ---
 
-*For quick setup, see [Quick Start Guide](./quick-start.md)*  
-*For configuration options, see [Configuration Guide](./configuration.md)*  
-*For production deployment, see [Production Deployment](./production.md)*
+_For quick setup, see [Quick Start Guide](./quick-start.md)_  
+_For configuration options, see [Configuration Guide](./configuration.md)_  
+_For production deployment, see [Production Deployment](./production.md)_

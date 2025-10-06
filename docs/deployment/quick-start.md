@@ -52,8 +52,9 @@ just dev
 ```
 
 This single command will:
+
 - 🚀 Start Spin API backend in background (port 3000)
-- 🌐 Start npm web interface in background (port 5173) 
+- 🌐 Start npm web interface in background (port 5173)
 - 🔗 Expose frontend via Tailscale for remote access
 - ✅ Verify all services started successfully
 
@@ -66,18 +67,21 @@ This single command will:
 ## Alternative Development Modes
 
 ### Foreground Mode
+
 ```bash
 # Start in foreground mode (for direct log monitoring)
 just dev-fg
 ```
 
 ### Background with Log Watching
+
 ```bash
 # Start in background and watch logs (Ctrl+C to stop watching only)
 just watch
 ```
 
 ### Service Management
+
 ```bash
 # Check status of all services
 just status
@@ -120,6 +124,7 @@ just stop
 ```
 
 The background server:
+
 - Runs with PID tracking in `.spin-dev.pid`
 - Logs output to `.spin-dev.log`
 - Survives terminal sessions
@@ -166,6 +171,7 @@ After setup, verify everything is working:
 ### Common Issues
 
 **Port Conflicts:**
+
 ```bash
 # Check what's using ports 3000/5173
 lsof -i :3000
@@ -175,6 +181,7 @@ lsof -i :5173
 ```
 
 **Permission Issues:**
+
 ```bash
 # Ensure proper permissions for database directory
 mkdir -p data/
@@ -182,6 +189,7 @@ chmod 755 data/
 ```
 
 **Missing Dependencies:**
+
 ```bash
 # Install Rust if not present
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -194,6 +202,7 @@ cd web && npm install
 ```
 
 **Environment Variables:**
+
 ```bash
 # Verify .env file exists and has proper format
 cat .env | head -10
@@ -210,6 +219,6 @@ rm .env && [run Python script above]
 
 ---
 
-*For production deployment, see [Production Deployment](./production.md)*  
-*For configuration details, see [Configuration Guide](./configuration.md)*  
-*For development commands, see [Development Guide](./development.md)*
+_For production deployment, see [Production Deployment](./production.md)_  
+_For configuration details, see [Configuration Guide](./configuration.md)_  
+_For development commands, see [Development Guide](./development.md)_

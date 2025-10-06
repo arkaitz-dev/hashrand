@@ -9,6 +9,7 @@ HashRand implements a **true Zero Knowledge architecture** where the server oper
 The HashRand system is built on the fundamental principle that **personal information should never reach the server**. This is achieved through a sophisticated cryptographic architecture that enables user identification without compromising privacy.
 
 ### Complete Data Privacy
+
 - **No PII Storage**: Server databases contain zero personal information
 - **Email Privacy**: Emails used only for magic link delivery, never stored
 - **Audit Trail Privacy**: All logs use Base58 usernames, not personal data
@@ -19,22 +20,46 @@ The HashRand system is built on the fundamental principle that **personal inform
 ### User ID Derivation Flow
 
 ```
-Email Input → Blake2b Hash → Blake2b-keyed → Per-User Salt → Argon2id → Blake2b-variable → 16-byte user_id
-                               (hmac_key)     (unique salt)   (19456KB)                      ↓
-                                                                                    Base58 Username Display (~22 chars)
+Email → Blake3 XOF(64) → blake3_keyed_variable(hmac_key[64], 32)
+                    ↓
+              blake3_keyed_variable(argon2_salt[64], 32) → dynamic_salt
+                    ↓
+              Argon2id(paso2, dynamic_salt, mem=19456, time=2) → 32 bytes
+                    ↓
+              blake3_keyed_variable(compression_key[64], 16) → user_id
+                    ↓
+              Base58 Username Display (~22 chars)
 ```
 
 ### Implementation Architecture
 
 ```rust
-// Zero Knowledge user identification (utils/jwt/crypto.rs)
-pub fn derive_user_id(email: &str) -> [u8; 16] {
-    let email_hash = Blake2b512::digest(email.to_lowercase());
-    let dynamic_salt = generate_dynamic_salt(&email_hash);
-    let argon2_output = argon2id_hash(&email_hash, &dynamic_salt);
+// Zero Knowledge user identification (utils/jwt/crypto/user_id.rs)
+pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
+    // Step 1: Blake3 XOF (64 bytes, no key)
+    let mut blake3_hasher = blake3::Hasher::new();
+    blake3_hasher.update(email.to_lowercase().trim().as_bytes());
+    let mut xof_reader = blake3_hasher.finalize_xof();
+    let mut paso1_output = [0u8; 64];
+    xof_reader.fill(&mut paso1_output);
+
+    // Step 2: blake3_keyed_variable (hmac_key[64] → 32 bytes)
+    let hmac_key = get_user_id_hmac_key()?;
+    let paso2_output = blake3_keyed_variable(&hmac_key, &paso1_output, 32);
+
+    // Step 3: blake3_keyed_variable (argon2_salt[64] → 32 bytes dynamic_salt)
+    let dynamic_salt = generate_dynamic_salt(&paso1_output)?;
+
+    // Step 4: Argon2id (unchanged)
+    let argon2_output = derive_with_argon2id(&paso2_output[..], &dynamic_salt)?;
+
+    // Step 5: blake3_keyed_variable (compression_key[64] → 16 bytes user_id)
+    let compression_key = get_user_id_argon2_compression()?;
+    let user_id_output = blake3_keyed_variable(&compression_key, &argon2_output, 16);
     let mut user_id = [0u8; 16];
-    Blake2bVar::new(16).unwrap().update(&argon2_output).finalize_variable(&mut user_id);
-    user_id  // Never stored with email - cryptographically derived
+    user_id.copy_from_slice(&user_id_output);
+
+    Ok(user_id)  // Never stored with email - cryptographically derived
 }
 
 pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
@@ -66,7 +91,7 @@ CREATE TABLE users (
 ```sql
 -- Zero Knowledge Magic Links Table
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake2b-variable hash of encrypted token
+    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake3 keyed hash of encrypted token
     timestamp INTEGER NOT NULL,         -- Original timestamp used in magic link creation
     encryption_blob BLOB NOT NULL,      -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     next_param TEXT,                     -- Optional next destination parameter
@@ -82,13 +107,13 @@ CREATE TABLE magiclinks (
 ```
 User_ID + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token
                                                                          ↓
-Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Hash Index
+blake3_keyed_variable(hash_key, encrypted_token, 16) → Database Hash Index
 ```
 
 ### Security Features
 
 - **ChaCha20 Encryption**: 32-byte encrypted magic link data using ChaCha20 stream cipher
-- **Blake2b-keyed Integrity**: Prevents modification and tampering of magic links
+- **Blake3 Keyed Integrity**: Prevents modification and tampering of magic links
 - **Database Validation**: Additional security layer through token presence verification
 - **Time-Limited**: 5-minute expiration prevents replay attacks (development: 15 minutes)
 - **One-Time Use**: Magic links consumed immediately after validation
@@ -98,19 +123,26 @@ Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Ha
 ## Cryptographic Security Properties
 
 ### Industry Standards
-- **Blake2b**: RFC 7693 standardized, widely adopted cryptographic hash function
-- **Blake2b-keyed**: Native keyed mode eliminates HMAC construction complexity
+
+- **Blake3**: Modern cryptographic hash with XOF (eXtendable Output Function) for variable-length outputs
+- **Blake3 KDF**: Key Derivation Function with domain separation for cryptographic namespace isolation
 - **Argon2id**: Winner of Password Hashing Competition, memory-hard function
 - **ChaCha20**: Industry-standard stream cipher with proven security record
 
 ### Multi-Layer Defense
-- **Blake2b-keyed Layer**: Protection against rainbow table and precomputation attacks
+
+- **Triple-Key Security (v1.6.13+)**: Three independent 64-byte keys for multi-layer protection
+  - `USER_ID_HMAC_KEY` (64 bytes) - Keyed hashing in Step 2
+  - `ARGON2_SALT` (64 bytes) - Dynamic salt derivation in Step 3
+  - `USER_ID_ARGON2_COMPRESSION` (64 bytes) - Final keyed compression in Step 5
+- **Blake3 Universal Pipeline**: Consistent blake3_keyed_variable() used in Steps 2, 3, and 5
 - **Per-User Salt**: Each user gets unique Argon2id salt preventing parallel dictionary attacks
 - **High Security Parameters**: Argon2id with mem_cost=19456KB, time_cost=2 exceeds current recommendations
-- **Blake2b-variable Compression**: Optimal entropy distribution in reduced 16-byte output
-- **Enhanced Secrets**: Dedicated Blake2b-keyed key separate from Argon2id salt
+- **Rainbow Table Resistance**: Keyed final compression makes precomputation impossible
+- **Key Compromise Mitigation**: Three independent keys required for full system break
 
 ### Forward Secrecy
+
 - **User Identity Derivation**: User identity derives from email but email is never stored
 - **Session Privacy**: Sessions identified by cryptographic user IDs, never by email
 - **Zero Knowledge Database**: No PII stored - only cryptographic hashes and timestamps
@@ -118,26 +150,31 @@ Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Ha
 ## Scalability & Performance
 
 ### Deterministic Lookups
+
 - **O(1) User Identification**: Same email always produces same user_id
 - **No PII Indexes**: Database indexes only on cryptographic hashes, never personal data
 - **Stateless Sessions**: JWT tokens eliminate need for server-side session storage
 - **Horizontal Scaling**: Zero Knowledge architecture supports distributed deployments
 
 ### Performance Benefits
-- **Blake2b Speed**: 2x faster than SHA3 while maintaining equivalent security
-- **Memory Efficiency**: Unified Blake2b reduces memory footprint vs multiple hash families
-- **CPU Optimization**: Blake2b designed for modern processor architectures
-- **Reduced Dependencies**: Fewer cryptographic crates in dependency tree
+
+- **Blake3 Performance**: ~100x faster than previous SHA3 implementation for magic links
+- **SIMD Optimization**: Blake3 leverages CPU SIMD instructions (wasm32_simd) for parallel processing
+- **Variable Output Efficiency**: Single blake3_keyed_variable() function handles all length requirements
+- **Unified Architecture**: Blake3 KDF + XOF for all variable-length cryptographic operations
+- **Minimal Dependencies**: Single blake3 crate for all hashing operations
 
 ## Development & Operations Benefits
 
 ### Safe Operations
+
 - **Safe Logging**: All application logs use Base58 usernames, safe to store and analyze
 - **Testing Friendly**: Short token durations enable rapid testing cycles (20s access, 2min refresh in dev)
 - **Debug Safety**: Development logs never contain personal information
 - **Incident Response**: Security incidents don't expose user personal data
 
 ### Compliance & Audit
+
 - **GDPR Article 17**: Right to erasure not applicable - no personal data stored
 - **CCPA Compliance**: No sale of personal information possible - none collected
 - **SOC 2 Ready**: Comprehensive audit trails without privacy concerns
@@ -177,13 +214,15 @@ pub struct AuthContext {
 ## Zero Knowledge Benefits Summary
 
 ### Technical Benefits
-- **⚡ Performance**: Faster cryptographic operations with Blake2b
-- **🏗️ Simplification**: Unified cryptographic family reduces complexity
-- **🔧 Maintainability**: Single hash family easier to audit and maintain
-- **📈 Future-Proofing**: Blake2b designed for modern computing environments
-- **🛡️ Security**: Maintained or improved cryptographic security properties
+
+- **⚡ Performance**: ~100x faster cryptographic operations with Blake3 SIMD
+- **🏗️ Unified Architecture**: Single Blake3 pipeline for all variable-length operations
+- **🔧 Maintainability**: Universal blake3_keyed_variable() function eliminates code duplication
+- **📈 Future-Proofing**: Blake3 optimized for modern SIMD-capable processors (wasm32_simd)
+- **🛡️ Security**: Enhanced triple-key cryptographic protection with domain separation
 
 ### Business Benefits
+
 - **📊 Privacy Compliance**: GDPR/CCPA compliant by design
 - **🛡️ Breach Resilience**: Data breaches cannot expose personal information
 - **⚖️ Legal Protection**: No personal data liability
@@ -191,6 +230,7 @@ pub struct AuthContext {
 - **🌍 Global Deployment**: No data localization requirements
 
 ### User Benefits
+
 - **🔒 Complete Privacy**: Personal information never reaches server
 - **🛡️ Breach Protection**: User data cannot be compromised in breaches
 - **⚡ Fast Authentication**: Efficient cryptographic authentication
@@ -199,6 +239,6 @@ pub struct AuthContext {
 
 ---
 
-*For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)*  
-*For security considerations, see [Security Documentation](./security.md)*  
-*For authentication flow, see [Authentication Documentation](../api/authentication.md)*
+_For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)_  
+_For security considerations, see [Security Documentation](./security.md)_  
+_For authentication flow, see [Authentication Documentation](../api/authentication.md)_

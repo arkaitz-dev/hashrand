@@ -33,8 +33,9 @@ CREATE TABLE users (
 ```
 
 **Key Features:**
+
 - **No Personal Information**: Only cryptographic hashes stored
-- **Primary Key**: 16-byte Blake2b-variable hash derived from email
+- **Primary Key**: 16-byte Blake3 keyed hash derived from email
 - **Timezone Agnostic**: Unix timestamps for universal compatibility
 - **Privacy Compliant**: GDPR/CCPA compliant by design
 
@@ -42,7 +43,7 @@ CREATE TABLE users (
 
 ```sql
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake2b-variable hash of encrypted token
+    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake3 keyed hash of encrypted token
     timestamp INTEGER NOT NULL,         -- Original timestamp used in magic link creation
     encryption_blob BLOB NOT NULL,      -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     next_param TEXT,                     -- Optional next destination parameter
@@ -52,8 +53,9 @@ CREATE TABLE magiclinks (
 ```
 
 **Key Features:**
+
 - **Encrypted Token Storage**: ChaCha20-encrypted magic link data
-- **Blake2b-variable Hashing**: 16-byte primary key for optimal indexing
+- **Blake3 Keyed Hashing**: 16-byte primary key for optimal indexing
 - **Expiration Management**: Automatic cleanup of expired tokens
 - **Zero PII**: No personal information stored anywhere
 
@@ -98,11 +100,11 @@ pub async fn user_exists(email: &str) -> Result<bool, DatabaseError> {
 // Store magic link (encrypted)
 pub async fn store_magic_link(
     token: &[u8],
-    user_id: &[u8; 16], 
+    user_id: &[u8; 16],
     expires_at: i64,
     next_param: Option<String>
 ) -> Result<(), DatabaseError> {
-    let token_hash = blake2b_variable_hash(token, 16);
+    let token_hash = blake3_keyed_variable(&hash_key, token, 16);
     let encryption_blob = chacha20_encrypt(user_id, timestamp);
     insert_magic_link(&token_hash, encryption_blob, expires_at, next_param).await
 }
@@ -111,7 +113,7 @@ pub async fn store_magic_link(
 // NOTE: This is pseudo-code - actual implementation in api/src/utils/auth/magic_link_val.rs
 pub async fn validate_magic_link_secure(token: &[u8], signature: &str) -> Result<Option<[u8; 16]>, DatabaseError> {
     // 1. Decrypt and validate magic link token
-    let token_hash = blake2b_variable_hash(token, 16);
+    let token_hash = blake3_keyed_variable(&hash_key, token, 16);
     let link_data = get_magic_link(&token_hash).await?;
 
     if let Some(data) = link_data {
@@ -152,10 +154,10 @@ pub fn get_database_name(host: Option<&str>) -> &'static str {
 
 ### Development vs Production
 
-| **Environment** | **Host Pattern** | **Database** | **Features** |
-|-----------------|------------------|--------------|--------------|
+| **Environment** | **Host Pattern**        | **Database**      | **Features**                      |
+| --------------- | ----------------------- | ----------------- | --------------------------------- |
 | **Development** | `localhost`, `*.ts.net` | `hashrand-dev.db` | Extended expiration, console logs |
-| **Production** | All other hosts | `hashrand.db` | Standard security timeouts |
+| **Production**  | All other hosts         | `hashrand.db`     | Standard security timeouts        |
 
 ## Database Maintenance
 
@@ -173,7 +175,7 @@ DELETE FROM users WHERE created_at < unixepoch() - 86400 * 30; -- 30 days
 
 ### Performance Optimization
 
-- **Indexed Primary Keys**: All BLOB primary keys use Blake2b-variable for optimal distribution
+- **Indexed Primary Keys**: All BLOB primary keys use Blake3 keyed hashing for optimal distribution
 - **Timestamp Indexing**: Unix timestamps enable efficient range queries
 - **Minimal Storage**: Only essential cryptographic data stored
 - **No Text Indexing**: Eliminates potential information leakage through index structures
@@ -265,6 +267,6 @@ SELECT * FROM magiclinks WHERE expires_at > unixepoch(); # Active links
 
 ---
 
-*For API usage, see [API Endpoints](./endpoints.md)*  
-*For cryptographic details, see [Cryptography Documentation](./cryptography.md)*  
-*For Zero Knowledge architecture, see [Zero Knowledge Documentation](../architecture/zero-knowledge.md)*
+_For API usage, see [API Endpoints](./endpoints.md)_  
+_For cryptographic details, see [Cryptography Documentation](./cryptography.md)_  
+_For Zero Knowledge architecture, see [Zero Knowledge Documentation](../architecture/zero-knowledge.md)_

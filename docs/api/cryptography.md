@@ -1,26 +1,18 @@
 # Cryptographic Architecture
 
-HashRand uses a **hybrid Blake2b + Blake3 cryptographic foundation**, combining Blake2b's optimized fixed-length operations with Blake3's unlimited variable-length outputs for maximum efficiency and flexibility.
+HashRand uses **Blake3** as its unified cryptographic foundation, leveraging Blake3's KDF (Key Derivation Function) and XOF (eXtendable Output Function) for all variable-length cryptographic operations.
 
 ## Core Cryptographic Stack
 
-### Blake2b Unified Architecture
-
-| **Function** | **Algorithm** | **Usage** | **Output** |
-|--------------|---------------|-----------|------------|
-| **Standard Hashing** | Blake2b512 | Email hashing, seed generation | 64 bytes |
-| **Keyed Authentication** | Blake2b-keyed | HMAC replacement, integrity verification | 32-64 bytes |
-| **Variable Output** | Blake2b-variable | User ID compression, database indexing | 8-64 bytes |
-
-### Blake3 Universal Pipeline (v1.6.12+)
+### Blake3 Universal Pipeline
 
 **🔐 Enterprise-Grade Variable-Length Cryptography**
 
-| **Function** | **Algorithm** | **Usage** | **Output** |
-|--------------|---------------|-----------|------------|
-| **Universal Pseudonimizer** | Blake3 KDF + XOF | Deterministic variable-length derivation | 1 to 2^64 bytes |
-| **Domain Separation** | Blake3 KDF (Base58 context) | Cryptographic namespace isolation | 32 bytes key |
-| **Extended Output** | Blake3 XOF | Unlimited deterministic expansion | Arbitrary length |
+| **Function**                | **Algorithm**               | **Usage**                                | **Output**       |
+| --------------------------- | --------------------------- | ---------------------------------------- | ---------------- |
+| **Universal Pseudonimizer** | Blake3 KDF + XOF            | Deterministic variable-length derivation | 1 to 2^64 bytes  |
+| **Domain Separation**       | Blake3 KDF (Base58 context) | Cryptographic namespace isolation        | 32 bytes key     |
+| **Extended Output**         | Blake3 XOF                  | Unlimited deterministic expansion        | Arbitrary length |
 
 #### Blake3 Pseudonimizer Pipeline
 
@@ -53,11 +45,88 @@ pub fn blake3_keyed_variable(
 ```
 
 **Security Properties:**
+
 - **🔒 Domain Separation**: Different `hmac_env_key` → cryptographically independent outputs
 - **🎲 Deterministic**: Same inputs always produce identical output
 - **⚡ Variable Output**: Single function handles all length requirements (1 to 2^64 bytes)
 - **🛡️ Key Derivation**: Unique 32-byte key derived per data input via Blake3 KDF
 - **📊 XOF Properties**: Extended outputs maintain cryptographic relationship (first N bytes consistent)
+
+### Frontend Blake3 Implementation (100% Backend Compatible)
+
+**🎯 EXACT TYPESCRIPT PORT**: The frontend implements an identical `blake3KeyedVariable` function using `@noble/hashes`, achieving 100% API compatibility with the Rust backend.
+
+#### TypeScript Implementation
+
+```typescript
+// web/src/lib/crypto/blake3-keyed-variable.ts
+import { blake3 } from "@noble/hashes/blake3";
+import { base58 } from "@scure/base";
+
+export function blake3KeyedVariable(
+  hmacEnvKey: Uint8Array, // Must be exactly 64 bytes (validated)
+  data: Uint8Array,
+  outputLength: number,
+): Uint8Array {
+  // SECURITY: Validate hmacEnvKey is exactly 64 bytes (same as backend)
+  if (hmacEnvKey.length !== 64) {
+    throw new Error(
+      `blake3KeyedVariable: hmacEnvKey must be exactly 64 bytes, got ${hmacEnvKey.length} bytes`,
+    );
+  }
+
+  // PASO 1: hmac_env_key[64] → Base58 → context (domain separation)
+  const contextString = base58.encode(hmacEnvKey);
+  const contextBytes = new TextEncoder().encode(contextString);
+
+  // PASO 2: Prepare key_material (Blake3 KDF works best with ≥32 bytes)
+  const keyMaterial: Uint8Array = data.length >= 32 ? data : blake3(data);
+
+  // PASO 3: (context, key_material) → Blake3 KDF → deterministic_key[32 bytes]
+  const deterministicKey = blake3(keyMaterial, { context: contextBytes });
+
+  // PASO 4: (data, deterministic_key, length) → Blake3 keyed+XOF → output
+  // CRITICAL: Using streaming API to exactly match backend behavior:
+  // Rust: Hasher::new_keyed() + update() + finalize_xof()
+  // TypeScript: blake3.create({key}) + update() + xof()
+  const hasher = blake3.create({ key: deterministicKey });
+  hasher.update(data);
+  const output = hasher.xof(outputLength);
+
+  return output;
+}
+```
+
+#### API Compatibility Table
+
+| **Aspect**            | **Backend (Rust)**          | **Frontend (TypeScript)**      | **Status**    |
+| --------------------- | --------------------------- | ------------------------------ | ------------- |
+| **Input key size**    | 64 bytes (enforced by type) | 64 bytes (runtime validation)  | ✅ Identical  |
+| **Domain separation** | Base58 context              | Base58 context                 | ✅ Identical  |
+| **KDF**               | `blake3::derive_key()`      | `blake3(data, {context})`      | ✅ Equivalent |
+| **Keyed hash**        | `Hasher::new_keyed()`       | `blake3.create({key})`         | ✅ Equivalent |
+| **XOF**               | `finalize_xof()`            | `.xof(length)`                 | ✅ Equivalent |
+| **Deterministic**     | ✅ Yes                      | ✅ Yes                         | ✅ Identical  |
+| **Variable output**   | ✅ Yes (1 to 2^64 bytes)    | ✅ Yes (1 to practical limits) | ✅ Identical  |
+| **Security level**    | 256 bits                    | 256 bits                       | ✅ Identical  |
+
+#### Security Notes
+
+**64-byte to 32-byte Key Compression:**
+
+- Blake3 keyed mode accepts only 32-byte keys (specification limit)
+- All 64 bytes pass through Blake3 KDF via Base58 context (no entropy loss)
+- Cryptographic compression (not truncation) - all 512 input bits influence output
+- Final 256-bit key derived from full 512-bit input
+- 256-bit security level is industry standard for symmetric cryptography
+
+**Streaming API Importance:**
+
+- Uses `blake3.create().update().xof()` instead of `blake3(data, {key, dkLen})`
+- Ensures exact match with Rust's streaming API behavior
+- True XOF (eXtendable Output Function) usage
+- Proper key derivation flow
+- Consistent behavior across platforms
 
 #### Usage Example: SignedResponse Ed25519 Key Derivation
 
@@ -74,16 +143,18 @@ let private_key_vec = blake3_keyed_variable(
 ### Migration History
 
 **Previous (SHA3/HMAC/SHAKE - v0.x):**
+
 ```
 SHA3-256 → HMAC-SHA3-256 → SHAKE256
 Multiple algorithms, complex interactions
 ```
 
-**Current (Hybrid Blake2b + Blake3 - v1.6.12+):**
+**Current (Blake3 - v1.6.12+):**
+
 ```
-Blake2b512 → Blake2b-keyed → Blake2b-variable (fixed-length operations)
-Blake3 KDF → Blake3 XOF (variable-length operations, unlimited output)
-Optimal algorithm selection per use case
+Blake3 KDF → Blake3 XOF → Variable-length output
+Unified cryptographic pipeline for all operations
+~100x performance improvement with WASM SIMD
 ```
 
 ## User ID Derivation System (v1.6.13+)
@@ -150,6 +221,7 @@ pub fn user_id_to_username(user_id: &[u8; 16]) -> String {
 ### Security Properties
 
 #### ✅ Triple-Key Cryptographic Security (v1.6.13+)
+
 - **Modern Cryptography**: Blake3 + Argon2id hybrid achieving maximum security
 - **Three Independent 64-byte Keys**: Multi-layer protection with domain separation
   - `USER_ID_HMAC_KEY` (64 bytes) - Keyed hashing in Step 2
@@ -204,15 +276,15 @@ fn sort_json_keys(value: Value) -> Value {
 ```javascript
 // Frontend: Matching deterministic serialization
 function sortObjectKeys(obj) {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (Array.isArray(obj)) return obj.map(sortObjectKeys);
+  if (obj === null || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(sortObjectKeys);
 
-    const sorted = {};
-    const keys = Object.keys(obj).sort();  // Same alphabetical ordering
-    for (const key of keys) {
-        sorted[key] = sortObjectKeys(obj[key]);
-    }
-    return sorted;
+  const sorted = {};
+  const keys = Object.keys(obj).sort(); // Same alphabetical ordering
+  for (const key of keys) {
+    sorted[key] = sortObjectKeys(obj[key]);
+  }
+  return sorted;
 }
 ```
 
@@ -221,6 +293,7 @@ function sortObjectKeys(obj) {
 **CRITICAL ENHANCEMENT**: Implemented universal Base64 URL-safe signature verification system ensuring perfect consistency between frontend and backend Ed25519 operations.
 
 **Verification Flow:**
+
 1. **JSON → Base64**: Deterministic JSON serialized and encoded as Base64 URL-safe
 2. **Sign Base64**: Both frontend and backend sign the Base64 string directly
 3. **Verify Base64**: Signature verification performed against Base64 payload
@@ -228,15 +301,17 @@ function sortObjectKeys(obj) {
 
 ```typescript
 // Frontend: Signs Base64 payload directly
-export async function createSignedRequest<T>(payload: T): Promise<SignedRequest> {
-    const jsonPayload = serializePayload(payload);         // Step 1: JSON deterministic
-    const base64Payload = encodePayloadBase64(jsonPayload); // Step 2: JSON → Base64 URL-safe
-    const signature = await signMessage(base64Payload, keyPair); // Step 3: Sign Base64!
+export async function createSignedRequest<T>(
+  payload: T,
+): Promise<SignedRequest> {
+  const jsonPayload = serializePayload(payload); // Step 1: JSON deterministic
+  const base64Payload = encodePayloadBase64(jsonPayload); // Step 2: JSON → Base64 URL-safe
+  const signature = await signMessage(base64Payload, keyPair); // Step 3: Sign Base64!
 
-    return {
-        payload: base64Payload,  // Send Base64 (what was signed)
-        signature
-    };
+  return {
+    payload: base64Payload, // Send Base64 (what was signed)
+    signature,
+  };
 }
 ```
 
@@ -253,6 +328,7 @@ pub fn validate_base64_payload(
 ```
 
 **Security Benefits:**
+
 - **🎯 Maximum Determinism**: Base64 strings provide highest consistency for cryptographic operations
 - **🔒 Perfect Consistency**: Frontend and backend sign/verify identical content
 - **⚡ Performance**: No re-serialization needed during verification
@@ -317,6 +393,7 @@ pub fn validate_universal<T>(signed_request: &SignedRequest<T>, request: &Reques
 #### Public Key Extraction Methods
 
 1. **Bearer Token Extraction** (JWT-protected endpoints):
+
 ```rust
 fn extract_pub_key_from_bearer(request: &Request) -> Result<String, SignedRequestError> {
     let auth_header = request.header("authorization")?;
@@ -327,6 +404,7 @@ fn extract_pub_key_from_bearer(request: &Request) -> Result<String, SignedReques
 ```
 
 2. **Payload pub_key Extraction** (Magic link generation):
+
 ```rust
 fn extract_pub_key_from_payload(payload: &Value) -> Result<String, SignedRequestError> {
     payload.get("pub_key")
@@ -337,6 +415,7 @@ fn extract_pub_key_from_payload(payload: &Value) -> Result<String, SignedRequest
 ```
 
 3. **Magiclink Database Lookup** (Magic link validation):
+
 ```rust
 fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedRequestError> {
     let magiclink = payload.get("magiclink")?.as_str()?;
@@ -363,6 +442,7 @@ Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] →
 ```
 
 #### Ed25519 Signature Security
+
 - **Elliptic Curve**: Curve25519 providing 128-bit security level
 - **Signature Size**: 64 bytes (128 hex characters) for compact transmission
 - **Public Key Size**: 32 bytes (64 hex characters) for optimal storage
@@ -370,6 +450,7 @@ Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] →
 - **Cryptographic Strength**: Equivalent to 3072-bit RSA
 
 #### Signature Verification Process
+
 ```rust
 // Ed25519 signature verification (api/src/utils/ed25519.rs)
 pub fn verify_magic_link_request(
@@ -401,8 +482,8 @@ pub fn verify_magic_link_request(
 
 ```typescript
 // Frontend Ed25519 module (web/src/lib/ed25519.ts)
-import { ed25519 } from '@noble/curves/ed25519';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { ed25519 } from "@noble/curves/ed25519";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 
 // Hybrid architecture with Web Crypto API primary + Noble fallback
 const keyPair = await generateEd25519KeyPair(); // WebCrypto or Noble
@@ -430,11 +511,18 @@ const signature = await signMessage(message, privateKey); // Auto-signs email + 
 
 ```typescript
 // Core Ed25519 frontend functions
-export async function getOrCreateKeyPair(): Promise<Ed25519KeyPair>
-export async function signMessage(message: string, privateKey: CryptoKey): Promise<string>
-export async function verifySignature(message: string, signature: string, publicKeyBytes: Uint8Array): Promise<boolean>
-export async function clearAllKeyPairs(): Promise<void>
-export function publicKeyToHex(publicKeyBytes: Uint8Array): string
+export async function getOrCreateKeyPair(): Promise<Ed25519KeyPair>;
+export async function signMessage(
+  message: string,
+  privateKey: CryptoKey,
+): Promise<string>;
+export async function verifySignature(
+  message: string,
+  signature: string,
+  publicKeyBytes: Uint8Array,
+): Promise<boolean>;
+export async function clearAllKeyPairs(): Promise<void>;
+export function publicKeyToHex(publicKeyBytes: Uint8Array): string;
 ```
 
 ### Encryption & Integrity Flow
@@ -442,15 +530,15 @@ export function publicKeyToHex(publicKeyBytes: Uint8Array): string
 ```
 User_ID + Pub_Key + Timestamp → ChaCha8RNG[44] → nonce[12] + secret_key[32] → ChaCha20 Encrypt → Base58 Token
                     ↓                                                                    ↓
-            Blake2b-keyed(raw_magic_link, hmac_key) → Blake2b-variable[16] → Database Hash Index
+            blake3_keyed_variable(hash_key, encrypted_token, 16) → Database Hash Index
 ```
 
 ### Enhanced Security Architecture
 
 - **Ed25519 Authentication**: Cryptographic proof of identity before magic link creation
 - **ChaCha20 Encryption**: 32-byte encrypted magic link data using ChaCha20 stream cipher
-- **Blake2b-keyed Integrity**: Prevents modification and tampering of magic links (replaces HMAC)
-- **Blake2b-variable Compression**: Optimal 16-byte hash indexing for database storage
+- **Blake3 Keyed Integrity**: Prevents modification and tampering of magic links (replaces HMAC)
+- **Blake3 Variable Output**: Optimal 16-byte hash indexing for database storage
 - **Pub_Key Storage**: Ed25519 public keys stored encrypted in database payloads
 - **Time-Limited**: 5-minute expiration prevents replay attacks (development: 15 minutes)
 - **One-Time Use**: Magic links consumed immediately after validation
@@ -475,6 +563,7 @@ encrypted_token[32] + MLINK_CONTENT[64] → blake3_keyed_variable() → 44 bytes
 #### Encryption/Decryption Flow
 
 **Encryption** (`api/src/database/operations/magic_link_crypto.rs`):
+
 ```rust
 pub fn encrypt_payload_content(
     encrypted_data: &[u8; 32],  // Encrypted magic token bytes
@@ -494,6 +583,7 @@ pub fn encrypt_payload_content(
 ```
 
 **Decryption** (reverse process):
+
 ```rust
 pub fn decrypt_payload_content(
     encrypted_data: &[u8; 32],  // Same encrypted magic token
@@ -514,7 +604,7 @@ pub fn decrypt_payload_content(
 
 #### Security Properties
 
-- **🚀 Performance**: Single Blake3 KDF call (vs previous Argon2id + Blake2b + ChaCha8RNG)
+- **🚀 Performance**: Single Blake3 KDF call (vs previous Argon2id + ChaCha8RNG)
 - **🔒 Deterministic**: Same encrypted_token always produces same nonce/cipher_key
 - **🎯 Domain Separation**: MLINK_CONTENT key ensures cryptographic independence
 - **🛡️ AEAD Security**: ChaCha20-Poly1305 provides both encryption and authentication
@@ -548,7 +638,7 @@ All pseudorandom generation uses **ChaCha8Rng** for cryptographic consistency:
 
 ### Seed Security Architecture
 
-- **Initial Generation**: Uses `nanoid` (128 characters) → Blake2b512 → 32-byte seed
+- **Initial Generation**: Uses `nanoid` (128 characters) → Blake3 hash → 32-byte seed
 - **Base58 Encoding**: Eliminates confusing characters (0, O, I, l) for better usability
 - **Deterministic Reproducibility**: Same seed always produces same results for audit trails
 
@@ -563,7 +653,7 @@ All pseudorandom generation uses **ChaCha8Rng** for cryptographic consistency:
 **5 Specialized Modules** (94% code reduction from 471→30 lines):
 
 - **`crypto-core.ts`** - Core cryptographic functions
-  - `cryptoHashGen()` - Blake2b-keyed + ChaCha8RNG pipeline for unified hash generation
+  - `cryptoHashGen()` - Blake3 keyed + ChaCha8RNG pipeline for unified hash generation
   - `generatePrehash()` - 32-byte prehash from prehash seed using session HMAC key
   - `generateCipherKey()` / `generateCipherNonce()` - ChaCha20-Poly1305 key/nonce derivation
   - `generateCryptoSalt()` / `generatePrehashSeed()` - Cryptographically secure random generation
@@ -626,7 +716,7 @@ CREATE TABLE users (
 
 -- Zero Knowledge Magic Links Table
 CREATE TABLE magiclinks (
-    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake2b-variable hash of encrypted token
+    token_hash BLOB PRIMARY KEY,        -- 16-byte Blake3 keyed hash of encrypted token
     timestamp INTEGER NOT NULL,         -- Original timestamp used in magic link creation
     encryption_blob BLOB NOT NULL,      -- 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
     next_param TEXT,                     -- Optional next destination parameter
@@ -637,30 +727,30 @@ CREATE TABLE magiclinks (
 
 ### Cryptographic Database Features
 
-- **Blake2b-variable Indexing**: All primary keys use Blake2b-variable hashes for optimal distribution
+- **Blake3 Keyed Indexing**: All primary keys use Blake3 keyed hashes for optimal distribution
 - **No PII Storage**: Database contains zero personal information
 - **Cryptographic References Only**: All foreign keys and indexes use hash-based identifiers
 - **Time-based Expiration**: Unix timestamps for precise expiration handling
 
 ## Performance Benefits
 
-### Blake2b vs SHA3 Performance
+### Blake3 vs SHA3 Performance
 
-| **Metric** | **Blake2b** | **SHA3** | **Improvement** |
-|------------|-------------|----------|-----------------|
-| **Speed** | ~3.2 GB/s | ~1.6 GB/s | **2x faster** |
-| **CPU Cycles** | 2.9 cpb | 5.4 cpb | **46% fewer** |
-| **Memory** | Lower | Higher | **Reduced footprint** |
-| **Dependencies** | 1 crate | 3 crates | **Simplified** |
+| **Metric**     | **Blake3**      | **SHA3**   | **Improvement**           |
+| -------------- | --------------- | ---------- | ------------------------- |
+| **Speed**      | ~10 GB/s (SIMD) | ~1.6 GB/s  | **~6x faster**            |
+| **CPU Cycles** | < 1 cpb (SIMD)  | 5.4 cpb    | **~5x fewer**             |
+| **Memory**     | Lower           | Higher     | **Reduced footprint**     |
+| **WASM SIMD**  | ✅ Optimized    | ❌ No SIMD | **~100x magic link perf** |
 
-### Unified Architecture Benefits
+### Unified Blake3 Architecture Benefits
 
-- **⚡ Performance**: Faster cryptographic operations across entire application
-- **🏗️ Simplification**: Unified Blake2b family reduces architectural complexity  
-- **🔧 Maintainability**: Single cryptographic family easier to audit and maintain
-- **📈 Future-Proofing**: Blake2b designed for modern computing environments
-- **🛡️ Security**: Maintained or improved cryptographic security properties
-- **🎯 Standards Compliance**: RFC 7693 standardized cryptographic implementation
+- **⚡ Performance**: ~100x faster cryptographic operations with WASM SIMD
+- **🏗️ Simplification**: Single Blake3 pipeline for all variable-length operations
+- **🔧 Maintainability**: Universal blake3_keyed_variable() eliminates code duplication
+- **📈 Future-Proofing**: Blake3 optimized for modern SIMD-capable processors
+- **🛡️ Security**: Enhanced domain separation with triple-key protection
+- **🎯 Standards Compliance**: Modern cryptographic implementation with KDF + XOF
 
 ## URL Parameter Encryption System
 
@@ -671,7 +761,7 @@ HashRand implements a revolutionary **URL Parameter Encryption System** that pro
 ### Cryptographic Pipeline
 
 ```
-URL Parameters → Crypto Salt → Prehash Seed → Blake2b-keyed → ChaCha20-Poly1305 → Base64URL
+URL Parameters → Crypto Salt → Prehash Seed → Blake3 keyed → ChaCha20-Poly1305 → Base64URL
      ↓                ↓              ↓              ↓                ↓              ↓
 Plain JSON → 32-byte salt → 32-byte seed → Cipher/Nonce Keys → AEAD Encryption → Encrypted URL
 ```
@@ -681,82 +771,96 @@ Plain JSON → 32-byte salt → 32-byte seed → Cipher/Nonce Keys → AEAD Encr
 ```typescript
 // Complete encryption workflow (web/src/lib/crypto.ts)
 export function encryptUrlParams(
-    params: Record<string, any>,
-    cipherToken: string,
-    nonceToken: string, 
-    hmacKey: string
+  params: Record<string, any>,
+  cipherToken: string,
+  nonceToken: string,
+  hmacKey: string,
 ): { p: string } {
-    // 1. Add 32-byte cryptographic salt for noise generation
-    const salt = generateCryptoSalt();
-    const paramsWithSalt = { ...params, _salt: bytesToBase64(salt) };
-    
-    // 2. Generate random 32-byte prehash seed (content-independent)
-    const prehashSeed = generatePrehashSeed();
-    
-    // 3. Store seed with 8-byte cryptographic key (FIFO rotation)
-    const idx = storePrehashSeed(prehashSeed, hmacKey);
-    
-    // 4. Generate encryption keys from prehash
-    const prehash = generatePrehash(prehashSeed, hmacKey);
-    const cipherKey = generateCipherKey(cipherToken, prehash);
-    const cipherNonce = generateCipherNonce(nonceToken, prehash);
-    
-    // 5. Encrypt with ChaCha20-Poly1305 AEAD
-    const cipher = chacha20poly1305(cipherKey, cipherNonce);
-    const ciphertext = cipher.encrypt(new TextEncoder().encode(JSON.stringify(paramsWithSalt)));
-    
-    return {
-        encrypted: bytesToBase64Url(ciphertext),
-        idx: idx  // 8-byte key for sessionStorage retrieval
-    };
+  // 1. Add 32-byte cryptographic salt for noise generation
+  const salt = generateCryptoSalt();
+  const paramsWithSalt = { ...params, _salt: bytesToBase64(salt) };
+
+  // 2. Generate random 32-byte prehash seed (content-independent)
+  const prehashSeed = generatePrehashSeed();
+
+  // 3. Store seed with 8-byte cryptographic key (FIFO rotation)
+  const idx = storePrehashSeed(prehashSeed, hmacKey);
+
+  // 4. Generate encryption keys from prehash
+  const prehash = generatePrehash(prehashSeed, hmacKey);
+  const cipherKey = generateCipherKey(cipherToken, prehash);
+  const cipherNonce = generateCipherNonce(nonceToken, prehash);
+
+  // 5. Encrypt with ChaCha20-Poly1305 AEAD
+  const cipher = chacha20poly1305(cipherKey, cipherNonce);
+  const ciphertext = cipher.encrypt(
+    new TextEncoder().encode(JSON.stringify(paramsWithSalt)),
+  );
+
+  return {
+    encrypted: bytesToBase64Url(ciphertext),
+    idx: idx, // 8-byte key for sessionStorage retrieval
+  };
 }
 ```
 
 ### Security Architecture Features
 
 #### ✅ Triple Token Cryptographic System
+
 - **Cipher Token**: 32-byte session key for ChaCha20-Poly1305 encryption
-- **Nonce Token**: 32-byte session key for unique nonce generation  
+- **Nonce Token**: 32-byte session key for unique nonce generation
 - **HMAC Key**: 32-byte session key for prehash seed derivation and integrity
 
 #### ✅ Advanced Key Derivation
-- **Blake2b-keyed Prehashing**: Content-independent key generation using Blake2b with HMAC key
+
+- **Blake3 Keyed Prehashing**: Content-independent key generation using Blake3 KDF with HMAC key
 - **ChaCha8RNG Pipeline**: Cryptographically secure key derivation for cipher and nonce generation
 - **Domain Separation**: Cipher and nonce keys derived independently to prevent key reuse
 
 #### ✅ FIFO Storage Management
+
 - **IndexedDB Enterprise Storage**: High-performance browser database with cross-tab synchronization
 - **20-Seed Rotation**: FIFO (First In, First Out) automatic cleanup prevents memory bloat
-- **8-Byte Cryptographic Keys**: Blake2b-derived identifiers for optimal IndexedDB indexing
+- **8-Byte Cryptographic Keys**: Blake3-derived identifiers for optimal IndexedDB indexing
 - **Cross-Tab Consistency**: Shared encryption keys and prehashseeds across all browser tabs
 
 ### Bidirectional Navigation Flow
 
 #### Backend → Frontend (Next Parameter)
+
 ```typescript
 // Layout interceptor (web/src/routes/+layout.svelte)
 if (loginResponse.next) {
-    const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
-        cipherToken, nonceToken, hmacKey
-    });
-    await goto(encryptedNextUrl);  // /custom?p=...
+  const encryptedNextUrl = encryptNextUrl(loginResponse.next, {
+    cipherToken,
+    nonceToken,
+    hmacKey,
+  });
+  await goto(encryptedNextUrl); // /custom?p=...
 }
 ```
 
 #### Configuration → Result (Generate Buttons)
+
 ```typescript
 // All config routes (custom/, password/, api-key/, mnemonic/)
-const encryptedUrl = createEncryptedUrl('/result', resultParams, {
-    cipherToken, nonceToken, hmacKey
+const encryptedUrl = createEncryptedUrl("/result", resultParams, {
+  cipherToken,
+  nonceToken,
+  hmacKey,
 });
-goto(encryptedUrl);  // /result?p=...
+goto(encryptedUrl); // /result?p=...
 ```
 
 #### Universal Route Decryption
+
 ```typescript
 // All target routes automatically decrypt parameters
 const decryptedParams = decryptPageParams(searchParams, {
-    cipherToken, nonceToken, hmacKey
+  cipherToken,
+  nonceToken,
+  hmacKey,
 });
 // Fallback to direct URL parameters if decryption fails
 ```
@@ -764,17 +868,20 @@ const decryptedParams = decryptPageParams(searchParams, {
 ### Privacy Protection Benefits
 
 #### 🛡️ Complete Browser History Privacy
+
 - **Zero Plaintext Exposure**: Sensitive parameters never visible in browser history
 - **Physical Device Security**: URLs remain private even with device access
 - **Web Analytics Protection**: User data hidden from monitoring and analytics tools
 
-#### 🔒 Advanced Security Properties  
+#### 🔒 Advanced Security Properties
+
 - **AEAD Security**: ChaCha20-Poly1305 provides both confidentiality and integrity
 - **Content Independence**: Encryption keys completely independent of parameter content
 - **Forward Secrecy**: Each parameter set uses unique cryptographic keys
 - **Replay Protection**: Time-bounded IndexedDB storage prevents replay attacks
 
 #### ⚡ Performance Optimization
+
 - **Efficient Storage**: 8-byte keys minimize IndexedDB overhead with optimal indexing
 - **Automatic Cleanup**: FIFO rotation prevents storage bloat across sessions
 - **Fast Crypto**: ChaCha20-Poly1305 optimized for modern web browsers
@@ -784,6 +891,7 @@ const decryptedParams = decryptPageParams(searchParams, {
 ### Backward Compatibility
 
 The system maintains **100% backward compatibility**:
+
 - Legacy unencrypted URLs continue to work as fallback
 - No breaking changes to existing API or user experience
 - Automatic detection of encrypted vs plain parameters
@@ -794,9 +902,10 @@ The system maintains **100% backward compatibility**:
 ### Rust Dependencies
 
 #### Backend (Rust)
+
 ```toml
 [dependencies]
-blake2 = "0.10"              # Blake2b hashing for unified cryptographic operations
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }  # Blake3 unified cryptographic foundation
 argon2 = "0.5.3"            # Argon2id for secure user ID derivation
 chacha20 = "0.9.1"          # ChaCha20 stream cipher for magic link encryption
 chacha20poly1305 = "0.10.1" # ChaCha20-Poly1305 AEAD for secure magic link encryption
@@ -805,9 +914,10 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ```
 
 #### Frontend (TypeScript)
+
 ```json
 "dependencies": {
-    "@noble/hashes": "^2.0.0",  // Blake2b and cryptographic hashing
+    "@noble/hashes": "^2.0.0",  // Blake3 and cryptographic hashing
     "@noble/ciphers": "^2.0.0", // ChaCha20-Poly1305 AEAD encryption
     "@scure/base": "^2.0.0"     // Base64URL and Base58 encoding utilities
 }
@@ -816,6 +926,7 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ### Key Implementation Files
 
 #### Backend (Rust/Spin)
+
 - **api/src/utils/ed25519.rs**: Ed25519 digital signature verification for magic links (NEW)
 - **api/src/utils/jwt/crypto.rs**: User ID derivation and cryptographic operations
 - **api/src/utils/jwt/magic_links.rs**: Magic link generation and processing
@@ -823,9 +934,10 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 - **api/src/utils/auth/magic_link_val.rs**: Magic link validation with pub_key extraction
 - **api/src/utils/jwt/custom_tokens.rs**: JWT token creation with pub_key claims
 - **api/src/database/operations/magic_link_ops.rs**: Magic link encryption/decryption
-- **api/src/utils/random_generator.rs**: Seed generation with Blake2b512
+- **api/src/utils/random_generator.rs**: Seed generation with Blake3 hash
 
 #### Frontend (TypeScript/SvelteKit)
+
 - **web/src/lib/crypto.ts**: Complete URL parameter encryption system
   - `encryptUrlParams()` / `decryptUrlParams()`: Core AEAD encryption/decryption
   - `createEncryptedUrl()`: High-level URL generation for navigation
@@ -847,6 +959,7 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 **Complete Implementation**: All generation endpoints now return cryptographically signed responses with zero legacy code.
 
 #### SignedResponse Structure
+
 ```rust
 // Universal response format across all endpoints
 {
@@ -858,6 +971,7 @@ base64 = "0.22.1"           # Base64 encoding for JWT tokens
 ```
 
 #### Ed25519 Response Signing Process
+
 ```rust
 // Deterministic response signing (api/src/utils/signed_response.rs)
 pub fn create_signed_response<T: Serialize>(
@@ -880,18 +994,21 @@ pub fn create_signed_response<T: Serialize>(
 ```
 
 #### Cryptographic Guarantees
+
 - **Integrity**: Response payload cannot be modified without detection
 - **Authenticity**: Responses verifiably originate from legitimate server
 - **Non-repudiation**: Server cannot deny having generated specific responses
 - **Deterministic**: Consistent signature generation for identical payloads
 
 #### Legacy Elimination Benefits
+
 - **🗑️ Zero Technical Debt**: Complete removal of all legacy response handlers
 - **🔒 Universal Security**: Consistent Ed25519 protection across all endpoints
 - **⚡ Performance**: Reduced code complexity and improved maintainability
 - **🏛️ Clean Architecture**: Enterprise-grade SOLID principles implementation
 
 #### Secure Cookie Integration (v1.6.11+)
+
 - **🍪 HTTP Headers Delivery**: Authentication endpoints deliver refresh tokens via standard HTTP `Set-Cookie` headers
 - **🛡️ Enterprise Security Attributes**: HttpOnly, Secure, SameSite=Strict, Max-Age, Path=/ for maximum protection
 - **🔒 Dual Security Model**: SignedResponse integrity + secure cookie delivery combining cryptographic and transport security
@@ -901,7 +1018,8 @@ pub fn create_signed_response<T: Serialize>(
 
 ### Cryptographic Strength
 
-- **Blake2b**: RFC 7693 standardized, widely adopted, equivalent security to SHA3
+- **Blake3**: Modern cryptographic hash with SIMD optimization, equivalent security to SHA3
+- **Blake3 KDF/XOF**: Key derivation and extendable output function for variable-length operations
 - **ChaCha20**: Industry-standard stream cipher, resistance to timing attacks
 - **Argon2id**: Winner of Password Hashing Competition, memory-hard function
 - **Ed25519**: Elliptic curve digital signatures with 128-bit security level
@@ -909,13 +1027,13 @@ pub fn create_signed_response<T: Serialize>(
 
 ### Attack Resistance
 
-- **Rainbow Tables**: Blake2b-keyed with unique keys prevents precomputation attacks
+- **Rainbow Tables**: Blake3 KDF with unique domain-separated keys prevents precomputation attacks
 - **Timing Attacks**: Constant-time implementations in all cryptographic operations
-- **Side-Channel**: ChaCha20, Blake2b, and Ed25519 designed for side-channel resistance
+- **Side-Channel**: ChaCha20, Blake3, and Ed25519 designed for side-channel resistance
 - **Response Tampering**: Ed25519 signatures prevent response modification attacks
 - **Quantum Resistance**: While not post-quantum, provides maximal classical security
 
 ---
 
-*For API usage, see [API Endpoints](./endpoints.md)*
-*For authentication flow, see [Authentication Documentation](./authentication.md)*
+_For API usage, see [API Endpoints](./endpoints.md)_
+_For authentication flow, see [Authentication Documentation](./authentication.md)_

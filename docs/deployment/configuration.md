@@ -198,6 +198,7 @@ es, en, fr, de, pt, ru, zh, ja, ar, hi, ca, gl, eu
 ### Development Email Mode
 
 In development mode:
+
 - Magic links are logged to console
 - Email sending is optional (fallback mode)
 - Extended debug display for mobile development
@@ -208,10 +209,10 @@ In development mode:
 
 Database selection using Spin configuration variables:
 
-| Environment | Configuration File | Database Variable | Database File | Features |
-|-------------|-------------------|------------------|---------------|----------|
-| Development | `spin-dev.toml` | `database_name = "hashrand-dev"` | `hashrand-dev.db` | Extended timeouts, debug logging |
-| Production | `spin-prod.toml` | `database_name = "hashrand"` | `hashrand.db` | Standard security settings |
+| Environment | Configuration File | Database Variable                | Database File     | Features                         |
+| ----------- | ------------------ | -------------------------------- | ----------------- | -------------------------------- |
+| Development | `spin-dev.toml`    | `database_name = "hashrand-dev"` | `hashrand-dev.db` | Extended timeouts, debug logging |
+| Production  | `spin-prod.toml`   | `database_name = "hashrand"`     | `hashrand.db`     | Standard security settings       |
 
 ### Runtime Configuration
 
@@ -222,7 +223,7 @@ type = "spin"
 path = "./data/hashrand-dev.db"
 
 [sqlite_database.hashrand]
-type = "spin" 
+type = "spin"
 path = "./data/hashrand.db"
 ```
 
@@ -233,7 +234,7 @@ path = "./data/hashrand.db"
 [variables]
 database_name = { default = "hashrand-dev" }
 
-# spin-prod.toml - Production  
+# spin-prod.toml - Production
 [variables]
 database_name = { default = "hashrand" }
 ```
@@ -253,9 +254,9 @@ data/
 ### Token Durations
 
 | Environment | Access Token | Refresh Token |
-|-------------|--------------|---------------|
-| Development | 3 minutes | 15 minutes |
-| Production | 15 minutes | 7 days |
+| ----------- | ------------ | ------------- |
+| Development | 3 minutes    | 15 minutes    |
+| Production  | 15 minutes   | 7 days        |
 
 ### Token Security Features
 
@@ -268,19 +269,19 @@ data/
 
 ### Security Settings
 
-| Parameter | Development | Production |
-|-----------|-------------|------------|
-| Expiration | 15 minutes | 5 minutes |
+| Parameter    | Development            | Production             |
+| ------------ | ---------------------- | ---------------------- |
+| Expiration   | 15 minutes             | 5 minutes              |
 | Token Length | 44 characters (Base58) | 44 characters (Base58) |
-| Encryption | ChaCha20 | ChaCha20 |
-| Integrity | Blake2b-keyed | Blake2b-keyed |
+| Encryption   | ChaCha20               | ChaCha20               |
+| Integrity    | Blake3 keyed           | Blake3 keyed           |
 
 ### Magic Link Features
 
 - **One-Time Use**: Links consumed immediately after validation
 - **Time-Limited**: Automatic expiration prevents replay attacks
 - **Encrypted**: ChaCha20 encryption protects link content
-- **Integrity Protected**: Blake2b-keyed prevents tampering
+- **Integrity Protected**: Blake3 keyed prevents tampering
 
 ## Performance Configuration
 
@@ -293,13 +294,13 @@ data/
 
 ### Optimization Features
 
-- **Blake2b Performance**: 2x faster than SHA3
+- **Blake3 Performance**: ~6x faster than SHA3 with WASM SIMD
 - **Unified Cryptography**: Single cryptographic family
 - **Minimal Dependencies**: Optimized dependency tree
 - **Efficient Encoding**: Base58 for optimal character set
 
 ---
 
-*For quick setup, see [Quick Start Guide](./quick-start.md)*  
-*For production deployment, see [Production Deployment](./production.md)*  
-*For development commands, see [Development Guide](./development.md)*
+_For quick setup, see [Quick Start Guide](./quick-start.md)_  
+_For production deployment, see [Production Deployment](./production.md)_  
+_For development commands, see [Development Guide](./development.md)_

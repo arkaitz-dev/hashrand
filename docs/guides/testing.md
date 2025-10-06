@@ -4,13 +4,14 @@ Comprehensive testing strategy and implementation guide for HashRand.
 
 ## Automated Test Suite
 
-### Complete Test Coverage (55 tests)
+### Complete Test Coverage (51 tests)
 
 HashRand includes a comprehensive automated test suite covering all aspects of the application with **100% success rate**:
 
-**Bash Tests (39 tests)**:
+**Bash Tests (35 tests)**:
+
 ```bash
-# Run complete bash test suite (35 API + 4 key rotation)
+# Run complete bash test suite
 just test
 
 # Test with auto-managed development server
@@ -21,6 +22,7 @@ cd scripts && ./final_test.sh
 ```
 
 **Playwright API Tests (16 tests)** - Browser-less, perfect for CI/CD:
+
 ```bash
 # Run all API-only tests (no browser required)
 cd web && npm run test:api
@@ -34,35 +36,41 @@ cd web && npx playwright test api/
 
 ### Test Categories
 
-#### Bash Test Categories (39 tests)
+#### Bash Test Categories (35 tests)
 
 **Public Endpoint Tests (1 test)**
+
 - **Version endpoint**: Public access validation with no authentication
 
 **Authentication Required Tests (4 tests)**
+
 - **Endpoint protection**: All generation endpoints properly require Bearer tokens
 - **Error responses**: Consistent authentication error messages
 
 **Authentication Flow Tests (7 tests)**
+
 - **Magic link generation**: Ed25519-signed email authentication requests
 - **JWT token lifecycle**: Bearer token generation and validation
 - **Token validation**: Access token verification and expiration handling
 - **SignedResponse validation**: Server response signature verification
 
 **Generation Endpoint Tests (18 tests)**
+
 - **Custom hash generation**: Multiple lengths and configurations
 - **Password generation**: Default and custom length secure passwords
-- **API key generation**: 'ak_' prefixed keys with length validation
+- **API key generation**: 'ak\_' prefixed keys with length validation
 - **BIP39 mnemonic**: 12/24 word phrases in multiple languages (English/Spanish)
 - **SignedResponse format**: All endpoints return Ed25519-signed responses
 
 **Error Validation Tests (5 tests)**
+
 - **Parameter validation**: Length limits and format requirements
 - **Authentication errors**: Missing/invalid tokens and signatures
 - **Input validation**: Malformed requests and invalid parameters
 - **Business logic**: Password/API key length constraints, invalid mnemonic parameters
 
 **Ed25519 Key Rotation Tests (4 tests)**
+
 - **Token validity**: Verify fresh tokens work correctly (t=0s)
 - **Partial refresh**: Access token renewal in TRAMO 1/3 (t=62s)
 - **Key rotation**: Complete Ed25519 keypair rotation in TRAMO 2/3 (t=110s)
@@ -71,16 +79,19 @@ cd web && npx playwright test api/
 #### Playwright API Test Categories (16 tests)
 
 **Authentication Tests (4 tests)** - `tests/api/auth-api.spec.ts`
+
 - **Magic link request**: Ed25519-signed authentication with server pub_key validation
 - **Unsigned rejection**: Verify server rejects unsigned requests (400)
 - **Invalid signature rejection**: Verify server rejects invalid Ed25519 signatures (400)
 - **Multiple requests**: Handle concurrent magic link requests correctly
 
 **Full Authentication Flow Tests (2 tests)** - `tests/api/auth-full-flow.spec.ts`
+
 - **Complete flow with log extraction**: Extract magic link from backend logs (matches bash pattern)
 - **Multiple extractions**: Verify unique magic tokens across multiple requests
 
 **Cryptographic Validation Tests (10 tests)** - `tests/api/crypto-validation.spec.ts`
+
 - **Ed25519 operations (3 tests)**: Keypair generation, signing/verification, hex conversion
 - **SignedRequest creation (3 tests)**: Deterministic serialization, identical signatures, query param signing
 - **Base64 and JSON (3 tests)**: URL-safe encoding, recursive key sorting, deterministic serialization
@@ -91,6 +102,7 @@ cd web && npx playwright test api/
 ### Test Script Structure
 
 **Bash Test Scripts**:
+
 ```bash
 scripts/
 ├── final_test.sh                    # Main test orchestrator (35 tests)
@@ -105,6 +117,7 @@ scripts/
 ```
 
 **Playwright Test Structure**:
+
 ```bash
 web/tests/
 ├── api/                             # API-only tests (no browser)
@@ -124,6 +137,7 @@ web/tests/
 ### Authentication Testing Flow
 
 **Bash Tests**:
+
 ```bash
 # Example authentication test sequence
 1. POST /api/login/ → Generate magic link (email_lang required)
@@ -136,6 +150,7 @@ web/tests/
 ```
 
 **Playwright API Tests**:
+
 ```typescript
 // Example API test sequence (no browser required)
 1. Generate Ed25519 keypair using @noble/curves
@@ -147,6 +162,7 @@ web/tests/
 ```
 
 **Key Features**:
+
 - ✅ **No browser dependencies** - Perfect for Arch Linux and CI/CD environments
 - ✅ **Magic link extraction** - Reads backend logs matching bash test pattern
 - ✅ **Ed25519 validation** - Full cryptographic signature verification
@@ -156,12 +172,14 @@ web/tests/
 ### Test Data Management
 
 #### Development Test Data
+
 - **Ephemeral database**: `data/hashrand-dev.db` (gitignored)
 - **Test users**: Cryptographic user IDs only (no PII)
 - **Magic links**: 15-minute expiration in development
 - **JWT tokens**: Short lifespan (20s access, 2min refresh)
 
 #### Test Security
+
 - **No PII in tests**: All test data uses cryptographic identifiers
 - **Safe email testing**: Only authorized emails:
   - `me@arkaitz.dev`
@@ -176,6 +194,7 @@ web/tests/
 ### API Testing with curl
 
 #### Public Endpoints
+
 ```bash
 # Version information
 curl "http://localhost:3000/api/version"
@@ -185,6 +204,7 @@ curl -i "http://localhost:3000/api/version"
 ```
 
 #### Authentication Flow
+
 ```bash
 # Request magic link
 curl -X POST "http://localhost:3000/api/login/" \
@@ -202,6 +222,7 @@ curl -H "Authorization: Bearer {jwt-token}" \
 > **⚠️ IMPORTANT**: As of the latest version, `email_lang` is **required** for all `/api/login/` requests. All test scripts now include `"email_lang": "en"` for consistency. This ensures emails are always sent in a predictable language during testing.
 
 #### Generation Endpoints
+
 ```bash
 # Custom hash generation
 curl -H "Authorization: Bearer {token}" \
@@ -223,12 +244,14 @@ curl -H "Authorization: Bearer {token}" \
 ### Web Interface Testing
 
 #### Development Testing
+
 - **Local access**: `http://localhost:5173`
 - **API proxy**: Automatic routing to backend at `http://localhost:3000`
 - **Hot reload**: Instant updates during development
 - **Browser dev tools**: Full debugging capabilities
 
 #### Mobile Testing via Tailscale
+
 ```bash
 # Enable remote access
 just tailscale-front-start
@@ -254,6 +277,7 @@ ab -n 100 -c 5 -p login.json -T "application/json" \
 ```
 
 ### Performance Metrics
+
 - **Cold start**: ~5ms WebAssembly initialization
 - **Response time**: <1ms for most generation requests
 - **Memory usage**: ~2MB baseline memory footprint
@@ -263,7 +287,7 @@ ab -n 100 -c 5 -p login.json -T "application/json" \
 ### Benchmarking Cryptographic Operations
 
 ```bash
-# Blake2b performance (internal benchmarks)
+# Blake3 performance (internal benchmarks)
 - Email hashing: ~0.1ms per operation
 - User ID derivation: ~50ms per operation (Argon2id)
 - Magic link encryption: ~0.2ms per operation
@@ -275,6 +299,7 @@ ab -n 100 -c 5 -p login.json -T "application/json" \
 ### Continuous Integration
 
 #### Pre-commit Testing
+
 ```bash
 # Complete quality assurance pipeline
 just pre-commit
@@ -287,6 +312,7 @@ just lint       # Static analysis
 ```
 
 #### Test-Driven Development
+
 - **Write tests first**: Define expected behavior before implementation
 - **Red-Green-Refactor**: Fail → Pass → Improve cycle
 - **Comprehensive coverage**: Test happy path, edge cases, and error conditions
@@ -295,6 +321,7 @@ just lint       # Static analysis
 ### Testing Environment
 
 #### Development Environment
+
 ```bash
 # Automatic test environment setup
 just dev        # Starts servers automatically
@@ -303,6 +330,7 @@ just stop       # Cleanup after testing
 ```
 
 #### Isolated Testing
+
 ```bash
 # Test with managed server lifecycle
 just test-dev   # Starts server, runs tests, stops server
@@ -311,12 +339,14 @@ just test-dev   # Starts server, runs tests, stops server
 ### Error Testing Strategies
 
 #### Boundary Testing
+
 - **Input validation**: Test minimum, maximum, and invalid values
 - **Character sets**: Test all supported alphabets and edge cases
 - **Length validation**: Test supported ranges and invalid lengths
 - **Authentication**: Test valid, expired, and malformed tokens
 
 #### Failure Simulation
+
 - **Database failures**: Test connection errors and constraint violations
 - **Network issues**: Simulate timeouts and connection drops
 - **Resource exhaustion**: Test memory and CPU limits
@@ -420,6 +450,7 @@ jobs:
 ```
 
 ### Quality Gates
+
 - **All tests must pass**: Zero tolerance for failing tests
 - **Performance regression**: Response time thresholds
 - **Security validation**: Cryptographic operation verification
@@ -427,6 +458,6 @@ jobs:
 
 ---
 
-*For development workflow, see [Development Guide](../deployment/development.md)*  
-*For API testing details, see [API Documentation](../api/)*  
-*For contribution guidelines, see [Contributing Guide](./contributing.md)*
+_For development workflow, see [Development Guide](../deployment/development.md)_  
+_For API testing details, see [API Documentation](../api/)_  
+_For contribution guidelines, see [Contributing Guide](./contributing.md)_

@@ -38,7 +38,7 @@ api/
     ├── database/                # Database abstraction layer
     │   ├── mod.rs              # Database module exports
     │   ├── connection.rs        # Spin variable-based database connections
-    │   ├── models.rs           # User model and data structures  
+    │   ├── models.rs           # User model and data structures
     │   └── operations/         # Modular database operations
     │       ├── mod.rs          # Operations module exports
     │       ├── user_ops.rs     # User CRUD operations (~200 lines)
@@ -60,13 +60,13 @@ api/
     └── utils/                   # Utility functions and cryptographic operations
         ├── query.rs            # HTTP query parameter parsing and validation
         ├── routing.rs          # Request routing logic and middleware
-        ├── random_generator.rs # ChaCha8 unified random generation with Blake2b
+        ├── random_generator.rs # ChaCha8 unified random generation with Blake3
         ├── jwt_middleware.rs   # JWT middleware for endpoint authentication
         ├── jwt/                # Modular JWT system (was monolithic jwt.rs)
         │   ├── mod.rs          # JWT module exports and backward compatibility
         │   ├── types.rs        # JWT claim structures and data types
         │   ├── config.rs       # Environment secrets and configuration management
-        │   ├── crypto.rs       # Cryptographic operations (Blake2b, Argon2, ChaCha20)
+        │   ├── crypto.rs       # Cryptographic operations (Blake3, Argon2, ChaCha20)
         │   ├── tokens.rs       # Token creation and validation logic
         │   ├── magic_links.rs  # Magic link generation and processing
         │   └── utils.rs        # Backward compatibility wrapper and utilities
@@ -81,20 +81,23 @@ api/
 ### Key API Components
 
 #### Core Handler (`lib.rs`)
+
 - **Spin Component Entry Point**: Main HTTP handler for all requests
 - **Request Routing**: Routes requests to appropriate handlers
 - **Middleware Integration**: Authentication, CORS, error handling
 - **Static File Serving**: Integration with Spin fileserver for unified deployment
 
 #### Modular Cryptographic Layer (`utils/jwt/`, `utils/auth/`)
-- **Zero Knowledge User ID**: Blake2b-based email → user_id derivation (`jwt/crypto.rs`)
+
+- **Zero Knowledge User ID**: Blake3-based email → user_id derivation (`jwt/crypto/user_id.rs`)
 - **JWT Token Management**: Access and refresh token generation/validation (`jwt/tokens.rs`)
-- **Magic Link Cryptography**: ChaCha20 encryption + Blake2b-keyed integrity (`jwt/magic_links.rs`)
+- **Magic Link Cryptography**: ChaCha20 encryption + Blake3 keyed integrity (`jwt/magic_links.rs`)
 - **Base58 Encoding**: User-friendly identifier encoding (`jwt/utils.rs`)
 - **Business Logic Separation**: Authentication logic separated from HTTP routing (`auth/`)
 - **Modular Architecture**: 6 specialized JWT modules + 4 auth modules replace monolithic files
 
 #### Modular Database Layer (`database/operations/`)
+
 - **Environment-Aware Connections**: Automatic dev/prod database selection
 - **Zero Knowledge Schema**: User tables with cryptographic identifiers only
 - **Specialized Operations**: Separated user operations (`user_ops.rs`) and magic link operations (`magic_link_ops.rs`)
@@ -129,7 +132,7 @@ web/
 │   │   ├── crypto.ts          # Cryptographic utilities (30 lines, was 471)
 │   │   ├── crypto/            # NEW: Modular cryptographic system (SOLID principles)
 │   │   │   ├── index.ts       # Centralized crypto exports
-│   │   │   ├── crypto-core.ts # Core cryptographic functions (Blake2b + ChaCha8)
+│   │   │   ├── crypto-core.ts # Core cryptographic functions (Blake3 + ChaCha8)
 │   │   │   ├── crypto-encoding.ts # Base64/Base64URL conversions
 │   │   │   ├── crypto-storage.ts # Prehash seed IndexedDB management
 │   │   │   ├── crypto-url-operations.ts # URL parameter encryption/decryption
@@ -209,6 +212,7 @@ web/
 **Enterprise-Grade Modular System**: Complete transformation from monolithic to SOLID-compliant architecture:
 
 #### State Management (`lib/stores/`)
+
 - **Authentication Store**: JWT token management with automatic refresh (274 lines, was 581)
   - **Modular Breakdown**: 5 specialized modules applying Single Responsibility Principle
   - `auth-storage.ts` - Local storage operations
@@ -222,8 +226,9 @@ web/
 - **Result Store**: Generation result caching and parameter preservation
 
 #### Cryptographic Systems (`lib/crypto/`, `lib/ed25519/`)
+
 - **Crypto Module System**: 5 specialized modules (94% size reduction from 471→30 lines)
-  - `crypto-core.ts` - Blake2b + ChaCha8 cryptographic functions
+  - `crypto-core.ts` - Blake3 + ChaCha8 cryptographic functions
   - `crypto-encoding.ts` - Base64/Base64URL conversion utilities
   - `crypto-storage.ts` - Prehash seed IndexedDB management with FIFO rotation
   - `crypto-url-operations.ts` - URL parameter encryption/decryption
@@ -237,6 +242,7 @@ web/
   - `ed25519-api.ts` - High-level API functions
 
 #### API Layer (`lib/api/`)
+
 - **Modular API System**: 4 DRY modules (61% size reduction from 546→215 lines)
   - `api-helpers.ts` - Shared utilities and error handling
   - `api-generators.ts` - Generation endpoints with DRY implementation
@@ -244,6 +250,7 @@ web/
   - `api-auth-operations.ts` - Authentication endpoints
 
 #### Session Management (`lib/session/`)
+
 - **Session Module System**: 6 specialized modules (61% size reduction from 557→216 lines)
   - `session-db.ts` - IndexedDB database operations
   - `session-crypto.ts` - Crypto token management
@@ -252,17 +259,20 @@ web/
   - `session-auth-flow.ts` - Auth flow temporary data
 
 #### Universal Composables (`lib/composables/`)
+
 - **DRY Elimination System**: 2 composables eliminating 840+ lines of duplicate code
   - `useGenerationWorkflow.ts` - Unified generation logic across all endpoints
   - `useFormParams.ts` - Centralized form parameter management
 
 #### Component Architecture (`lib/components/`)
+
 - **Dialog System**: Unified modal system for authentication flows
 - **Icon System**: Progressive SVG sprite loading with UTF placeholders
 - **Theme Toggle**: Manual theme switching with persistent storage
 - **RTL Support**: Universal RTL-aware wrapper components
 
 #### Technical Benefits Achieved
+
 - **Zero Breaking Changes**: 100% API compatibility preserved during massive refactoring
 - **Enterprise Standards**: All modules under 225 lines following SOLID principles
 - **Performance**: Faster compilation with granular imports and smaller modules
@@ -283,6 +293,7 @@ scripts/
 ```
 
 ### Script Functions
+
 - **Testing**: Complete API testing with authentication flow
 - **Translation Management**: Automated translation addition and updates
 - **Utility Functions**: Hash generation for testing and development
@@ -298,7 +309,7 @@ docs/
 ├── api/                               # API-specific documentation
 │   ├── endpoints.md                   # Complete API endpoint reference
 │   ├── authentication.md              # Zero Knowledge authentication system
-│   ├── cryptography.md                # Blake2b cryptographic architecture
+│   ├── cryptography.md                # Blake3 cryptographic architecture
 │   └── database.md                    # SQLite database system and schemas
 ├── web/                               # Web interface documentation
 │   ├── interface.md                   # UI/UX features and components
@@ -324,14 +335,15 @@ docs/
 ### Build and Development Configuration
 
 #### Rust Configuration (`Cargo.toml`)
+
 ```toml
 [workspace]
 members = ["api"]
 resolver = "2"
 
 [workspace.dependencies]
-# Unified Blake2b cryptographic stack
-blake2 = "0.10"
+# Blake3 unified cryptographic foundation
+blake3 = { version = "1.8.2", features = ["wasm32_simd"] }
 argon2 = "0.5.3"
 chacha20poly1305 = "0.10.1"
 # Spin WebAssembly framework
@@ -343,6 +355,7 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 #### Environment-Specific Spin Configuration
 
 **Development Configuration (`spin-dev.toml`)**
+
 ```toml
 spin_manifest_version = 2
 
@@ -359,10 +372,11 @@ source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 ```
 
 **Production Configuration (`spin-prod.toml`)**
+
 ```toml
 spin_manifest_version = 2
 
-[application]  
+[application]
 name = "hashrand"
 
 [[trigger.http]]
@@ -383,6 +397,7 @@ environment = { FALLBACK_PATH = "index.html" }
 ```
 
 #### Web Configuration (`package.json`)
+
 ```json
 {
   "name": "hashrand-web",
@@ -402,6 +417,7 @@ environment = { FALLBACK_PATH = "index.html" }
 ## Development Workflow Files
 
 ### Task Automation (`justfile`)
+
 - **Primary Development Interface**: All development commands centralized
 - **Environment Management**: Automatic environment variable handling
 - **Service Orchestration**: Background service management with PID tracking
@@ -409,6 +425,7 @@ environment = { FALLBACK_PATH = "index.html" }
 - **Deployment Automation**: Production deployment with unified backend
 
 ### Quality Control (`.gitignore`)
+
 ```gitignore
 # SQLite databases (Zero Knowledge - no PII but environment-specific)
 *.db
@@ -434,6 +451,7 @@ web/node_modules/
 ## Architecture Principles
 
 ### Enterprise-Grade Modular Design
+
 - **Clear Separation**: API backend and web interface are independent
 - **Minimal Coupling**: Components communicate through well-defined interfaces
 - **Scalable Structure**: Easy to add new generators, languages, or features
@@ -442,11 +460,13 @@ web/node_modules/
 - **Business Logic Separation**: HTTP routing vs business logic cleanly separated
 
 ### Security-First Architecture
+
 - **Zero Knowledge**: No personal information stored at any layer
 - **Defense in Depth**: Multiple security layers (encryption, authentication, integrity)
 - **Fail-Safe Defaults**: Secure configuration by default
 
 ### Developer Experience
+
 - **Single Command Setup**: `just dev` starts complete development environment
 - **Comprehensive Testing**: 36 automated tests cover all functionality (100% pass rate)
 - **Quality Assurance**: Integrated linting and formatting tools
@@ -457,6 +477,6 @@ web/node_modules/
 
 ---
 
-*For development workflow, see [Development Guide](../deployment/development.md)*  
-*For API architecture, see [API Documentation](../api/)*  
-*For web architecture, see [Web Documentation](../web/)*
+_For development workflow, see [Development Guide](../deployment/development.md)_  
+_For API architecture, see [API Documentation](../api/)_  
+_For web architecture, see [Web Documentation](../web/)_

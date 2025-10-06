@@ -1,6 +1,7 @@
 # Ed25519 Key Rotation Testing Guide
 
 ## Overview
+
 This guide explains how to manually verify the 2/3 time window key rotation system for Ed25519 cryptographic keys.
 
 ## Test Configuration (Development Environment)
@@ -19,6 +20,7 @@ This guide explains how to manually verify the 2/3 time window key rotation syst
 ## Test 1: Verify NO Rotation in TRAMO 1/3 (0-40s)
 
 ### Expected Behavior
+
 - Access token expires after 20s
 - Automatic refresh occurs
 - Backend detects TRAMO 1/3 (time_remaining > 40s)
@@ -29,6 +31,7 @@ This guide explains how to manually verify the 2/3 time window key rotation syst
 ### Testing Steps
 
 1. **Initial Login** (time = 0s)
+
    ```
    Open http://localhost:5173
    Click "Login" button
@@ -44,6 +47,7 @@ This guide explains how to manually verify the 2/3 time window key rotation syst
    - Monitor backend logs
 
 3. **Expected Flash Messages** (Frontend)
+
    ```
    🔄 Iniciando renovación de token...
    🔑 Nuevo keypair generado para rotación
@@ -54,6 +58,7 @@ This guide explains how to manually verify the 2/3 time window key rotation syst
    ```
 
 4. **Expected Backend Logs**
+
    ```
    🔍 Refresh: Attempting to validate refresh token...
    ✅ Refresh: Token validation successful
@@ -76,6 +81,7 @@ This guide explains how to manually verify the 2/3 time window key rotation syst
    - [ ] Frontend console shows "===== TRAMO 1/3: NO KEY ROTATION ====="
 
 ### ✅ Success Criteria
+
 If all checklist items are true, **TRAMO 1/3 test PASSES** - no key rotation occurred as expected.
 
 ---
@@ -83,6 +89,7 @@ If all checklist items are true, **TRAMO 1/3 test PASSES** - no key rotation occ
 ## Test 2: Verify Rotation DOES Occur in TRAMO 2/3 (40-120s)
 
 ### Expected Behavior
+
 - Refresh token has < 40s remaining
 - Backend detects TRAMO 2/3 (time_remaining < 80s)
 - Backend uses NEW pub_key for tokens
@@ -102,6 +109,7 @@ If all checklist items are true, **TRAMO 1/3 test PASSES** - no key rotation occ
    - Monitor backend logs for rotation
 
 3. **Expected Flash Messages** (Frontend)
+
    ```
    🔄 Iniciando renovación de token...
    🔑 Nuevo keypair generado para rotación
@@ -113,6 +121,7 @@ If all checklist items are true, **TRAMO 1/3 test PASSES** - no key rotation occ
    ```
 
 4. **Expected Backend Logs**
+
    ```
    🔍 Refresh: Attempting to validate refresh token...
    ✅ Refresh: Token validation successful
@@ -138,6 +147,7 @@ If all checklist items are true, **TRAMO 1/3 test PASSES** - no key rotation occ
    - [ ] Frontend console shows both priv_key and server_pub_key rotated
 
 ### ✅ Success Criteria
+
 If all checklist items are true, **TRAMO 2/3 test PASSES** - full key rotation occurred as expected.
 
 ---
@@ -145,6 +155,7 @@ If all checklist items are true, **TRAMO 2/3 test PASSES** - full key rotation o
 ## Monitoring Commands
 
 ### Backend Logs (Terminal)
+
 ```bash
 # Real-time monitoring
 tail -f .spin-dev.log | grep -E "Refresh:|TRAMO"
@@ -154,12 +165,14 @@ tail -f .spin-dev.log | grep "🔄"
 ```
 
 ### Frontend Console (Browser DevTools - if available)
+
 ```javascript
 // Filter refresh logs
-console.log('[REFRESH]')
+console.log("[REFRESH]");
 ```
 
 ### Alternative Monitoring (Tablet without DevTools)
+
 - **Flash Messages**: Visible at top of screen
 - **Flash Messages Store**: Persists last 10 messages
 - **Color Coding**:
@@ -173,37 +186,41 @@ console.log('[REFRESH]')
 
 ## Timing Reference
 
-| Time | Event | Expected Behavior |
-|------|-------|-------------------|
-| 0s   | Initial Login | Magic link authentication |
-| 20s  | First Access Token Expiry | Auto-refresh triggered |
-| 22s  | First Refresh Request | TRAMO 1/3 - NO rotation |
-| 40s  | Second Access Token Expiry | Auto-refresh triggered |
-| 42s  | Second Refresh Request | TRAMO 2/3 - FULL rotation |
-| 60s  | Third Access Token Expiry | Auto-refresh triggered |
-| 62s  | Third Refresh Request | TRAMO 2/3 - FULL rotation |
-| 120s | Refresh Token Expiry | Session ends, new login required |
+| Time | Event                      | Expected Behavior                |
+| ---- | -------------------------- | -------------------------------- |
+| 0s   | Initial Login              | Magic link authentication        |
+| 20s  | First Access Token Expiry  | Auto-refresh triggered           |
+| 22s  | First Refresh Request      | TRAMO 1/3 - NO rotation          |
+| 40s  | Second Access Token Expiry | Auto-refresh triggered           |
+| 42s  | Second Refresh Request     | TRAMO 2/3 - FULL rotation        |
+| 60s  | Third Access Token Expiry  | Auto-refresh triggered           |
+| 62s  | Third Refresh Request      | TRAMO 2/3 - FULL rotation        |
+| 120s | Refresh Token Expiry       | Session ends, new login required |
 
 ---
 
 ## Troubleshooting
 
 ### No Flash Messages Appearing
+
 - Check `flashMessagesStore` is imported in UI
 - Verify messages component is rendered
 - Check browser console for JavaScript errors
 
 ### Backend Logs Not Showing
+
 - Verify `just dev` is running
 - Check `.spin-dev.log` file exists
 - Try `tail -100 .spin-dev.log` for recent logs
 
 ### Auto-Refresh Not Triggering
+
 - Check `sessionExpiry.svelte` is loaded
 - Verify token expiration values in JWT
 - Check browser tab is active (timers may pause in background)
 
 ### Wrong TRAMO Decision
+
 - Verify `SPIN_VARIABLE_REFRESH_TOKEN_DURATION_MINUTES` in .env
 - Check system clock is accurate
 - Review calculation logs in backend
@@ -235,6 +252,7 @@ The automated script performs 4 comprehensive tests:
 #### Implementation Details
 
 **Key Rotation Sequence** (Test 3):
+
 ```bash
 # 1. Preserve OLD private key before generating NEW keypair
 cp .test-ed25519-private-key .test-ed25519-private-key.old
@@ -256,6 +274,7 @@ cp .test-ed25519-private-key.new .test-ed25519-private-key
 ```
 
 **Why This Sequence is Critical**:
+
 - Request MUST be signed with OLD private key (backend validates with OLD pub_key from refresh token)
 - Payload contains NEW pub_key for backend to use in new tokens
 - Only after successful rotation does client switch to NEW private key
@@ -286,6 +305,7 @@ cp .test-ed25519-private-key.new .test-ed25519-private-key
 ## Security Validation
 
 After successful testing, verify:
+
 1. Old keys are destroyed after rotation
 2. New SignedRequests use rotated keys
 3. Backend rejects signatures with old keys after rotation

@@ -4,21 +4,21 @@ HashRand implements enterprise-grade security through multiple layers of cryptog
 
 ## Cryptographic Foundation
 
-### Hybrid Blake2b + Blake3 Security Stack (v1.6.12+)
+### Blake3 Security Stack (v1.6.12+)
 
-HashRand uses a **hybrid Blake2b + Blake3 cryptographic foundation**, combining Blake2b's optimized fixed-length operations with Blake3's unlimited variable-length outputs:
+HashRand uses **Blake3** as its unified cryptographic foundation, leveraging Blake3's KDF and XOF for all variable-length operations:
 
-| **Function** | **Algorithm** | **Usage** | **Security Level** |
-|--------------|---------------|-----------|-------------------|
-| **Standard Hashing** | Blake2b512 | Email hashing, seed generation | 256-bit equivalent |
-| **Keyed Authentication** | Blake2b-keyed | HMAC replacement, integrity | 256-bit equivalent |
-| **Variable Output (Fixed)** | Blake2b-variable | User ID compression, indexing | Configurable (8-64 bytes) |
-| **Variable Output (Unlimited)** | Blake3 KDF + XOF | Deterministic variable-length derivation | 256-bit security, 1 to 2^64 bytes |
-| **Domain Separation** | Blake3 KDF (Base58) | Cryptographic namespace isolation | 256-bit security |
+| **Function**             | **Algorithm**       | **Usage**                                | **Security Level**                |
+| ------------------------ | ------------------- | ---------------------------------------- | --------------------------------- |
+| **Standard Hashing**     | Blake3 hash         | Email hashing, seed generation           | 256-bit security                  |
+| **Keyed Authentication** | Blake3 keyed        | Integrity verification, HMAC replacement | 256-bit security                  |
+| **Variable Output**      | Blake3 KDF + XOF    | Deterministic variable-length derivation | 256-bit security, 1 to 2^64 bytes |
+| **Domain Separation**    | Blake3 KDF (Base58) | Cryptographic namespace isolation        | 256-bit security                  |
 
 ### Blake3 Pseudonimizer Security Properties (v1.6.12+)
 
 #### Cryptographic Guarantees
+
 - **🔒 Domain Separation**: Different `hmac_env_key` produce cryptographically independent outputs
   - Base58-encoded context ensures namespace isolation
   - Prevents key material confusion across use cases
@@ -33,6 +33,7 @@ HashRand uses a **hybrid Blake2b + Blake3 cryptographic foundation**, combining 
   - No pattern leakage or structural weaknesses in variable outputs
 
 #### Implementation Security
+
 ```rust
 // utils/pseudonimizer.rs - Cryptographically secure pipeline
 // STEP 1: Domain separation via Base58-encoded HMAC key
@@ -50,26 +51,29 @@ hasher.update(data);
 let mut output_reader = hasher.finalize_xof();  // Unlimited secure output
 ```
 
-#### Security Advantages Over Blake2b
-- **✅ Unlimited Output**: Blake3 XOF supports 1 to 2^64 bytes (Blake2b limited to 64 bytes)
-- **✅ Domain Separation**: Blake3 KDF context parameter (Blake2b lacks native domain separation)
-- **✅ Parallel Performance**: Blake3 parallelizable structure for faster operations
-- **✅ Cryptographic Agility**: Dedicated algorithm for variable-length requirements
+#### Blake3 Security Advantages
+
+- **✅ Unlimited Output**: Blake3 XOF supports 1 to 2^64 bytes of secure output
+- **✅ Domain Separation**: Blake3 KDF context parameter for namespace isolation
+- **✅ WASM SIMD**: ~100x performance improvement with SIMD optimization
+- **✅ Modern Design**: Purpose-built for variable-length cryptographic requirements
 
 ### Cryptographic Properties
 
 #### Security Standards
-- **RFC 7693 Compliant**: Blake2b is standardized and widely adopted
-- **Blake3 Security**: Proven security based on BLAKE2 foundation with improved properties
-- **Cryptanalysis Resistant**: Extensive security analysis with no known vulnerabilities
+
+- **Blake3 Security**: Modern cryptographic design with proven security properties
+- **BLAKE2 Foundation**: Blake3 builds on extensively analyzed BLAKE2 foundation
+- **Cryptanalysis Resistant**: No known vulnerabilities with extensive security analysis
 - **Side-Channel Resistant**: Designed to resist timing and power analysis attacks
 - **Memory-Hard Components**: Argon2id provides resistance to ASIC attacks
 
 #### Performance Security
+
 - **Constant-Time Operations**: All cryptographic operations execute in constant time
 - **No Secret-Dependent Branches**: Code paths independent of secret values
 - **Cache-Safe**: Operations designed to minimize cache timing leaks
-- **SIMD Optimized**: Hardware acceleration where available (both Blake2b and Blake3)
+- **WASM SIMD Optimized**: Hardware acceleration for Blake3 in WebAssembly environments
 
 ## Authentication Security
 
@@ -81,14 +85,14 @@ let mut output_reader = hasher.finalize_xof();  // Unlimited secure output
 
 The SignedRequest validation system enforces **mutually exclusive authentication methods** to eliminate potential attack vectors:
 
-| **Authentication State** | **Validation Result** | **Security Rationale** |
-|--------------------------|----------------------|------------------------|
-| Bearer + Nothing | ✅ Valid | Clear Bearer-only authentication |
-| Bearer + pub_key/magiclink | ❌ ConflictingAuthMethods | Prevents authentication bypass attempts |
-| No Bearer + pub_key only | ✅ Valid | Clear payload pub_key authentication |
-| No Bearer + magiclink only | ✅ Valid | Clear payload magiclink authentication |
-| No Bearer + both | ❌ AmbiguousPayloadAuth | Eliminates ambiguous authentication state |
-| No Bearer + neither | ❌ MissingPublicKey | Requires explicit authentication method |
+| **Authentication State**   | **Validation Result**     | **Security Rationale**                    |
+| -------------------------- | ------------------------- | ----------------------------------------- |
+| Bearer + Nothing           | ✅ Valid                  | Clear Bearer-only authentication          |
+| Bearer + pub_key/magiclink | ❌ ConflictingAuthMethods | Prevents authentication bypass attempts   |
+| No Bearer + pub_key only   | ✅ Valid                  | Clear payload pub_key authentication      |
+| No Bearer + magiclink only | ✅ Valid                  | Clear payload magiclink authentication    |
+| No Bearer + both           | ❌ AmbiguousPayloadAuth   | Eliminates ambiguous authentication state |
+| No Bearer + neither        | ❌ MissingPublicKey       | Requires explicit authentication method   |
 
 #### Security Benefits Achieved
 
@@ -119,6 +123,7 @@ match (has_bearer, has_pub_key, has_magiclink) {
 ### Magic Link Security Model with Ed25519 Authentication
 
 #### Ed25519 Digital Signature Layer
+
 ```
 Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] → Backend_Verification
                     ↓                                        ↓
@@ -132,6 +137,7 @@ Email + Pub_Key + Next → Ed25519_Sign(private_key) → Signature[64_bytes] →
 - **Compact Format**: 64-byte signatures and 32-byte public keys for efficiency
 
 #### Encryption Layer (ChaCha20)
+
 ```
 User_ID + Pub_Key + Timestamp → ChaCha20(data, key) → Encrypted_Token[32] → Base58[44]
 ```
@@ -142,9 +148,10 @@ User_ID + Pub_Key + Timestamp → ChaCha20(data, key) → Encrypted_Token[32] �
 - **Base58 Encoding**: Prevents character confusion and URL-safe transmission
 - **Pub_Key Storage**: Ed25519 public keys encrypted in database payloads
 
-#### Integrity Layer (Blake2b-keyed)
+#### Integrity Layer (Blake3 Keyed)
+
 ```
-Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
+Encrypted_Token → blake3_keyed_variable(hash_key, encrypted_data, 16) → Database_Hash_Index
 ```
 
 - **Message Authentication**: Prevents tampering and modification
@@ -155,6 +162,7 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
 ### JWT Security Architecture
 
 #### Token Structure
+
 ```json
 {
   "header": {
@@ -172,12 +180,14 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
 ```
 
 #### JWT Signing Algorithm
+
 - **Algorithm**: HS256 (HMAC with SHA-256)
-- **Secret Key**: Blake2b-keyed derived from JWT_SECRET environment variable
-- **Security**: Cryptographically secure 256-bit key with Blake2b entropy enhancement
-- **Integrity**: Each token signed with enterprise-grade Blake2b-keyed HMAC
+- **Secret Key**: Derived from JWT_SECRET environment variable
+- **Security**: Cryptographically secure 256-bit key
+- **Integrity**: Each token signed with enterprise-grade HMAC-SHA256
 
 #### Dual-Token System
+
 - **Access Tokens**: Short-lived (3min dev, 15min prod), in JSON responses
 - **Refresh Tokens**: Longer-lived (15min dev, 7days prod), HttpOnly cookies
 - **Automatic Refresh**: Transparent token renewal without user interaction
@@ -186,12 +196,14 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
 ### Session Security
 
 #### Session Management
+
 - **Stateless Design**: No server-side session storage required
 - **Cryptographic Sessions**: Sessions identified by user_id hash only
 - **Automatic Cleanup**: Expired tokens automatically removed from database
 - **Secure Cookies**: HttpOnly, Secure, SameSite=Strict for refresh tokens
 
 #### Logout Security
+
 - **Server-Side Cleanup**: Refresh token cookies explicitly cleared
 - **Client-Side Cleanup**: Complete localStorage and authentication state removal
 - **Session Invalidation**: Immediate token invalidation on logout
@@ -202,18 +214,22 @@ Raw_Magic_Link → Blake2b-keyed(data, hmac_key) → Authentication_Tag[32]
 ### Cryptographic User ID Derivation
 
 #### Multi-Layer Security Process
+
 ```
-Email → Blake2b512 → Blake2b-keyed → Per-User-Salt → Argon2id → Blake2b-variable → user_id
+Email → Blake3 XOF(64) → blake3_keyed_variable(hmac_key, 32) → Dynamic Salt
+     → Argon2id → blake3_keyed_variable(compression_key, 16) → user_id
 ```
 
 #### Security Properties
-1. **Blake2b512(email)**: Irreversible hash of email address
-2. **Blake2b-keyed**: Prevents rainbow table attacks with secret key
+
+1. **Blake3 XOF(email)**: Irreversible hash of email address (64 bytes)
+2. **blake3_keyed_variable**: Triple-key protection prevents rainbow table attacks
 3. **Per-User Salt**: Unique salt per user prevents parallel attacks
 4. **Argon2id**: Memory-hard function with OWASP 2024 parameters
-5. **Blake2b-variable**: Compression to 16-byte identifier
+5. **Blake3 keyed compression**: Final 16-byte identifier derivation
 
 #### Argon2id Security Parameters
+
 ```rust
 Argon2id {
     mem_cost: 19456,    // 19MB memory requirement
@@ -227,6 +243,7 @@ Argon2id {
 ### Attack Resistance
 
 #### Ed25519 Signature Attack Resistance
+
 - **Discrete Logarithm Problem**: Ed25519 security based on computationally hard mathematical problem
 - **Curve25519 Strength**: Chosen for resistance to timing attacks and implementation vulnerabilities
 - **Double Spending Prevention**: Each signature tied to specific message content
@@ -234,16 +251,19 @@ Argon2id {
 - **Quantum Resistance**: While not post-quantum, provides maximum classical security
 
 #### Rainbow Table Resistance
+
 - **Salted Hashing**: Per-user salts prevent precomputed attacks
-- **Blake2b-keyed Layer**: Additional secret key protection
+- **Blake3 Keyed Layer**: Triple-key secret protection
 - **Memory-Hard Function**: Argon2id increases attack cost exponentially
 
 #### Brute Force Resistance
+
 - **High Memory Cost**: 19MB per hash attempt
 - **Time Cost**: Multiple iterations required
 - **Parallel Attack Prevention**: Unique salts eliminate batch processing
 
 #### Dictionary Attack Resistance
+
 - **Cryptographic Preprocessing**: Email hashed before key derivation
 - **Key Stretching**: Argon2id provides computational difficulty
 - **Salt Uniqueness**: Per-user salts prevent dictionary reuse
@@ -253,6 +273,7 @@ Argon2id {
 ### Zero Knowledge Database
 
 #### No Personal Information
+
 ```sql
 -- What is NOT stored:
 -- ❌ Email addresses
@@ -269,6 +290,7 @@ Argon2id {
 ```
 
 #### Database Security Features
+
 - **Encryption at Rest**: SQLite databases can be encrypted with SQLCipher
 - **Minimal Data**: Only essential cryptographic data stored
 - **Automatic Cleanup**: Expired tokens automatically purged
@@ -277,15 +299,17 @@ Argon2id {
 ### Seed-Based Generation Security
 
 #### Cryptographic Seed Generation
+
 ```rust
 // Secure seed generation process
 let initial_random = nanoid(128);           // 128 characters of entropy
-let seed_hash = Blake2b512::digest(&initial_random);  // 512-bit hash
+let seed_hash = blake3::hash(&initial_random);  // 256-bit hash
 let seed_32_bytes = &seed_hash[..32];       // First 32 bytes as seed
 let base58_seed = bs58::encode(seed_32_bytes);        // URL-safe encoding
 ```
 
 #### ChaCha8 Generation Security
+
 - **Cryptographic PRNG**: ChaCha8 provides cryptographically secure randomness
 - **Domain Separation**: Independent random streams for hash vs OTP generation
 - **Seed Security**: 256-bit seeds provide 2^256 keyspace
@@ -296,12 +320,14 @@ let base58_seed = bs58::encode(seed_32_bytes);        // URL-safe encoding
 ### Transport Layer Security
 
 #### HTTPS Requirements
+
 - **TLS 1.2 Minimum**: Modern TLS version requirements
 - **Perfect Forward Secrecy**: Ephemeral key exchange
 - **HSTS Headers**: HTTP Strict Transport Security
 - **Certificate Pinning**: Optional certificate validation
 
 #### API Security Headers
+
 ```http
 Content-Security-Policy: default-src 'self'
 X-Content-Type-Options: nosniff
@@ -313,6 +339,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 ### Cross-Origin Request Security
 
 #### CORS Configuration
+
 - **Allowed Origins**: Explicitly configured allowed domains
 - **Credentials Handling**: Secure cookie transmission rules
 - **Method Restrictions**: Limited HTTP methods allowed
@@ -323,6 +350,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 ### Secret Management
 
 #### Production Secrets
+
 ```bash
 # Required 256-bit secrets (64 hex characters each)
 JWT_SECRET=<64-char-hex>                 # JWT token signing
@@ -332,6 +360,7 @@ CHACHA_ENCRYPTION_KEY=<64-char-hex>     # Magic link encryption
 ```
 
 #### Secret Security Requirements
+
 - **Cryptographic Generation**: All secrets generated with secure RNG
 - **Environment Variables**: Secrets passed via environment, never hardcoded
 - **Secret Rotation**: Regular rotation procedures for production
@@ -344,7 +373,9 @@ CHACHA_ENCRYPTION_KEY=<64-char-hex>     # Magic link encryption
 HashRand implements a comprehensive three-tier data cleanup system to ensure zero sensitive data persistence:
 
 ##### 1. Preventive Defense (`clearPreventiveAuthData()`)
+
 **Proactive cleanup before authentication dialogs**
+
 ```typescript
 // Executed before EVERY authentication request (v0.19.14+)
 IndexedDB: ALL auth data cleared (auth_user, access_token, crypto tokens, prehashseeds)
@@ -353,13 +384,16 @@ Preserved: Language preferences, theme settings (UX continuity)
 ```
 
 **Use Cases:**
+
 - User clicks authentication button
 - Automatic refresh fails
 - Generation routes require authentication
 - Any authentication dialog display
 
 ##### 2. Selective Cleanup (`clearSensitiveAuthData()`)
+
 **Targeted cleanup for token errors while preserving active flows**
+
 ```typescript
 // Executed during token expiration/validation errors (v0.19.14+)
 IndexedDB: ALL auth data cleared (auth_user, access_token, crypto tokens, prehashseeds)
@@ -368,13 +402,16 @@ Preserved: pending_auth_email (ongoing magic link flows), user preferences
 ```
 
 **Use Cases:**
+
 - JWT token expiration
-- Token validation failures  
+- Token validation failures
 - Database parsing errors
 - Session corruption recovery
 
 ##### 3. Complete Cleanup (`clearAuthFromStorage()`)
+
 **Maximum security cleanup for explicit logout**
+
 ```typescript
 // Executed during explicit user logout (v0.19.14+)
 IndexedDB: ALL session data cleared (complete wipe including user preferences)
@@ -383,6 +420,7 @@ Result: Complete fresh state
 ```
 
 **Use Cases:**
+
 - User logout button
 - Security-mandated session termination
 - Administrative logout
@@ -390,6 +428,7 @@ Result: Complete fresh state
 #### Sensitive Data Lifecycle Management
 
 ##### Immediate Cleanup Strategy (v0.19.14+)
+
 ```typescript
 // pending_auth_email - Minimum retention principle (IndexedDB)
 1. validateMagicLink() → Success → sessionManager.clearPendingAuthEmail()
@@ -398,7 +437,8 @@ Result: Data exists only during authentication flow, never persists
 ```
 
 ##### Cryptographic Key Persistence
-```typescript  
+
+```typescript
 // Crypto tokens (cipher/nonce/hmac) - Session continuity optimization
 Generation: ONLY when !hasCryptoTokens() (not every refresh)
 Persistence: Throughout valid session for URL encryption continuity
@@ -407,17 +447,18 @@ Cleanup: Complete removal during authentication errors/logout
 
 #### Storage Security Benefits
 
-| **Security Layer** | **Attack Vector Mitigated** | **Implementation** |
-|-------------------|----------------------------|-------------------|
-| **Preventive Defense** | Residual data from crashes/improper logout | Clean state before auth |
-| **Lifecycle Management** | Data persistence beyond necessity | Immediate post-auth cleanup |
-| **Session Isolation** | Cross-session data leakage | Complete storage separation |
-| **UX Preservation** | Security vs usability balance | Selective preservation |
+| **Security Layer**       | **Attack Vector Mitigated**                | **Implementation**          |
+| ------------------------ | ------------------------------------------ | --------------------------- |
+| **Preventive Defense**   | Residual data from crashes/improper logout | Clean state before auth     |
+| **Lifecycle Management** | Data persistence beyond necessity          | Immediate post-auth cleanup |
+| **Session Isolation**    | Cross-session data leakage                 | Complete storage separation |
+| **UX Preservation**      | Security vs usability balance              | Selective preservation      |
 
 #### Browser History Protection
 
 ##### URL Parameter Encryption Enforcement
-- **Mandatory Encryption**: All routes accept ONLY encrypted parameters  
+
+- **Mandatory Encryption**: All routes accept ONLY encrypted parameters
 - **Zero Fallbacks**: Direct URL parameters completely eliminated (except `magiclink`)
 - **Ultra-Compact Architecture**: Single `p` parameter replaces dual parameter format (v0.19.12+)
 - **Attack Surface Reduction**: No bypass vectors through parameter manipulation
@@ -425,6 +466,7 @@ Cleanup: Complete removal during authentication errors/logout
 ### Monitoring & Auditing
 
 #### Security Logging
+
 ```rust
 // Example security log (safe - no PII)
 {
@@ -432,12 +474,13 @@ Cleanup: Complete removal during authentication errors/logout
     "event": "authentication_success",
     "user_id": "HpGAge9YJ7uMvw4QV5qDPk",  // Base58 username
     "endpoint": "/api/login",
-    "ip_hash": "blake2b_hash_of_ip",      // Hashed IP for privacy
-    "user_agent_hash": "blake2b_hash"     // Hashed UA for privacy
+    "ip_hash": "blake3_hash_of_ip",       // Hashed IP for privacy
+    "user_agent_hash": "blake3_hash"      // Hashed UA for privacy
 }
 ```
 
 #### Privacy-Safe Monitoring
+
 - **Base58 Usernames**: All logs use privacy-safe identifiers
 - **Hashed PII**: Any potentially identifying info is hashed
 - **Aggregate Metrics**: Usage statistics without user correlation
@@ -446,6 +489,7 @@ Cleanup: Complete removal during authentication errors/logout
 ### Incident Response
 
 #### Security Incident Categories
+
 1. **Authentication Bypass**: Unauthorized access to protected endpoints
 2. **Token Compromise**: Suspected JWT or refresh token compromise
 3. **Database Breach**: Unauthorized access to database files
@@ -453,6 +497,7 @@ Cleanup: Complete removal during authentication errors/logout
 5. **Cryptographic Failures**: Hash collisions or key compromise
 
 #### Response Procedures
+
 - **Immediate Containment**: Service isolation and traffic blocking
 - **Secret Rotation**: Emergency rotation of compromised secrets
 - **User Notification**: Privacy-safe notification of affected users
@@ -464,12 +509,14 @@ Cleanup: Complete removal during authentication errors/logout
 ### Regulatory Compliance
 
 #### GDPR Compliance
+
 - **No Personal Data**: Article 4 - no personal data processed or stored
 - **Right to Erasure**: Article 17 - not applicable (no personal data)
 - **Data Portability**: Article 20 - not applicable (no personal data)
 - **Privacy by Design**: Article 25 - implemented through Zero Knowledge architecture
 
 #### CCPA Compliance
+
 - **No Sale of Information**: No personal information collected to sell
 - **Right to Know**: No personal information collected beyond email for delivery
 - **Right to Delete**: Not applicable - no personal information stored
@@ -478,18 +525,20 @@ Cleanup: Complete removal during authentication errors/logout
 ### Security Standards
 
 #### Industry Standards Compliance
+
 - **SOC 2 Type II**: Security, availability, and confidentiality controls
 - **ISO 27001**: Information security management system
 - **NIST Cybersecurity Framework**: Comprehensive security controls
 - **OWASP ASVS**: Application Security Verification Standard
 
 #### Cryptographic Standards
+
 - **FIPS 140-2**: Federal cryptographic module standards (where applicable)
 - **Common Criteria**: Security evaluation criteria
-- **RFC Standards**: Blake2b (RFC 7693), JWT (RFC 7519), Argon2 (RFC 9106)
+- **RFC Standards**: JWT (RFC 7519), Argon2 (RFC 9106), Blake3 (modern cryptographic design)
 
 ---
 
-*For Zero Knowledge architecture, see [Zero Knowledge Documentation](./zero-knowledge.md)*  
-*For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)*  
-*For authentication implementation, see [Authentication Documentation](../api/authentication.md)*
+_For Zero Knowledge architecture, see [Zero Knowledge Documentation](./zero-knowledge.md)_  
+_For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)_  
+_For authentication implementation, see [Authentication Documentation](../api/authentication.md)_

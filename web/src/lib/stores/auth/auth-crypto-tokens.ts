@@ -15,7 +15,7 @@ export async function generateCryptoTokens(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		// Generate three 32-byte cryptographically secure tokens
+		// Generate three 64-byte cryptographically secure tokens
 		const cipherToken = generateSecureToken();
 		const nonceToken = generateSecureToken();
 		const hmacKey = generateSecureToken();
@@ -46,11 +46,11 @@ export async function hasCryptoTokens(): Promise<boolean> {
 }
 
 /**
- * Generate a cryptographically secure 32-byte token
+ * Generate a cryptographically secure 64-byte token
  * @returns Base64 encoded string
  */
 function generateSecureToken(): string {
-	const array = new Uint8Array(32);
+	const array = new Uint8Array(64);
 	crypto.getRandomValues(array);
 	return btoa(String.fromCharCode(...array));
 }

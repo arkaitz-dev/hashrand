@@ -5,14 +5,13 @@
  * Part of crypto.ts refactorization to apply SOLID principles
  */
 
-import { blake2b } from '@noble/hashes/blake2.js';
-import { rngChacha8 } from '@noble/ciphers/chacha.js';
+import { blake3KeyedVariable } from './blake3-keyed-variable';
 
 /**
- * Generic cryptographic hash generator using Blake2b-keyed + ChaCha8RNG
+ * Generic cryptographic hash generator using Blake3 keyed variable (100% backend compatible)
  *
  * @param data - Input data (string or Uint8Array)
- * @param key - Key for Blake2b keyed hash (string base64 or Uint8Array)
+ * @param key - 64-byte key for Blake3 (string base64 or Uint8Array)
  * @param outputLength - Desired output length in bytes
  * @returns Generated hash as Uint8Array
  */
@@ -32,35 +31,31 @@ export function cryptoHashGen(
 				)
 			: key;
 
-	// Step 1: Blake2b keyed hash (32 bytes seed)
-	const seed = blake2b(dataBytes, {
-		key: keyBytes,
-		dkLen: 32
-	});
+	// Validate 64-byte key requirement (same as backend)
+	if (keyBytes.length !== 64) {
+		throw new Error(`cryptoHashGen requires 64-byte key, got ${keyBytes.length} bytes`);
+	}
 
-	// Step 2: ChaCha8 RNG using the seed
-	const rng = rngChacha8(seed);
-	const output = rng.randomBytes(outputLength);
-
-	return output;
+	// Use Blake3 keyed variable (100% compatible with backend)
+	return blake3KeyedVariable(keyBytes, dataBytes, outputLength);
 }
 
 /**
- * Generate a 32-byte prehash from prehash seed using cryptoHashGen
+ * Generate a 64-byte prehash from prehash seed using cryptoHashGen
  *
  * @param prehashSeed - 32-byte prehash seed
- * @param hmacKey - 32-byte HMAC key from session (base64 encoded)
- * @returns 32-byte prehash as Uint8Array
+ * @param hmacKey - 64-byte HMAC key from session (base64 encoded)
+ * @returns 64-byte prehash as Uint8Array
  */
 export function generatePrehash(prehashSeed: Uint8Array, hmacKey: string): Uint8Array {
-	return cryptoHashGen(prehashSeed, hmacKey, 32);
+	return cryptoHashGen(prehashSeed, hmacKey, 64);
 }
 
 /**
  * Generate ChaCha-Poly cipher key using session cipher token and prehash
  *
- * @param cipherToken - Session cipher token (base64 encoded)
- * @param prehash - 32-byte prehash as key
+ * @param cipherToken - Session cipher token (base64 encoded, 64 bytes)
+ * @param prehash - 64-byte prehash as key
  * @returns 32-byte cipher key for ChaCha-Poly
  */
 export function generateCipherKey(cipherToken: string, prehash: Uint8Array): Uint8Array {
@@ -70,8 +65,8 @@ export function generateCipherKey(cipherToken: string, prehash: Uint8Array): Uin
 /**
  * Generate ChaCha-Poly nonce using session nonce token and prehash
  *
- * @param nonceToken - Session nonce token (base64 encoded)
- * @param prehash - 32-byte prehash as key
+ * @param nonceToken - Session nonce token (base64 encoded, 64 bytes)
+ * @param prehash - 64-byte prehash as key
  * @returns 12-byte nonce for ChaCha-Poly
  */
 export function generateCipherNonce(nonceToken: string, prehash: Uint8Array): Uint8Array {

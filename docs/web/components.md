@@ -7,14 +7,16 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🎨 UI Components
 
 #### BackButton.svelte
+
 - **Purpose**: Consistent navigation back functionality
-- **Features**: 
+- **Features**:
   - Keyboard navigation support
   - Customizable styling
   - Accessible ARIA labels
 - **Usage**: Used across all generator pages for navigation
 
 #### LoadingSpinner.svelte
+
 - **Purpose**: Loading animations during API calls
 - **Features**:
   - Smooth spinning animations
@@ -23,6 +25,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Usage**: Displayed during hash generation and authentication
 
 #### Icon.svelte
+
 - **Purpose**: SVG icon sprite component
 - **Features**:
   - Progressive SVG sprite loading
@@ -33,6 +36,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Usage**: Icons throughout the interface, including consistent session management
 
 #### Iconize.svelte
+
 - **Purpose**: Universal RTL-aware wrapper for any content
 - **Features**:
   - Automatic RTL detection and handling
@@ -44,6 +48,7 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🌙 Theme System
 
 #### ThemeToggle.svelte
+
 - **Purpose**: Dark/light mode toggle control
 - **Features**:
   - Manual theme toggle in upper-right corner
@@ -56,6 +61,7 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🔐 Authentication Components
 
 #### AuthStatusButton.svelte
+
 - **Purpose**: Session management button with consistent user icon and centralized loading state
 - **Features**:
   - Always-visible authentication button regardless of session state
@@ -69,6 +75,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Loading State**: Displays CSS-animated spinner during `$authStore.isRefreshing`
 
 #### DialogContainer.svelte
+
 - **Purpose**: Unified modal dialog system
 - **Features**:
   - Professional modal dialogs for all authentication flows
@@ -79,6 +86,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Accessibility**: Full keyboard navigation and screen reader support
 
 #### AuthDialogContent.svelte
+
 - **Purpose**: Authentication dialog content
 - **Features**:
   - Two-step authentication process
@@ -89,6 +97,7 @@ The HashRand web interface is built with a modular component architecture using 
 - **Validation**: Real-time email validation with feedback
 
 #### AuthConfirmDialogContent.svelte
+
 - **Purpose**: Email confirmation dialog
 - **Features**:
   - Confirmation step after email submission
@@ -100,6 +109,7 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🌐 Internationalization Components
 
 #### DateTimeLocalized.svelte
+
 - **Purpose**: Robust date/time localization
 - **Features**:
   - Multi-level fallback system
@@ -112,6 +122,7 @@ The HashRand web interface is built with a modular component architecture using 
 ### 📱 Responsive Layout Components
 
 #### Layout Components
+
 - **+layout.svelte**: Root layout with navigation and theme system
 - **Navigation**: Responsive navigation for all screen sizes
 - **Header**: Consistent header across all pages
@@ -122,44 +133,51 @@ The HashRand web interface is built with a modular component architecture using 
 ### 🏪 Svelte Stores
 
 #### Authentication Store (`auth.ts`)
+
 ```typescript
 interface AuthState {
   isAuthenticated: boolean;
   accessToken: string | null;
   userId: string | null;
   isLoading: boolean;
-  isRefreshing: boolean;  // Centralized loading state for authentication attempts
+  isRefreshing: boolean; // Centralized loading state for authentication attempts
   error: string | null;
 }
 ```
+
 - **Features**: JWT token management, automatic refresh, session persistence, centralized loading state
 - **Methods**: `login()`, `logout()`, `refreshToken()`, `checkAuth()`, `ensureAuthenticated()`
 - **DRY Architecture**: Single source of truth for authentication loading states across all components
 - **Loading Management**: `isRefreshing` state automatically managed during token refresh operations
 
 #### Theme Store (`theme.ts`)
+
 ```typescript
 interface ThemeState {
-  current: 'light' | 'dark' | 'system';
-  effective: 'light' | 'dark';
+  current: "light" | "dark" | "system";
+  effective: "light" | "dark";
 }
 ```
+
 - **Features**: System preference detection, persistent storage, reactive updates
 - **Methods**: `toggleTheme()`, `setTheme()`, `detectSystemTheme()`
 
 #### Internationalization Store (`i18n.ts`)
+
 ```typescript
 interface I18nState {
   currentLanguage: string;
   translations: Record<string, any>;
   isRTL: boolean;
-  textDirection: 'ltr' | 'rtl';
+  textDirection: "ltr" | "rtl";
 }
 ```
+
 - **Features**: Dynamic language loading, RTL detection, persistent language selection
 - **Methods**: `setLanguage()`, `translate()`, `detectRTL()`
 
 #### Navigation Store (`navigation.ts`)
+
 ```typescript
 interface NavigationState {
   currentRoute: string;
@@ -167,10 +185,12 @@ interface NavigationState {
   breadcrumbs: string[];
 }
 ```
+
 - **Features**: Route tracking, breadcrumb generation, navigation history
 - **Methods**: `navigate()`, `goBack()`, `updateBreadcrumbs()`
 
 #### Result Store (`result.ts`)
+
 ```typescript
 interface ResultState {
   lastResult: GenerationResult | null;
@@ -179,6 +199,7 @@ interface ResultState {
   parameters: GenerationParameters;
 }
 ```
+
 - **Features**: Result caching, parameter preservation, error handling
 - **Methods**: `generateHash()`, `clearResult()`, `updateParameters()`
 
@@ -187,12 +208,14 @@ interface ResultState {
 ### 📋 Form Handling
 
 #### Parameter Preservation System
+
 - **Base58 URL Encoding**: Form parameters encoded as base58 URL-safe strings
 - **LocalStorage Integration**: Temporary storage with automatic cleanup
 - **State Restoration**: Seamless form state restoration after authentication
 - **Universal Integration**: Works across all generator pages
 
 #### Real-time Validation
+
 - **Parameter Validation**: Immediate feedback on parameter changes
 - **Visual Feedback**: Color-coded validation states
 - **Context-aware Help**: Dynamic help text based on current settings
@@ -201,6 +224,7 @@ interface ResultState {
 ### 🎛️ Interactive Controls
 
 #### Range Sliders
+
 - **Beautiful Styling**: Gradient styling with custom CSS
 - **Touch Optimization**: Mobile-friendly touch interaction
 - **Real-time Updates**: Immediate parameter updates
@@ -208,6 +232,7 @@ interface ResultState {
 - **Visual Feedback**: Clear indication of current values
 
 #### Clipboard Integration
+
 - **One-click Copying**: Copy results with visual feedback
 - **Success Indicators**: Toast notifications for copy success
 - **Error Handling**: Graceful fallback when clipboard unavailable
@@ -216,12 +241,14 @@ interface ResultState {
 ### 🔄 State Synchronization
 
 #### URL Parameter Sync
+
 - **Automatic Synchronization**: Parameters synchronized with browser URL
 - **Shareable URLs**: Complete configuration shareable via URL
 - **Browser History**: Proper browser back/forward support
 - **Deep Linking**: Direct access to configured generator states
 
 #### Form State Management
+
 - **Persistent State**: Form state preserved across navigation
 - **Validation State**: Validation results maintained
 - **Parameter Binding**: Two-way data binding for all parameters
@@ -230,6 +257,7 @@ interface ResultState {
 ## Component Testing
 
 ### 🧪 Testing Architecture
+
 - **Unit Tests**: Individual component testing with Vitest
 - **Integration Tests**: Component interaction testing
 - **Accessibility Tests**: ARIA compliance and keyboard navigation
@@ -237,32 +265,35 @@ interface ResultState {
 - **Cross-browser Testing**: Compatibility across different browsers
 
 ### Testing Examples
+
 ```typescript
 // Component testing example
-import { render, fireEvent } from '@testing-library/svelte';
-import ThemeToggle from './ThemeToggle.svelte';
+import { render, fireEvent } from "@testing-library/svelte";
+import ThemeToggle from "./ThemeToggle.svelte";
 
-test('theme toggle switches between light and dark', async () => {
+test("theme toggle switches between light and dark", async () => {
   const { getByRole } = render(ThemeToggle);
-  const toggle = getByRole('button');
-  
+  const toggle = getByRole("button");
+
   await fireEvent.click(toggle);
-  expect(document.documentElement).toHaveClass('dark');
-  
+  expect(document.documentElement).toHaveClass("dark");
+
   await fireEvent.click(toggle);
-  expect(document.documentElement).toHaveClass('light');
+  expect(document.documentElement).toHaveClass("light");
 });
 ```
 
 ## Performance Optimization
 
 ### ⚡ Component Performance
+
 - **Lazy Loading**: Non-critical components loaded on demand
 - **Code Splitting**: Components split by route for optimal loading
 - **Tree Shaking**: Unused component code eliminated in build
 - **Bundle Analysis**: Regular analysis of component bundle sizes
 
 ### Memory Management
+
 - **Store Cleanup**: Automatic cleanup of unused store subscriptions
 - **Event Listeners**: Proper cleanup of event listeners in components
 - **DOM References**: Efficient management of DOM element references
@@ -270,6 +301,6 @@ test('theme toggle switches between light and dark', async () => {
 
 ---
 
-*For interface features, see [Interface Documentation](./interface.md)*  
-*For internationalization, see [Internationalization Documentation](./internationalization.md)*  
-*For development setup, see [Development Guide](../deployment/development.md)*
+_For interface features, see [Interface Documentation](./interface.md)_  
+_For internationalization, see [Internationalization Documentation](./internationalization.md)_  
+_For development setup, see [Development Guide](../deployment/development.md)_

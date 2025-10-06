@@ -12,6 +12,7 @@ just predeploy
 ```
 
 This single command will:
+
 - 🧹 **Stop & Clean**: Stop all services and clean build artifacts
 - 🏗️ **Build Web Interface**: Compile SvelteKit SPA for production
 - ⚙️ **Build Backend**: Compile WebAssembly backend component
@@ -159,16 +160,16 @@ spec:
         app: hashrand
     spec:
       containers:
-      - name: hashrand
-        image: hashrand:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: hashrand-secrets
-              key: jwt-secret
+        - name: hashrand
+          image: hashrand:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hashrand-secrets
+                  key: jwt-secret
 ```
 
 ## Performance Optimization
@@ -245,6 +246,6 @@ sqlite3 data/hashrand.db ".backup $BACKUP_DIR/hashrand-$DATE.db"
 
 ---
 
-*For configuration details, see [Configuration Guide](./configuration.md)*  
-*For development setup, see [Development Guide](./development.md)*  
-*For quick start, see [Quick Start Guide](./quick-start.md)*
+_For configuration details, see [Configuration Guide](./configuration.md)_  
+_For development setup, see [Development Guide](./development.md)_  
+_For quick start, see [Quick Start Guide](./quick-start.md)_
