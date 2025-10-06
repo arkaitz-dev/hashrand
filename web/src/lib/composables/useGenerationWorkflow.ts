@@ -67,12 +67,28 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 	 * Core generation logic - creates encrypted URL and navigates
 	 */
 	async function proceedWithGeneration() {
+		// Import conversion functions
+		const { alphabetToInt, mnemonicLangToInt } = await import('$lib/types');
+
 		// Create parameters object for result page
 		const params = config.getParams();
 		const resultParams: Record<string, unknown> = {
 			endpoint: config.endpoint,
 			...params
 		};
+
+		// CRITICAL: Convert alphabet/language strings to integers BEFORE encryption
+		// This ensures encrypted URL params use compact integer format
+		if (resultParams.alphabet && typeof resultParams.alphabet === 'string') {
+			resultParams.alphabet = alphabetToInt(
+				resultParams.alphabet as import('$lib/types').AlphabetTypeString
+			);
+		}
+		if (resultParams.language && typeof resultParams.language === 'string') {
+			resultParams.language = mnemonicLangToInt(
+				resultParams.language as import('$lib/types').MnemonicLanguageString
+			);
+		}
 
 		// Add seed if provided from URL
 		if (config.urlProvidedSeed) {

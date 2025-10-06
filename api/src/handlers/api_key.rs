@@ -79,11 +79,40 @@ fn generate_api_key_signed(
     params: &HashMap<String, String>,
     crypto_material: &crate::utils::CryptoMaterial,
 ) -> anyhow::Result<Response> {
-    // Parse parameters with API key-specific defaults
-    let alphabet_type = params
-        .get("alphabet")
-        .map(|s| AlphabetType::from_str(s))
-        .unwrap_or(AlphabetType::Full);
+    // Parse alphabet parameter (integer: 1=no-look-alike, 2=full)
+    // API key allows only no-look-alike (1) and full (2) for compatibility
+    let alphabet_type = if let Some(alphabet_str) = params.get("alphabet") {
+        match alphabet_str.parse::<u8>() {
+            Ok(index) => match AlphabetType::try_from(index) {
+                Ok(alphabet) => {
+                    // Validate that API key only uses compatible alphabets
+                    match alphabet {
+                        AlphabetType::NoLookAlike | AlphabetType::Full => alphabet,
+                        _ => {
+                            return Ok(create_error_response(
+                                400,
+                                "API key alphabet must be 1 (no-look-alike) or 2 (full)",
+                            ));
+                        }
+                    }
+                }
+                Err(_) => {
+                    return Ok(create_error_response(
+                        400,
+                        "Invalid alphabet index. Valid range for API keys: 1 or 2 (1=no-look-alike, 2=full)",
+                    ));
+                }
+            },
+            Err(_) => {
+                return Ok(create_error_response(
+                    400,
+                    "Invalid alphabet parameter. Must be integer 1 or 2 (1=no-look-alike, 2=full)",
+                ));
+            }
+        }
+    } else {
+        AlphabetType::Full // Default for API keys
+    };
 
     // Dynamic minimum length based on alphabet
     let min_length = match alphabet_type {

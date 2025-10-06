@@ -18,7 +18,7 @@ import {
 	signQueryParamsWithKeyPair as _signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
-import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
+import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 } from '@noble/curves/ed25519.js';
 
 test.describe('API-Only Authentication Tests', () => {
@@ -82,9 +82,8 @@ test.describe('API-Only Authentication Tests', () => {
 
 		// Verify signature with server public key
 		const messageBytes = new TextEncoder().encode(signedResponse.payload);
-		const signatureBytes = new Uint8Array(
-			signedResponse.signature.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
-		);
+		// Backend now uses base58 for signatures (migrated from hex)
+		const signatureBytes = signatureBase58ToBytes(signedResponse.signature);
 		const publicKeyBytes = new Uint8Array(
 			responsePayload.server_pub_key.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
 		);

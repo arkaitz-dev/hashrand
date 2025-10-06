@@ -8,6 +8,7 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+const bs58 = require('bs58').default || require('bs58');
 
 /**
  * Sort object keys recursively for deterministic serialization
@@ -36,7 +37,7 @@ function sortObjectKeys(obj) {
  * Sign query parameters with stored Ed25519 private key
  * @param {object} params - Query parameters object
  * @param {string} publicKeyHex - Public key to include in params
- * @returns {string} - Ed25519 signature as hex string (128 chars = 64 bytes)
+ * @returns {string} - Ed25519 signature as base58 string (~88 chars, 64 bytes)
  */
 function signQueryParams(params, publicKeyHex) {
     try {
@@ -81,8 +82,8 @@ function signQueryParams(params, publicKeyHex) {
             type: 'pkcs8'
         });
 
-        // Return signature as hex (128 chars = 64 bytes)
-        return signature.toString('hex');
+        // Return signature as base58 (~88 chars, 64 bytes)
+        return bs58.encode(signature);
     } catch (error) {
         console.error('Error signing query params:', error.message);
         process.exit(1);

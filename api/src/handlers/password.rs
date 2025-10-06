@@ -87,8 +87,40 @@ fn generate_password_signed(
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(32);
 
-    // Password uses FullWithSymbols alphabet for security
-    let alphabet_type = AlphabetType::FullWithSymbols;
+    // Parse alphabet parameter (integer: 1=no-look-alike, 3=full-with-symbols)
+    // Password allows only no-look-alike (1) and full-with-symbols (3) for security
+    let alphabet_type = if let Some(alphabet_str) = params.get("alphabet") {
+        match alphabet_str.parse::<u8>() {
+            Ok(index) => match AlphabetType::try_from(index) {
+                Ok(alphabet) => {
+                    // Validate that password only uses secure alphabets
+                    match alphabet {
+                        AlphabetType::NoLookAlike | AlphabetType::FullWithSymbols => alphabet,
+                        _ => {
+                            return Ok(create_error_response(
+                                400,
+                                "Password alphabet must be 1 (no-look-alike) or 3 (full-with-symbols)",
+                            ));
+                        }
+                    }
+                }
+                Err(_) => {
+                    return Ok(create_error_response(
+                        400,
+                        "Invalid alphabet index. Valid range for passwords: 1 or 3 (1=no-look-alike, 3=full-with-symbols)",
+                    ));
+                }
+            },
+            Err(_) => {
+                return Ok(create_error_response(
+                    400,
+                    "Invalid alphabet parameter. Must be integer 1 or 3 (1=no-look-alike, 3=full-with-symbols)",
+                ));
+            }
+        }
+    } else {
+        AlphabetType::FullWithSymbols // Default for passwords (maximum security)
+    };
 
     // Validate length (21-44 for passwords - security requirement)
     if let Err(e) = validate_length(length, 21, 44) {

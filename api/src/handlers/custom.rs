@@ -88,10 +88,26 @@ fn generate_custom_hash_signed(
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(21);
 
-    let alphabet_type = params
-        .get("alphabet")
-        .map(|s| AlphabetType::from_str(s))
-        .unwrap_or(AlphabetType::Base58);
+    // Parse alphabet parameter (integer 0-4)
+    let alphabet_type = if let Some(alphabet_str) = params.get("alphabet") {
+        match alphabet_str.parse::<u8>() {
+            Ok(index) => match AlphabetType::try_from(index) {
+                Ok(alphabet) => alphabet,
+                Err(_) => {
+                    return Ok(create_client_error_response(
+                        "Invalid alphabet index. Valid range: 0-4 (0=base58, 1=no-look-alike, 2=full, 3=full-with-symbols, 4=numeric)",
+                    ));
+                }
+            },
+            Err(_) => {
+                return Ok(create_client_error_response(
+                    "Invalid alphabet parameter. Must be integer 0-4 (0=base58, 1=no-look-alike, 2=full, 3=full-with-symbols, 4=numeric)",
+                ));
+            }
+        }
+    } else {
+        AlphabetType::Base58 // Default
+    };
 
     let prefix = params.get("prefix").cloned().unwrap_or_default();
     let suffix = params.get("suffix").cloned().unwrap_or_default();

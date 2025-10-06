@@ -5,12 +5,13 @@
  * This matches the exact format expected by the backend:
  * {
  *   "payload": "<base64_url_safe_encoded_json>",
- *   "signature": "<ed25519_hex_signature>"
+ *   "signature": "<ed25519_base58_signature>"
  * }
  */
 
 const crypto = require('crypto');
 const fs = require('fs');
+const bs58 = require('bs58').default || require('bs58');
 
 /**
  * Recursively sort object keys for deterministic serialization
@@ -57,7 +58,7 @@ function base64UrlEncode(str) {
 /**
  * Sign serialized payload with stored Ed25519 private key
  * @param {string} serializedPayload - JSON string to sign
- * @returns {string} - Ed25519 signature as hex string (128 chars = 64 bytes)
+ * @returns {string} - Ed25519 signature as base58 string (~88 chars, 64 bytes)
  */
 function signSerializedPayload(serializedPayload) {
     // Read stored private key
@@ -95,8 +96,8 @@ function signSerializedPayload(serializedPayload) {
         type: 'pkcs8'
     });
 
-    // Return signature as hex (128 chars = 64 bytes)
-    return signature.toString('hex');
+    // Return signature as base58 (~88 chars, 64 bytes)
+    return bs58.encode(signature);
 }
 
 /**

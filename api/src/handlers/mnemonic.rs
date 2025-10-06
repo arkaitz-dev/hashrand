@@ -1,4 +1,4 @@
-use crate::types::CustomHashResponse;
+use crate::types::{CustomHashResponse, MnemonicLanguage};
 use crate::utils::protected_endpoint::{extract_seed_from_payload, payload_to_params};
 use crate::utils::{
     ProtectedEndpointMiddleware, ProtectedEndpointResult, create_error_response,
@@ -77,13 +77,27 @@ fn generate_mnemonic_signed(
     params: &HashMap<String, String>,
     crypto_material: &crate::utils::CryptoMaterial,
 ) -> anyhow::Result<Response> {
-    // Parse language parameter
-    let language = match params.get("language") {
-        Some(lang_str) => match parse_language(lang_str) {
-            Ok(lang) => lang,
-            Err(e) => return Ok(create_error_response(400, &e.to_string())),
-        },
-        None => Language::English,
+    // Parse language parameter (integer: 0=english, 1=spanish, ..., 9=czech)
+    let language = if let Some(lang_str) = params.get("language") {
+        match lang_str.parse::<u8>() {
+            Ok(index) => match MnemonicLanguage::try_from(index) {
+                Ok(mnemonic_lang) => Language::from(mnemonic_lang),
+                Err(_) => {
+                    return Ok(create_error_response(
+                        400,
+                        "Invalid language index. Valid range: 0-9 (0=english, 1=spanish, 2=french, 3=portuguese, 4=japanese, 5=chinese-simplified, 6=chinese-traditional, 7=italian, 8=korean, 9=czech)",
+                    ));
+                }
+            },
+            Err(_) => {
+                return Ok(create_error_response(
+                    400,
+                    "Invalid language parameter. Must be integer 0-9 (0=english, 1=spanish, 2=french, 3=portuguese, 4=japanese, 5=chinese-simplified, 6=chinese-traditional, 7=italian, 8=korean, 9=czech)",
+                ));
+            }
+        }
+    } else {
+        Language::English // Default
     };
 
     // Parse words parameter (12 or 24)
@@ -161,22 +175,4 @@ fn generate_mnemonic_signed(
     }
 }
 
-/// Parse language string to BIP39 Language enum
-fn parse_language(lang: &str) -> anyhow::Result<Language> {
-    match lang.to_lowercase().as_str() {
-        "english" | "en" => Ok(Language::English),
-        "spanish" | "es" => Ok(Language::Spanish),
-        "french" | "fr" => Ok(Language::French),
-        "portuguese" | "pt" => Ok(Language::Portuguese),
-        "japanese" | "ja" => Ok(Language::Japanese),
-        "chinese" | "zh" | "chinese-simplified" => Ok(Language::SimplifiedChinese),
-        "chinese-traditional" | "zh-tw" => Ok(Language::TraditionalChinese),
-        "italian" | "it" => Ok(Language::Italian),
-        "korean" | "ko" => Ok(Language::Korean),
-        "czech" | "cs" => Ok(Language::Czech),
-        _ => Err(anyhow::anyhow!(
-            "Unsupported language: {}. Supported: english, spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech",
-            lang
-        )),
-    }
-}
+// DELETED: Legacy parse_language() function removed - replaced with MnemonicLanguage::try_from() for DRY

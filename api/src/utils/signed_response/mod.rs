@@ -137,7 +137,7 @@ mod tests {
         };
 
         // Verify structure matches expected format
-        assert!(response.signature.len() > 0);
+        assert!(!response.signature.is_empty());
         assert_eq!(response.payload, "test_payload");
 
         // Verify JSON value can be serialized

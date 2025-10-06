@@ -22,12 +22,24 @@ async function generateHash(
 	params: GenerateParams | PasswordParams | ApiKeyParams | MnemonicParams
 ): Promise<CustomHashResponse> {
 	const { httpAuthenticatedSignedGETRequest } = await import('../httpSignedRequests');
+	const { alphabetToInt, mnemonicLangToInt } = await import('../types');
 
 	// Convert parameters to string format for signing
 	const stringParams: Record<string, string> = {};
 	Object.entries(params).forEach(([key, value]) => {
 		if (value !== undefined && value !== null) {
-			if (typeof value === 'boolean') {
+			// CRITICAL: Convert alphabet to integer (must match backend mapping)
+			if (key === 'alphabet' && typeof value === 'string') {
+				const alphabetInt = alphabetToInt(value as import('../types').AlphabetTypeString);
+				stringParams[key] = alphabetInt.toString();
+			}
+			// CRITICAL: Convert language to integer (must match backend mapping)
+			else if (key === 'language' && typeof value === 'string') {
+				const langInt = mnemonicLangToInt(value as import('../types').MnemonicLanguageString);
+				stringParams[key] = langInt.toString();
+			}
+			// Standard conversions
+			else if (typeof value === 'boolean') {
 				stringParams[key] = value.toString();
 			} else if (typeof value === 'number') {
 				stringParams[key] = value.toString();

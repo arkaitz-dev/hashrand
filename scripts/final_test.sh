@@ -611,7 +611,7 @@ else
         "true"
 
     test_api "Mnemonic in Spanish" \
-        "$BASE_URL/api/mnemonic?language=spanish" \
+        "$BASE_URL/api/mnemonic?language=1" \
         "200" \
         "" \
         "GET" \
@@ -635,7 +635,7 @@ else
         "true"
 
     test_api "Mnemonic Spanish 24 words" \
-        "$BASE_URL/api/mnemonic?language=spanish&words=24" \
+        "$BASE_URL/api/mnemonic?language=1&words=24" \
         "200" \
         "" \
         "GET" \
@@ -713,7 +713,7 @@ else
         "true"
 
     test_api "Invalid mnemonic language (should fail)" \
-        "$BASE_URL/api/mnemonic?language=invalid" \
+        "$BASE_URL/api/mnemonic?language=99" \
         "400" \
         "" \
         "GET" \

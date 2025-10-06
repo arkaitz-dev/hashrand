@@ -133,13 +133,13 @@ fn handle_not_found() -> anyhow::Result<Response> {
     let help_message = r#"Not Found
 
 Available endpoints:
-- GET /api/custom?length=21&alphabet=base58&prefix=&suffix=&raw=true
+- GET /api/custom?length=21&alphabet=0&prefix=&suffix=&raw=true
 - POST /api/custom (JSON body with optional seed parameter)
-- GET /api/password?length=21&alphabet=full-with-symbols&raw=true
+- GET /api/password?length=21&alphabet=3&raw=true
 - POST /api/password (JSON body with optional seed parameter)
-- GET /api/api-key?length=44&alphabet=full&raw=true
+- GET /api/api-key?length=44&alphabet=2&raw=true
 - POST /api/api-key (JSON body with optional seed parameter)
-- GET /api/mnemonic?language=english&words=12 (BIP39 mnemonic phrases)
+- GET /api/mnemonic?language=0&words=12 (BIP39 mnemonic phrases)
 - POST /api/mnemonic (JSON body with seed parameter)
 - POST /api/login/ (Generate magic link - JSON: {"email": "user@example.com"})
 - POST /api/login/magiclink/ (Validate magic link with Ed25519 signature and get JWT tokens)
@@ -152,12 +152,16 @@ Available endpoints:
 
 Parameters:
 - length: 2-128 (custom), 21-44 (password), 44-64 (api-key)
-- alphabet: base58, no-look-alike, full, full-with-symbols
-- language: english (default), spanish, french, portuguese, japanese, chinese, chinese-traditional, italian, korean, czech (mnemonic only)
+- alphabet: Integer 0-4 (custom: 0-4, password: 1 or 3, api-key: 1 or 2)
+  0=base58 (default custom), 1=no-look-alike, 2=full (default api-key),
+  3=full-with-symbols (default password), 4=numeric
+- language: Integer 0-9 (mnemonic only, default 0)
+  0=english, 1=spanish, 2=french, 3=portuguese, 4=japanese,
+  5=chinese-simplified, 6=chinese-traditional, 7=italian, 8=korean, 9=czech
 - words: 12 (default), 24 (mnemonic only)
 - raw: true (default), false (adds newline)
 - prefix/suffix: max 32 chars each (custom only)
-- seed: 64 hex characters (optional for POST requests)"#;
+- seed: base58-encoded 32 bytes (optional for POST requests)"#;
 
     Ok(Response::builder()
         .status(404)

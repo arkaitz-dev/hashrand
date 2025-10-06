@@ -18,8 +18,14 @@ import {
 	signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
-import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
+import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 } from '@noble/curves/ed25519.js';
+import {
+	alphabetToInt,
+	mnemonicLangToInt,
+	type AlphabetTypeString,
+	type MnemonicLanguageString
+} from '../../src/lib/types';
 
 /**
  * SignedResponse structure from backend
@@ -71,9 +77,8 @@ export function verifySignedResponse(
 		const publicKeyBytes = new Uint8Array(
 			serverPubKeyHex.match(/.{2}/g)?.map((byte) => parseInt(byte, 16)) || []
 		);
-		const signatureBytes = new Uint8Array(
-			signedResponse.signature.match(/.{2}/g)?.map((byte) => parseInt(byte, 16)) || []
-		);
+		// Backend now uses base58 for signatures (migrated from hex)
+		const signatureBytes = signatureBase58ToBytes(signedResponse.signature);
 
 		// Message to verify is the Base64 payload string (what backend signed)
 		const messageBytes = new TextEncoder().encode(signedResponse.payload);
@@ -268,11 +273,17 @@ export async function generateCustomHash(
 	const serverPubKey = await session.getServerPubKey();
 	if (!serverPubKey) throw new Error('No server public key - call requestMagicLink first');
 
-	// Step 2: Convert params to string record for signing
+	// Step 2: Convert params to string record for signing (CRITICAL: convert alphabet to integer)
 	const stringParams: Record<string, string> = {};
 	Object.entries(params).forEach(([key, value]) => {
 		if (value !== undefined) {
-			stringParams[key] = value.toString();
+			// Convert alphabet string to integer (must match backend mapping)
+			if (key === 'alphabet' && typeof value === 'string') {
+				const alphabetInt = alphabetToInt(value as AlphabetTypeString);
+				stringParams[key] = alphabetInt.toString();
+			} else {
+				stringParams[key] = value.toString();
+			}
 		}
 	});
 
@@ -475,11 +486,17 @@ export async function generateMnemonic(
 	const serverPubKey = await session.getServerPubKey();
 	if (!serverPubKey) throw new Error('No server public key');
 
-	// Convert params to string record
+	// Convert params to string record (CRITICAL: convert language to integer)
 	const stringParams: Record<string, string> = {};
 	Object.entries(params).forEach(([key, value]) => {
 		if (value !== undefined) {
-			stringParams[key] = value.toString();
+			// Convert language string to integer (must match backend mapping)
+			if (key === 'language' && typeof value === 'string') {
+				const langInt = mnemonicLangToInt(value as MnemonicLanguageString);
+				stringParams[key] = langInt.toString();
+			} else {
+				stringParams[key] = value.toString();
+			}
 		}
 	});
 

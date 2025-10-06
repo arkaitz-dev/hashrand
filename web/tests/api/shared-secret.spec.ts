@@ -19,7 +19,7 @@ import {
 	signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
-import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
+import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
@@ -166,9 +166,8 @@ function verifySignedResponse(
 	serverPubKey: string
 ): { payload: any; isValid: boolean } {
 	const messageBytes = new TextEncoder().encode(signedResponse.payload);
-	const signatureBytes = new Uint8Array(
-		signedResponse.signature.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
-	);
+	// Backend now uses base58 for signatures (migrated from hex)
+	const signatureBytes = signatureBase58ToBytes(signedResponse.signature);
 	const publicKeyBytes = new Uint8Array(
 		serverPubKey.match(/.{2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
 	);

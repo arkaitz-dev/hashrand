@@ -1,5 +1,103 @@
 // API types matching the backend
-export type AlphabetType = 'base58' | 'no-look-alike' | 'full' | 'full-with-symbols' | 'numeric';
+// AlphabetType: Internal representation uses strings for UI, converted to integers for API
+export type AlphabetTypeString =
+	| 'base58'
+	| 'no-look-alike'
+	| 'full'
+	| 'full-with-symbols'
+	| 'numeric';
+export type AlphabetTypeInt = 0 | 1 | 2 | 3 | 4;
+export type AlphabetType = AlphabetTypeString; // UI uses strings
+
+// Alphabet mapping utilities - CRITICAL: Must match backend exactly
+// Backend mapping (api/src/types/alphabet.rs):
+// 0 = Base58, 1 = NoLookAlike, 2 = Full, 3 = FullWithSymbols, 4 = Numeric
+export const ALPHABET_TO_INT: Record<AlphabetTypeString, AlphabetTypeInt> = {
+	base58: 0,
+	'no-look-alike': 1,
+	full: 2,
+	'full-with-symbols': 3,
+	numeric: 4
+};
+
+export const INT_TO_ALPHABET: Record<AlphabetTypeInt, AlphabetTypeString> = {
+	0: 'base58',
+	1: 'no-look-alike',
+	2: 'full',
+	3: 'full-with-symbols',
+	4: 'numeric'
+};
+
+export function alphabetToInt(alphabet: AlphabetTypeString): AlphabetTypeInt {
+	return ALPHABET_TO_INT[alphabet];
+}
+
+export function intToAlphabet(index: AlphabetTypeInt): AlphabetTypeString {
+	return INT_TO_ALPHABET[index];
+}
+
+// Type guard for alphabet integers
+export function isAlphabetInt(value: unknown): value is AlphabetTypeInt {
+	return typeof value === 'number' && value >= 0 && value <= 4;
+}
+
+// BIP39 Mnemonic Language types - CRITICAL: Must match backend exactly
+// Backend mapping (api/src/handlers/mnemonic.rs parse_language):
+// 0=English, 1=Spanish, 2=French, 3=Portuguese, 4=Japanese, 5=SimplifiedChinese,
+// 6=TraditionalChinese, 7=Italian, 8=Korean, 9=Czech
+export type MnemonicLanguageString =
+	| 'english'
+	| 'spanish'
+	| 'french'
+	| 'portuguese'
+	| 'japanese'
+	| 'chinese'
+	| 'chinese-traditional'
+	| 'italian'
+	| 'korean'
+	| 'czech';
+
+export type MnemonicLanguageInt = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+// Mnemonic language mapping tables
+export const MNEMONIC_LANG_TO_INT: Record<MnemonicLanguageString, MnemonicLanguageInt> = {
+	english: 0,
+	spanish: 1,
+	french: 2,
+	portuguese: 3,
+	japanese: 4,
+	chinese: 5,
+	'chinese-traditional': 6,
+	italian: 7,
+	korean: 8,
+	czech: 9
+};
+
+export const INT_TO_MNEMONIC_LANG: Record<MnemonicLanguageInt, MnemonicLanguageString> = {
+	0: 'english',
+	1: 'spanish',
+	2: 'french',
+	3: 'portuguese',
+	4: 'japanese',
+	5: 'chinese',
+	6: 'chinese-traditional',
+	7: 'italian',
+	8: 'korean',
+	9: 'czech'
+};
+
+export function mnemonicLangToInt(lang: MnemonicLanguageString): MnemonicLanguageInt {
+	return MNEMONIC_LANG_TO_INT[lang];
+}
+
+export function intToMnemonicLang(index: MnemonicLanguageInt): MnemonicLanguageString {
+	return INT_TO_MNEMONIC_LANG[index];
+}
+
+// Type guard for mnemonic language integers
+export function isMnemonicLangInt(value: unknown): value is MnemonicLanguageInt {
+	return typeof value === 'number' && value >= 0 && value <= 9;
+}
 
 export interface GenerateParams {
 	length?: number;

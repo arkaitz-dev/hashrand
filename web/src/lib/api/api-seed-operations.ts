@@ -17,11 +17,35 @@ const API_BASE = '/api';
 /**
  * Generic seed-based generation function using universal authenticated signed POST request
  */
-async function generateWithSeed<T>(endpoint: string, seedRequest: T): Promise<CustomHashResponse> {
+async function generateWithSeed<T extends object>(
+	endpoint: string,
+	seedRequest: T
+): Promise<CustomHashResponse> {
 	const { httpAuthenticatedSignedPOSTRequest } = await import('../httpSignedRequests');
+	const { alphabetToInt, mnemonicLangToInt } = await import('../types');
+
+	// Convert enums to integers (CRITICAL: must match backend)
+	const convertedRequest = { ...seedRequest } as Record<string, unknown>;
+
+	// Convert alphabet to integer if present
+	if ('alphabet' in seedRequest && typeof seedRequest.alphabet === 'string') {
+		const alphabetInt = alphabetToInt(
+			seedRequest.alphabet as import('../types').AlphabetTypeString
+		);
+		convertedRequest.alphabet = alphabetInt;
+	}
+
+	// Convert language to integer if present
+	if ('language' in seedRequest && typeof seedRequest.language === 'string') {
+		const langInt = mnemonicLangToInt(
+			seedRequest.language as import('../types').MnemonicLanguageString
+		);
+		convertedRequest.language = langInt;
+	}
+
 	return await httpAuthenticatedSignedPOSTRequest<T, CustomHashResponse>(
 		`${API_BASE}/${endpoint}`,
-		seedRequest
+		convertedRequest as T
 	);
 }
 

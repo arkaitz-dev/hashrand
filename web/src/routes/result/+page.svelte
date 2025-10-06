@@ -73,17 +73,48 @@
 	});
 
 	// Helper function to build params object from URL parameters (DRY)
-	function buildParamsFromUrlParams(
+	async function buildParamsFromUrlParams(
 		urlParams: Record<string, unknown>
-	): Record<string, string | number | boolean> {
+	): Promise<Record<string, string | number | boolean>> {
+		const { intToAlphabet, isAlphabetInt, intToMnemonicLang, isMnemonicLangInt } = await import(
+			'$lib/types'
+		);
 		const params: Record<string, string | number | boolean> = { raw: true };
 
 		// Convert and validate parameters
 		if (urlParams.length) params.length = parseInt(String(urlParams.length));
-		if (urlParams.alphabet) params.alphabet = String(urlParams.alphabet);
+
+		// CRITICAL: Alphabet MUST be integer (0-4) in encrypted URLs
+		// Strings are INVALID and indicate an error
+		if (urlParams.alphabet !== undefined) {
+			const alphabetValue = urlParams.alphabet;
+			if (typeof alphabetValue === 'number' && isAlphabetInt(alphabetValue)) {
+				// Convert integer to string for display
+				params.alphabet = intToAlphabet(alphabetValue);
+			} else {
+				// STRING IS INVALID - encrypted URLs must use integers
+				throw new Error(
+					`Invalid alphabet format: expected integer 0-4, got ${typeof alphabetValue}`
+				);
+			}
+		}
+
 		if (urlParams.prefix) params.prefix = String(urlParams.prefix);
 		if (urlParams.suffix) params.suffix = String(urlParams.suffix);
-		if (urlParams.language) params.language = String(urlParams.language);
+
+		// CRITICAL: Language MUST be integer (0-9) in encrypted URLs
+		// Strings are INVALID and indicate an error
+		if (urlParams.language !== undefined) {
+			const langValue = urlParams.language;
+			if (typeof langValue === 'number' && isMnemonicLangInt(langValue)) {
+				// Convert integer to string for display
+				params.language = intToMnemonicLang(langValue);
+			} else {
+				// STRING IS INVALID - encrypted URLs must use integers
+				throw new Error(`Invalid language format: expected integer 0-9, got ${typeof langValue}`);
+			}
+		}
+
 		if (urlParams.words) params.words = parseInt(String(urlParams.words));
 
 		return params;
@@ -145,7 +176,7 @@
 		usedProvidedSeed = hasProvidedSeed;
 
 		// Build parameters object using DRY helper function
-		const params = buildParamsFromUrlParams(urlParams);
+		const params = await buildParamsFromUrlParams(urlParams);
 
 		// CREATE TEMPORARY resultState to show UI immediately (before API call)
 		// This provides instant feedback to the user instead of blank screen
@@ -431,6 +462,9 @@
 		const basePath = endpointRoutes[$resultState.endpoint] || '/';
 
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
+			// Import conversion functions
+			const { alphabetToInt, mnemonicLangToInt } = await import('$lib/types');
+
 			const configParams: Record<string, unknown> = {};
 
 			// Add common parameters
@@ -438,7 +472,11 @@
 				configParams.length = $resultState.params.length;
 			}
 			if ($resultState.params.alphabet) {
-				configParams.alphabet = String($resultState.params.alphabet);
+				// CRITICAL: Convert alphabet string to integer BEFORE encryption
+				const alphabetStr = String($resultState.params.alphabet);
+				configParams.alphabet = alphabetToInt(
+					alphabetStr as import('$lib/types').AlphabetTypeString
+				);
 			}
 
 			// Add endpoint-specific parameters
@@ -451,7 +489,11 @@
 				}
 			} else if ($resultState.endpoint === 'mnemonic') {
 				if ($resultState.params.language) {
-					configParams.language = String($resultState.params.language);
+					// CRITICAL: Convert language string to integer BEFORE encryption
+					const langStr = String($resultState.params.language);
+					configParams.language = mnemonicLangToInt(
+						langStr as import('$lib/types').MnemonicLanguageString
+					);
 				}
 				if ($resultState.params.words) {
 					configParams.words = $resultState.params.words;
@@ -506,6 +548,9 @@
 
 		// Build parameters object (without seed)
 		if ($resultState.params && Object.keys($resultState.params).length > 0) {
+			// Import conversion functions
+			const { alphabetToInt, mnemonicLangToInt } = await import('$lib/types');
+
 			const configParams: Record<string, unknown> = {};
 
 			// Add common parameters
@@ -513,7 +558,11 @@
 				configParams.length = $resultState.params.length;
 			}
 			if ($resultState.params.alphabet) {
-				configParams.alphabet = String($resultState.params.alphabet);
+				// CRITICAL: Convert alphabet string to integer BEFORE encryption
+				const alphabetStr = String($resultState.params.alphabet);
+				configParams.alphabet = alphabetToInt(
+					alphabetStr as import('$lib/types').AlphabetTypeString
+				);
 			}
 
 			// Add endpoint-specific parameters
@@ -526,7 +575,11 @@
 				}
 			} else if ($resultState.endpoint === 'mnemonic') {
 				if ($resultState.params.language) {
-					configParams.language = String($resultState.params.language);
+					// CRITICAL: Convert language string to integer BEFORE encryption
+					const langStr = String($resultState.params.language);
+					configParams.language = mnemonicLangToInt(
+						langStr as import('$lib/types').MnemonicLanguageString
+					);
 				}
 				if ($resultState.params.words) {
 					configParams.words = $resultState.params.words;
