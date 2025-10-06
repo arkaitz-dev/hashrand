@@ -7,7 +7,7 @@ A **cryptographically secure random hash generator** built with Fermyon Spin and
 ```bash
 # 1. Clone and setup
 git clone <repository-url>
-cd hashrand-spin
+cd hashrand
 
 # 2. Generate development secrets
 python3 -c "

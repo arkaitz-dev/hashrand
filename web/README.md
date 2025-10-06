@@ -1,6 +1,6 @@
-# HashRand Spin Web Interface
+# HashRand Web Interface
 
-Professional web interface for the HashRand Spin API - a modern SPA built with SvelteKit 2.x, TypeScript, and TailwindCSS 4.0.
+Professional web interface for the HashRand API - a modern SPA built with SvelteKit 2.x, TypeScript, and TailwindCSS 4.0.
 
 ## 🎯 Features
 
@@ -182,7 +182,7 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 ### Build & Deployment
 
 - **@sveltejs/adapter-static**: SPA adapter for static deployment
-- **API Proxy Configuration**: Automatic proxying to HashRand Spin API on port 3000
+- **API Proxy Configuration**: Automatic proxying to HashRand API on port 3000
 - **Tailscale Integration**: Built-in remote development access support
 
 ## 🛠️ Development
@@ -190,14 +190,14 @@ Professional web interface for the HashRand Spin API - a modern SPA built with S
 ### Prerequisites
 
 - **Node.js 18+**: For package management and build tools
-- **HashRand Spin API**: Backend API running on `http://127.0.0.1:3000`
+- **HashRand API**: Backend API running on `http://127.0.0.1:3000`
 
 ### Quick Start
 
 ```bash
 # Clone and navigate to web interface
 git clone <repository-url>
-cd hashrand-spin/web
+cd hashrand/web
 
 # Install all dependencies
 npm install
@@ -238,7 +238,7 @@ npm run prepare      # Svelte-kit sync for development setup
 
 ## API Integration
 
-The web interface automatically proxies `/api/*` requests to the HashRand Spin backend API running on port 3000. No additional configuration needed for development.
+The web interface automatically proxies `/api/*` requests to the HashRand backend API running on port 3000. No additional configuration needed for development.
 
 ## 📁 Project Structure
 
@@ -359,7 +359,7 @@ npm run build
 
 ### API Endpoint
 
-The API endpoint is configured in `vite.config.ts`. For production, update the proxy target or configure your reverse proxy to route `/api/*` to your HashRand Spin API.
+The API endpoint is configured in `vite.config.ts`. For production, update the proxy target or configure your reverse proxy to route `/api/*` to your HashRand API.
 
 ### Styling
 

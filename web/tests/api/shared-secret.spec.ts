@@ -33,7 +33,7 @@ function extractMagicTokenFromLogs(): string | null {
 		execSync('sleep 1');
 
 		// Read backend log file
-		const logPath = '/home/arkaitz/proyectos/spin/hashrand-spin/.spin-dev.log';
+		const logPath = '/home/arkaitz/proyectos/spin/hashrand/.spin-dev.log';
 		const logContent = readFileSync(logPath, 'utf-8');
 
 		// Extract magic link (last occurrence)
@@ -66,7 +66,7 @@ function extractMagicTokenFromLogs(): string | null {
  */
 function clearBackendLogs(): void {
 	try {
-		const logPath = '/home/arkaitz/proyectos/spin/hashrand-spin/.spin-dev.log';
+		const logPath = '/home/arkaitz/proyectos/spin/hashrand/.spin-dev.log';
 		execSync(`> ${logPath}`);
 		console.log('✅ Backend logs cleared');
 	} catch (error) {

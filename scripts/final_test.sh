@@ -1338,7 +1338,7 @@ echo "✓ Temporary files cleaned"
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "\n${GREEN}🎉 ALL TESTS PASSED! 🎉${NC}"
-    echo -e "${GREEN}HashRand Spin API with Zero Knowledge Auth + Ed25519 Digital Signatures is working perfectly!${NC}"
+    echo -e "${GREEN}HashRand API with Zero Knowledge Auth + Ed25519 Digital Signatures is working perfectly!${NC}"
     echo -e "${GREEN}✓ Authentication flow with Ed25519 signature validation working${NC}"
     echo -e "${GREEN}✓ JWT protection active on all endpoints${NC}"
     echo -e "${GREEN}✓ Public endpoints accessible${NC}"

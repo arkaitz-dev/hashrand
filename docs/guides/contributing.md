@@ -17,8 +17,8 @@ Welcome to HashRand! This guide will help you contribute effectively to the proj
 
 ```bash
 # 1. Clone the repository
-git clone git@github.com:username/hashrand-spin.git
-cd hashrand-spin
+git clone git@github.com:username/hashrand.git
+cd hashrand
 
 # 2. Generate development secrets
 python3 -c "

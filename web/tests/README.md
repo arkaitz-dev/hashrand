@@ -1,6 +1,6 @@
-# E2E and API Testing for HashRand Spin
+# E2E and API Testing for HashRand
 
-Complete testing suite for HashRand Spin frontend using Playwright.
+Complete testing suite for HashRand frontend using Playwright.
 
 ## 📊 Test Suite Overview
 
@@ -235,7 +235,7 @@ Tests follow **SOLID/DRY/KISS principles**:
 **Solution**: Make sure you're in the `/web` directory:
 
 ```bash
-cd /home/arkaitz/proyectos/spin/hashrand-spin/web
+cd /home/arkaitz/proyectos/spin/hashrand/web
 npm run test:api
 ```
 

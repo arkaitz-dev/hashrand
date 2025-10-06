@@ -1,4 +1,4 @@
-/// Database module for HashRand Spin application
+/// Database module for HashRand application
 ///
 /// This module handles SQLite database operations for magic link authentication.
 pub mod connection;

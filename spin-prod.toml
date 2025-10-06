@@ -1,7 +1,7 @@
 spin_manifest_version = 2
 
 [application]
-name = "hashrand-spin"
+name = "hashrand"
 version = "0.1.0"
 authors = ["Arkaitz Dev <me@arkaitz.dev>"]
 description = "A random hash generator API built with Fermyon Spin"
@@ -48,18 +48,18 @@ database_name = { default = "hashrand" }
 
 [[trigger.http]]
 route = "/api/..."
-component = "hashrand-spin"
+component = "hashrand"
 
 [[trigger.http]]
 route = "/..."
 component = "static-fileserver"
 
-[component.hashrand-spin]
-source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
+[component.hashrand]
+source = "target/wasm32-wasip1/release/hashrand.wasm"
 allowed_outbound_hosts = ["https://send.api.mailtrap.io"]
 sqlite_databases = ["hashrand"]
 # Reference application variables in component variables
-[component.hashrand-spin.variables]
+[component.hashrand.variables]
 jwt_secret = "{{ jwt_secret }}"
 magic_link_hmac_key = "{{ magic_link_hmac_key }}"
 user_id_hmac_key = "{{ user_id_hmac_key }}"
@@ -89,7 +89,7 @@ mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
 from_email = "{{ from_email }}"
 database_name = "{{ database_name }}"
-[component.hashrand-spin.build]
+[component.hashrand.build]
 command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]
 

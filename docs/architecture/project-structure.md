@@ -5,7 +5,7 @@ Detailed overview of the HashRand project organization, file architecture, and c
 ## Repository Structure
 
 ```
-hashrand-spin/
+hashrand/
 ├── README.md                    # Project overview (simplified)
 ├── CHANGELOG.md                 # Version history and release notes
 ├── CLAUDE.md                    # Development guidance and session history
@@ -347,13 +347,13 @@ bip39 = { version = "2.2.0", features = ["all-languages"] }
 spin_manifest_version = 2
 
 [application]
-name = "hashrand-spin"
+name = "hashrand"
 
 [[trigger.http]]
 route = "/api/..."
-component = "hashrand-spin"
+component = "hashrand"
 
-[component.hashrand-spin]
+[component.hashrand]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 # No static fileserver - SvelteKit serves web interface on port 5173
 ```
@@ -363,17 +363,17 @@ source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 spin_manifest_version = 2
 
 [application]  
-name = "hashrand-spin"
+name = "hashrand"
 
 [[trigger.http]]
 route = "/api/..."
-component = "hashrand-spin"
+component = "hashrand"
 
 [[trigger.http]]
 route = "/..."
 component = "static-fileserver"
 
-[component.hashrand-spin]
+[component.hashrand]
 source = "target/wasm32-wasip1/release/hashrand_spin.wasm"
 
 [component.static-fileserver]

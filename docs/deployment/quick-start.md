@@ -15,12 +15,12 @@ Get HashRand running in minutes with this comprehensive setup guide.
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd hashrand-spin
+cd hashrand
 
 # Generate cryptographically secure secrets for development
 python3 -c "
 import secrets
-print('# HashRand Spin - Environment Variables for Backend API')
+print('# HashRand - Environment Variables for Backend API')
 print('# These are cryptographically secure secrets - NEVER commit to git')
 print()
 print('# JWT Secret for token signing (64 hex chars = 32 bytes)')

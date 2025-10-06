@@ -1,4 +1,4 @@
-# Runtime configuration for HashRand Spin SQLite databases
+# Runtime configuration for HashRand SQLite databases
 # This file configures multiple database environments
 
 # Development database (used for localhost and elite.faun-pirate.ts.net)

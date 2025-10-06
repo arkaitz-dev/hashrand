@@ -1,8 +1,8 @@
 {
-	"name": "hashrand-spin-web",
+	"name": "hashrand-web",
 	"private": true,
 	"version": "0.27.5",
-	"description": "Professional web interface for HashRand Spin API - hash, password, and API key generator",
+	"description": "Professional web interface for HashRand API - hash, password, and API key generator",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev --host",
@@ -70,6 +70,6 @@
 		"frontend",
 		"web-interface"
 	],
-	"author": "HashRand Spin",
+	"author": "HashRand",
 	"license": "MIT"
 }

@@ -72,7 +72,7 @@ just perf-test    # Performance testing
 ```bash
 # Clone and setup
 git clone <repository-url>
-cd hashrand-spin
+cd hashrand
 
 # Generate development secrets
 python3 -c "
@@ -127,7 +127,7 @@ just pre-commit
 ### Project Structure
 
 ```
-hashrand-spin/
+hashrand/
 ├── README.md              # Project overview
 ├── CHANGELOG.md           # Version history
 ├── CLAUDE.md              # Development guidance

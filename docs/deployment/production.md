@@ -147,20 +147,20 @@ CMD ["spin", "up", "--listen", "0.0.0.0:3000"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hashrand-spin
+  name: hashrand
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: hashrand-spin
+      app: hashrand
   template:
     metadata:
       labels:
-        app: hashrand-spin
+        app: hashrand
     spec:
       containers:
       - name: hashrand
-        image: hashrand-spin:latest
+        image: hashrand:latest
         ports:
         - containerPort: 3000
         env:

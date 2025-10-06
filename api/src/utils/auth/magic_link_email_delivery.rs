@@ -83,13 +83,13 @@ impl MagicLinkEmailDelivery {
     ) {
         println!("\n🔗 === EMAIL FALLBACK (DEVELOPMENT MODE) ===");
         println!("📧 TO: {}", email);
-        println!("📬 FROM: HashRand Spin <noreply@hashrand.dev>");
-        println!("📝 SUBJECT: Your Magic Link for HashRand Spin");
+        println!("📬 FROM: HashRand <noreply@hashrand.dev>");
+        println!("📝 SUBJECT: Your Magic Link for HashRand");
         println!("📄 EMAIL BODY:");
         println!("──────────────────────────────────────────────────");
         println!("Hi there!");
         println!();
-        println!("You requested access to HashRand Spin. Click the link below to sign in:");
+        println!("You requested access to HashRand. Click the link below to sign in:");
         println!();
         println!("🔗 {}", magic_link);
         println!();
@@ -101,7 +101,7 @@ impl MagicLinkEmailDelivery {
         println!("If you didn't request this, you can safely ignore this email.");
         println!();
         println!("Best regards,");
-        println!("The HashRand Spin Team");
+        println!("The HashRand Team");
         println!("──────────────────────────────────────────────────");
         println!("🔧 DEVELOPMENT INFO:");
         println!("   • UI Host: {:?}", ui_host);

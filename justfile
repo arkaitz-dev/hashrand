@@ -1,4 +1,4 @@
-# HashRand Spin - Development Tasks
+# HashRand - Development Tasks
 # Run `just` to see available commands
 
 # Environment file configuration
@@ -258,8 +258,8 @@ test-dev:
 
 # Show project information
 info:
-    @echo "HashRand Spin - Random Hash Generator API"
-    @echo "========================================="
+    @echo "HashRand - Random Hash Generator API"
+    @echo "====================================="
     @echo "Version: $(grep '^version' api/Cargo.toml | cut -d'"' -f2)"
     @echo "Rust Edition: $(grep '^edition' api/Cargo.toml | cut -d'"' -f2)"
     @echo "Rust Version: $(grep '^rust-version' api/Cargo.toml | cut -d'"' -f2)"
