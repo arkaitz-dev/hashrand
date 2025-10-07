@@ -43,7 +43,6 @@ pub async fn handle_login(
 
     // Handle specific endpoint: POST /api/login/magiclink/ (secure validation with Ed25519)
     if path == "/api/login/magiclink/" && *req.method() == Method::Post {
-        println!("🔐 Handling secure magic link validation with Ed25519 verification");
         return validate_magic_link_secure(req.body());
     }
 

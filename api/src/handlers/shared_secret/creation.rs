@@ -18,6 +18,10 @@ use serde_json::json;
 use spin_sdk::http::{Request, Response};
 
 /// Request payload for creating a shared secret
+///
+/// NOTE: receiver_language and sender_language are EXCEPTIONS to the integer
+/// encoding policy (see api/src/utils/auth/types.rs module doc).
+/// They use ISO 639-1 string codes because rust_i18n requires strings.
 #[derive(Debug, Deserialize, Serialize)]
 struct CreateSecretRequest {
     sender_email: String,
@@ -31,8 +35,10 @@ struct CreateSecretRequest {
     require_otp: bool,
     #[serde(default)]
     send_copy_to_sender: bool,
+    /// EXCEPTION: Uses ISO string instead of integer (rust_i18n requirement)
     #[serde(default)]
     receiver_language: Option<String>,
+    /// EXCEPTION: Uses ISO string instead of integer (rust_i18n requirement)
     #[serde(default)]
     sender_language: Option<String>,
     ui_host: String, // Required: UI hostname for URL generation

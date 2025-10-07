@@ -14,6 +14,7 @@ export {
 	getKeyPair,
 	clearAllKeyPairs,
 	signMessage,
+	signMessageWithKeyPair,
 	verifySignature,
 	publicKeyToHex,
 	publicKeyFromHex,

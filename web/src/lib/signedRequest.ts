@@ -32,7 +32,7 @@ export {
  * This is the production browser implementation
  *
  * @param payload - Data to be sent to API
- * @returns SignedRequest with Base64 payload and signature
+ * @returns SignedRequest with Base64 payload and base58 signature
  */
 export async function createSignedRequest<T>(
 	payload: T
@@ -46,7 +46,7 @@ export async function createSignedRequest<T>(
 	// Step 2: Encode JSON as Base64 URL-safe for transmission
 	const base64Payload = encodePayloadBase64(jsonPayload);
 
-	// Step 3: Sign the Base64 string using signMessage (supports WebCrypto + Noble)
+	// Step 3: Sign the Base64 string using signMessage (supports WebCrypto + Noble, returns base58)
 	const signature = await signMessage(base64Payload, keyPair);
 
 	return {
@@ -61,7 +61,7 @@ export async function createSignedRequest<T>(
  * Uses signMessage() which supports both WebCrypto and Noble keypairs
  *
  * @param params - Query parameters to sign
- * @returns Signature string for the JSON serialized parameters
+ * @returns Signature string (base58) for the JSON serialized parameters
  */
 export async function signQueryParams(params: Record<string, string>): Promise<string> {
 	// Get or generate Ed25519 keypair from IndexedDB
@@ -70,6 +70,6 @@ export async function signQueryParams(params: Record<string, string>): Promise<s
 	// Serialize parameters with deterministic JSON
 	const serializedParams = serializeQueryParams(params);
 
-	// Sign using signMessage (supports WebCrypto + Noble)
+	// Sign using signMessage (supports WebCrypto + Noble, returns base58)
 	return await signMessage(serializedParams, keyPair);
 }

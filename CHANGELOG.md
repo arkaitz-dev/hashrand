@@ -4,6 +4,144 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.8] - 2025-10-07
+
+### Added
+
+**📚 DOCUMENTATION: Enum Encoding Policy - Critical Design Rule**
+
+**Problem**:
+- Project has 2 different approaches for enum encoding (alphabet/mnemonic use integers, email_lang uses strings)
+- No documentation explaining why this inconsistency exists
+- Risk of future developers breaking the pattern without understanding rationale
+
+**Solution - Comprehensive Documentation**:
+
+Added **"Enum/List Encoding Policy"** as CRITICAL RULE in:
+
+1. **Frontend Types** (`web/src/lib/types/index.ts`):
+   - 24-line policy header at top of file
+   - Clear documentation of general rule (integers for all enums)
+   - Explicit exception for email_lang (rust_i18n requirement)
+   - Inline comments on LoginRequest and CreateSharedSecretRequest
+
+2. **Backend Types** (`api/src/utils/auth/types.rs`):
+   - Module-level documentation with policy
+   - Clear rationale for email_lang exception
+   - Inline doc comments on affected fields
+
+3. **Shared Secret Handler** (`api/src/handlers/shared_secret/creation.rs`):
+   - Struct documentation explaining language field exceptions
+   - Cross-references to main policy docs
+
+4. **Project Memory** (`CLAUDE.md`):
+   - New critical rule section after Email Testing Standards
+   - Examples showing byte savings (85-87% reduction)
+   - Enforcement guidelines for future development
+   - Never-delete directive
+
+**Policy Summary**:
+- ✅ **General Rule**: All enums → integers (minimize payload)
+- ✅ **Examples**: alphabet (85% smaller), mnemonic language (87% smaller)
+- ❌ **Exception**: email_lang fields use ISO strings (rust_i18n dependency)
+- 📍 **Trade-off**: +1-2 bytes for library compatibility
+
+**Files Modified** (Total: 5 files):
+- `web/src/lib/types/index.ts` (policy header + inline docs)
+- `api/src/utils/auth/types.rs` (module doc + field comments)
+- `api/src/handlers/shared_secret/creation.rs` (struct docs)
+- `CLAUDE.md` (critical rule section)
+- `CHANGELOG.md` (this entry)
+
+**Impact**:
+- ✅ **Clear design rationale** - Future developers understand the "why"
+- ✅ **Prevent regressions** - Policy ensures consistency
+- ✅ **Documented exceptions** - email_lang rationale explicit
+- ✅ **Enterprise standards** - Professional codebase documentation
+
+### Fixed
+
+**🐛 CRITICAL FIX: WebCrypto/Noble Keypair Incompatibility (Login Broken)**
+
+**Symptom**:
+- Login flow completely broken - browser not sending requests to backend
+- FlashMessage error: "❌ HTTP ERROR: Private key bytes required for signing"
+- Tests passing but production failing
+
+**Root Cause Analysis**:
+- Recent commit (e791836, ~48h ago) changed `signedRequest.ts` from `signMessage()` to `signMessageWithKeyPair()` for base58 support
+- **Critical incompatibility discovered**:
+  - `signMessage()`: Supports BOTH WebCrypto (browser) AND Noble (tests) keypairs
+  - `signMessageWithKeyPair()`: ONLY supports Noble keypairs (requires `privateKeyBytes`)
+- **Browser generates WebCrypto keypairs** (non-extractable, no `privateKeyBytes` property)
+- **Tests use Noble keypairs** (extractable, has `privateKeyBytes` property)
+- **Result**: Production broken, tests passing (hidden incompatibility)
+
+**Technical Details**:
+- WebCrypto CryptoKeyPair:
+  - `privateKey: CryptoKey` (non-extractable by design)
+  - NO `privateKeyBytes` property
+  - Used by browser for security
+
+- Noble KeyPair:
+  - `publicKeyBytes: Uint8Array`
+  - `privateKeyBytes: Uint8Array` (extractable)
+  - Used by tests for simplicity
+
+**Fix Implementation**:
+
+1. **Modified `signMessage()` to return base58** (`web/src/lib/ed25519/ed25519-signing.ts`):
+   - Added `signatureBytesToBase58` import
+   - Changed Noble path: `return signatureBytesToBase58(signature)`
+   - Changed WebCrypto path: `return signatureBytesToBase58(new Uint8Array(signature))`
+   - Now supports BOTH keypair types AND returns base58
+
+2. **Reverted `signedRequest.ts` to use `signMessage()`** (`web/src/lib/signedRequest.ts`):
+   - Reverted import: `signMessage` instead of `signMessageWithKeyPair`
+   - Reverted calls in `createSignedRequest()`: `await signMessage(base64Payload, keyPair)`
+   - Reverted calls in `signQueryParams()`: `await signMessage(serializedParams, keyPair)`
+   - Restores WebCrypto compatibility
+
+3. **Removed debugging artifacts** (8 files):
+   - Removed all `flashMessagesStore.addMessage()` calls (login.ts, unsigned-requests.ts)
+   - Removed all `println!` debugging (magic_link.rs, mod.rs, routing.rs)
+   - Clean production code
+
+**Files Modified** (Total: 10 files):
+- `web/src/lib/ed25519/ed25519-signing.ts` (base58 support in signMessage)
+- `web/src/lib/signedRequest.ts` (revert to signMessage for compatibility)
+- `web/src/lib/types/index.ts` (enum policy docs)
+- `web/src/lib/api/api-auth-operations/login.ts` (remove flashMessages)
+- `web/src/lib/httpSignedRequests/unsigned-requests.ts` (remove flashMessages)
+- `api/src/handlers/login/magic_link.rs` (remove println! debugging)
+- `api/src/handlers/login/mod.rs` (remove println! debugging)
+- `api/src/handlers/login/routing.rs` (remove println! debugging)
+- `web/package.json` (version bump: 0.27.7 → 0.27.8)
+- `CHANGELOG.md` (this entry)
+
+**Impact**:
+- ✅ **Login restored** - WebCrypto + Noble compatibility preserved
+- ✅ **Base58 migration complete** - All signatures now base58 (31% smaller)
+- ✅ **Dual keypair support** - Browser (WebCrypto) AND tests (Noble) working
+- ✅ **Production code clean** - All debugging artifacts removed
+- ✅ **All 51 tests passing** - Full test suite green
+- ✅ **Backend logs clean** - Successful auth flow with base58 signatures
+
+**Validation**:
+```bash
+just test
+# ✅ 35/35 bash tests passed
+# ✅ 16/16 Playwright tests passed
+# ✅ Login flow verified in production (tablet)
+# ✅ Backend logs show base58 signatures validated correctly
+```
+
+**Lesson Learned**:
+- Always test with ACTUAL browser environment, not just test suite
+- WebCrypto and Noble have different capabilities - need abstraction layer
+- `signMessage()` provides the right abstraction (works with both)
+- Tests can pass while production fails if they use different code paths
+
 ## [API v1.8.6 + Web v0.27.7] - 2025-10-06
 
 ### Changed

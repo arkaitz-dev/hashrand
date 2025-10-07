@@ -37,6 +37,32 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - **Add this rule to global ~/.claude/CLAUDE.md** - Must be in all projects
 - **This is EXTREMELY IMPORTANT and must NEVER be forgotten or overlooked**
 
+## Enum/List Encoding Policy - CRITICAL RULE - NEVER DELETE
+**📊 MANDATORY: Network payload optimization for ALL enum/fixed list fields:**
+
+**GENERAL RULE**: All fixed enums/lists transmitted between client-server MUST use integer encoding to minimize network payload size.
+
+**Why**: Network optimization - integers (1 byte) vs strings (2-20+ bytes)
+
+**Examples**:
+- ✅ `alphabet`: `"base58"` → `0` (saved 6 bytes, 85% reduction)
+- ✅ `mnemonic language`: `"english"` → `0` (saved 7 bytes, 87% reduction)
+
+**EXCEPTION (ONLY ONE)**:
+- ❌ `email_lang`, `receiver_language`, `sender_language`: MUST remain ISO 639-1 strings (`"es"`, `"en"`, etc.)
+  - **Reason**: Backend rust_i18n library requires ISO string codes for `set_locale()`
+  - **Trade-off**: +1-2 bytes per request for external library compatibility
+  - **Locations**: `LoginRequest.email_lang`, `CreateSharedSecretRequest.*_language`
+
+**Enforcement**:
+- When adding new enum fields, ALWAYS map to integers unless blocked by external dependency
+- Document any future exceptions in code comments with clear justification
+- See detailed documentation:
+  - Frontend: `web/src/lib/types/index.ts` (top of file)
+  - Backend: `api/src/utils/auth/types.rs` (module doc)
+
+**NEVER delete this rule** - Copy to every project using network APIs
+
 ## Essential Commands
 ```bash
 just dev         # PRIMARY: Complete development environment (API + Web + Tailscale)

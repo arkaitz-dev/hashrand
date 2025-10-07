@@ -7,13 +7,14 @@
 
 import { ed25519 } from '@noble/curves/ed25519';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { signatureBytesToBase58 } from './ed25519-core';
 import type { Ed25519KeyPair } from './ed25519-types';
 
 /**
  * Sign message using Ed25519 private key
  * @param message - Message to sign (string or bytes)
  * @param privateKey - Ed25519 private key (CryptoKey)
- * @returns Signature as hex string (128 hex chars = 64 bytes)
+ * @returns Signature as base58 string (~88 chars, 31% shorter than hex)
  */
 export async function signMessage(
 	message: string | Uint8Array,
@@ -25,7 +26,7 @@ export async function signMessage(
 		// Use Noble curves for signing
 		// Signing with Noble curves
 		const signature = ed25519.sign(new Uint8Array(messageBytes), keyPair.privateKeyBytes);
-		return bytesToHex(signature);
+		return signatureBytesToBase58(signature);
 	} else if (keyPair.privateKey) {
 		// Use WebCrypto for signing
 		// Signing with WebCrypto
@@ -35,7 +36,7 @@ export async function signMessage(
 				keyPair.privateKey,
 				new Uint8Array(messageBytes)
 			);
-			return bytesToHex(new Uint8Array(signature));
+			return signatureBytesToBase58(new Uint8Array(signature));
 		} catch (error) {
 			throw new Error(`WebCrypto signing failed: ${error}`);
 		}

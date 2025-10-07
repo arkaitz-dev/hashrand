@@ -1,3 +1,28 @@
+// ============================================================================
+// ENUM/LIST ENCODING POLICY - CRITICAL DESIGN RULE
+// ============================================================================
+//
+// **GENERAL RULE**: All fixed enums/lists transmitted between client-server
+// MUST use integer encoding to minimize payload size.
+//
+// **WHY**: Network optimization - integers (1 byte) vs strings (2-20+ bytes)
+//
+// **EXAMPLES**:
+// - ✅ alphabet: "base58" → 0 (saved 6 bytes, 85% reduction)
+// - ✅ mnemonic language: "english" → 0 (saved 7 bytes, 87% reduction)
+//
+// **EXCEPTION (ONLY ONE)**:
+// - ❌ email_lang: MUST remain string ("es", "en", etc.)
+//   - Reason: Backend rust_i18n library requires ISO 639-1 string codes
+//   - Trade-off: +1-2 bytes per request for library compatibility
+//   - Location: LoginRequest.email_lang, SharedSecretRequest.*_language
+//
+// **ENFORCEMENT**:
+// - When adding new enums, ALWAYS map to integers unless external dependency
+// - Document any future exceptions here with justification
+//
+// ============================================================================
+
 // API types matching the backend
 // AlphabetType: Internal representation uses strings for UI, converted to integers for API
 export type AlphabetTypeString =
@@ -204,6 +229,9 @@ export interface LoginRequest {
 	email: string;
 	ui_host: string; // Frontend URL for magic link generation (REQUIRED)
 	next?: string; // Simple URL path to redirect to after authentication
+	// EXCEPTION TO INTEGER ENCODING POLICY (see top of file):
+	// email_lang uses ISO string codes ("es", "en") instead of integers
+	// because backend rust_i18n requires string codes
 	email_lang: string; // Language code for email template (e.g., "es", "en") - REQUIRED, matches user selection
 	pub_key: string; // Ed25519 public key (64-character hex string, 32 bytes) - REQUIRED
 	signature: string; // Ed25519 signature of email + pub_key message (128-character hex string, 64 bytes) - REQUIRED
@@ -236,6 +264,8 @@ export interface CreateSharedSecretRequest {
 	max_reads: number; // 1-10
 	require_otp: boolean;
 	send_copy_to_sender: boolean;
+	// EXCEPTION TO INTEGER ENCODING POLICY (see top of file):
+	// *_language fields use ISO string codes because backend rust_i18n requires strings
 	receiver_language?: string; // Optional: language for receiver email (defaults to 'en')
 	sender_language?: string; // Optional: language for sender copy email (defaults to 'en')
 	ui_host: string; // Required: UI hostname for URL generation (e.g., "localhost" or "app.domain.com")
