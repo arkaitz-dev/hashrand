@@ -52,13 +52,13 @@ fn parse_signed_request(body_bytes: &[u8]) -> Result<MagicLinkSignedRequest, Res
 ///
 /// Ensures the Base64-encoded JSON payload can be properly deserialized
 fn validate_payload_structure(signed_request: &MagicLinkSignedRequest) -> Result<(), Response> {
-    match SignedRequestValidator::deserialize_base64_payload::<MagicLinkPayload>(&signed_request.payload) {
+    match SignedRequestValidator::deserialize_base64_payload::<MagicLinkPayload>(
+        &signed_request.payload,
+    ) {
         Ok(_) => Ok(()),
-        Err(_) => {
-            Err(
-                create_error_response(400, "Invalid Base64 JSON payload format")
-                    .expect("Failed to create error response"),
-            )
-        }
+        Err(_) => Err(
+            create_error_response(400, "Invalid Base64 JSON payload format")
+                .expect("Failed to create error response"),
+        ),
     }
 }

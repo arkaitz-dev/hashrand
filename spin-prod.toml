@@ -90,7 +90,7 @@ mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
 from_email = "{{ from_email }}"
 database_name = "{{ database_name }}"
 [component.hashrand.build]
-command = "cargo build --target wasm32-wasip1 --release --manifest-path api/Cargo.toml"
+command = "cargo build --target wasm32-wasip1 --release --no-default-features --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]
 
 [component.static-fileserver]

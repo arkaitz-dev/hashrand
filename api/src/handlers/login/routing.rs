@@ -34,7 +34,7 @@ pub fn extract_api_path(req: &Request) -> String {
 /// Ensures the auth_sessions table exists before processing requests
 /// Returns None if successful, Some(Response) with error if failed
 pub fn initialize_database_or_error() -> Option<Response> {
-    if let Err(_) = initialize_database() {
+    if initialize_database().is_err() {
         return Some(
             create_error_response(500, "Database initialization failed")
                 .expect("Failed to create error response"),

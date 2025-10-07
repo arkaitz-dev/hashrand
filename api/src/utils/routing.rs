@@ -5,6 +5,10 @@ use crate::handlers::{
     handle_login, handle_mnemonic_request, handle_password_request, handle_retrieve_secret,
     handle_version,
 };
+
+// Test endpoint handler (DEV-MODE ONLY - eliminated in production builds)
+#[cfg(feature = "dev-mode")]
+use crate::handlers::handle_dry_run_toggle;
 use crate::utils::jwt_middleware::{requires_authentication, with_auth_and_renewal};
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
@@ -89,6 +93,13 @@ pub async fn route_request_with_req(
         // GET-only endpoints
         path if path.ends_with("/api/version") => match *method {
             Method::Get => handle_version(),
+            _ => handle_method_not_allowed(),
+        },
+
+        // Test endpoints (DEV-MODE ONLY - this entire branch is eliminated in production)
+        #[cfg(feature = "dev-mode")]
+        path if path.starts_with("/api/test/dry-run") => match *method {
+            Method::Get => handle_dry_run_toggle(req).await,
             _ => handle_method_not_allowed(),
         },
 

@@ -21,6 +21,13 @@ export default defineConfig({
 	testDir: './tests',
 
 	/**
+	 * Global setup/teardown for email dry-run mode
+	 * Executed ONCE before all tests start and after all tests complete
+	 */
+	globalSetup: './tests/global-setup.ts',
+	globalTeardown: './tests/global-teardown.ts',
+
+	/**
 	 * Maximum time one test can run for (5 minutes for key rotation tests)
 	 * Key rotation tests need ~3 minutes for full 2/3 system cycle
 	 */

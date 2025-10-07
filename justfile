@@ -179,17 +179,34 @@ watch: dev
     echo "============================================================="
     tail -f .spin-dev.log .npm-dev.log
 
+# Run bash integration tests only (35 tests)
+# Automatically activates/deactivates email dry-run mode
+test-bash:
+    #!/usr/bin/env bash
+    echo "Running bash integration tests (35 tests)..."
+    echo "Note: Email dry-run mode managed automatically"
+    echo ""
+    ./scripts/final_test.sh
+
+# Run Playwright API tests only (16 tests)
+# Automatically activates/deactivates email dry-run mode via globalSetup/Teardown
+test-api:
+    #!/usr/bin/env bash
+    echo "Running Playwright API tests (16 tests)..."
+    echo "Note: Email dry-run mode managed automatically via globalSetup/Teardown"
+    echo ""
+    cd web && npm run test:api
+
 # Run comprehensive test suite (bash + Playwright)
+# IMPORTANT: Both test suites manage their own email dry-run mode independently
 test:
     #!/usr/bin/env bash
-    echo "Running comprehensive test suite..."
+    echo "Running comprehensive test suite (bash + Playwright)..."
+    echo "Note: Each test suite automatically manages email dry-run mode"
     echo ""
-    # Run bash tests (35 tests)
-    ./scripts/final_test.sh
+    just test-bash
     echo ""
-    echo "Running Playwright API tests (16 tests)..."
-    echo "==========================================="
-    cd web && npm run test:api
+    just test-api
     echo ""
     echo "✅ All tests completed!"
 

@@ -19,6 +19,19 @@ NC='\033[0m'
 # Source signed response helpers
 source scripts/signed_response_helpers.sh
 
+# ========== EMAIL DRY-RUN ACTIVATION ==========
+# CRITICAL: Activate dry-run mode to prevent real email sending during tests
+echo -e "${PURPLE}📧 Activating email DRY-RUN mode (preventing real email sends)...${NC}"
+DRY_RUN_RESPONSE=$(curl -s http://localhost:3000/api/test/dry-run?enabled=true 2>&1)
+if echo "$DRY_RUN_RESPONSE" | grep -q "email_dry_run.*true"; then
+    echo -e "${GREEN}✓ Email dry-run mode ACTIVATED${NC}"
+else
+    echo -e "${YELLOW}⚠ Warning: Failed to activate dry-run mode (server may not be running)${NC}"
+    echo -e "${YELLOW}  Continuing tests but emails may be sent...${NC}"
+fi
+echo ""
+# ==============================================
+
 test_api() {
     local name="$1"
     local url="$2"
@@ -1335,6 +1348,13 @@ rm -f .test-receiver-pubkey .test-magiclink-pubkey-sender
 rm -f .test-receiver-private-key .test-ed25519-private-key-sender
 rm -f .test-ed25519-private-key-sender-backup
 echo "✓ Temporary files cleaned"
+
+# ========== EMAIL DRY-RUN DEACTIVATION ==========
+# Restore normal email mode after tests complete
+echo -e "\n${PURPLE}📧 Deactivating email DRY-RUN mode (restoring normal operation)...${NC}"
+curl -s http://localhost:3000/api/test/dry-run?enabled=false > /dev/null 2>&1
+echo -e "${GREEN}✓ Email mode restored to normal${NC}"
+# ===============================================
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "\n${GREEN}🎉 ALL TESTS PASSED! 🎉${NC}"

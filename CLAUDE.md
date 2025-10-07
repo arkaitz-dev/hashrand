@@ -38,6 +38,49 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - **Add this rule to global ~/.claude/CLAUDE.md** - Must be in all projects
 - **This is EXTREMELY IMPORTANT and must NEVER be forgotten or overlooked**
 
+## Test Execution Standards - CRITICAL RULE - NEVER DELETE
+**🧪 MANDATORY: Email dry-run mode automatically activated in ALL test scenarios:**
+
+**Available Test Commands:**
+- `just test` - Run ALL tests (35 bash + 16 Playwright) sequentially - **RECOMMENDED**
+- `just test-bash` - Run ONLY bash integration tests (35 tests)
+- `just test-api` - Run ONLY Playwright API tests (16 tests)
+
+**Automatic Dry-Run Management:**
+- **Bash tests** (`just test-bash` / `./scripts/final_test.sh`): Activates dry-run at START, deactivates at END
+- **Playwright tests** (`just test-api` / `npm run test:api`): Activates via `globalSetup`, deactivates via `globalTeardown`
+- **Combined suite** (`just test`): Runs both suites sequentially, each manages its own dry-run independently
+- **Email dry-run mode prevents real email sending during tests** - Only logs email content
+- **Tests can be run independently or combined** - Each suite handles its own dry-run lifecycle
+- **Dry-run is AUTOMATIC** - No manual intervention needed when running tests
+- **Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
+
+**Architecture: Compilation-Time Feature Flags (dev-mode)**
+- **Development builds** (`spin-dev.toml`): `cargo build --release` → `dev-mode` feature ACTIVE (default)
+  - Dry-run mode: ENABLED by default (emails OFF) - must be explicitly disabled for manual testing
+  - Endpoint `/api/test/dry-run` EXISTS and functional
+  - Code: `AtomicBool::new(true)` → emails disabled by default in dev
+- **Production builds** (`spin-prod.toml`): `cargo build --release --no-default-features` → `dev-mode` feature ELIMINATED
+  - All dry-run code REMOVED from WASM binary (zero overhead)
+  - Endpoint `/api/test/dry-run` DOES NOT EXIST (404)
+  - Emails ALWAYS sent (no dry-run code exists)
+- **Security**: Impossible to accidentally activate dry-run in production (code eliminated by compiler)
+- **Implementation**: `#[cfg(feature = "dev-mode")]` guards in:
+  - `api/src/utils/email.rs` - Email sending functions
+  - `api/src/handlers/test.rs` - Test endpoint (entire file)
+  - `api/src/utils/routing.rs` - Endpoint routing
+  - `api/Cargo.toml` - Feature definition: `default = ["dev-mode"]`
+
+**Test Suite Dry-Run Management:**
+- **Bash tests** (`scripts/final_test.sh`):
+  - Line ~23: `curl /api/test/dry-run?enabled=true` - Activates before tests
+  - Line ~1354: `curl /api/test/dry-run?enabled=false` - Deactivates after cleanup
+- **Playwright tests** (`web/tests/api/`):
+  - `web/tests/global-setup.ts` - Activates dry-run ONCE before all tests
+  - `web/tests/global-teardown.ts` - Deactivates dry-run ONCE after all tests
+  - `web/playwright.config.ts` - Registers globalSetup/globalTeardown
+- **Independence**: Each suite can run independently, manages own dry-run lifecycle
+
 ## Enum/List Encoding Policy - CRITICAL RULE - NEVER DELETE
 **📊 MANDATORY: Network payload optimization for ALL enum/fixed list fields:**
 
@@ -66,16 +109,19 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 ## Essential Commands
 ```bash
+# Development
 just dev         # PRIMARY: Complete development environment (API + Web + Tailscale)
 just stop        # Stop all services
 just status      # Services status
-just test        # Run 51 tests (35 bash + 16 Playwright)
+
+# Testing (auto dry-run management)
+just test        # Run ALL tests (35 bash + 16 Playwright) - RECOMMENDED
+just test-bash   # Run ONLY bash integration tests (35 tests)
+just test-api    # Run ONLY Playwright API tests (16 tests)
+
+# Code Quality
 just check       # Code quality (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
-
-# Playwright Tests (browser-less, perfect for CI/CD)
-cd web && npm run test:api          # 16 API tests without browser
-cd web && npm run test:api:verbose  # Detailed output
 ```
 
 ## General Architecture

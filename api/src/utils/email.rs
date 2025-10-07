@@ -7,6 +7,47 @@ use spin_sdk::{
 
 use crate::email_templates::render_magic_link_email;
 
+// ==================== DEV-MODE ONLY: Email Dry-Run System ====================
+// This entire block is ELIMINATED from production builds (cargo build --no-default-features)
+// In development: emails are NOT sent by default (dry-run ON), can be toggled via endpoint
+// In production: this code doesn't exist, emails ALWAYS sent
+
+#[cfg(feature = "dev-mode")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Global flag to control dry-run mode (DEV-MODE ONLY)
+/// Default: true (emails OFF) - must be explicitly disabled for manual browser testing
+/// This static is completely removed from production binaries
+#[cfg(feature = "dev-mode")]
+static EMAIL_DRY_RUN: AtomicBool = AtomicBool::new(true);
+
+/// Toggle email dry-run mode (DEV-MODE ONLY)
+/// This function doesn't exist in production builds
+///
+/// # Safety
+/// Thread-safe using atomic operations. Can be called from multiple threads.
+#[cfg(feature = "dev-mode")]
+pub fn set_email_dry_run(enabled: bool) {
+    EMAIL_DRY_RUN.store(enabled, Ordering::Relaxed);
+    eprintln!(
+        "📧 [DEV-MODE] Email dry-run: {}",
+        if enabled {
+            "ON (emails will NOT be sent)"
+        } else {
+            "OFF (emails will be sent)"
+        }
+    );
+}
+
+/// Check if email dry-run mode is enabled (DEV-MODE ONLY)
+/// Returns: true if dry-run active (don't send emails)
+#[cfg(feature = "dev-mode")]
+fn is_email_dry_run_enabled() -> bool {
+    EMAIL_DRY_RUN.load(Ordering::Relaxed)
+}
+
+// ==================== End DEV-MODE Block ====================
+
 /// Email configuration loaded from Spin variables
 #[derive(Debug)]
 pub struct EmailConfig {
@@ -127,6 +168,27 @@ pub async fn send_magic_link_email(
     magic_link: &str,
     language: Option<&str>,
 ) -> Result<()> {
+    // DEV-MODE ONLY: Check dry-run flag before sending
+    // Production builds: this entire block is removed, email always sent
+    #[cfg(feature = "dev-mode")]
+    {
+        if is_email_dry_run_enabled() {
+            let (subject, html_content, text_content) =
+                render_magic_link_email(magic_link, language.unwrap_or("en"));
+
+            eprintln!("📧 [DRY-RUN] Magic link email NOT sent (dev-mode, testing)");
+            eprintln!("   📬 To: {}", recipient_email);
+            eprintln!("   📝 Subject: {}", subject);
+            eprintln!("   🔗 Magic Link: {}", magic_link);
+            eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
+            eprintln!("   📄 HTML length: {} bytes", html_content.len());
+            eprintln!("   📄 Text length: {} bytes", text_content.len());
+
+            return Ok(());
+        }
+    }
+
+    // ALWAYS executed in production, only if dry-run OFF in development
     let config = EmailConfig::from_environment()?;
 
     // Validate email format (basic validation)
@@ -191,17 +253,7 @@ pub async fn send_shared_secret_receiver_email(
 ) -> Result<()> {
     use crate::email_templates::shared_secret::render_shared_secret_receiver_email;
 
-    let config = EmailConfig::from_environment()?;
-
-    // Validate email format
-    if recipient_email.is_empty() || !recipient_email.contains('@') {
-        return Err(anyhow!(
-            "Invalid recipient email address: {}",
-            recipient_email
-        ));
-    }
-
-    // Render email template
+    // Render email template (needed for both dry-run and real sending)
     let (subject, html_content, text_content) = render_shared_secret_receiver_email(
         secret_url,
         reference,
@@ -211,6 +263,39 @@ pub async fn send_shared_secret_receiver_email(
         max_reads,
         language.unwrap_or("en"),
     );
+
+    // DEV-MODE ONLY: Check dry-run flag before sending
+    // Production builds: this entire block is removed, email always sent
+    #[cfg(feature = "dev-mode")]
+    {
+        if is_email_dry_run_enabled() {
+            eprintln!("📧 [DRY-RUN] Shared secret receiver email NOT sent (dev-mode, testing)");
+            eprintln!("   📬 To: {}", recipient_email);
+            eprintln!("   📝 Subject: {}", subject);
+            eprintln!("   🔗 Secret URL: {}", secret_url);
+            eprintln!("   🔑 Reference: {}", reference);
+            eprintln!("   🔐 OTP: {}", otp.unwrap_or("N/A"));
+            eprintln!("   👤 Sender: {}", sender_email);
+            eprintln!("   ⏰ Expires: {} hours", expires_hours);
+            eprintln!("   📖 Max reads: {}", max_reads);
+            eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
+            eprintln!("   📄 HTML length: {} bytes", html_content.len());
+            eprintln!("   📄 Text length: {} bytes", text_content.len());
+
+            return Ok(());
+        }
+    }
+
+    // ALWAYS executed in production, only if dry-run OFF in development
+    let config = EmailConfig::from_environment()?;
+
+    // Validate email format
+    if recipient_email.is_empty() || !recipient_email.contains('@') {
+        return Err(anyhow!(
+            "Invalid recipient email address: {}",
+            recipient_email
+        ));
+    }
 
     // Generate unique Message-ID
     let message_id = format!(
@@ -311,14 +396,7 @@ pub async fn send_shared_secret_sender_email(
 ) -> Result<()> {
     use crate::email_templates::shared_secret::render_shared_secret_sender_email;
 
-    let config = EmailConfig::from_environment()?;
-
-    // Validate email format
-    if sender_email.is_empty() || !sender_email.contains('@') {
-        return Err(anyhow!("Invalid sender email address: {}", sender_email));
-    }
-
-    // Render email template
+    // Render email template (needed for both dry-run and real sending)
     let (subject, html_content, text_content) = render_shared_secret_sender_email(
         secret_url,
         reference,
@@ -326,6 +404,36 @@ pub async fn send_shared_secret_sender_email(
         expires_hours,
         language.unwrap_or("en"),
     );
+
+    // DEV-MODE ONLY: Check dry-run flag before sending
+    // Production builds: this entire block is removed, email always sent
+    #[cfg(feature = "dev-mode")]
+    {
+        if is_email_dry_run_enabled() {
+            eprintln!(
+                "📧 [DRY-RUN] Shared secret sender (copy) email NOT sent (dev-mode, testing)"
+            );
+            eprintln!("   📬 To: {}", sender_email);
+            eprintln!("   📝 Subject: {}", subject);
+            eprintln!("   🔗 Secret URL: {}", secret_url);
+            eprintln!("   🔑 Reference: {}", reference);
+            eprintln!("   👤 Receiver: {}", receiver_email);
+            eprintln!("   ⏰ Expires: {} hours", expires_hours);
+            eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
+            eprintln!("   📄 HTML length: {} bytes", html_content.len());
+            eprintln!("   📄 Text length: {} bytes", text_content.len());
+
+            return Ok(());
+        }
+    }
+
+    // ALWAYS executed in production, only if dry-run OFF in development
+    let config = EmailConfig::from_environment()?;
+
+    // Validate email format
+    if sender_email.is_empty() || !sender_email.contains('@') {
+        return Err(anyhow!("Invalid sender email address: {}", sender_email));
+    }
 
     // Generate unique Message-ID
     let message_id = format!(
