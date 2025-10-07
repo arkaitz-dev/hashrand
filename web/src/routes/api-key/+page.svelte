@@ -22,8 +22,7 @@
 	function getDefaultParams(): ApiKeyParams {
 		return {
 			length: 44, // Minimum for full alphabet
-			alphabet: 'full',
-			raw: true
+			alphabet: 'full'
 		};
 	}
 
@@ -110,8 +109,7 @@
 		},
 		getParams: () => ({
 			length: length ?? 44,
-			alphabet: alphabet ?? 'full',
-			raw: true
+			alphabet: alphabet ?? 'full'
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;

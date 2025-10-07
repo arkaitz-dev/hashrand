@@ -20,8 +20,7 @@
 	function getDefaultParams(): MnemonicParams {
 		return {
 			language: 'english',
-			words: 12,
-			raw: true
+			words: 12
 		};
 	}
 
@@ -179,8 +178,7 @@
 		},
 		getParams: () => ({
 			language: language ?? 'english',
-			words: words ?? 12,
-			raw: true
+			words: words ?? 12
 		}),
 		get urlProvidedSeed() {
 			return urlProvidedSeed;

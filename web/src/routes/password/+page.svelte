@@ -22,8 +22,7 @@
 	function getDefaultParams(): PasswordParams {
 		return {
 			length: 21, // Minimum for full-with-symbols alphabet
-			alphabet: 'full-with-symbols',
-			raw: true
+			alphabet: 'full-with-symbols'
 		};
 	}
 

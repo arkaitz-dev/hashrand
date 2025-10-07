@@ -129,25 +129,21 @@ export interface GenerateParams {
 	alphabet?: AlphabetType;
 	prefix?: string;
 	suffix?: string;
-	raw?: boolean;
 }
 
 export interface PasswordParams {
 	length?: number;
 	alphabet?: 'no-look-alike' | 'full-with-symbols';
-	raw?: boolean;
 }
 
 export interface ApiKeyParams {
 	length?: number;
 	alphabet?: 'no-look-alike' | 'full';
-	raw?: boolean;
 }
 
 export interface MnemonicParams {
 	language?: string;
 	words?: 12 | 24;
-	raw?: boolean;
 }
 
 // POST request body for seeded generation

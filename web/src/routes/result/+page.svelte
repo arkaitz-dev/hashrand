@@ -79,7 +79,7 @@
 		const { intToAlphabet, isAlphabetInt, intToMnemonicLang, isMnemonicLangInt } = await import(
 			'$lib/types'
 		);
-		const params: Record<string, string | number | boolean> = { raw: true };
+		const params: Record<string, string | number | boolean> = {};
 
 		// Convert and validate parameters
 		if (urlParams.length) params.length = parseInt(String(urlParams.length));
@@ -851,7 +851,7 @@
 							<!-- Content - collapsible on mobile, always visible on desktop -->
 							<dl class="space-y-2 {showParametersUsed ? 'block' : 'hidden'} md:block">
 								{#each Object.entries($resultState.params) as [key, value]}
-									{#if value !== undefined && value !== null && value !== '' && key !== 'raw'}
+									{#if value !== undefined && value !== null && value !== ''}
 										<div>
 											<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
 												{translateParameterKey(key)}

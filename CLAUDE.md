@@ -4,9 +4,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-05 - **API v1.8.4 + Web v0.27.1**
-- 🐛 **Latest**: CRITICAL FIX - Expiration date showing year 1970 (backend returning hardcoded expires_at:0) - v1.8.4
-- 🎨 **Latest**: UI simplification - Removed redundant "(lecturas limitadas)" from receiver role in all 13 languages - v0.27.1
+**Last Update**: 2025-10-07 - **API v1.8.4 + Web v0.27.9**
+- ⚡ **Latest**: PERF - Eliminated useless `raw` parameter from all requests (~10 bytes/request saved) - v0.27.9
+- 🐛 CRITICAL FIX - Expiration date showing year 1970 (backend returning hardcoded expires_at:0) - v1.8.4
+- 🎨 UI simplification - Removed redundant "(lecturas limitadas)" from receiver role in all 13 languages - v0.27.1
 - 🐛 CRITICAL FIX - Incomplete URLs in shared secret emails/response (added ui_host + protocol logic) - v1.8.3/v0.27.0
 - 🌐 Multi-language email support - Fixed placeholders + language selector for shared secret emails (13 languages) - v0.26.0
 - 🔐 Shared Secret Feature - Secure text sharing with encryption, dual-URL system, OTP protection (v1.8.0 + v0.25.0)

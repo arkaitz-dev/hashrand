@@ -25,8 +25,7 @@
 			length: 21,
 			alphabet: 'base58',
 			prefix: '',
-			suffix: '',
-			raw: true
+			suffix: ''
 		};
 	}
 

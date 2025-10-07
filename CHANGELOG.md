@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.9] - 2025-10-07
+
+### Removed
+
+**⚡ PERFORMANCE: Eliminated useless `raw` parameter from all requests**
+
+**Root Cause Analysis**:
+- Frontend was sending `raw: true` parameter in ALL generation requests (custom, password, api-key, mnemonic)
+- Backend NEVER used this parameter - always returned JSON SignedResponse regardless
+- Parameter was being serialized, transmitted over network, and completely ignored
+- Wasted ~10 bytes per request + unnecessary serialization overhead
+
+**Solution - Complete Elimination**:
+
+1. **Type Definitions** (`web/src/lib/types/index.ts`):
+   - Removed `raw?: boolean` from 4 interfaces: `GenerateParams`, `PasswordParams`, `ApiKeyParams`, `MnemonicParams`
+
+2. **Route Components** (6 files modified):
+   - `routes/password/+page.svelte`: Removed `raw: true` from default params
+   - `routes/custom/+page.svelte`: Removed `raw: true` from default params
+   - `routes/api-key/+page.svelte`: Removed `raw: true` from default params (2 occurrences)
+   - `routes/mnemonic/+page.svelte`: Removed `raw: true` from default params (2 occurrences)
+   - `routes/result/+page.svelte`: Removed `raw: true` from params initialization + removed filter `key !== 'raw'`
+
+**Verification**:
+- ✅ Backend audit: Never processed `raw` parameter (always returns JSON)
+- ✅ Tests audit: No bash or Playwright tests used `raw`
+- ✅ ESLint: 0 errors after changes
+- ✅ Prettier: All files formatted correctly
+
+**Impact**:
+- 🎯 Reduced payload size: ~10 bytes saved per request
+- 🎯 Eliminated unnecessary serialization processing
+- 🎯 Cleaner codebase: Removed dead parameter from entire frontend
+- 🎯 Better maintainability: No confusion about unused parameters
+
+**Files Modified**: 6 frontend files
+**Backend Changes**: None (never used parameter)
+**Test Changes**: None (never tested parameter)
+
 ## [Web v0.27.8] - 2025-10-07
 
 ### Added
