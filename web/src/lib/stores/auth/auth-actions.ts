@@ -48,8 +48,14 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	accessToken: string;
 	loginResponse: LoginResponse;
 }> {
+	logger.info('[auth-actions] validateMagicLink called with token:', {
+		tokenLength: magicToken.length,
+		tokenPrefix: magicToken.substring(0, 20) + '...'
+	});
+
 	const { api } = await import('../../api');
 	const loginResponse = await api.validateMagicLink(magicToken);
+	logger.info('[auth-actions] Magic link validation successful, processing response');
 
 	// Get pending email before clearing it (needed for Zero Knowledge UX)
 	const { sessionManager } = await import('../../session-manager');

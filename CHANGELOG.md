@@ -4,6 +4,194 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.13] - 2025-10-08
+
+### Added
+
+**🔍 DEBUG: Add comprehensive magic link validation logging**
+
+**Problem**:
+- User reported magic link not working: no API logs for `/api/login/magiclink` endpoint
+- No frontend error logs visible during validation flow
+- Difficult to diagnose where validation flow fails (detection → HTTP request → response)
+- Silent failures with no visibility into the execution path
+
+**Root Cause Analysis**:
+- Missing logs at critical points in magic link flow:
+  1. URL parameter detection (+layout.svelte browser load check)
+  2. Function entry points (forceMagicLinkValidation, handleMagicLinkValidation)
+  3. HTTP request initiation (login.ts::validateMagicLink)
+  4. Backend endpoint call (should see info! logs from API)
+  5. Error paths (all catch blocks were silent)
+
+**Solution - Comprehensive Logging Strategy**:
+
+1. **Entry point detection** (`+layout.svelte` lines 106-124):
+   - Logs when magic link detected in URL at browser load
+   - Shows pathname and token prefix
+   - Logs when NO magic link present (confirms detection logic)
+
+2. **Function call tracking** (`+layout.svelte` lines 42-46, 207-211):
+   - `forceMagicLinkValidation`: Entry log with processing state + tokens
+   - `handleMagicLinkValidation`: Entry log with duplicate detection info
+   - Logs when duplicates are prevented (helps diagnose race conditions)
+   - Success/failure logs for both paths
+
+3. **HTTP request visibility** (`login.ts` lines 47-68):
+   - Entry log: "Starting magic link validation" with token info
+   - Pre-request log: "Sending POST request to /api/login/magiclink/"
+   - Success log: "Received successful response from backend"
+   - Error log: "Request failed" with full error details
+
+4. **Store layer tracking** (`auth-actions.ts` lines 51-58):
+   - Entry log: "validateMagicLink called with token"
+   - Success log: "Magic link validation successful, processing response"
+   - Shows token length and prefix for verification
+
+5. **Error path logging** (ALL catch blocks now log errors):
+   - `+layout.svelte` lines 84-89, 116, 240-241: All errors logged
+   - `login.ts` lines 65-67: HTTP errors logged
+   - No more silent failures
+
+**Log Output Flow (Successful Validation)**:
+```
+[+layout] No magic link in URL at browser load
+[+layout] forceMagicLinkValidation called
+[+layout] forceMagicLinkValidation: Starting validation
+[auth-actions] validateMagicLink called with token: { tokenLength: 344, tokenPrefix: '...' }
+[validateMagicLink] Starting magic link validation: { tokenLength: 344, tokenPrefix: '...' }
+[validateMagicLink] Sending POST request to /api/login/magiclink/
+🔐 Request to /api/login/magiclink/ (magic link validation) endpoint  ← BACKEND
+[validateMagicLink] Received successful response from backend
+[auth-actions] Magic link validation successful, processing response
+[+layout] forceMagicLinkValidation: Validation successful
+```
+
+**Log Output Flow (Failure Case)**:
+```
+[+layout] Magic link detected in URL at browser load
+[+layout] forceMagicLinkValidation called
+[+layout] forceMagicLinkValidation: Starting validation
+[auth-actions] validateMagicLink called with token
+[validateMagicLink] Starting magic link validation
+[validateMagicLink] Sending POST request to /api/login/magiclink/
+[validateMagicLink] Request failed: [Error details]
+[auth-actions] Error: [Propagated error]
+[+layout] forceMagicLinkValidation: Validation failed [Full error object]
+```
+
+**Files Modified**:
+- `web/src/lib/api/api-auth-operations/login.ts` - HTTP layer logs (lines 47-68)
+- `web/src/lib/stores/auth/auth-actions.ts` - Store layer logs (lines 51-58)
+- `web/src/routes/+layout.svelte` - UI layer logs (lines 42-124, 207-241)
+- `web/package.json` - Version 0.27.12 → 0.27.13
+
+**Debugging Benefits**:
+- ✅ Tracks magic link detection at browser load
+- ✅ Shows which validation function executes
+- ✅ Confirms duplicate prevention logic
+- ✅ Visible HTTP request initiation
+- ✅ Backend endpoint call confirmation (via API logs)
+- ✅ Full error visibility at every layer
+- ✅ Token info (length + prefix) for verification
+- ✅ NO SILENT FAILURES - all errors logged
+
+**Next Steps for User**:
+1. Restart development environment (`just stop && just dev`)
+2. Request new magic link
+3. Check frontend terminal: Should see `[+layout]`, `[auth-actions]`, `[validateMagicLink]` logs
+4. Check backend terminal: Should see `🔐 Request to /api/login/magiclink/` log
+5. Report which logs appear and which are missing
+
+## [API v1.8.9] - 2025-10-08
+
+### Fixed
+
+**📧 DEV: Enable email sending by default in development mode**
+
+**Problem**:
+- In `just dev`, emails were NOT being sent (dry-run mode ON by default)
+- Dry-run should only activate during test execution, not during development
+- Manual testing of email flows required explicit dry-run disabling
+- Inconsistent with development workflow expectations
+
+**Root Cause**:
+- `EMAIL_DRY_RUN` static initialized with `AtomicBool::new(true)` (emails OFF)
+- Comments stated "emails NOT sent by default (dry-run ON)"
+- Original design assumed dry-run needed for manual browser testing
+- However, tests already activate dry-run explicitly before execution
+
+**Solution**:
+1. **Changed default dry-run value** (`api/src/utils/email.rs:23`):
+   - `AtomicBool::new(true)` → `AtomicBool::new(false)`
+   - Emails now SENT by default in development mode
+
+2. **Updated documentation comments** (lines 12-14, 20):
+   - "emails NOT sent by default" → "emails ARE sent by default"
+   - "must be explicitly disabled" → "tests explicitly activate dry-run"
+   - Clarified that dry-run activation is test responsibility
+
+**Behavior**:
+- ✅ **Development (`just dev`)**: Emails SENT (dry-run OFF by default)
+- ✅ **Tests (`just test`)**: Emails NOT sent (dry-run ON, activated at start)
+- ✅ **Production**: Dry-run code eliminated (emails ALWAYS sent)
+
+**Test Suite Independence**:
+- Bash tests (`scripts/final_test.sh`): Activate dry-run at line ~23, deactivate at line ~1354
+- Playwright tests (`web/tests/api/`): Activate in `global-setup.ts`, deactivate in `global-teardown.ts`
+- Both suites manage their own dry-run lifecycle independently
+
+**Files Modified**:
+- `api/src/utils/email.rs` - Changed default value + updated comments
+- `api/Cargo.toml` - Version 1.8.8 → 1.8.9
+
+**Benefits**:
+- ✅ Natural development workflow (emails sent during manual testing)
+- ✅ No impact on test suite (tests explicitly control dry-run)
+- ✅ Production behavior unchanged (dry-run code eliminated)
+- ✅ Better alignment with user expectations
+
+### Added
+
+**🔍 LOGGING: Add shared secret creation visibility (URLs + participants)**
+
+**Problem**:
+- No logging of shared secret URLs when created
+- Difficult to debug/verify secret creation during development
+- Missing visibility into sender/receiver information
+- Had to manually check database or frontend to see generated URLs
+
+**Solution**:
+Added `info!()` logging after URL generation (`api/src/handlers/shared_secret/creation.rs:270-273`):
+
+```rust
+info!(
+    "🔐 Shared secret created: {} → {} | Sender URL: {} | Receiver URL: {}",
+    request.sender_email, request.receiver_email, url_sender, url_receiver
+);
+```
+
+**Log Output Example**:
+```
+🔐 Shared secret created: alice@example.com → bob@example.com | Sender URL: https://app.hashrand.com/shared-secret/ABC123... | Receiver URL: https://app.hashrand.com/shared-secret/XYZ789...
+```
+
+**Information Logged**:
+- Sender email (who created the secret)
+- Receiver email (who can access the secret)
+- Complete sender URL (for verification/archival)
+- Complete receiver URL (for verification/delivery confirmation)
+
+**Files Modified**:
+- `api/src/handlers/shared_secret/creation.rs` - Added info! logging (lines 270-273)
+
+**Benefits**:
+- ✅ Full visibility of shared secret creation
+- ✅ Easy verification during development/testing
+- ✅ Audit trail for troubleshooting
+- ✅ Confirms email delivery targets
+- ✅ No performance impact (info level, conditional in production)
+
 ## [Web v0.27.12] - 2025-10-08
 
 ### Added

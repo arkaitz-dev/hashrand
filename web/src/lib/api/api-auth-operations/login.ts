@@ -44,14 +44,28 @@ export async function requestMagicLink(
  * SECURITY: Uses credentials: 'include' to receive HttpOnly refresh token cookie
  */
 export async function validateMagicLink(magicToken: string): Promise<LoginResponse> {
+	const { logger } = await import('../../utils/logger');
+	logger.info('[validateMagicLink] Starting magic link validation:', {
+		tokenLength: magicToken.length,
+		tokenPrefix: magicToken.substring(0, 20) + '...'
+	});
+
 	const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
 
-	return await httpSignedPOSTRequest<{ magiclink: string }, LoginResponse>(
-		`${API_BASE}/login/magiclink/`,
-		{ magiclink: magicToken },
-		false,
-		{ credentials: 'include' }
-	);
+	try {
+		logger.info('[validateMagicLink] Sending POST request to /api/login/magiclink/');
+		const response = await httpSignedPOSTRequest<{ magiclink: string }, LoginResponse>(
+			`${API_BASE}/login/magiclink/`,
+			{ magiclink: magicToken },
+			false,
+			{ credentials: 'include' }
+		);
+		logger.info('[validateMagicLink] Received successful response from backend');
+		return response;
+	} catch (error) {
+		logger.error('[validateMagicLink] Request failed:', error);
+		throw error;
+	}
 }
 
 /**

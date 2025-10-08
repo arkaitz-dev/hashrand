@@ -4,12 +4,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.8 + Web v0.27.12**
-- 🌍 **Latest**: UX - Add specific 403 Forbidden message with i18n (13 languages) + logger messages
-- 🔒 **Previous**: SECURITY - Fix shared secret ownership validation HTTP status (500 → 403 Forbidden)
-- 🔒 **Previous**: AUTH - Fix duplicate magic link validation (race condition between forceMagicLink/handleMagicLink)
-- 🏗️ **Previous**: INFRA - Development build mode correction: debug builds for dev, release only for predeploy/deploy
-- 📝 **Previous**: INFRA - Frontend logging: logger wrapper + browser→terminal redirection (tablet dev) + ZERO logs in production
+**Last Update**: 2025-10-08 - **API v1.8.9 + Web v0.27.13**
+- 🔍 **Latest**: DEBUG - Comprehensive magic link validation logging (detection → HTTP → backend → errors)
+- 📧 **Previous**: DEV - Email dry-run OFF by default in development (ON only during tests)
+- 🔍 **Previous**: LOGGING - Shared secret creation visibility (URLs + sender/receiver info)
 - ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)
@@ -56,10 +54,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - **Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
 
 **Architecture: Compilation-Time Feature Flags (dev-mode)**
-- **Development builds** (`spin-dev.toml`): `cargo build --release` → `dev-mode` feature ACTIVE (default)
-  - Dry-run mode: ENABLED by default (emails OFF) - must be explicitly disabled for manual testing
+- **Development builds** (`spin-dev.toml`): `cargo build` → `dev-mode` feature ACTIVE (default)
+  - Dry-run mode: DISABLED by default (emails ON) - tests activate dry-run explicitly
   - Endpoint `/api/test/dry-run` EXISTS and functional
-  - Code: `AtomicBool::new(true)` → emails disabled by default in dev
+  - Code: `AtomicBool::new(false)` → emails SENT by default in dev
 - **Production builds** (`spin-prod.toml`): `cargo build --release --no-default-features` → `dev-mode` feature ELIMINATED
   - All dry-run code REMOVED from WASM binary (zero overhead)
   - Endpoint `/api/test/dry-run` DOES NOT EXIST (404)
