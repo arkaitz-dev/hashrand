@@ -1,5 +1,8 @@
 use spin_sdk::http::{IntoResponse, Request};
 use spin_sdk::http_component;
+use std::sync::Once;
+use tracing::info;
+use tracing_subscriber;
 
 // Initialize rust-i18n for email templates
 rust_i18n::i18n!("locales");
@@ -12,6 +15,51 @@ mod types;
 mod utils;
 
 use utils::{init_rate_limiter, parse_query_params, route_request_with_req};
+
+// Static initialization for tracing subscriber (only once)
+static INIT_TRACING: Once = Once::new();
+
+/// Initialize tracing subscriber with compilation-time defined log level
+///
+/// DEVELOPMENT MODE (with dev-mode feature):
+/// - Default: RUST_LOG=info (info, warn, error)
+/// - Override with RUST_LOG environment variable for debugging
+/// - Use `just dev-debug` to start with RUST_LOG=debug
+///
+/// PRODUCTION MODE (without dev-mode feature):
+/// - Fixed: error level only (security: prevents info leak)
+/// - No environment variable override possible
+/// - Compiled-in behavior for safety
+fn init_tracing() {
+    INIT_TRACING.call_once(|| {
+        use tracing_subscriber::{fmt, EnvFilter};
+
+        #[cfg(feature = "dev-mode")]
+        {
+            // DEVELOPMENT: Default "info", can override with RUST_LOG environment variable
+            // Usage: RUST_LOG=debug for verbose debugging, RUST_LOG=error for minimal logs
+            let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+            fmt()
+                .with_env_filter(EnvFilter::new(log_level))
+                .with_target(false)
+                .with_thread_ids(false)
+                .with_line_number(false)
+                .init();
+        }
+
+        #[cfg(not(feature = "dev-mode"))]
+        {
+            // PRODUCTION: Fixed "error" level only, no environment variable override
+            // Security: Prevents accidental verbose logging in production (info leak protection)
+            fmt()
+                .with_env_filter(EnvFilter::new("error"))
+                .with_target(false)
+                .with_thread_ids(false)
+                .with_line_number(false)
+                .init();
+        }
+    });
+}
 
 /// Main Spin HTTP component function
 ///
@@ -27,6 +75,9 @@ use utils::{init_rate_limiter, parse_query_params, route_request_with_req};
 /// - POST /api/refresh - Token refresh with key rotation
 #[http_component]
 async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse> {
+    // Initialize tracing subscriber (only once)
+    init_tracing();
+
     // Initialize rate limiter on first request
     init_rate_limiter();
 
@@ -37,7 +88,8 @@ async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse>
         .unwrap_or("")
         .to_string(); // Clone to avoid borrowing issues
 
-    println!("Handling request to: {}", full_url);
+    // println!("Handling request to: {}", full_url);
+    info!("Handling request to: {}", full_url);
 
     // Parse the URL to get path and query parameters
     let url_parts: Vec<&str> = full_url.split('?').collect();

@@ -4,6 +4,7 @@
 //! Rejects any request that contains both Authorization header and refresh_token cookie.
 
 use spin_sdk::http::Request;
+use tracing::{info, error};
 
 /// Validates that requests don't contain both Authorization header and refresh_token cookie
 ///
@@ -35,15 +36,22 @@ pub fn validate_no_simultaneous_tokens(req: &Request) -> Result<(), String> {
         .unwrap_or(false);
 
     if has_auth_header && has_refresh_cookie {
-        println!(
+        // println!(
+        //     "🚨 [SECURITY VIOLATION] Request contains BOTH Authorization header AND refresh_token cookie - REJECTED"
+        // );
+        error!(
             "🚨 [SECURITY VIOLATION] Request contains BOTH Authorization header AND refresh_token cookie - REJECTED"
         );
         Err("SECURITY: Request contains both Authorization header and refresh cookie - forbidden. Use only one authentication method.".to_string())
     } else {
         if has_auth_header {
-            println!("✅ [SECURITY] Request validated: Authorization header only (no cookie)");
+            // println!("✅ [SECURITY] Request validated: Authorization header only (no cookie)");
+            info!("✅ [SECURITY] Request validated: Authorization header only (no cookie)");
         } else if has_refresh_cookie {
-            println!(
+            // println!(
+            //     "✅ [SECURITY] Request validated: refresh_token cookie only (no Authorization header)"
+            // );
+            info!(
                 "✅ [SECURITY] Request validated: refresh_token cookie only (no Authorization header)"
             );
         }

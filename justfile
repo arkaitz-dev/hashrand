@@ -172,6 +172,11 @@ dev: stop
     #!/usr/bin/env bash
     source scripts/just-dev-part.sh
 
+# Start complete development environment with DEBUG logging (RUST_LOG=debug)
+dev-debug: stop
+    #!/usr/bin/env bash
+    source scripts/just-dev-debug-part.sh
+
 # Watch mode: start dev server in background and follow logs (Ctrl+C stops watching only)
 watch: dev
     echo "Following development server logs (Ctrl+C to stop watching)..."
@@ -197,18 +202,58 @@ test-api:
     echo ""
     cd web && npm run test:api
 
-# Run comprehensive test suite (bash + Playwright)
-# IMPORTANT: Both test suites manage their own email dry-run mode independently
+# Run comprehensive test suite with INFO logging (default)
+# Restarts server with RUST_LOG=info before running tests
 test:
+    just _run-tests info
+
+# Run comprehensive test suite with DEBUG logging (verbose)
+# Restarts server with RUST_LOG=debug before running tests
+test-debug:
+    just _run-tests debug
+
+# Internal: Run complete test suite with specified log level
+# Manages server lifecycle: stop → start with log level → test → stop
+_run-tests log_level:
     #!/usr/bin/env bash
-    echo "Running comprehensive test suite (bash + Playwright)..."
-    echo "Note: Each test suite automatically manages email dry-run mode"
+    echo "=========================================="
+    echo "Running comprehensive test suite"
+    echo "Log level: RUST_LOG={{log_level}}"
+    echo "=========================================="
     echo ""
-    just test-bash
+
+    # Stop any existing servers
+    echo "Stopping existing servers..."
+    just stop > /dev/null 2>&1
+
+    # Start server with specified log level
+    echo "Starting test server with RUST_LOG={{log_level}}..."
+    bash scripts/start-server-for-tests.sh {{log_level}}
+
+    # Run bash tests
     echo ""
-    just test-api
+    echo "Running bash integration tests (35 tests)..."
+    echo "Note: Email dry-run mode managed automatically"
     echo ""
+    ./scripts/final_test.sh
+
+    # Run playwright tests
+    echo ""
+    echo "Running Playwright API tests (16 tests)..."
+    echo "Note: Email dry-run mode managed automatically via globalSetup/Teardown"
+    echo ""
+    export TEST_API_ONLY=true && cd web && npm run test:api
+
+    # Stop server
+    echo ""
+    echo "Stopping test server..."
+    just stop > /dev/null 2>&1
+
+    echo ""
+    echo "=========================================="
     echo "✅ All tests completed!"
+    echo "Log level used: RUST_LOG={{log_level}}"
+    echo "=========================================="
 
 # Run linting checks
 lint:
@@ -398,7 +443,9 @@ tailscale-back-stop: tailscale-front-stop
 
 # Development workflow shortcuts
 alias d := dev
+alias dd := dev-debug
 alias t := test
+alias td := test-debug
 alias b := build
 alias c := check
 alias f := format

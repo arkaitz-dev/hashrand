@@ -4,6 +4,7 @@
 //! Part of magic_link_val.rs refactorization to apply SOLID principles
 
 use spin_sdk::http::Response;
+use tracing::{info, warn, error};
 
 use super::types::ErrorResponse;
 use crate::database::operations::MagicLinkOperations;
@@ -39,7 +40,8 @@ pub fn validate_and_extract_token_data(
 
     // Check if token validation passed
     if !is_valid {
-        println!("❌ Magic token validation failed or expired");
+        // println!("❌ Magic token validation failed or expired");
+        error!("❌ Magic token validation failed or expired");
         return Err(create_token_invalid_response());
     }
 
@@ -47,7 +49,8 @@ pub fn validate_and_extract_token_data(
     let user_id_array = match user_id_bytes {
         Some(user_id) => user_id,
         None => {
-            println!("❌ No user_id returned from magic link validation");
+            // println!("❌ No user_id returned from magic link validation");
+            error!("❌ No user_id returned from magic link validation");
             return Err(create_missing_user_id_response());
         }
     };
@@ -56,21 +59,30 @@ pub fn validate_and_extract_token_data(
     let pub_key_array = match pub_key_bytes {
         Some(key) => key,
         None => {
-            println!("❌ No Ed25519 public key found in magic link payload");
+            // println!("❌ No Ed25519 public key found in magic link payload");
+            error!("❌ No Ed25519 public key found in magic link payload");
             return Err(create_missing_public_key_response());
         }
     };
 
-    println!("✅ Magic token validation and data extraction successful");
+    // println!("✅ Magic token validation and data extraction successful");
+    info!("✅ Magic token validation and data extraction successful");
 
     // Log ui_host extraction
     if let Some(ref host) = ui_host {
-        println!(
+        // println!(
+        //     "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
+        //     host
+        // );
+        info!(
             "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
             host
         );
     } else {
-        println!(
+        // println!(
+        //     "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
+        // );
+        warn!(
             "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
         );
     }
@@ -86,7 +98,8 @@ pub fn validate_and_extract_token_data(
 /// Categorize token validation errors and return appropriate HTTP response
 fn categorize_token_validation_error(error: anyhow::Error) -> Response {
     let error_msg = error.to_string();
-    println!("❌ Magic token validation error: {}", error_msg);
+    // println!("❌ Magic token validation error: {}", error_msg);
+    error!("❌ Magic token validation error: {}", error_msg);
 
     // Client validation errors (400 Bad Request)
     if error_msg.contains("Invalid Base58") || error_msg.contains("must be 32 bytes") {

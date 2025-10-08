@@ -3,6 +3,8 @@
 //! POST /api/shared-secret/create - Create shared secret with dual-URL system
 //! Requires JWT authentication and Ed25519 signature validation
 
+use tracing::warn;
+
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto,
     shared_secret_ops::SharedSecretOps,
@@ -277,7 +279,8 @@ async fn create_shared_secret(
     .await;
 
     if let Err(e) = receiver_email_result {
-        println!("⚠️  Warning: Failed to send receiver email: {}", e);
+        // println!("⚠️  Warning: Failed to send receiver email: {}", e);
+        warn!("⚠️  Warning: Failed to send receiver email: {}", e);
         // Don't fail the entire operation, just log the error
     }
 
@@ -294,7 +297,8 @@ async fn create_shared_secret(
         .await;
 
         if let Err(e) = sender_email_result {
-            println!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
+            // println!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
+            warn!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
             // Don't fail the entire operation, just log the error
         }
     }

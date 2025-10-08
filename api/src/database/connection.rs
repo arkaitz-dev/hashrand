@@ -5,6 +5,7 @@
 
 use spin_sdk::sqlite::{Connection, Error as SqliteError};
 use spin_sdk::variables;
+use tracing::info;
 
 /// Get database connection using configured database name
 ///
@@ -12,7 +13,8 @@ use spin_sdk::variables;
 /// * `Result<Connection, SqliteError>` - Database connection or error
 pub fn get_database_connection() -> Result<Connection, SqliteError> {
     let db_name = variables::get("database_name").map_err(|_| SqliteError::AccessDenied)?;
-    println!("Database: Connecting to database: '{}'", db_name);
+    // println!("Database: Connecting to database: '{}'", db_name);
+    info!("Database: Connecting to database: '{}'", db_name);
     Connection::open(&db_name)
 }
 

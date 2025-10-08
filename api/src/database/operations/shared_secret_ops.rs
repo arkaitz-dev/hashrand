@@ -8,6 +8,7 @@ use super::shared_secret_storage::SharedSecretStorage;
 use super::shared_secret_types::{SecretRole, SharedSecretPayload, constants::*};
 use chrono::Utc;
 use spin_sdk::sqlite::Error as SqliteError;
+use tracing::{info, warn};
 
 /// Shared secret operations - High-level business logic
 pub struct SharedSecretOps;
@@ -132,7 +133,11 @@ impl SharedSecretOps {
         // Store tracking record (with max_reads as initial pending_reads)
         SharedSecretStorage::store_tracking(reference_hash, max_reads, expires_at, created_at)?;
 
-        println!(
+        // println!(
+        //     "✅ SharedSecret: Created pair (sender + receiver) with reference_hash (expires in {}h)",
+        //     expires_hours
+        // );
+        info!(
             "✅ SharedSecret: Created pair (sender + receiver) with reference_hash (expires in {}h)",
             expires_hours
         );
@@ -383,19 +388,23 @@ impl SharedSecretOps {
         match (stored_otp, provided_otp) {
             (Some(stored), Some(provided)) => {
                 if stored == provided {
-                    println!("✅ SharedSecret: OTP validated successfully");
+                    // println!("✅ SharedSecret: OTP validated successfully");
+                    info!("✅ SharedSecret: OTP validated successfully");
                     Ok(true)
                 } else {
-                    println!("❌ SharedSecret: Invalid OTP");
+                    // println!("❌ SharedSecret: Invalid OTP");
+                    warn!("❌ SharedSecret: Invalid OTP");
                     Ok(false)
                 }
             }
             (Some(_), None) => {
-                println!("⚠️  SharedSecret: OTP required but not provided");
+                // println!("⚠️  SharedSecret: OTP required but not provided");
+                warn!("⚠️  SharedSecret: OTP required but not provided");
                 Err(SqliteError::Io("OTP required".to_string()))
             }
             (None, _) => {
-                println!("ℹ️  SharedSecret: No OTP required");
+                // println!("ℹ️  SharedSecret: No OTP required");
+                info!("ℹ️  SharedSecret: No OTP required");
                 Ok(true)
             }
         }

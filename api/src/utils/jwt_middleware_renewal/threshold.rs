@@ -1,5 +1,7 @@
 //! 2/3 threshold renewal window calculation
 
+use tracing::info;
+
 use crate::utils::jwt::config::get_refresh_token_duration_minutes;
 
 /// Check if proactive renewal is needed based on 2/3 threshold
@@ -22,7 +24,11 @@ pub fn is_in_renewal_window(refresh_expires_at: i64, now: i64) -> Result<bool, S
     let two_thirds_threshold = (refresh_duration_seconds * 2) / 3;
 
     if time_remaining < two_thirds_threshold as i64 {
-        println!(
+        // println!(
+        //     "Proactive renewal triggered: {}s remaining < {}s threshold",
+        //     time_remaining, two_thirds_threshold
+        // );
+        info!(
             "Proactive renewal triggered: {}s remaining < {}s threshold",
             time_remaining, two_thirds_threshold
         );

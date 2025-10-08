@@ -3,6 +3,7 @@
 //! DRY utilities for authentication middleware
 
 use spin_sdk::http::Response;
+use tracing::debug;
 
 use crate::utils::jwt_middleware_errors::create_auth_error_response;
 
@@ -15,7 +16,8 @@ use crate::utils::jwt_middleware_errors::create_auth_error_response;
 /// * `Result<Vec<u8>, Response>` - User ID bytes or error response
 pub fn decode_username_to_user_id(username: &str) -> Result<Vec<u8>, Response> {
     bs58::decode(username).into_vec().map_err(|_| {
-        println!("🔍 DEBUG: Failed to decode Base58 username");
+        // println!("🔍 DEBUG: Failed to decode Base58 username");
+        debug!("🔍 DEBUG: Failed to decode Base58 username");
         create_auth_error_response("Invalid username format", None)
     })
 }

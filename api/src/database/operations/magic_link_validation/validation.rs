@@ -5,6 +5,7 @@ use super::extraction::extract_payload_components;
 use super::utilities::{copy_to_array, create_validation_error};
 use crate::database::get_database_connection;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
+use tracing::{info, warn, error};
 
 /// Magic link validation operations
 pub struct MagicLinkValidation;
@@ -32,13 +33,15 @@ impl MagicLinkValidation {
         // Step 1: Decode and hash encrypted token
         let (encrypted_data, token_hash) = decode_and_hash_token(encrypted_token)?;
 
-        println!("Database: Validating encrypted magic link hash");
+        // println!("Database: Validating encrypted magic link hash");
+        info!("Database: Validating encrypted magic link hash");
 
         // Step 2: Retrieve encrypted payload from database
         let encrypted_payload_blob = match retrieve_encrypted_payload(&connection, &token_hash)? {
             Some(blob) => blob,
             None => {
-                println!("Database: Encrypted magic link not found in database");
+                // println!("Database: Encrypted magic link not found in database");
+                warn!("Database: Encrypted magic link not found in database");
                 return Ok(create_validation_error());
             }
         };
@@ -50,7 +53,8 @@ impl MagicLinkValidation {
         ) {
             Ok(payload) => payload,
             Err(e) => {
-                println!("Database: Encrypted payload decryption failed: {}", e);
+                // println!("Database: Encrypted payload decryption failed: {}", e);
+                error!("Database: Encrypted payload decryption failed: {}", e);
                 return Ok(create_validation_error());
             }
         };
@@ -84,7 +88,8 @@ impl MagicLinkValidation {
                     &[Value::Blob(token_hash.to_vec())],
                 )?;
 
-                println!("Database: Encrypted magic link validated and consumed");
+                // println!("Database: Encrypted magic link validated and consumed");
+                info!("Database: Encrypted magic link validated and consumed");
                 Ok((
                     true,
                     next_param,
@@ -94,7 +99,8 @@ impl MagicLinkValidation {
                 ))
             }
             Err(e) => {
-                println!("Database: Magic link internal validation failed: {}", e);
+                // println!("Database: Magic link internal validation failed: {}", e);
+                error!("Database: Magic link internal validation failed: {}", e);
                 Ok(create_validation_error())
             }
         }
@@ -138,7 +144,8 @@ fn retrieve_encrypted_payload(
         match &row.values[1] {
             Value::Blob(blob) => Ok(Some(blob.clone())),
             _ => {
-                println!("Database: Invalid encrypted_payload type");
+                // println!("Database: Invalid encrypted_payload type");
+                error!("Database: Invalid encrypted_payload type");
                 Ok(None)
             }
         }

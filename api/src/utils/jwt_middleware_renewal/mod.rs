@@ -8,6 +8,7 @@ mod token_generation;
 
 use serde_json::Value;
 use spin_sdk::http::Response;
+use tracing::error;
 
 use non_signed_handler::add_tokens_to_headers;
 use signed_response_handler::add_tokens_to_signed_response;
@@ -38,7 +39,8 @@ pub fn check_proactive_renewal(
     let needs_renewal = match is_in_renewal_window(refresh_expires_at, now) {
         Ok(result) => result,
         Err(e) => {
-            println!("❌ Renewal threshold check failed: {}", e);
+            // println!("❌ Renewal threshold check failed: {}", e);
+            error!("❌ Renewal threshold check failed: {}", e);
             return Err(super::jwt_middleware_errors::create_auth_error_response(
                 "Server configuration error",
                 None,

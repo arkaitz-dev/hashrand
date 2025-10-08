@@ -2,6 +2,7 @@
 
 use chrono::DateTime;
 use spin_sdk::http::Response;
+use tracing::error;
 
 use super::super::jwt_middleware_errors::create_auth_error_response;
 use super::super::jwt_middleware_types::RenewedTokens;
@@ -45,7 +46,11 @@ pub fn generate_renewed_tokens(
         ) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                println!(
+                // println!(
+                //     "Failed to create new access token during proactive renewal: {}",
+                //     e
+                // );
+                error!(
                     "Failed to create new access token during proactive renewal: {}",
                     e
                 );
@@ -61,7 +66,11 @@ pub fn generate_renewed_tokens(
         match JwtUtils::create_refresh_token_from_username(username, &pub_key) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                println!(
+                // println!(
+                //     "Failed to create new refresh token during proactive renewal: {}",
+                //     e
+                // );
+                error!(
                     "Failed to create new refresh token during proactive renewal: {}",
                     e
                 );

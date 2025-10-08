@@ -7,6 +7,7 @@ use super::shared_secret_types::{SecretRole, constants::*};
 use crate::database::get_database_connection;
 use chrono::Utc;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
+use tracing::{info, warn, debug};
 
 /// Type alias for secret retrieval result tuple: (encrypted_payload, expires_at, role)
 type SecretData = (Vec<u8>, i64, SecretRole);
@@ -37,7 +38,12 @@ impl SharedSecretStorage {
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
-        println!(
+        // println!(
+        //     "🔒 SharedSecret: Storing secret with role '{}', expires_at={} (using db_index)",
+        //     role.to_str(),
+        //     expires_at
+        // );
+        info!(
             "🔒 SharedSecret: Storing secret with role '{}', expires_at={} (using db_index)",
             role.to_str(),
             expires_at
@@ -53,7 +59,8 @@ impl SharedSecretStorage {
             ],
         )?;
 
-        println!("✅ SharedSecret: Stored successfully with db_index");
+        // println!("✅ SharedSecret: Stored successfully with db_index");
+        info!("✅ SharedSecret: Stored successfully with db_index");
         Ok(())
     }
 
@@ -76,7 +83,12 @@ impl SharedSecretStorage {
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
-        println!(
+        // println!(
+        //     "🔒 SharedSecret: Storing secret with role '{}', expires_at={}",
+        //     role.to_str(),
+        //     expires_at
+        // );
+        info!(
             "🔒 SharedSecret: Storing secret with role '{}', expires_at={}",
             role.to_str(),
             expires_at
@@ -92,7 +104,8 @@ impl SharedSecretStorage {
             ],
         )?;
 
-        println!("✅ SharedSecret: Stored successfully");
+        // println!("✅ SharedSecret: Stored successfully");
+        info!("✅ SharedSecret: Stored successfully");
         Ok(())
     }
 
@@ -138,7 +151,12 @@ impl SharedSecretStorage {
             let role = SecretRole::from_str(&role_str)
                 .ok_or_else(|| SqliteError::Io(format!("Invalid role value: {}", role_str)))?;
 
-            println!(
+            // println!(
+            //     "🔍 SharedSecret: Retrieved with db_index (role={}, expires_at={})",
+            //     role.to_str(),
+            //     expires_at
+            // );
+            debug!(
                 "🔍 SharedSecret: Retrieved with db_index (role={}, expires_at={})",
                 role.to_str(),
                 expires_at
@@ -146,7 +164,8 @@ impl SharedSecretStorage {
 
             Ok(Some((encrypted_payload, expires_at, role)))
         } else {
-            println!("🔍 SharedSecret: Not found (db_index)");
+            // println!("🔍 SharedSecret: Not found (db_index)");
+            warn!("🔍 SharedSecret: Not found (db_index)");
             Ok(None)
         }
     }
@@ -192,7 +211,12 @@ impl SharedSecretStorage {
             let role = SecretRole::from_str(&role_str)
                 .ok_or_else(|| SqliteError::Io(format!("Invalid role value: {}", role_str)))?;
 
-            println!(
+            // println!(
+            //     "🔍 SharedSecret: Retrieved (role={}, expires_at={})",
+            //     role.to_str(),
+            //     expires_at
+            // );
+            debug!(
                 "🔍 SharedSecret: Retrieved (role={}, expires_at={})",
                 role.to_str(),
                 expires_at
@@ -200,7 +224,8 @@ impl SharedSecretStorage {
 
             Ok(Some((encrypted_payload, expires_at, role)))
         } else {
-            println!("⚠️  SharedSecret: Not found in database");
+            // println!("⚠️  SharedSecret: Not found in database");
+            warn!("⚠️  SharedSecret: Not found in database");
             Ok(None)
         }
     }
@@ -225,7 +250,8 @@ impl SharedSecretStorage {
             &[Value::Blob(db_index.to_vec())],
         )?;
 
-        println!("🗑️  SharedSecret: Deleted successfully (db_index)");
+        // println!("🗑️  SharedSecret: Deleted successfully (db_index)");
+        info!("🗑️  SharedSecret: Deleted successfully (db_index)");
         Ok(true)
     }
 
@@ -250,7 +276,8 @@ impl SharedSecretStorage {
             &[Value::Blob(id.to_vec())],
         )?;
 
-        println!("🗑️  SharedSecret: Deleted successfully");
+        // println!("🗑️  SharedSecret: Deleted successfully");
+        info!("🗑️  SharedSecret: Deleted successfully");
         Ok(true)
     }
 
@@ -300,13 +327,15 @@ impl SharedSecretStorage {
 
         // Don't decrement if sender (unlimited reads = -1)
         if pending_reads == UNLIMITED_READS {
-            println!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
+            // println!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
+            info!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
             return Ok(UNLIMITED_READS);
         }
 
         // Don't decrement if already at 0 or negative
         if pending_reads <= 0 {
-            println!("⚠️  SharedSecret: Already at 0 reads");
+            // println!("⚠️  SharedSecret: Already at 0 reads");
+            warn!("⚠️  SharedSecret: Already at 0 reads");
             return Ok(0);
         }
 
@@ -321,7 +350,8 @@ impl SharedSecretStorage {
             ],
         )?;
 
-        println!("📖 SharedSecret: Decremented to {} reads", new_reads);
+        // println!("📖 SharedSecret: Decremented to {} reads", new_reads);
+        info!("📖 SharedSecret: Decremented to {} reads", new_reads);
         Ok(new_reads)
     }
 
@@ -343,7 +373,11 @@ impl SharedSecretStorage {
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
-        println!(
+        // println!(
+        //     "📊 SharedSecret: Storing tracking record (pending_reads={}, expires_at={}, created_at={})",
+        //     pending_reads, expires_at, created_at
+        // );
+        info!(
             "📊 SharedSecret: Storing tracking record (pending_reads={}, expires_at={}, created_at={})",
             pending_reads, expires_at, created_at
         );
@@ -358,7 +392,8 @@ impl SharedSecretStorage {
             ],
         )?;
 
-        println!("✅ SharedSecret: Tracking record stored");
+        // println!("✅ SharedSecret: Tracking record stored");
+        info!("✅ SharedSecret: Tracking record stored");
         Ok(())
     }
 
@@ -399,14 +434,17 @@ impl SharedSecretStorage {
             };
 
             if read_at.is_some() {
-                println!("📖 SharedSecret: Tracking updated with read_at={}", now);
+                // println!("📖 SharedSecret: Tracking updated with read_at={}", now);
+                info!("📖 SharedSecret: Tracking updated with read_at={}", now);
                 Ok(true)
             } else {
-                println!("ℹ️  SharedSecret: Tracking read_at was already set");
+                // println!("ℹ️  SharedSecret: Tracking read_at was already set");
+                info!("ℹ️  SharedSecret: Tracking read_at was already set");
                 Ok(false)
             }
         } else {
-            println!("⚠️  SharedSecret: Tracking record not found");
+            // println!("⚠️  SharedSecret: Tracking record not found");
+            warn!("⚠️  SharedSecret: Tracking record not found");
             Ok(false)
         }
     }
@@ -433,7 +471,8 @@ impl SharedSecretStorage {
             &[Value::Integer(now_hours)],
         )?;
 
-        println!("🧹 SharedSecret: Cleaned up expired records");
+        // println!("🧹 SharedSecret: Cleaned up expired records");
+        info!("🧹 SharedSecret: Cleaned up expired records");
         // Spin SQLite doesn't provide rows_affected, return placeholder
         Ok((1, 1))
     }

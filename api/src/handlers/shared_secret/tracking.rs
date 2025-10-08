@@ -4,6 +4,8 @@
 //! Confirms read by updating tracking record
 //! Requires JWT authentication and Ed25519 signature validation
 
+use tracing::warn;
+
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
     shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
@@ -136,7 +138,11 @@ fn confirm_read_validated_v2(
             .unwrap_or(0);
 
     if current_pending_reads > payload.max_reads {
-        println!(
+        // println!(
+        //     "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
+        //     current_pending_reads, payload.max_reads
+        // );
+        warn!(
             "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
             current_pending_reads, payload.max_reads
         );
@@ -235,7 +241,11 @@ fn confirm_read_validated(
             .unwrap_or(0);
 
     if current_pending_reads > payload.max_reads {
-        println!(
+        // println!(
+        //     "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
+        //     current_pending_reads, payload.max_reads
+        // );
+        warn!(
             "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
             current_pending_reads, payload.max_reads
         );

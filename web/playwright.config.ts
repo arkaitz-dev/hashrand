@@ -13,6 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 const WEB_BASE_URL = process.env.WEB_BASE_URL || 'http://localhost:5173';
 const CI = !!process.env.CI;
+const TEST_API_ONLY = !!process.env.TEST_API_ONLY; // For API-only test mode
 
 export default defineConfig({
 	/**
@@ -120,34 +121,39 @@ export default defineConfig({
 	 *
 	 * IMPORTANT: Tests assume both API and Web servers are running
 	 * Alternative: Use `just dev` to start all services manually
+	 *
+	 * TEST_API_ONLY mode: For `just test` and `just test-debug`
+	 * Skips webServer config entirely - assumes server already running (started by just test scripts)
 	 */
-	webServer: CI
-		? [
-				// CI: Start both servers explicitly
-				{
-					command: 'cd ../api && spin-cli up --listen 127.0.0.1:3000',
-					url: API_BASE_URL,
-					reuseExistingServer: false,
-					timeout: 120_000,
-					stdout: 'pipe',
-					stderr: 'pipe'
-				},
-				{
-					command: 'npm run dev',
-					url: WEB_BASE_URL,
-					reuseExistingServer: false,
-					timeout: 120_000,
-					stdout: 'pipe',
-					stderr: 'pipe'
-				}
-			]
-		: [
-				// Local development: Reuse existing servers from `just dev`
-				{
-					command: 'echo "Reusing existing dev servers (started with just dev)"',
-					url: WEB_BASE_URL,
-					reuseExistingServer: true,
-					timeout: 5_000
-				}
-			]
+	webServer: TEST_API_ONLY
+		? undefined // Skip server management - assume API server already running from just test
+		: CI
+			? [
+					// CI: Start both servers explicitly
+					{
+						command: 'cd ../api && spin-cli up --listen 127.0.0.1:3000',
+						url: API_BASE_URL,
+						reuseExistingServer: false,
+						timeout: 120_000,
+						stdout: 'pipe',
+						stderr: 'pipe'
+					},
+					{
+						command: 'npm run dev',
+						url: WEB_BASE_URL,
+						reuseExistingServer: false,
+						timeout: 120_000,
+						stdout: 'pipe',
+						stderr: 'pipe'
+					}
+				]
+			: [
+					// Local development: Reuse existing servers from `just dev`
+					{
+						command: 'echo "Reusing existing dev servers (started with just dev)"',
+						url: WEB_BASE_URL,
+						reuseExistingServer: true,
+						timeout: 5_000
+					}
+				]
 });

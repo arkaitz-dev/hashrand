@@ -1,6 +1,7 @@
 //! Validation logic for refresh token requests
 
 use spin_sdk::http::{Method, Request, Response};
+use tracing::{info, error};
 
 use super::super::types::{RefreshPayload, RefreshSignedRequest};
 use super::utilities::{create_error_response, extract_refresh_token_from_cookies};
@@ -62,7 +63,8 @@ pub fn extract_and_validate_refresh_token(
     let claims = match JwtUtils::validate_refresh_token(&refresh_token) {
         Ok(claims) => claims,
         Err(e) => {
-            println!("❌ Refresh: Token validation failed: {}", e);
+            // println!("❌ Refresh: Token validation failed: {}", e);
+            error!("❌ Refresh: Token validation failed: {}", e);
             return Err(
                 create_error_response(401, &format!("Invalid refresh token: {}", e))
                     .expect("Failed to create error response"),
@@ -92,7 +94,8 @@ pub fn validate_signed_request(
     let signed_request: RefreshSignedRequest = match serde_json::from_slice(body_bytes) {
         Ok(req) => req,
         Err(e) => {
-            println!("❌ Refresh: Failed to parse SignedRequest: {}", e);
+            // println!("❌ Refresh: Failed to parse SignedRequest: {}", e);
+            error!("❌ Refresh: Failed to parse SignedRequest: {}", e);
             return Err(
                 create_error_response(400, "Invalid SignedRequest structure")
                     .expect("Failed to create error response"),
@@ -106,7 +109,8 @@ pub fn validate_signed_request(
         &signed_request.signature,
         pub_key_hex,
     ) {
-        println!("❌ Refresh: Signature validation failed: {}", e);
+        // println!("❌ Refresh: Signature validation failed: {}", e);
+        error!("❌ Refresh: Signature validation failed: {}", e);
         return Err(
             create_error_response(401, &format!("Invalid signature: {}", e))
                 .expect("Failed to create error response"),
@@ -130,13 +134,18 @@ pub fn parse_refresh_payload(
         match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
             Ok(payload) => payload,
             Err(e) => {
-                println!("❌ Refresh: Failed to deserialize payload: {}", e);
+                // println!("❌ Refresh: Failed to deserialize payload: {}", e);
+                error!("❌ Refresh: Failed to deserialize payload: {}", e);
                 return Err(create_error_response(400, "Invalid payload format")
                     .expect("Failed to create error response"));
             }
         };
 
-    println!(
+    // println!(
+    //     "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
+    //     &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
+    // );
+    info!(
         "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
         &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
     );

@@ -4,6 +4,7 @@
 //! for development and testing purposes.
 
 use chrono::{DateTime, Utc};
+use tracing::{info, warn};
 
 use crate::utils::send_magic_link_email;
 
@@ -37,11 +38,16 @@ impl MagicLinkEmailDelivery {
         // Try to send email via Mailtrap
         match send_magic_link_email(email, magic_link, email_lang).await {
             Ok(()) => {
-                println!("✅ Email sent successfully to: {}", email);
+                // println!("✅ Email sent successfully to: {}", email);
+                info!("✅ Email sent successfully to: {}", email);
                 Ok(())
             }
             Err(e) => {
-                println!(
+                // println!(
+                //     "⚠️ Email sending failed, falling back to console logging: {}",
+                //     e
+                // );
+                warn!(
                     "⚠️ Email sending failed, falling back to console logging: {}",
                     e
                 );
@@ -81,36 +87,36 @@ impl MagicLinkEmailDelivery {
         magic_expires_at: DateTime<Utc>,
         error_msg: &str,
     ) {
-        println!("\n🔗 === EMAIL FALLBACK (DEVELOPMENT MODE) ===");
-        println!("📧 TO: {}", email);
-        println!("📬 FROM: HashRand <noreply@hashrand.dev>");
-        println!("📝 SUBJECT: Your Magic Link for HashRand");
-        println!("📄 EMAIL BODY:");
-        println!("──────────────────────────────────────────────────");
-        println!("Hi there!");
-        println!();
-        println!("You requested access to HashRand. Click the link below to sign in:");
-        println!();
-        println!("🔗 {}", magic_link);
-        println!();
-        println!(
+        info!("\n🔗 === EMAIL FALLBACK (DEVELOPMENT MODE) ===");
+        info!("📧 TO: {}", email);
+        info!("📬 FROM: HashRand <noreply@hashrand.dev>");
+        info!("📝 SUBJECT: Your Magic Link for HashRand");
+        info!("📄 EMAIL BODY:");
+        info!("──────────────────────────────────────────────────");
+        info!("Hi there!");
+        info!("");
+        info!("You requested access to HashRand. Click the link below to sign in:");
+        info!("");
+        info!("🔗 {}", magic_link);
+        info!("");
+        info!(
             "This link will expire at: {}",
             magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC")
         );
-        println!();
-        println!("If you didn't request this, you can safely ignore this email.");
-        println!();
-        println!("Best regards,");
-        println!("The HashRand Team");
-        println!("──────────────────────────────────────────────────");
-        println!("🔧 DEVELOPMENT INFO:");
-        println!("   • UI Host: {:?}", ui_host);
-        println!("   • Final Host URL: {}", final_host_url);
-        println!(
+        info!("");
+        info!("If you didn't request this, you can safely ignore this email.");
+        info!("");
+        info!("Best regards,");
+        info!("The HashRand Team");
+        info!("──────────────────────────────────────────────────");
+        info!("🔧 DEVELOPMENT INFO:");
+        info!("   • UI Host: {:?}", ui_host);
+        info!("   • Final Host URL: {}", final_host_url);
+        info!(
             "   • Token expires: {}",
             magic_expires_at.format("%Y-%m-%d %H:%M:%S UTC")
         );
-        println!("   • Email send error: {}", error_msg);
-        println!("═══════════════════════════════════════════════════\n");
+        info!("   • Email send error: {}", error_msg);
+        info!("═══════════════════════════════════════════════════\n");
     }
 }

@@ -7,6 +7,7 @@ use super::shared_secret_types::constants::*;
 use crate::utils::pseudonimizer::blake3_keyed_variable;
 use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
+use tracing::{info, debug};
 
 /// Shared secret cryptographic operations
 pub struct SharedSecretCrypto;
@@ -110,7 +111,8 @@ impl SharedSecretCrypto {
             .encrypt(nonce, payload)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
 
-        println!("🔒 SharedSecret: Encrypted payload using Blake3 KDF + ChaCha20-Poly1305");
+        // println!("🔒 SharedSecret: Encrypted payload using Blake3 KDF + ChaCha20-Poly1305");
+        info!("🔒 SharedSecret: Encrypted payload using Blake3 KDF + ChaCha20-Poly1305");
         Ok(ciphertext)
     }
 
@@ -147,7 +149,8 @@ impl SharedSecretCrypto {
             .decrypt(nonce, ciphertext)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
 
-        println!("🔓 SharedSecret: Decrypted payload using Blake3 KDF + ChaCha20-Poly1305");
+        // println!("🔓 SharedSecret: Decrypted payload using Blake3 KDF + ChaCha20-Poly1305");
+        info!("🔓 SharedSecret: Decrypted payload using Blake3 KDF + ChaCha20-Poly1305");
         Ok(plaintext)
     }
 
@@ -188,7 +191,10 @@ impl SharedSecretCrypto {
             .encrypt(nonce, payload)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
 
-        println!(
+        // println!(
+        //     "🔒 SharedSecret: Encrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
+        // );
+        info!(
             "🔒 SharedSecret: Encrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
         );
         Ok(ciphertext)
@@ -227,7 +233,10 @@ impl SharedSecretCrypto {
             .decrypt(nonce, ciphertext)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
 
-        println!(
+        // println!(
+        //     "🔓 SharedSecret: Decrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
+        // );
+        info!(
             "🔓 SharedSecret: Decrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
         );
         Ok(plaintext)
@@ -314,7 +323,8 @@ impl SharedSecretCrypto {
         checksum[0..7].copy_from_slice(&checksum_base[0..7]);
         checksum[7] = role_byte;
 
-        println!("🔒 SharedSecret: Generated checksum with role {:?}", role);
+        // println!("🔒 SharedSecret: Generated checksum with role {:?}", role);
+        debug!("🔒 SharedSecret: Generated checksum with role {:?}", role);
         Ok(checksum)
     }
 
@@ -348,7 +358,8 @@ impl SharedSecretCrypto {
         hash[16..32].copy_from_slice(&user_id);
         hash[32..40].copy_from_slice(&checksum);
 
-        println!("✅ SharedSecret: Generated 40-byte hash for {:?}", role);
+        // println!("✅ SharedSecret: Generated 40-byte hash for {:?}", role);
+        info!("✅ SharedSecret: Generated 40-byte hash for {:?}", role);
         Ok(hash)
     }
 
@@ -394,7 +405,8 @@ impl SharedSecretCrypto {
         let mut encrypted = *hash_40;
         cipher.apply_keystream(&mut encrypted);
 
-        println!("🔐 SharedSecret: Encrypted 40-byte hash with ChaCha20");
+        // println!("🔐 SharedSecret: Encrypted 40-byte hash with ChaCha20");
+        info!("🔐 SharedSecret: Encrypted 40-byte hash with ChaCha20");
         Ok(encrypted)
     }
 
@@ -436,7 +448,8 @@ impl SharedSecretCrypto {
         let mut decrypted = *encrypted_hash;
         cipher.apply_keystream(&mut decrypted);
 
-        println!("🔓 SharedSecret: Decrypted 40-byte hash with ChaCha20");
+        // println!("🔓 SharedSecret: Decrypted 40-byte hash with ChaCha20");
+        info!("🔓 SharedSecret: Decrypted 40-byte hash with ChaCha20");
         Ok(decrypted)
     }
 
@@ -502,7 +515,11 @@ impl SharedSecretCrypto {
             ));
         }
 
-        println!(
+        // println!(
+        //     "✅ SharedSecret: Validated checksum and extracted role {:?}",
+        //     role
+        // );
+        info!(
             "✅ SharedSecret: Validated checksum and extracted role {:?}",
             role
         );
@@ -540,7 +557,8 @@ impl SharedSecretCrypto {
         let mut db_index = [0u8; 32];
         db_index.copy_from_slice(&db_index_vec[0..32]);
 
-        println!("🔑 SharedSecret: Generated 32-byte database index");
+        // println!("🔑 SharedSecret: Generated 32-byte database index");
+        info!("🔑 SharedSecret: Generated 32-byte database index");
         Ok(db_index)
     }
 }

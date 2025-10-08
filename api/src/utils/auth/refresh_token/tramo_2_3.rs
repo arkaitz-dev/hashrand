@@ -1,6 +1,7 @@
 //! TRAMO 2/3: Key rotation logic (complete token + keypair refresh)
 
 use spin_sdk::http::Response;
+use tracing::error;
 
 use super::threshold::get_refresh_duration_seconds;
 use super::utilities::{
@@ -42,7 +43,8 @@ pub fn handle_key_rotation(
         match JwtUtils::create_access_token_from_username(username, &new_pub_key_array) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                println!("❌ Refresh: Failed to create access token: {}", e);
+                // println!("❌ Refresh: Failed to create access token: {}", e);
+                error!("❌ Refresh: Failed to create access token: {}", e);
                 return create_error_response(
                     500,
                     &format!("Failed to create access token: {}", e),
@@ -55,7 +57,8 @@ pub fn handle_key_rotation(
         match create_custom_refresh_token_from_username(username, &new_pub_key_array) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                println!("❌ Refresh: Failed to create refresh token: {}", e);
+                // println!("❌ Refresh: Failed to create refresh token: {}", e);
+                error!("❌ Refresh: Failed to create refresh token: {}", e);
                 return create_error_response(
                     500,
                     &format!("Failed to create refresh token: {}", e),
@@ -74,7 +77,8 @@ pub fn handle_key_rotation(
     let user_id = match decode_username_to_user_id(username) {
         Ok(bytes) => bytes,
         Err(e) => {
-            println!("❌ Refresh: {}", e);
+            // println!("❌ Refresh: {}", e);
+            error!("❌ Refresh: {}", e);
             return create_error_response(500, "Invalid username format");
         }
     };
@@ -98,7 +102,8 @@ pub fn handle_key_rotation(
     ) {
         Ok(response) => response,
         Err(e) => {
-            println!("❌ CRITICAL: Cannot create signed response: {}", e);
+            // println!("❌ CRITICAL: Cannot create signed response: {}", e);
+            error!("❌ CRITICAL: Cannot create signed response: {}", e);
             return create_error_response(500, "Cryptographic signature failure");
         }
     };
@@ -107,7 +112,8 @@ pub fn handle_key_rotation(
     let response_json = match serialize_response_to_json(&signed_response) {
         Ok(json) => json,
         Err(e) => {
-            println!("❌ Refresh: {}", e);
+            // println!("❌ Refresh: {}", e);
+            error!("❌ Refresh: {}", e);
             return create_error_response(500, "Response serialization failed");
         }
     };
@@ -126,12 +132,14 @@ pub fn handle_key_rotation(
 fn validate_new_pub_key(new_pub_key_hex: &str) -> anyhow::Result<[u8; 32]> {
     // Decode new_pub_key from hex
     let new_pub_key_bytes = hex::decode(new_pub_key_hex).map_err(|e| {
-        println!("❌ Refresh: Invalid new_pub_key hex: {}", e);
+        // println!("❌ Refresh: Invalid new_pub_key hex: {}", e);
+        error!("❌ Refresh: Invalid new_pub_key hex: {}", e);
         anyhow::anyhow!("Invalid new_pub_key format")
     })?;
 
     let new_pub_key_array: [u8; 32] = new_pub_key_bytes.try_into().map_err(|_| {
-        println!("❌ Refresh: new_pub_key must be 32 bytes");
+        // println!("❌ Refresh: new_pub_key must be 32 bytes");
+        error!("❌ Refresh: new_pub_key must be 32 bytes");
         anyhow::anyhow!("new_pub_key must be 32 bytes")
     })?;
 

@@ -5,6 +5,7 @@
 
 use hex;
 use spin_sdk::http::Response;
+use tracing::{info, error, debug};
 
 use super::types::ErrorResponse;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
@@ -31,21 +32,34 @@ pub fn verify_magic_link_signature(
     signature_hex: &str,
     pub_key_bytes: &[u8; 32],
 ) -> Result<(), Response> {
-    println!(
+    // println!(
+    //     "🔍 DEBUG Ed25519: Verifying signature for Base64 payload: {}...",
+    //     &base64_payload[..base64_payload.len().min(50)]
+    // );
+    debug!(
         "🔍 DEBUG Ed25519: Verifying signature for Base64 payload: {}...",
         &base64_payload[..base64_payload.len().min(50)]
     );
 
     // Convert pub_key_array to hex string for verification
     let pub_key_hex = hex::encode(pub_key_bytes);
-    println!(
+    // println!(
+    //     "🔍 DEBUG: Using pub_key_hex for verification: {}",
+    //     pub_key_hex
+    // );
+    debug!(
         "🔍 DEBUG: Using pub_key_hex for verification: {}",
         pub_key_hex
     );
 
     // CORRECTED: Verify signature directly against the Base64 payload received from frontend!
     // NO NEED TO RECREATE ANYTHING - we already have what was signed!
-    println!(
+    // println!(
+    //     "🔍 DEBUG BASE64: Verifying signature against received Base64 payload (length {}): {}...",
+    //     base64_payload.len(),
+    //     &base64_payload[..base64_payload.len().min(100)]
+    // );
+    debug!(
         "🔍 DEBUG BASE64: Verifying signature against received Base64 payload (length {}): {}...",
         base64_payload.len(),
         &base64_payload[..base64_payload.len().min(100)]
@@ -61,32 +75,37 @@ pub fn verify_magic_link_signature(
     // Handle verification result
     match signature_verification_result {
         SignatureVerificationResult::Valid => {
-            println!("✅ Ed25519 signature verification successful");
+            // println!("✅ Ed25519 signature verification successful");
+            info!("✅ Ed25519 signature verification successful");
             Ok(())
         }
         SignatureVerificationResult::Invalid => {
-            println!("❌ Ed25519 signature verification failed - invalid signature");
+            // println!("❌ Ed25519 signature verification failed - invalid signature");
+            error!("❌ Ed25519 signature verification failed - invalid signature");
             Err(create_signature_error_response(
                 401,
                 "Ed25519 signature verification failed",
             ))
         }
         SignatureVerificationResult::MalformedPublicKey => {
-            println!("❌ Ed25519 signature verification error: malformed public key");
+            // println!("❌ Ed25519 signature verification error: malformed public key");
+            error!("❌ Ed25519 signature verification error: malformed public key");
             Err(create_signature_error_response(
                 400,
                 "Ed25519 malformed public key",
             ))
         }
         SignatureVerificationResult::MalformedSignature => {
-            println!("❌ Ed25519 signature verification error: malformed signature");
+            // println!("❌ Ed25519 signature verification error: malformed signature");
+            error!("❌ Ed25519 signature verification error: malformed signature");
             Err(create_signature_error_response(
                 400,
                 "Ed25519 malformed signature",
             ))
         }
         SignatureVerificationResult::MalformedMessage => {
-            println!("❌ Ed25519 signature verification error: malformed message");
+            // println!("❌ Ed25519 signature verification error: malformed message");
+            error!("❌ Ed25519 signature verification error: malformed message");
             Err(create_signature_error_response(
                 400,
                 "Ed25519 malformed message",

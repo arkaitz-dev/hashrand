@@ -4,8 +4,9 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-07 - **API v1.8.4 + Web v0.27.9**
-- ⚡ **Latest**: PERF - Eliminated useless `raw` parameter from all requests (~10 bytes/request saved) - v0.27.9
+**Last Update**: 2025-10-08 - **API v1.8.6 + Web v0.27.9**
+- 📝 **Latest**: INFRA - Migrated to Rust tracing library with compilation-time logging control (dev-mode feature flag)
+- ⚡ PERF - Eliminated useless `raw` parameter from all requests (~10 bytes/request saved) - v0.27.9
 - 🐛 CRITICAL FIX - Expiration date showing year 1970 (backend returning hardcoded expires_at:0) - v1.8.4
 - 🎨 UI simplification - Removed redundant "(lecturas limitadas)" from receiver role in all 13 languages - v0.27.1
 - 🐛 CRITICAL FIX - Incomplete URLs in shared secret emails/response (added ui_host + protocol logic) - v1.8.3/v0.27.0
@@ -42,7 +43,8 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 **🧪 MANDATORY: Email dry-run mode automatically activated in ALL test scenarios:**
 
 **Available Test Commands:**
-- `just test` - Run ALL tests (35 bash + 16 Playwright) sequentially - **RECOMMENDED**
+- `just test` - Run ALL tests with info logging (35 bash + 16 Playwright) - **RECOMMENDED**
+- `just test-debug` - Run ALL tests with debug logging (verbose troubleshooting)
 - `just test-bash` - Run ONLY bash integration tests (35 tests)
 - `just test-api` - Run ONLY Playwright API tests (16 tests)
 
@@ -81,6 +83,56 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
   - `web/playwright.config.ts` - Registers globalSetup/globalTeardown
 - **Independence**: Each suite can run independently, manages own dry-run lifecycle
 
+## Logging System Standards - CRITICAL RULE - NEVER DELETE
+**📝 MANDATORY: Compilation-time differentiated logging with Rust tracing library:**
+
+**Architecture: Rust `tracing` Library with Feature Flags**
+- **Migrated from println!/eprintln!** to professional structured logging (tracing v0.1.41)
+- **Log level mapping**:
+  - `error!` → 🚨 Security violations, ❌ critical errors, CRITICAL failures
+  - `warn!` → ⚠️ Anomalous situations (OTP invalid, tokens not found)
+  - `info!` → ✅ Successful operations, normal flow (emails sent, endpoint access)
+  - `debug!` → 🔍 DEBUG statements for troubleshooting
+
+**Development Mode** (`#[cfg(feature = "dev-mode")]`):
+- **Default**: `RUST_LOG=info` (info, warn, error visible)
+- **Configurable**: Set `RUST_LOG` environment variable to override
+- **Commands**:
+  - `just dev` → Normal development (info level)
+  - `just dev-debug` / `just dd` → Verbose debugging (debug level)
+  - `RUST_LOG=error just dev` → Minimal logging
+
+**Production Mode** (`#[cfg(not(feature = "dev-mode"))]`):
+- **Fixed**: `RUST_LOG=error` (HARDCODED - only critical errors)
+- **NOT configurable** - Logging code eliminated by compiler
+- **Security**: Impossible to activate verbose logging (prevents info leak)
+- **Build**: `cargo build --release --no-default-features`
+
+**Test Execution with Logging Control**:
+- **Available commands**:
+  - `just test` / `just t` → Tests with info logging (default)
+  - `just test-debug` / `just td` → Tests with debug logging (verbose)
+- **Implementation**:
+  - Script `scripts/start-server-for-tests.sh` accepts log level parameter
+  - Sets `RUST_LOG` before starting test server
+  - Playwright config uses `TEST_API_ONLY=true` to skip webServer management
+  - Server lifecycle: stop → start with log level → test → stop
+
+**Implementation Details**:
+- `api/src/lib.rs::init_tracing()` - Conditional initialization with `#[cfg(feature = "dev-mode")]`
+- `scripts/just-dev-debug-part.sh` - Dev server with `RUST_LOG=debug`
+- `scripts/start-server-for-tests.sh` - Test server with configurable log level
+- `web/playwright.config.ts` - `TEST_API_ONLY` flag for test mode
+
+**Benefits**:
+- ✅ Professional structured logging with severity levels
+- ✅ Environment-based filtering (RUST_LOG) in development
+- ✅ Production security: verbose logs physically impossible (code eliminated)
+- ✅ Test flexibility: switch between info/debug for troubleshooting
+- ✅ Zero overhead in production builds
+
+**NEVER delete this section** - Copy to every Rust/Spin project using tracing
+
 ## Enum/List Encoding Policy - CRITICAL RULE - NEVER DELETE
 **📊 MANDATORY: Network payload optimization for ALL enum/fixed list fields:**
 
@@ -109,13 +161,17 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 ## Essential Commands
 ```bash
-# Development
-just dev         # PRIMARY: Complete development environment (API + Web + Tailscale)
+# Development (with logging control)
+just dev         # PRIMARY: Development environment (RUST_LOG=info)
+just dev-debug   # Development with verbose logging (RUST_LOG=debug)
+just dd          # Alias for dev-debug
 just stop        # Stop all services
 just status      # Services status
 
-# Testing (auto dry-run management)
-just test        # Run ALL tests (35 bash + 16 Playwright) - RECOMMENDED
+# Testing (auto dry-run + logging management)
+just test        # Run ALL tests with info logging (35 bash + 16 Playwright)
+just test-debug  # Run ALL tests with debug logging (verbose)
+just td          # Alias for test-debug
 just test-bash   # Run ONLY bash integration tests (35 tests)
 just test-api    # Run ONLY Playwright API tests (16 tests)
 

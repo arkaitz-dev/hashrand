@@ -4,6 +4,7 @@
 
 use chrono::Utc;
 use spin_sdk::http::{Request, Response};
+use tracing::{error, debug};
 
 use crate::utils::JwtUtils;
 use crate::utils::jwt_middleware_errors::create_auth_error_response;
@@ -27,7 +28,8 @@ use super::helpers::decode_username_to_user_id;
 pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
     // SECURITY: Validate that request doesn't contain both Authorization header AND refresh cookie
     if let Err(e) = crate::utils::validate_no_simultaneous_tokens(req) {
-        println!("🚨 [SECURITY VIOLATION] GET endpoint received request with both tokens");
+        // println!("🚨 [SECURITY VIOLATION] GET endpoint received request with both tokens");
+        error!("🚨 [SECURITY VIOLATION] GET endpoint received request with both tokens");
         return Err(Response::builder()
             .status(403)
             .header("content-type", "application/json")
@@ -95,7 +97,8 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
             })
         }
         Err(error_msg) => {
-            println!("🔍 DEBUG: Token validation failed: {}", error_msg);
+            // println!("🔍 DEBUG: Token validation failed: {}", error_msg);
+            debug!("🔍 DEBUG: Token validation failed: {}", error_msg);
 
             // If token validation fails (any reason), try to refresh using cookies (2/3 system)
             handle_token_refresh_from_cookies(req, &error_msg)
