@@ -31,9 +31,9 @@
 	// Track validation state to prevent duplicates
 	let isValidating = false;
 
-	// CRITICAL: Prevent duplicate magic link processing
+	// CRITICAL: Prevent race conditions (concurrent calls in SAME page load)
+	// Backend handles single-use validation (deletes magic link after use)
 	let magicLinkProcessing = false;
-	let lastProcessedToken = '';
 
 	/**
 	 * Force magic link validation - bypasses SvelteKit hydration issues
@@ -41,24 +41,26 @@
 	async function forceMagicLinkValidation(magicToken: string) {
 		logger.debug('[+layout] forceMagicLinkValidation called', {
 			magicLinkProcessing,
-			lastProcessedToken: lastProcessedToken.substring(0, 10) + '...',
 			currentToken: magicToken.substring(0, 10) + '...'
 		});
 
-		// CRITICAL: Prevent duplicate processing
-		if (magicLinkProcessing || lastProcessedToken === magicToken) {
-			logger.debug('[+layout] forceMagicLinkValidation: Duplicate detected, skipping');
+		// CRITICAL: Prevent race conditions only
+		if (magicLinkProcessing) {
+			logger.debug('[+layout] forceMagicLinkValidation: Already processing, skipping');
 			return;
 		}
 
 		magicLinkProcessing = true;
-		lastProcessedToken = magicToken;
 		logger.debug('[+layout] forceMagicLinkValidation: Starting validation');
 
 		try {
 			// Validate the magic link (Ed25519 verification by backend)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
 			logger.info('[+layout] Magic link validation successful');
+			logger.debug('[+layout] Login response received', {
+				hasNext: !!loginResponse.next,
+				nextValue: loginResponse.next
+			});
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
@@ -66,19 +68,30 @@
 			// CRITICAL: Start session monitoring after successful login
 			await startMonitoringIfAuthenticated();
 
-			// Clean URL after successful validation
-			const newUrl = new window.URL(window.location.href);
-			newUrl.searchParams.delete('magiclink');
-			replaceState(newUrl.toString(), {});
-
-			// Handle next parameter from response if present
+			// Handle next parameter and clean URL
 			if (loginResponse.next) {
+				logger.debug('[+layout] Processing next parameter', { next: loginResponse.next });
 				// Parse next parameter JSON and create navigation URL
 				const navigationUrl = await parseNextParameterJson(loginResponse.next);
+				logger.debug('[+layout] Parsed navigation URL', { navigationUrl });
 
 				if (navigationUrl !== '/') {
+					// Navigate to different route - goto() doesn't preserve query params
+					logger.info('[+layout] Navigating to next destination', { navigationUrl });
 					await goto(navigationUrl);
+				} else {
+					// Staying on /, clean magiclink from URL
+					logger.debug('[+layout] Staying on /, cleaning magiclink from URL');
+					const newUrl = new window.URL(window.location.href);
+					newUrl.searchParams.delete('magiclink');
+					replaceState(newUrl.toString(), {});
 				}
+			} else {
+				// No next parameter, clean magiclink from URL
+				logger.warn('[+layout] No next parameter, cleaning magiclink from URL');
+				const newUrl = new window.URL(window.location.href);
+				newUrl.searchParams.delete('magiclink');
+				replaceState(newUrl.toString(), {});
 			}
 		} catch (error) {
 			logger.error('[+layout] Magic link validation failed', error);
@@ -99,9 +112,25 @@
 
 	// CRITICAL: Force client-side execution immediately when browser loads
 	if (typeof window !== 'undefined') {
+		// DEBUG: Log full URL state at module load
+		logger.debug('[+layout] Module loaded - URL state', {
+			href: window.location.href,
+			search: window.location.search,
+			pathname: window.location.pathname,
+			hash: window.location.hash
+		});
+
 		// Check if we have a magic link in URL
 		const urlParams = new URLSearchParams(window.location.search);
 		const magicToken = urlParams.get('magiclink');
+
+		logger.debug('[+layout] Magic link detection check', {
+			hasMagicToken: !!magicToken,
+			tokenLength: magicToken?.length || 0,
+			pathname: window.location.pathname,
+			isRootPage: window.location.pathname === '/'
+		});
+
 		if (magicToken && window.location.pathname === '/') {
 			logger.debug('[+layout] Magic link detected in URL at browser load', {
 				pathname: window.location.pathname,
@@ -157,19 +186,11 @@
 
 			// Only process magic links on root page to prevent navigation interference
 			if (magicToken && isRootPage) {
-				// CRITICAL: Prevent concurrent validations and duplicates
-				if (isValidating || magicLinkProcessing) {
+				// CRITICAL: Prevent concurrent validations (race conditions)
+				// Don't check magicLinkProcessing here - let handleMagicLinkValidation handle it
+				if (isValidating) {
 					return;
 				}
-
-				// CRITICAL: Prevent reprocessing same token
-				if (lastProcessedToken === magicToken) {
-					return;
-				}
-
-				// Mark as processing and store token
-				magicLinkProcessing = true;
-				lastProcessedToken = magicToken;
 
 				// Process magic link - URL will be cleaned after successful validation
 				handleMagicLinkValidation(magicToken);
@@ -206,18 +227,16 @@
 	async function handleMagicLinkValidation(magicToken: string) {
 		logger.debug('[+layout] handleMagicLinkValidation called', {
 			magicLinkProcessing,
-			lastProcessedToken: lastProcessedToken.substring(0, 10) + '...',
 			currentToken: magicToken.substring(0, 10) + '...'
 		});
 
-		// CRITICAL: Prevent duplicate processing (same protection as forceMagicLinkValidation)
-		if (magicLinkProcessing || lastProcessedToken === magicToken) {
-			logger.debug('[+layout] handleMagicLinkValidation: Duplicate detected, skipping');
+		// CRITICAL: Prevent race conditions only
+		if (magicLinkProcessing) {
+			logger.debug('[+layout] handleMagicLinkValidation: Already processing, skipping');
 			return;
 		}
 
 		magicLinkProcessing = true;
-		lastProcessedToken = magicToken;
 		logger.debug('[+layout] handleMagicLinkValidation: Starting validation');
 
 		// Set validation state
@@ -231,6 +250,10 @@
 			loginResponse = await authStore.validateMagicLink(magicToken);
 			validationSuccessful = true;
 			logger.info('[+layout] Magic link validation successful');
+			logger.debug('[+layout] Login response received (handleMagicLinkValidation)', {
+				hasNext: !!loginResponse.next,
+				nextValue: loginResponse.next
+			});
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
@@ -252,15 +275,13 @@
 
 		// If validation was successful, handle navigation
 		if (validationSuccessful && loginResponse) {
-			// Clean URL after successful validation to prevent race conditions
-			const newUrl = new window.URL(window.location.href);
-			newUrl.searchParams.delete('magiclink');
-			replaceState(newUrl.toString(), {});
-
-			// Handle next parameter from response if present - AFTER crypto tokens are ready
+			// Handle next parameter and clean URL
 			if (loginResponse.next) {
+				logger.debug('[+layout] Processing next parameter (handleMagicLinkValidation)', {
+					next: loginResponse.next
+				});
 				try {
-					// Wait for crypto tokens to be available before processing next parameter
+					// Wait for BOTH crypto tokens AND access token to be available before navigating
 					let tokensReady = false;
 					let attempts = 0;
 					const maxAttempts = 50; // 5 seconds max wait
@@ -269,8 +290,9 @@
 						const cipherToken = authStore.getCipherToken();
 						const nonceToken = authStore.getNonceToken();
 						const hmacKey = authStore.getHmacKey();
+						const accessToken = authStore.getAccessToken();
 
-						if (cipherToken && nonceToken && hmacKey) {
+						if (cipherToken && nonceToken && hmacKey && accessToken) {
 							tokensReady = true;
 						} else {
 							await new Promise((resolve) => setTimeout(resolve, 100));
@@ -279,18 +301,44 @@
 					}
 
 					if (!tokensReady) {
-						// Proceed without encryption if tokens not ready
+						logger.warn('[+layout] Tokens not ready after waiting', {
+							hasCipher: !!authStore.getCipherToken(),
+							hasNonce: !!authStore.getNonceToken(),
+							hasHmac: !!authStore.getHmacKey(),
+							hasAccessToken: !!authStore.getAccessToken()
+						});
+						// Proceed anyway - components should handle missing tokens
 					}
 
 					// Parse next parameter JSON and create navigation URL
 					const navigationUrl = await parseNextParameterJson(loginResponse.next);
+					logger.debug('[+layout] Parsed navigation URL (handleMagicLinkValidation)', {
+						navigationUrl
+					});
 
 					if (navigationUrl !== '/') {
+						// Navigate to different route - goto() doesn't preserve query params
+						logger.info('[+layout] Navigating to next destination (handleMagicLinkValidation)', {
+							navigationUrl
+						});
 						await goto(navigationUrl);
+					} else {
+						// Staying on /, clean magiclink from URL
+						logger.debug('[+layout] Staying on /, cleaning magiclink from URL');
+						const newUrl = new window.URL(window.location.href);
+						newUrl.searchParams.delete('magiclink');
+						replaceState(newUrl.toString(), {});
 					}
-				} catch {
+				} catch (error) {
+					logger.error('[+layout] Failed to process next parameter', error);
 					// Don't prevent successful authentication, just stay on current page
 				}
+			} else {
+				// No next parameter, clean magiclink from URL
+				logger.warn('[+layout] No next parameter, cleaning magiclink from URL');
+				const newUrl = new window.URL(window.location.href);
+				newUrl.searchParams.delete('magiclink');
+				replaceState(newUrl.toString(), {});
 			}
 		}
 

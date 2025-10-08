@@ -34,6 +34,11 @@
 
 			// Build nextParam using universal DRY function
 			const nextParam = buildNextParameterFromConfig(config);
+			logger.debug('[AuthConfirm] Built next parameter', {
+				config,
+				nextParam,
+				destination: config.destination
+			});
 
 			await authStore.requestMagicLink(config.email || '', nextParam);
 

@@ -39,6 +39,7 @@ pub fn build_authentication_response(
         + (refresh_duration_minutes as i64 * 60);
 
     // Create JWT response payload with refresh cookie expiration timestamp
+    debug!("📍 DEBUG: Building auth response with next parameter: {:?}", next_param);
     let payload = JwtAuthResponse::new(
         jwt_tokens.access_token,
         jwt_tokens.username,

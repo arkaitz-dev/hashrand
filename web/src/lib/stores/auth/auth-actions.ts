@@ -33,6 +33,8 @@ export async function requestMagicLink(
 	const { sessionManager } = await import('../../session-manager');
 	await sessionManager.setPendingAuthEmail(email);
 
+	logger.debug('[auth-actions] requestMagicLink called', { email, ui_host, next });
+
 	const { api } = await import('../../api');
 	return await api.requestMagicLink(email, ui_host, next);
 }

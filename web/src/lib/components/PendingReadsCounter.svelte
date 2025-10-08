@@ -25,6 +25,38 @@
 	onMount(async () => {
 		// Only confirm read for receiver role and if hash exists
 		if (role === 'receiver' && hash) {
+			// CRITICAL: Wait for access token to be available before confirming read
+			// This prevents 401 errors when navigating immediately after magic link validation
+			const { authStore } = await import('$lib/stores/auth');
+			let tokenReady = false;
+			let attempts = 0;
+			const maxAttempts = 50; // 5 seconds max wait
+
+			logger.debug('[PendingReadsCounter] Waiting for access token to be available');
+
+			while (!tokenReady && attempts < maxAttempts) {
+				const accessToken = authStore.getAccessToken();
+
+				logger.debug('[PendingReadsCounter] Token check attempt', {
+					attempt: attempts + 1,
+					hasAccessToken: !!accessToken,
+					accessTokenLength: accessToken?.length || 0
+				});
+
+				if (accessToken) {
+					tokenReady = true;
+					logger.debug('[PendingReadsCounter] Access token ready, proceeding with confirmation');
+				} else {
+					await new Promise((resolve) => setTimeout(resolve, 100));
+					attempts++;
+				}
+			}
+
+			if (!tokenReady) {
+				logger.warn('[PendingReadsCounter] Access token not ready after waiting, skipping confirmation');
+				return;
+			}
+
 			try {
 				const confirmResult = await api.confirmRead(hash);
 				pendingReads = confirmResult.pending_reads;

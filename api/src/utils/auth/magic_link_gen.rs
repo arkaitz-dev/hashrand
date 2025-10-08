@@ -54,6 +54,7 @@ pub async fn generate_magic_link_signed(
         };
     // println!("✅ DEBUG: Deserialized Base64 JSON payload for magic link generation");
     debug!("✅ DEBUG: Deserialized Base64 JSON payload for magic link generation");
+    debug!("📍 DEBUG: Magic link next parameter: '{}'", payload.next);
 
     // Step 1: Validate request (rate limiting and signed request)
     if let Err(response) = MagicLinkRequestValidation::check_rate_limiting(req) {

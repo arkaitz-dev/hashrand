@@ -88,5 +88,5 @@ export async function confirmRead(hash: string): Promise<{
 		read_confirmed: boolean;
 		role: string;
 		message: string;
-	}>(`${API_BASE}/shared-secret/confirm-read?hash=${hash}`);
+	}>(`${API_BASE}/shared-secret/confirm-read`, { hash }); // Pass hash as param, not in URL
 }
