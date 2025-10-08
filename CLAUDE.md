@@ -79,6 +79,30 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
   - `web/playwright.config.ts` - Registers globalSetup/globalTeardown
 - **Independence**: Each suite can run independently, manages own dry-run lifecycle
 
+## Logging Levels Standards - CRITICAL RULE - NEVER DELETE
+**📊 MANDATORY: Understand logging levels and use appropriate commands for debugging:**
+
+**Log Level Hierarchy** (lowest to highest visibility):
+- `error` (0) → Critical errors, security violations → **ALWAYS visible**
+- `warn` (1) → Anomalous situations, potential issues → Visible at warn/info/debug
+- `info` (2) → Normal operations, successful flows → **DEFAULT** → Visible at info/debug
+- `debug` (3) → Verbose troubleshooting → Visible ONLY at debug
+
+**Command Usage**:
+- `just dev` → `RUST_LOG=info` (default) + `VITE_LOG_LEVEL=info` (default) → **Shows error + warn + info**
+- `just dev-debug` / `just dd` → `RUST_LOG=debug` + `VITE_LOG_LEVEL=debug` → **Shows ALL logs (verbose)**
+
+**When to Use Each**:
+- ✅ `just dev` → **Normal development** - Sufficient for most debugging (shows all info! logs)
+- ✅ `just dev-debug` → **Deep troubleshooting** - Use when you need to see debug! logs or system internals
+
+**CRITICAL: When adding debugging logs**:
+- Use `info!` (Rust) or `logger.info()` (TypeScript) for debugging → **Visible in `just dev`**
+- Use `debug!` (Rust) or `logger.debug()` (TypeScript) for verbose details → **Requires `just dev-debug`**
+- **NEVER assume logs require dev-debug** - Most debugging uses info! level
+
+**Copy this rule to EVERY project with logging** - Never delete when compacting/simplifying
+
 ## Logging System Standards - CRITICAL RULE - NEVER DELETE
 **📝 MANDATORY: Compilation-time differentiated logging with Rust tracing library:**
 
