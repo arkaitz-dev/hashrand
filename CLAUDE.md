@@ -4,10 +4,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.7 + Web v0.27.10**
-- 🏗️ **Latest**: INFRA - Development build mode correction: debug builds for dev, release only for predeploy/deploy
+**Last Update**: 2025-10-08 - **API v1.8.7 + Web v0.27.11**
+- 🔒 **Latest**: AUTH - Fix duplicate magic link validation (race condition between forceMagicLink/handleMagicLink)
+- 🏗️ **Previous**: INFRA - Development build mode correction: debug builds for dev, release only for predeploy/deploy
 - 📝 **Previous**: INFRA - Frontend logging: logger wrapper + browser→terminal redirection (tablet dev) + ZERO logs in production
-- 🛠️ **Previous**: DEV - Justfile commands for separated log monitoring (logs-api, logs-web, logs-predeploy)
 - ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)

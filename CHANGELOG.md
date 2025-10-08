@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.11] - 2025-10-08
+
+### Fixed
+
+**🔒 AUTH: Fix duplicate magic link validation requests**
+
+**Problem**:
+- Magic link validation executed twice (race condition)
+- First request succeeded, second failed with "not found in database" error
+- Magic links are one-time use (deleted after first successful validation)
+- Error logs showed duplicate requests ~13 seconds apart
+
+**Root Cause**:
+- Two validation functions: `forceMagicLinkValidation()` and `handleMagicLinkValidation()`
+- Only `forceMagicLinkValidation()` checked duplicate prevention flags
+- `handleMagicLinkValidation()` reset `magicLinkProcessing` flag but never checked it
+- SvelteKit hydration triggered both functions simultaneously (lines 100 and 156)
+
+**Solution**:
+- Added duplicate prevention to `handleMagicLinkValidation()`:
+  - Check `magicLinkProcessing` flag before processing
+  - Check `lastProcessedToken` to prevent same-token reprocessing
+  - Set flags at start (same pattern as `forceMagicLinkValidation()`)
+
+**File**: `web/src/routes/+layout.svelte:188-194`
+
+**Benefits**:
+- ✅ Single validation request per magic link
+- ✅ No spurious error logs
+- ✅ Consistent duplicate prevention across both validation paths
+- ✅ Cleaner server logs
+
 ## [API v1.8.7] - 2025-10-08
 
 ### Fixed

@@ -185,6 +185,14 @@
 	 * Handle magic link validation when present in URL
 	 */
 	async function handleMagicLinkValidation(magicToken: string) {
+		// CRITICAL: Prevent duplicate processing (same protection as forceMagicLinkValidation)
+		if (magicLinkProcessing || lastProcessedToken === magicToken) {
+			return;
+		}
+
+		magicLinkProcessing = true;
+		lastProcessedToken = magicToken;
+
 		// Set validation state
 		isValidating = true;
 
