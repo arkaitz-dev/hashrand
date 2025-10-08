@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.8.7] - 2025-10-08
+
+### Fixed
+
+**🏗️ INFRA: Development build mode correction (debug instead of release)**
+
+**Problem**:
+- `just dev` was compiling in `--release` mode (optimized build)
+- Development should use debug builds (faster compilation, better debug info)
+- Release mode only appropriate for production (`just predeploy`, `just deploy`)
+- Build logs showed "Finished `release` profile" during development
+
+**Root Cause**:
+- `spin-dev.toml` incorrectly configured with `--release` flag
+- Both dev and prod configurations using same build profile
+- WASM source path pointing to `release/` instead of `debug/`
+
+**Solution**:
+1. **Updated `spin-dev.toml`**:
+   - Line 89: Removed `--release` from build command
+   - Line 54: Changed source from `release/hashrand.wasm` to `debug/hashrand.wasm`
+
+2. **Verified `spin-prod.toml`** (unchanged):
+   - Correctly uses `--release --no-default-features`
+   - Source points to `release/hashrand.wasm`
+
+**Build Modes**:
+- `just dev`: Debug build (faster, better debug info)
+- `just predeploy`: Release build (optimized, no dev features)
+- `just deploy`: Release build (optimized, no dev features)
+
+**Benefits**:
+- ✅ Faster development builds
+- ✅ Better debug symbols and stack traces
+- ✅ Proper separation between dev and prod builds
+- ✅ Consistent with Rust best practices
+
 ## [Web v0.27.10] - 2025-10-08
 
 ### Added
