@@ -8,7 +8,7 @@ export const eu: I18nTexts = {
 		copied: 'Kopiatuta!',
 		backToMenu: 'Menura itzuli',
 		loading: 'Sortzen...',
-		error: 'Errorea gertatu da',
+		error: 'Akatsa gertatu da',
 		result: 'Emaitza',
 		choose: 'Aukeratu',
 		type: 'Mota',
@@ -51,8 +51,8 @@ export const eu: I18nTexts = {
 		send: 'Bidali',
 		sending: 'Bidaltzen...',
 		formInvalid: 'Formularioa baliogabea da',
-		connectionError: 'Konexio errorea. Saiatu berriro.',
-		sendError: 'Esteka bidaltzerakoan errorea. Saiatu berriro.',
+		connectionError: 'Konexio akatsa. Saiatu berriro.',
+		sendError: 'Esteka bidaltzerakoan akatsa. Saiatu berriro.',
 		seedUsed: 'Erabilitako Hazia',
 		copySeed: 'Hazia Kopiatu',
 		optionalSeed: 'Aukerako hazia (64 hex karaktere)',
@@ -67,17 +67,17 @@ export const eu: I18nTexts = {
 		sessionExpired: 'Zure saioa bukatu da.',
 		close: 'Itxi',
 		understand: 'Ulertzen dut',
-		// Error messages for user notifications
+		// Akats mezuak erabiltzaileentzat
 		magicLinkValidationFailed: 'Esteka magikoaren balioztapenak huts egin du',
 		signatureValidationError: 'Zerbitzariaren erantzun baliogabea jaso da',
 		parameterDecryptionFailed: 'Parametroak deszifratu ezin dira',
-		parameterDecryptionError: 'Parametroen deszifratze errorea',
-		generationError: 'Sortze errorea',
-		regenerationError: 'Berriz sortze errorea',
+		parameterDecryptionError: 'Parametroen deszifratze akatsa',
+		generationError: 'Sortze akatsa',
+		regenerationError: 'Berriz sortze akatsa',
 		pageNotFound: 'Orria ez da aurkitu (404)',
-		serverError: 'Zerbitzariaren errorea (500)',
-		clientError: 'Bezeroaren errorea ({status})',
-		genericError: 'Errorea ({status})',
+		serverError: 'Zerbitzariaren akatsa (500)',
+		clientError: 'Bezeroaren akatsa ({status})',
+		genericError: 'Akatsa ({status})',
 		redirectingToHome: 'Hasierara bideratzen...',
 		update: 'Eguneratu',
 		updating: 'Eguneratzen',
@@ -194,7 +194,7 @@ export const eu: I18nTexts = {
 		magicLinkInstructions: 'Egiaztatu zure emaila eta klikatu esteka magikoan autentifikatzeko.',
 		magicLinkSentFlash:
 			'Esteka magikoa bidali da. Egiaztatu zure emaila eta klikatu estekan jarraitzeko.',
-		magicLinkErrorFlash: 'Esteka magikoa bidaltzerakoan errorea. Saiatu berriro.',
+		magicLinkErrorFlash: 'Esteka magikoa bidaltzerakoan akatsa. Saiatu berriro.',
 		developmentMode: 'Garapen Modua:',
 		testMagicLink: 'Egin klik hemen esteka magikoa probatzeko',
 		authenticationFailed: 'Autentifikazioak huts egin du',
@@ -220,7 +220,7 @@ export const eu: I18nTexts = {
 		keyRotationCompleted: '✅ Gakoen biraketa osatua (2/3)',
 		tokenRenewedNoRotation: '⏭️ Tokena berritu da biraketagabe (1/3)',
 		tokenRefreshSuccess: '✅ Tokena ongi berritu da',
-		tokenRefreshError: '❌ Errorea tokena berritzean',
+		tokenRefreshError: '❌ Akatsa tokena berritzean',
 		sessionExpiredRequireLogin: '⚠️ Saioa iraungitu da - saio-hasiera berri bat behar da',
 		cryptoTokensMissing: '🔐 Kriptografia-tokenak falta dira - autentifikazioa beharrezkoa',
 		sessionCorrupted: '⚠️ Saioa hondatuta - mesedez, hasi saioa berriro',
@@ -279,10 +279,10 @@ export const eu: I18nTexts = {
 		secretEmpty: 'Sekretuaren testua ezin da hutsik egon',
 		expiresInvalid: 'Iraungitzea 1 eta 72 ordu artean egon behar da',
 		readsInvalid: 'Irakurketa maximoak 1 eta 10 artean egon behar dira',
-		creationError: 'Errorea sekretua sortzerakoan',
-		retrievalError: 'Errorea sekretua eskuratzerakoan',
+		creationError: 'Akatsa sekretua sortzerakoan',
+		retrievalError: 'Akatsa sekretua eskuratzerakoan',
 		accessDenied: 'Sarbidea ukatua: Sekretu hau beste erabiltzaile batena da',
-		deletionError: 'Errorea sekretua ezabatzerakoan',
+		deletionError: 'Akatsa sekretua ezabatzerakoan',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',
 		consumed: 'Consumed',
@@ -322,13 +322,13 @@ export const eu: I18nTexts = {
 			'Ziur zaude saioa amaitu nahi duzula? Funtzio babestuetara sarbidea izateko berriro autentifikatu beharko duzu.',
 		// BERRIA: Saio-amaiera flash mezuak
 		successMessage: '✅ Saioa ongi amaitu da',
-		errorMessage: '❌ Errorea saioa amaitzean'
+		errorMessage: '❌ Akatsa saioa amaitzean'
 	},
 	errors: {
-		// BERRIA: Errore orriaren mezuak
+		// BERRIA: Akats orriaren mezuak
 		pageNotFoundMessage: 'Orria ez da aurkitu (404). Hasierara birbideratzen...',
-		serverErrorMessage: 'Zerbitzari errorea (500). Hasierara birbideratzen...',
-		clientErrorMessage: 'Bezero errorea ({status}). Hasierara birbideratzen...',
-		genericErrorMessage: 'Errorea ({status}). Hasierara birbideratzen...'
+		serverErrorMessage: 'Zerbitzari akatsa (500). Hasierara birbideratzen...',
+		clientErrorMessage: 'Bezero akatsa ({status}). Hasierara birbideratzen...',
+		genericErrorMessage: 'Akatsa ({status}). Hasierara birbideratzen...'
 	}
 };
