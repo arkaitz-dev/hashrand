@@ -8,6 +8,7 @@
 import type { Writable } from 'svelte/store';
 import { getSupportedLanguageCodes } from '$lib/languageConfig';
 import { sessionManager } from '$lib/session-manager';
+import { logger } from '$lib/utils/logger';
 
 /**
  * Initialize debug utilities in browser console (development only)
@@ -50,7 +51,7 @@ export function initializeDebugUtilities(currentLanguage: Writable<string>): voi
 				currentLanguage.set(lang);
 				return lang;
 			}
-			console.error('[i18n] Unsupported language:', lang);
+			logger.error('[i18n] Unsupported language:', lang);
 			return null;
 		},
 		testRTL: () => {

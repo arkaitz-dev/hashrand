@@ -7,6 +7,7 @@
 
 import { isSignedResponse, extractServerPubKey, validateSignedResponse } from './signedResponse';
 import { sessionManager } from './session-manager';
+import { logger } from './utils/logger';
 
 /**
  * STRICT handler for signed responses from backend
@@ -65,7 +66,7 @@ export async function handleSignedResponseStrict<T>(
 		return validatedPayload;
 	} catch (error) {
 		// Security violation: Invalid or missing signature
-		console.error('SignedResponse validation failed:', error);
+		logger.error('SignedResponse validation failed:', error);
 
 		// Show flash message and redirect to home
 		await showSecurityErrorAndRedirect();
@@ -101,7 +102,7 @@ async function showSecurityErrorAndRedirect(): Promise<void> {
 		// Redirect to home page
 		await goto('/');
 	} catch (redirectError) {
-		console.error('Failed to redirect after security violation:', redirectError);
+		logger.error('Failed to redirect after security violation:', redirectError);
 		// Force page reload as last resort
 		window.location.href = '/';
 	}

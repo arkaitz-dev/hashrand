@@ -4,6 +4,7 @@
 	import { flashMessagesStore } from '../stores/flashMessages';
 	import { _ } from '../stores/i18n';
 	import { isRTL } from '../stores/rtl';
+	import { logger } from '../utils/logger';
 
 	// Props
 	export let onClose: () => void;
@@ -25,7 +26,7 @@
 			// Navigate to home
 			goto('/');
 		} catch (error) {
-			console.error('Logout error:', error);
+			logger.error('Logout error:', error);
 			// Still close dialog and navigate even if there's an error
 			onClose();
 			goto('/');

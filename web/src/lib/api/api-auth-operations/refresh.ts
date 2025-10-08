@@ -4,6 +4,7 @@
 
 import type { LoginResponse } from '../../types';
 import { API_BASE, getCurrentLanguage } from './utilities';
+import { logger } from '../../utils/logger';
 
 /**
  * Try to refresh the access token using the HttpOnly refresh token cookie
@@ -61,7 +62,7 @@ export async function refreshToken(): Promise<boolean> {
 				const { storeSessionExpiration } = await import('../../session-storage');
 				await storeSessionExpiration(data.expires_at);
 			} catch (error) {
-				console.warn('Failed to store session expiration during refresh:', error);
+				logger.warn('Failed to store session expiration during refresh:', error);
 			}
 		}
 
@@ -82,7 +83,7 @@ export async function refreshToken(): Promise<boolean> {
 
 		return true;
 	} catch (error) {
-		console.error('Token refresh failed:', error);
+		logger.error('Token refresh failed:', error);
 		flashMessagesStore.addMessage(t('auth.tokenRefreshError', lang));
 
 		// Check for dual token expiry

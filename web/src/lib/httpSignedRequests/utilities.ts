@@ -5,6 +5,7 @@
 
 import { handleSignedResponseStrict } from '../universalSignedResponseHandler';
 import { HttpSignedRequestError } from './types';
+import { logger } from '../utils/logger';
 
 /**
  * Handle HTTP error response (DRY consolidation for 6 duplicated patterns)
@@ -31,7 +32,7 @@ export function handleCatchError(error: unknown, url: string, operation: string)
 		throw error;
 	}
 
-	console.error(`${operation} failed: ${url}`, error);
+	logger.error(`${operation} failed: ${url}`, error);
 	throw new HttpSignedRequestError(
 		`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 		0,

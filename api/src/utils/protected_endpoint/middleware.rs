@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use spin_sdk::http::{Request, Response};
-use tracing::{info, error, debug};
+use tracing::{debug, error, info};
 
 use super::super::SignedRequestValidator;
 use super::errors;
@@ -94,9 +94,7 @@ impl ProtectedEndpointMiddleware {
             // println!(
             //     "🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens"
             // );
-            error!(
-                "🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens"
-            );
+            error!("🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens");
             return Err(errors::forbidden(e));
         }
 

@@ -10,6 +10,7 @@
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
 	import type { ViewSharedSecretResponse } from '$lib/types';
+	import { logger } from '$lib/utils/logger';
 
 	// Route parameter
 	let hash = $derived($page.params.hash);
@@ -143,7 +144,7 @@
 			currentReads = preview.pending_reads;
 		} catch (error: unknown) {
 			// If preview fails, continue anyway (don't block submission)
-			console.warn('[SharedSecret] Preview failed, skipping confirmation:', error);
+			logger.warn('[SharedSecret] Preview failed, skipping confirmation:', error);
 			isSubmittingOtp = true;
 			await loadSecret(otpInput);
 			isSubmittingOtp = false;

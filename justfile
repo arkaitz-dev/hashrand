@@ -184,6 +184,45 @@ watch: dev
     echo "============================================================="
     tail -f .spin-dev.log .npm-dev.log
 
+# Follow backend API logs in real-time (Spin server on port 3000)
+logs-api:
+    #!/usr/bin/env bash
+    if [ ! -f .spin-dev.log ]; then
+        echo "⚠️  Backend log file not found. Start development server first:"
+        echo "   just dev"
+        exit 1
+    fi
+    echo "Following backend API logs (Ctrl+C to stop)..."
+    echo "Log file: .spin-dev.log (Spin server, port 3000)"
+    echo "================================================="
+    tail -f .spin-dev.log
+
+# Follow frontend web logs in real-time (Vite server on port 5173)
+logs-web:
+    #!/usr/bin/env bash
+    if [ ! -f .npm-dev.log ]; then
+        echo "⚠️  Frontend log file not found. Start development server first:"
+        echo "   just dev"
+        exit 1
+    fi
+    echo "Following frontend web logs (Ctrl+C to stop)..."
+    echo "Log file: .npm-dev.log (Vite server, port 5173)"
+    echo "================================================"
+    tail -f .npm-dev.log
+
+# Follow predeploy server logs in real-time (production simulation)
+logs-predeploy:
+    #!/usr/bin/env bash
+    if [ ! -f .spin-predeploy.log ]; then
+        echo "⚠️  Predeploy log file not found. Start predeploy server first:"
+        echo "   just predeploy"
+        exit 1
+    fi
+    echo "Following predeploy server logs (Ctrl+C to stop)..."
+    echo "Log file: .spin-predeploy.log (Production simulation)"
+    echo "====================================================="
+    tail -f .spin-predeploy.log
+
 # Run bash integration tests only (35 tests)
 # Automatically activates/deactivates email dry-run mode
 test-bash:
@@ -451,3 +490,7 @@ alias c := check
 alias f := format
 alias fmt := format
 alias l := lint
+alias w := watch
+alias la := logs-api
+alias lw := logs-web
+alias lp := logs-predeploy

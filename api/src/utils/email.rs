@@ -4,7 +4,7 @@ use spin_sdk::{
     http::{Method, Request, Response},
     variables,
 };
-use tracing::{info, error};
+use tracing::{error, info};
 
 use crate::email_templates::render_magic_link_email;
 
@@ -459,9 +459,7 @@ pub async fn send_shared_secret_sender_email(
             // eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
             // eprintln!("   📄 HTML length: {} bytes", html_content.len());
             // eprintln!("   📄 Text length: {} bytes", text_content.len());
-            info!(
-                "📧 [DRY-RUN] Shared secret sender (copy) email NOT sent (dev-mode, testing)"
-            );
+            info!("📧 [DRY-RUN] Shared secret sender (copy) email NOT sent (dev-mode, testing)");
             info!("   📬 To: {}", sender_email);
             info!("   📝 Subject: {}", subject);
             info!("   🔗 Secret URL: {}", secret_url);

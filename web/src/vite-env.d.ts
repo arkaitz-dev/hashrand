@@ -14,3 +14,12 @@ declare module 'vite-plugin-eslint' {
 	function eslint(options?: ESLintOptions): unknown;
 	export default eslint;
 }
+
+// Logging system environment variables
+interface ImportMetaEnv {
+	readonly VITE_LOG_LEVEL?: 'error' | 'warn' | 'info' | 'debug';
+}
+
+interface ImportMeta {
+	readonly env: ImportMetaEnv;
+}

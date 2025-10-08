@@ -8,6 +8,7 @@
 import type { AuthUser, LoginResponse, MagicLinkResponse } from '../../types';
 import { saveAuthToStorage } from './auth-storage';
 import { generateCryptoTokens, hasCryptoTokens } from './auth-crypto-tokens';
+import { logger } from '../../utils/logger';
 
 /**
  * Request magic link for email authentication
@@ -69,7 +70,7 @@ export async function validateMagicLink(magicToken: string): Promise<{
 			const { storeSessionExpiration } = await import('../../session-storage');
 			await storeSessionExpiration(loginResponse.expires_at);
 		} catch (error) {
-			console.warn('Failed to store session expiration:', error);
+			logger.warn('Failed to store session expiration:', error);
 			// Non-blocking - auth continues without persistent expiration tracking
 		}
 	}
@@ -147,7 +148,7 @@ export async function clearLocalAuthData(): Promise<void> {
 		const { clearSessionExpiration } = await import('../../session-storage');
 		await clearSessionExpiration();
 	} catch (error) {
-		console.warn('Failed to clear session expiration during logout:', error);
+		logger.warn('Failed to clear session expiration during logout:', error);
 		// Non-blocking - logout continues
 	}
 }

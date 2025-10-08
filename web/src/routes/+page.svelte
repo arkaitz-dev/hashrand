@@ -8,6 +8,7 @@
 	import MenuCard from '$lib/components/MenuCard.svelte';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
 	import { authStore } from '$lib/stores/auth';
+	import { logger } from '$lib/utils/logger';
 
 	onMount(async () => {
 		// Clear result state when returning to menu - this resets all form values to defaults
@@ -20,7 +21,7 @@
 		// Check for any unauthorized parameters
 		for (const [key] of searchParams) {
 			if (!allowedParams.includes(key)) {
-				console.warn(`Unauthorized parameter '${key}' detected on home route, redirecting`);
+				logger.warn(`Unauthorized parameter '${key}' detected on home route, redirecting`);
 				// Remove unauthorized parameter and redirect
 				const cleanUrl = new globalThis.URL($page.url);
 				cleanUrl.search = '';

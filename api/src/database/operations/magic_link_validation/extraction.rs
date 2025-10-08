@@ -1,7 +1,7 @@
 use super::super::magic_link_types::ValidationResult;
 use super::super::magic_link_types::constants::*;
 use super::utilities::{copy_to_array, create_validation_error, extract_utf8_string};
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 /// Type alias for extracted payload components (encryption_blob, pub_key, ui_host, next_param)
 type PayloadComponents = ([u8; 44], [u8; 32], Option<String>, Option<String>);

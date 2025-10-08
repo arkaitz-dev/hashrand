@@ -8,6 +8,7 @@
 import { writable, derived, type Readable } from 'svelte/store';
 import { getVersionWithCache, writeCache } from '$lib/version-cache';
 import type { VersionResponse } from '$lib/types';
+import { logger } from '$lib/utils/logger';
 
 // Session backup interface
 interface SessionBackup {
@@ -52,7 +53,7 @@ export async function initializeVersionCheck(): Promise<void> {
 		// Set as cached versions initially
 		cachedVersions.set(versions);
 	} catch (error) {
-		console.warn('Failed to initialize version check:', error);
+		logger.warn('Failed to initialize version check:', error);
 	}
 }
 
@@ -72,7 +73,7 @@ export async function checkForUpdates(): Promise<void> {
 
 		// Note: cachedVersions remains unchanged until user accepts update
 	} catch (error) {
-		console.warn('Failed to check for updates:', error);
+		logger.warn('Failed to check for updates:', error);
 	}
 }
 
@@ -96,7 +97,7 @@ export async function acceptUpdate(): Promise<void> {
 		// Reload the entire frontend
 		window.location.reload();
 	} catch (error) {
-		console.error('Failed to accept update:', error);
+		logger.error('Failed to accept update:', error);
 	}
 }
 
@@ -137,7 +138,7 @@ async function backupCurrentState(): Promise<void> {
 			transaction.onerror = () => reject(transaction.error);
 		});
 	} catch (error) {
-		console.warn('Failed to backup session state:', error);
+		logger.warn('Failed to backup session state:', error);
 		// Non-blocking - continue with reload even if backup fails
 	}
 }
@@ -183,7 +184,7 @@ export async function restoreSessionState(): Promise<void> {
 			deleteStore.delete('pre-update-backup');
 		}
 	} catch (error) {
-		console.warn('Failed to restore session state:', error);
+		logger.warn('Failed to restore session state:', error);
 		// Non-blocking
 	}
 }

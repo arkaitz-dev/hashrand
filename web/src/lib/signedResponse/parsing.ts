@@ -3,6 +3,7 @@
  */
 
 import type { SignedResponse } from './types';
+import { logger } from '../utils/logger';
 
 /**
  * Parse response data to SignedResponse structure (DRY utility)
@@ -21,13 +22,13 @@ export function parseResponseData<T>(
 		try {
 			signedResponse = JSON.parse(responseData);
 		} catch {
-			console.error(`${errorPrefix}: Invalid JSON in signed response`);
+			logger.error(`${errorPrefix}: Invalid JSON in signed response`);
 			return null;
 		}
 	} else if (typeof responseData === 'object' && responseData !== null) {
 		signedResponse = responseData as SignedResponse<T>;
 	} else {
-		console.error(`${errorPrefix}: Response data must be string or object`);
+		logger.error(`${errorPrefix}: Response data must be string or object`);
 		return null;
 	}
 

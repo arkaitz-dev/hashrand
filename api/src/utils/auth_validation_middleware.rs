@@ -4,7 +4,7 @@
 //! Rejects any request that contains both Authorization header and refresh_token cookie.
 
 use spin_sdk::http::Request;
-use tracing::{info, error};
+use tracing::{error, info};
 
 /// Validates that requests don't contain both Authorization header and refresh_token cookie
 ///

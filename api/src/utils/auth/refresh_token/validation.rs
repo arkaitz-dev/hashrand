@@ -1,7 +1,7 @@
 //! Validation logic for refresh token requests
 
 use spin_sdk::http::{Method, Request, Response};
-use tracing::{info, error};
+use tracing::{error, info};
 
 use super::super::types::{RefreshPayload, RefreshSignedRequest};
 use super::utilities::{create_error_response, extract_refresh_token_from_cookies};

@@ -4,14 +4,9 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.6 + Web v0.27.9**
-- 📝 **Latest**: INFRA - Migrated to Rust tracing library with compilation-time logging control (dev-mode feature flag)
-- ⚡ PERF - Eliminated useless `raw` parameter from all requests (~10 bytes/request saved) - v0.27.9
-- 🐛 CRITICAL FIX - Expiration date showing year 1970 (backend returning hardcoded expires_at:0) - v1.8.4
-- 🎨 UI simplification - Removed redundant "(lecturas limitadas)" from receiver role in all 13 languages - v0.27.1
-- 🐛 CRITICAL FIX - Incomplete URLs in shared secret emails/response (added ui_host + protocol logic) - v1.8.3/v0.27.0
-- 🌐 Multi-language email support - Fixed placeholders + language selector for shared secret emails (13 languages) - v0.26.0
-- 🔐 Shared Secret Feature - Secure text sharing with encryption, dual-URL system, OTP protection (v1.8.0 + v0.25.0)
+**Last Update**: 2025-10-08 - **API v1.8.6 + Web v0.27.10**
+- 📝 **Latest**: INFRA - Frontend logging: logger wrapper + browser→terminal redirection (tablet dev) + ZERO logs in production
+- 🛠️ **Latest**: DEV - Justfile commands for separated log monitoring (logs-api, logs-web, logs-predeploy)
 - ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)
@@ -86,6 +81,14 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 ## Logging System Standards - CRITICAL RULE - NEVER DELETE
 **📝 MANDATORY: Compilation-time differentiated logging with Rust tracing library:**
 
+**CRITICAL: Logging Policy**
+- **ALWAYS use tracing macros** (`error!`, `warn!`, `info!`, `debug!`) for ALL logging
+- **NEVER use println!/eprintln!** for logging - Only allowed for temporary debugging (must be removed before commit)
+- **Immediate migration**: Convert any println!/eprintln! found in code to appropriate tracing macro
+- **Code review**: Check for println!/eprintln! in all new/modified code
+- **This is MANDATORY** - Non-compliance creates production security risks (info leaks)
+- **Copy this rule to EVERY Rust project CLAUDE.md** - Never delete when compacting/simplifying
+
 **Architecture: Rust `tracing` Library with Feature Flags**
 - **Migrated from println!/eprintln!** to professional structured logging (tracing v0.1.41)
 - **Log level mapping**:
@@ -133,6 +136,100 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **NEVER delete this section** - Copy to every Rust/Spin project using tracing
 
+### Frontend Logging (TypeScript/JavaScript)
+
+**CRITICAL: Logging Policy**
+- **ALWAYS use logger wrapper** (`logger.error()`, `logger.warn()`, `logger.info()`, `logger.debug()`) for ALL logging
+- **NEVER use console.*** directly for logging - Only allowed for temporary debugging (must be removed before commit)
+- **Immediate migration**: Convert any console.* found in code to appropriate logger method
+- **Code review**: Check for console.* in all new/modified code
+- **This is MANDATORY** - Ensures production security (zero logs in production)
+- **Copy this rule to EVERY frontend project CLAUDE.md** - Never delete when compacting/simplifying
+
+**Architecture: Logger Wrapper + Terser Elimination**
+- **Logger wrapper**: `web/src/lib/utils/logger.ts`
+- **Log level mapping** (consistent with backend):
+  - `logger.error()` → 🚨 Security violations, critical errors
+  - `logger.warn()` → ⚠️ Anomalous situations, potential issues
+  - `logger.info()` → ✅ Normal operations, successful flows (DEFAULT)
+  - `logger.debug()` → 🔍 Verbose debugging information
+
+**Development Mode**:
+- **Default**: `VITE_LOG_LEVEL=info` (info, warn, error visible)
+- **Configurable**: Set `VITE_LOG_LEVEL` environment variable
+- **Commands**:
+  - `just dev` → Normal development (info level)
+  - `just dev-debug` / `just dd` → Verbose debugging (debug + info + warn + error)
+  - NPM scripts: `npm run dev:debug`, `npm run dev:silent`
+
+**Production Mode**:
+- **ZERO console.*** - ALL calls eliminated by terser (drop_console: true)
+- **NOT configurable** - Console code removed from bundle
+- **Security**: Impossible to log in production (code eliminated by bundler)
+- **Build**: Terser plugin removes ALL console.* during build
+
+**Implementation**:
+- `web/src/lib/utils/logger.ts` - Logger wrapper with level filtering
+- `web/vite.config.ts` - Terser plugin with `drop_console: true` for production
+- `web/src/vite-env.d.ts` - TypeScript types for VITE_LOG_LEVEL
+- `scripts/just-dev-debug-part.sh` - Sets VITE_LOG_LEVEL=debug for frontend
+- `web/package.json` - NPM scripts: dev:debug, dev:silent
+
+**Migration Completed (2025-10-08)**:
+- ✅ 68 console.* calls migrated across 26 files
+- ✅ Production bundle: ZERO console.* (verified via grep)
+- ✅ Breakdown: 15 error, 18 warn, 20 info, 15 debug
+
+**Browser→Terminal Redirection (Development Only)**:
+- **Critical for tablet development** - Tablet browser has NO DevTools access
+- **Architecture**: Browser logs sent via Vite WebSocket to server terminal
+- **Implementation**:
+  - `web/vite-terminal-logger.ts` - Custom Vite plugin with WebSocket listener
+  - `web/src/lib/utils/logger.ts` - `sendToTerminal()` function using `import.meta.hot.send()`
+  - `web/vite.config.ts` - Plugin integration (dev only)
+- **Format**: `[HH:MM:SS] [BROWSER ERROR] message` (only ERROR shows prefix, others only timestamp)
+- **Colors**: ERROR=red, WARN=yellow, INFO=cyan, DEBUG=gray
+- **Production**: Code eliminated by terser (zero overhead)
+
+**Benefits**:
+- ✅ Consistent logging system (backend + frontend)
+- ✅ Environment-based filtering (VITE_LOG_LEVEL) in development
+- ✅ Production security: ZERO logs (code eliminated by terser)
+- ✅ Professional severity levels matching backend
+- ✅ Zero runtime impact in production
+- ✅ Tablet debugging without DevTools via terminal redirection
+
+**NEVER delete this section** - Copy to every frontend project using Vite/SvelteKit
+
+## Log Monitoring Standards - CRITICAL RULE - NEVER DELETE
+**📺 MANDATORY: Use justfile commands for ALL real-time log monitoring:**
+
+**CRITICAL: Log Viewing Policy**
+- **ALWAYS use justfile commands** for viewing logs - NEVER use `tail -f` directly
+- **Commands available**:
+  - `just logs-api` / `just la` → Backend API logs (Spin, port 3000, `.spin-dev.log`)
+  - `just logs-web` / `just lw` → Frontend web logs (Vite, port 5173, `.npm-dev.log`)
+  - `just logs-predeploy` / `just lp` → Predeploy server logs (production simulation, `.spin-predeploy.log`)
+  - `just watch` / `just w` → Both API + Web logs together
+- **Why mandatory**: Consistency, validation (warns if server not running), clear context
+- **Ctrl+C behavior**: Stops watching logs (does NOT stop servers)
+- **This is MANDATORY** - Ensures consistent development workflow
+- **Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
+
+**Workflow**:
+```bash
+# Terminal 1: Start servers
+just dev
+
+# Terminal 2: Monitor backend
+just la
+
+# Terminal 3 (optional): Monitor frontend
+just lw
+```
+
+**NEVER delete this section** - Copy to every project with background servers
+
 ## Enum/List Encoding Policy - CRITICAL RULE - NEVER DELETE
 **📊 MANDATORY: Network payload optimization for ALL enum/fixed list fields:**
 
@@ -168,6 +265,14 @@ just dd          # Alias for dev-debug
 just stop        # Stop all services
 just status      # Services status
 
+# Log Monitoring (real-time)
+just logs-api    # Follow backend API logs (Spin, port 3000)
+just la          # Alias for logs-api
+just logs-web    # Follow frontend web logs (Vite, port 5173)
+just lw          # Alias for logs-web
+just watch       # Follow both API + Web logs together
+just w           # Alias for watch
+
 # Testing (auto dry-run + logging management)
 just test        # Run ALL tests with info logging (35 bash + 16 Playwright)
 just test-debug  # Run ALL tests with debug logging (verbose)
@@ -180,13 +285,16 @@ just check       # Code quality (clippy + fmt + ESLint + svelte-check)
 just build       # Build API (WASM) + Web (SPA)
 ```
 
-## General Architecture
+## Architecture & Features
 **Backend** (`api/src/`): handlers/, database/ (SQLite Zero Knowledge), utils/ (JWT, auth, ChaCha20)
 **Frontend** (`web/src/`): routes/ (SPA), lib/components/ (AuthGuard, dialogs), lib/stores/ (auth, i18n 13 languages)
-**Auth**: Zero Knowledge magic links + JWT (durations: see `.env` configuration above)
+**Auth**: Zero Knowledge magic links + JWT + Ed25519 digital signatures + 2/3 automatic key rotation
+**Security**: ChaCha20-Poly1305 URL encryption, MITM protection, dual-token system
+**Testing**: 51 automated tests (35 bash + 16 Playwright), 100% success rate
 
 ## Key Endpoints
 - `POST /api/{custom,password,api-key,mnemonic}` - Generation (JWT protected)
+- `POST /api/shared-secret` - Create encrypted shared secret (JWT protected)
 - `POST/GET /api/login/` - Auth flow with Zero Knowledge magic links
 - `GET /api/version` - Public (no auth)
 
@@ -260,65 +368,6 @@ just build       # Build API (WASM) + Web (SPA)
 - **Add this rule to global ~/.claude/CLAUDE.md** - Must be in all projects
 - **This is CRITICAL for maintainability** - Prevents CLAUDE.md bloat and information overload
 
-
-## 🚧 Current Work in Progress
-
-**No active work in progress** - Codebase stable at v1.8.0 + v0.25.1
-
-## Recent Session History
-
-**Latest versions**: API v1.8.0 + Web v0.25.1 (2025-10-04)
-
-**Recent sessions summary**:
-- **v0.25.1**: 🎨 UX - Automatic email display in Shared Secret (readonly, from IndexedDB)
-- **v1.8.0 + v0.25.0**: 🔐 Shared Secret Feature - Complete encrypted text sharing system
-- **v1.7.1 + v0.24.0**: Client-side logout architecture + unified cleanup (DRY)
-- **v0.23.2**: Instant UI loading + DRY improvements + cleanup
-- **v1.7.0 + v0.22.0**: MAJOR - Enterprise-grade SOLID/DRY/KISS refactoring
-
-**📚 For complete details**: See [CHANGELOG.md](CHANGELOG.md) - root causes, technical flows, implementation details, file modifications, and testing results.
-
 ---
 
-## Architecture and Main Features
-
-### Zero Knowledge Auth
-- Server never stores emails/PII
-- Cryptographic User IDs (Blake3 pipeline)
-- Single-use unique magic links
-
-### Ed25519 Key Rotation (2/3 System)
-- **TRAMO 1/3**: Partial refresh (access token only)
-- **TRAMO 2/3**: Complete key rotation (access + refresh + keypairs)
-- 100% functional system after fixes v1.6.23-v1.6.34
-- MITM protection with dual-key signing
-- Zero session loss during rotation
-
-### Dual-Token JWT
-- Access tokens: 1min dev, 15min prod
-- Refresh tokens: 5min dev, 8h prod
-- Transparent auto-refresh with HttpOnly cookies
-- Dynamic configuration via `.env`
-
-### Testing & Quality
-- **51 automated tests** (35 bash + 16 Playwright)
-- 100% success rate across all suites
-- Enterprise architecture: modules <225 lines
-- DRY/SOLID/KISS principles enforced
-
----
-
-## Key Project Achievements (Summary)
-
-- **Enterprise Architecture**: Refactoring 3,698 monolithic lines → modules <225 lines
-- **Blake3 Migration**: ~100x performance in magic links (WASM SIMD optimization)
-- **Ed25519 Integration**: Complete frontend-backend system with digital signatures
-- **Ed25519 Key Rotation**: Automatic 2/3 window system, transparent rotation ✅
-- **URL Encryption**: ChaCha20-Poly1305 with 66% size reduction (FIFO rotation)
-- **100% SignedResponse**: ALL endpoints validate Ed25519 (except `/api/version`)
-- **Email System**: Mailtrap integration, 13 languages + RTL support
-- **Testing**: Complete coverage auth flow + generation + key rotation
-
-## Additional Details
-
-See README.md and CHANGELOG.md for complete implementation details, technical flows, and root cause analysis.
+**📚 Session History**: See [CHANGELOG.md](CHANGELOG.md) for complete implementation details, technical flows, and root cause analysis.

@@ -4,7 +4,7 @@
 //! Part of magic_link_val.rs refactorization to apply SOLID principles
 
 use spin_sdk::http::Response;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 use super::types::ErrorResponse;
 use crate::database::operations::MagicLinkOperations;
@@ -82,9 +82,7 @@ pub fn validate_and_extract_token_data(
         // println!(
         //     "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
         // );
-        warn!(
-            "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
-        );
+        warn!("⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain");
     }
 
     Ok(TokenValidationResult {

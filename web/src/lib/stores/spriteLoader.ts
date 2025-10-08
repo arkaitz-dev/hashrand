@@ -5,6 +5,7 @@
 
 /* eslint-env browser */
 import { writable } from 'svelte/store';
+import { logger } from '$lib/utils/logger';
 
 // Sprite loading state interface
 export interface SpriteState {
@@ -51,7 +52,7 @@ export function initializeSpriteLoader(): void {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const customEvent = event as any;
-		console.error('[SpriteLoader] Sprite loading failed:', customEvent.detail);
+		logger.error('[SpriteLoader] Sprite loading failed:', customEvent.detail);
 	});
 
 	// Fallback: poll global state until loaded

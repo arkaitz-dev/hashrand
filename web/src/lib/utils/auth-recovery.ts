@@ -6,6 +6,8 @@
  * DRY: Universal solution for Cases 1 & 3 (crypto tokens missing)
  */
 
+import { logger } from './logger';
+
 /**
  * Check if crypto tokens are missing and handle recovery flow
  *
@@ -37,7 +39,7 @@ export async function ensureCryptoTokensExist(context: string): Promise<boolean>
 		return false;
 	} else {
 		// Unexpected: Has session BUT missing crypto tokens - session corrupted
-		console.error(`🚨 [AUTH-RECOVERY] ${context}: Session corrupted - forcing logout`);
+		logger.error(`🚨 [AUTH-RECOVERY] ${context}: Session corrupted - forcing logout`);
 		await handleSessionCorruption('auth.sessionCorrupted');
 		return false;
 	}

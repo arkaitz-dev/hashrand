@@ -5,7 +5,7 @@ use super::extraction::extract_payload_components;
 use super::utilities::{copy_to_array, create_validation_error};
 use crate::database::get_database_connection;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 /// Magic link validation operations
 pub struct MagicLinkValidation;

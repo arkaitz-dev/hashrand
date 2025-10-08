@@ -21,9 +21,7 @@ async function globalSetup() {
 				console.warn('⚠ Warning: Dry-run response unexpected:', data);
 			}
 		} else {
-			console.warn(
-				`⚠ Warning: Failed to activate dry-run mode (HTTP ${response.status})`
-			);
+			console.warn(`⚠ Warning: Failed to activate dry-run mode (HTTP ${response.status})`);
 			console.warn('  Tests will continue but emails may be sent...');
 		}
 	} catch (error) {

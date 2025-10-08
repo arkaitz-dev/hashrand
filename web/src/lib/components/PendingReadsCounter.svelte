@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
 	import { _ } from '$lib/stores/i18n';
+	import { logger } from '$lib/utils/logger';
 
 	/**
 	 * Reactive counter for shared secret pending reads
@@ -27,23 +28,23 @@
 			try {
 				const confirmResult = await api.confirmRead(hash);
 				pendingReads = confirmResult.pending_reads;
-				console.info(
+				logger.info(
 					'[PendingReadsCounter] Confirmed read, new pending_reads:',
 					confirmResult.pending_reads
 				);
 			} catch (err: unknown) {
 				// Retry once on failure
-				console.warn('[PendingReadsCounter] Failed to confirm read, retrying...', err);
+				logger.warn('[PendingReadsCounter] Failed to confirm read, retrying...', err);
 				try {
 					const retryResult = await api.confirmRead(hash);
 					pendingReads = retryResult.pending_reads;
-					console.info(
+					logger.info(
 						'[PendingReadsCounter] Retry successful, new pending_reads:',
 						retryResult.pending_reads
 					);
 				} catch (retryErr: unknown) {
 					// Silent failure after retry: log for debugging but don't alert user
-					console.error('[PendingReadsCounter] Retry failed (non-critical):', retryErr);
+					logger.error('[PendingReadsCounter] Retry failed (non-critical):', retryErr);
 				}
 			}
 		}

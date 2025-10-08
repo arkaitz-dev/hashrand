@@ -4,6 +4,89 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.10] - 2025-10-08
+
+### Added
+
+**📝 INFRA: Professional Frontend Logging System**
+
+**Problem**:
+- Frontend used raw console.* calls (68 occurrences across 26 files)
+- No log level control in development
+- console.* calls shipped to production (security/performance risk)
+- Inconsistent with backend professional logging system (Rust tracing)
+
+**Root Cause Analysis**:
+- No unified logging abstraction in frontend
+- console.* is browser API without level filtering
+- Vite default build doesn't eliminate console.* calls
+- Production bundles contained all console.* calls (verified via grep)
+
+**Solution - Professional Logger Wrapper + Terser Elimination**:
+
+1. **Logger Wrapper** (`web/src/lib/utils/logger.ts`):
+   - Severity levels matching backend: `error`, `warn`, `info` (default), `debug`
+   - Level filtering based on VITE_LOG_LEVEL environment variable
+   - Default INFO level in development
+   - All console.* eliminated in production (code removed by terser)
+
+2. **Vite Configuration** (`web/vite.config.ts`):
+   - Added @rollup/plugin-terser for production builds
+   - Configuration: `drop_console: true` + `drop_debugger: true`
+   - Removes ALL console.* from production bundle (zero overhead)
+
+3. **TypeScript Types** (`web/src/vite-env.d.ts`):
+   - Type definitions for VITE_LOG_LEVEL environment variable
+   - Enum: 'error' | 'warn' | 'info' | 'debug'
+
+4. **NPM Scripts** (`web/package.json`):
+   - `npm run dev` → INFO level (default)
+   - `npm run dev:debug` → DEBUG level (verbose)
+   - `npm run dev:silent` → ERROR level only
+
+5. **Justfile Integration** (`scripts/just-dev-debug-part.sh`):
+   - `just dev` → Frontend INFO level (backend INFO)
+   - `just dev-debug` / `just dd` → Frontend DEBUG level (backend DEBUG)
+   - Consistent logging behavior across full stack
+
+6. **Migration** (68 console.* → logger.* across 26 files):
+   - **Breakdown**: 15 error, 18 warn, 20 info, 15 debug
+   - **Decision rules applied**:
+     - Security violations, critical errors → `logger.error`
+     - Anomalous situations, non-blocking failures → `logger.warn`
+     - Successful operations, normal flow → `logger.info`
+     - Verbose debugging, test output → `logger.debug`
+
+**Verification**:
+- ✅ Development build: Logger wrapper functional with level filtering
+- ✅ Production build: grep shows ZERO console.* (only 1 SvelteKit framework call)
+- ✅ ESLint: 0 errors (1 warning: unused import in ed25519-signing.ts)
+- ✅ Full stack consistency: Frontend + Backend use same severity levels
+
+**Files Modified** (Total: 30 files):
+- `web/src/lib/utils/logger.ts` (NEW - logger wrapper)
+- `web/vite.config.ts` (terser plugin integration)
+- `web/src/vite-env.d.ts` (type definitions)
+- `web/package.json` (npm scripts + @rollup/plugin-terser dependency)
+- `scripts/just-dev-debug-part.sh` (VITE_LOG_LEVEL=debug export)
+- 26 files with console.* migrated to logger.*
+
+**Dependencies Added**:
+- `@rollup/plugin-terser` v0.4.4 (replaces deprecated rollup-plugin-terser)
+
+**Impact**:
+- ✅ **Consistent logging**: Frontend matches backend severity levels
+- ✅ **Production security**: ZERO logs in production (code eliminated)
+- ✅ **Development control**: Configurable via VITE_LOG_LEVEL environment variable
+- ✅ **Zero overhead**: Production bundle smaller (console.* code removed)
+- ✅ **Professional architecture**: Enterprise-grade logging system
+- ✅ **Full stack coherence**: `just dev-debug` activates DEBUG in both frontend/backend
+
+**Documentation**:
+- Added "Frontend Logging" section to CLAUDE.md (CRITICAL RULE)
+- Migration details: 68 calls across 26 files
+- Commands: just dev, just dev-debug, npm run dev:debug, npm run dev:silent
+
 ## [Web v0.27.9] - 2025-10-07
 
 ### Removed

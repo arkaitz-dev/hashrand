@@ -5,7 +5,7 @@
 
 use chrono::{DateTime, Utc};
 use spin_sdk::http::Response;
-use tracing::{info, error};
+use tracing::{error, info};
 
 use super::types::ErrorResponse;
 use crate::database::operations::MagicLinkOperations;

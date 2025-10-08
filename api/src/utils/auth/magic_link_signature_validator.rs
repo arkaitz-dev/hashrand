@@ -5,7 +5,7 @@
 
 use hex;
 use spin_sdk::http::Response;
-use tracing::{info, error, debug};
+use tracing::{debug, error, info};
 
 use super::types::ErrorResponse;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};

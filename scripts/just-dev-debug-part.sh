@@ -4,9 +4,10 @@ echo "Starting complete development environment with DEBUG logging..."
 echo "Loading environment variables from .env..."
 export $(cat .env | grep -v '^#' | xargs)
 
-# Set DEBUG logging level
+# Set DEBUG logging level for both backend and frontend
 export RUST_LOG=debug
-echo "Setting RUST_LOG=debug for verbose debugging output"
+export VITE_LOG_LEVEL=debug
+echo "Setting RUST_LOG=debug and VITE_LOG_LEVEL=debug for verbose debugging output"
 
 # Start spin-cli watch in background (first - API backend)
 echo "Starting spin-cli watch in background with DEBUG logging..."
@@ -49,14 +50,14 @@ if [ "$NPM_SUCCESS" = true ] || [ "$SPIN_SUCCESS" = true ]; then
     echo "🚀 Development environment ready (DEBUG MODE)!"
     echo "=============================================="
     [ "$SPIN_SUCCESS" = true ] && echo "  API: http://localhost:3000 (RUST_LOG=debug)"
-    [ "$NPM_SUCCESS" = true ] && echo "  Web: http://localhost:5173"
+    [ "$NPM_SUCCESS" = true ] && echo "  Web: http://localhost:5173 (VITE_LOG_LEVEL=debug)"
     echo ""
     echo "Management commands:"
     echo "  Logs: tail -f .spin-dev.log .npm-dev.log"
     echo "  Stop: just stop"
     echo "  Status: just status"
     echo ""
-    echo "⚠️  DEBUG logging active - expect verbose output in .spin-dev.log"
+    echo "⚠️  DEBUG logging active - expect verbose output in both .spin-dev.log and browser console"
 
     # Start Tailscale serve for frontend if npm is running
     if [ "$NPM_SUCCESS" = true ]; then

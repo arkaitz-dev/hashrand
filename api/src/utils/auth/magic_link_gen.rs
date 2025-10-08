@@ -4,7 +4,7 @@
 //! SOLID and DRY principles to eliminate code duplication.
 
 use spin_sdk::http::{Request, Response};
-use tracing::{info, error, debug};
+use tracing::{debug, error, info};
 
 use super::magic_link_email_delivery::MagicLinkEmailDelivery;
 use super::magic_link_request_validation::MagicLinkRequestValidation;

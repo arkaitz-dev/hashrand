@@ -6,6 +6,7 @@
  */
 
 import type { AuthUser } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Load authentication state from IndexedDB on initialization
@@ -60,7 +61,7 @@ export async function saveAuthToStorage(user: AuthUser, accessToken: string): Pr
 		const { sessionManager } = await import('../../session-manager');
 		await sessionManager.setAuthData(user, accessToken);
 	} catch (error) {
-		console.error('Failed to save auth to IndexedDB:', error);
+		logger.error('Failed to save auth to IndexedDB:', error);
 
 		// Show translated warning to user (silent failure is bad UX)
 		try {

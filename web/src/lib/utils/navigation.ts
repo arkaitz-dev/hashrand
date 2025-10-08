@@ -2,6 +2,8 @@
  * Navigation utilities for handling Next parameter structure with DRY principles
  */
 
+import { logger } from './logger';
+
 /**
  * Structure for Next parameter - used consistently across all components
  */
@@ -72,7 +74,7 @@ export async function parseNextParameterJson(
 			}
 		} catch (error) {
 			// Encryption failed - use universal recovery handler
-			console.error('URL parameter encryption failed:', error);
+			logger.error('URL parameter encryption failed:', error);
 			const { ensureCryptoTokensExist } = await import('./auth-recovery');
 			await ensureCryptoTokensExist('URL Parameter Encryption (Error)');
 			// Return home (safe abort)

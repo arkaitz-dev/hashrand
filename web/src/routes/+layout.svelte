@@ -23,6 +23,7 @@
 		destroySessionMonitor,
 		startMonitoringIfAuthenticated
 	} from '$lib/sessionMonitor';
+	import { logger } from '$lib/utils/logger';
 
 	let { children } = $props();
 
@@ -118,7 +119,7 @@
 				sessionStatusStore.markValid();
 			}
 		} catch (error) {
-			console.warn('Global session check failed:', error);
+			logger.warn('Global session check failed:', error);
 			// On error, assume expired for security
 			sessionStatusStore.markExpired();
 		}

@@ -2,7 +2,6 @@ use spin_sdk::http::{IntoResponse, Request};
 use spin_sdk::http_component;
 use std::sync::Once;
 use tracing::info;
-use tracing_subscriber;
 
 // Initialize rust-i18n for email templates
 rust_i18n::i18n!("locales");
@@ -32,7 +31,7 @@ static INIT_TRACING: Once = Once::new();
 /// - Compiled-in behavior for safety
 fn init_tracing() {
     INIT_TRACING.call_once(|| {
-        use tracing_subscriber::{fmt, EnvFilter};
+        use tracing_subscriber::{EnvFilter, fmt};
 
         #[cfg(feature = "dev-mode")]
         {

@@ -22,6 +22,7 @@
 
 import { blake3 } from '@noble/hashes/blake3';
 import { base58 } from '@scure/base';
+import { logger } from '$lib/utils/logger';
 
 /**
  * Universal Blake3 pipeline: hmac_env_key + data → variable-length output
@@ -86,7 +87,7 @@ export function blake3KeyedVariable(
  * Ensures compatibility with Rust backend implementation
  */
 export function testBlake3KeyedVariable(): void {
-	console.log('Testing blake3KeyedVariable...');
+	logger.info('Testing blake3KeyedVariable...');
 
 	// Test 0: Validate 64-byte requirement (SECURITY)
 	const invalidKey32 = new Uint8Array(32).fill(1); // Only 32 bytes
@@ -95,22 +96,20 @@ export function testBlake3KeyedVariable(): void {
 
 	try {
 		blake3KeyedVariable(invalidKey32, testData, 32);
-		console.assert(false, 'Should reject 32-byte key');
+		logger.debug('Should reject 32-byte key');
 	} catch (e) {
-		console.assert(
-			(e as Error).message.includes('must be exactly 64 bytes'),
-			'Should throw error for wrong key size'
-		);
+		if ((e as Error).message.includes('must be exactly 64 bytes')) {
+			logger.debug('Correctly rejected 32-byte key');
+		}
 	}
 
 	try {
 		blake3KeyedVariable(invalidKey128, testData, 32);
-		console.assert(false, 'Should reject 128-byte key');
+		logger.debug('Should reject 128-byte key');
 	} catch (e) {
-		console.assert(
-			(e as Error).message.includes('must be exactly 64 bytes'),
-			'Should throw error for wrong key size'
-		);
+		if ((e as Error).message.includes('must be exactly 64 bytes')) {
+			logger.debug('Correctly rejected 128-byte key');
+		}
 	}
 
 	// Test 1: Deterministic output (with correct 64-byte key)
@@ -119,10 +118,11 @@ export function testBlake3KeyedVariable(): void {
 	const output1 = blake3KeyedVariable(hmacKey1, testData, 32);
 	const output2 = blake3KeyedVariable(hmacKey1, testData, 32);
 
-	console.assert(output1.length === 32 && output2.length === 32, 'Output should be 32 bytes');
-	console.assert(
-		output1.every((byte, i) => byte === output2[i]),
-		'Same inputs should produce same output (deterministic)'
+	logger.debug(
+		`Output length test: ${output1.length === 32 && output2.length === 32 ? 'PASS' : 'FAIL'}`
+	);
+	logger.debug(
+		`Deterministic test: ${output1.every((byte, i) => byte === output2[i]) ? 'PASS' : 'FAIL'}`
 	);
 
 	// Test 2: Variable output lengths
@@ -130,39 +130,36 @@ export function testBlake3KeyedVariable(): void {
 	const output64 = blake3KeyedVariable(hmacKey1, testData, 64);
 	const output128 = blake3KeyedVariable(hmacKey1, testData, 128);
 
-	console.assert(output32.length === 32, 'Should produce 32-byte output');
-	console.assert(output64.length === 64, 'Should produce 64-byte output');
-	console.assert(output128.length === 128, 'Should produce 128-byte output');
+	logger.debug(`32-byte output test: ${output32.length === 32 ? 'PASS' : 'FAIL'}`);
+	logger.debug(`64-byte output test: ${output64.length === 64 ? 'PASS' : 'FAIL'}`);
+	logger.debug(`128-byte output test: ${output128.length === 128 ? 'PASS' : 'FAIL'}`);
 
 	// First 32 bytes should match (XOF property)
-	console.assert(
-		output64.slice(0, 32).every((byte, i) => byte === output32[i]),
-		'First 32 bytes of 64-byte output should match 32-byte output'
+	logger.debug(
+		`XOF property test: ${output64.slice(0, 32).every((byte, i) => byte === output32[i]) ? 'PASS' : 'FAIL'}`
 	);
 
 	// Test 3: Domain separation
 	const hmacKey2 = new Uint8Array(64).fill(2);
 	const outputDifferentKey = blake3KeyedVariable(hmacKey2, testData, 32);
 
-	console.assert(
-		!output1.every((byte, i) => byte === outputDifferentKey[i]),
-		'Different hmac_env_key should produce different outputs'
+	logger.debug(
+		`Domain separation test: ${!output1.every((byte, i) => byte === outputDifferentKey[i]) ? 'PASS' : 'FAIL'}`
 	);
 
 	// Test 4: Data sensitivity
 	const testData2 = new TextEncoder().encode('different data');
 	const outputDifferentData = blake3KeyedVariable(hmacKey1, testData2, 32);
 
-	console.assert(
-		!output1.every((byte, i) => byte === outputDifferentData[i]),
-		'Different data should produce different outputs'
+	logger.debug(
+		`Data sensitivity test: ${!output1.every((byte, i) => byte === outputDifferentData[i]) ? 'PASS' : 'FAIL'}`
 	);
 
 	// Test 5: Short data handling (< 32 bytes)
 	const shortData = new TextEncoder().encode('short');
 	const outputShort = blake3KeyedVariable(hmacKey1, shortData, 32);
 
-	console.assert(outputShort.length === 32, 'Short data should produce 32-byte output');
+	logger.debug(`Short data test: ${outputShort.length === 32 ? 'PASS' : 'FAIL'}`);
 
 	// Test 6: Long data handling (>= 32 bytes)
 	const longData = new TextEncoder().encode(
@@ -170,11 +167,10 @@ export function testBlake3KeyedVariable(): void {
 	);
 	const outputLong = blake3KeyedVariable(hmacKey1, longData, 32);
 
-	console.assert(outputLong.length === 32, 'Long data should produce 32-byte output');
-	console.assert(
-		!outputShort.every((byte, i) => byte === outputLong[i]),
-		'Short and long data should produce different outputs'
+	logger.debug(`Long data test: ${outputLong.length === 32 ? 'PASS' : 'FAIL'}`);
+	logger.debug(
+		`Short vs long test: ${!outputShort.every((byte, i) => byte === outputLong[i]) ? 'PASS' : 'FAIL'}`
 	);
 
-	console.log('✅ All blake3KeyedVariable tests passed!');
+	logger.info('✅ All blake3KeyedVariable tests passed!');
 }

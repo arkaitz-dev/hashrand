@@ -21,9 +21,7 @@ async function globalTeardown() {
 				console.warn('⚠ Warning: Dry-run deactivation response unexpected:', data);
 			}
 		} else {
-			console.warn(
-				`⚠ Warning: Failed to deactivate dry-run mode (HTTP ${response.status})`
-			);
+			console.warn(`⚠ Warning: Failed to deactivate dry-run mode (HTTP ${response.status})`);
 		}
 	} catch (error) {
 		console.error('⚠ Error deactivating dry-run mode:', error);

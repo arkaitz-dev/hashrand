@@ -3,6 +3,7 @@
  */
 
 import { HttpSignedRequestError } from './types';
+import { logger } from '../utils/logger';
 
 /**
  * Global flag to prevent concurrent refresh attempts
@@ -41,11 +42,11 @@ export async function handleRequestWithAutoRetry<TResponse>(
 					// Retry original request with new access token
 					return await requestFn();
 				} else {
-					console.error('Token refresh failed');
+					logger.error('Token refresh failed');
 					throw error; // Propagate original 401 error
 				}
 			} catch (refreshError) {
-				console.error('Token refresh error:', refreshError);
+				logger.error('Token refresh error:', refreshError);
 				// If refresh itself fails, propagate original 401 error
 				throw error;
 			} finally {

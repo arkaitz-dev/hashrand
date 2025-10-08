@@ -18,6 +18,7 @@ import { get } from 'svelte/store';
 import { isSessionExpired, handleExpiredSession } from './session-expiry-manager';
 import { flashMessagesStore } from './stores/flashMessages';
 import { _ } from './stores/i18n';
+import { logger } from './utils/logger';
 
 /**
  * Session monitor configuration
@@ -66,7 +67,7 @@ async function checkAndHandleExpiration(): Promise<void> {
 			await performAutoLogout();
 		}
 	} catch (error) {
-		console.warn('Session monitor check failed:', error);
+		logger.warn('Session monitor check failed:', error);
 		// Don't logout on check errors - could be temporary
 	}
 }
@@ -92,7 +93,7 @@ async function performAutoLogout(): Promise<void> {
 		// Redirect to home page
 		await goto('/');
 	} catch (error) {
-		console.error('Auto-logout failed:', error);
+		logger.error('Auto-logout failed:', error);
 		// Fallback - force redirect even if cleanup failed
 		if (browser) {
 			window.location.href = '/';

@@ -7,6 +7,7 @@
 
 import { getSessionExpiration } from './session-storage';
 import { clearLocalAuthData } from './stores/auth/auth-actions';
+import { logger } from './utils/logger';
 
 /**
  * Check if current session has expired based on stored timestamp
@@ -23,7 +24,7 @@ export async function isSessionExpired(): Promise<boolean> {
 		const now = Math.floor(Date.now() / 1000); // Convert to seconds
 		return now >= expiresAt;
 	} catch (error) {
-		console.warn('Failed to check session expiration:', error);
+		logger.warn('Failed to check session expiration:', error);
 		// On error, assume expired for security
 		return true;
 	}
@@ -42,7 +43,7 @@ export async function handleExpiredSession(): Promise<void> {
 		// Use unified cleanup function (same as manual logout)
 		await clearLocalAuthData();
 	} catch (error) {
-		console.error('Failed to handle expired session:', error);
+		logger.error('Failed to handle expired session:', error);
 		// Even if cleanup fails, continue with auth flow
 	}
 }
@@ -65,7 +66,7 @@ export async function launchMagicLinkFlow(next?: string): Promise<void> {
 
 		dialogStore.show('auth', authConfig);
 	} catch (error) {
-		console.error('Failed to launch magic link flow:', error);
+		logger.error('Failed to launch magic link flow:', error);
 		// Fallback - redirect to home if dialog fails
 		if (typeof window !== 'undefined') {
 			window.location.href = '/';

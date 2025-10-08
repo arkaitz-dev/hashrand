@@ -6,6 +6,7 @@
  */
 
 import type { VersionResponse } from './types';
+import { logger } from './utils/logger';
 
 const DB_NAME = 'hashrand-cache';
 const DB_VERSION = 1;
@@ -55,7 +56,7 @@ async function readCache(): Promise<VersionCache | null> {
 			request.onsuccess = () => resolve(request.result || null);
 		});
 	} catch (error) {
-		console.warn('Failed to read version cache from IndexedDB:', error);
+		logger.warn('Failed to read version cache from IndexedDB:', error);
 		return null;
 	}
 }
@@ -82,7 +83,7 @@ export async function writeCache(versions: VersionResponse): Promise<void> {
 			request.onsuccess = () => resolve();
 		});
 	} catch (error) {
-		console.warn('Failed to write version cache to IndexedDB:', error);
+		logger.warn('Failed to write version cache to IndexedDB:', error);
 		// Non-blocking - cache write failure shouldn't break the app
 	}
 }

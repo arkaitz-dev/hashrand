@@ -2,6 +2,7 @@
  * Authentication utility functions shared across pages
  */
 import { base58 } from '@scure/base';
+import { logger } from './logger';
 
 /**
  * Convert JSON object to base58 encoded string
@@ -18,7 +19,7 @@ export function encodeNextToBase58(nextObj: Record<string, unknown> | null): str
 		const base58String = base58.encode(bytes);
 		return base58String;
 	} catch (error) {
-		console.error('Error encoding next parameter to base58:', error);
+		logger.error('Error encoding next parameter to base58:', error);
 		return null;
 	}
 }
@@ -54,7 +55,7 @@ export async function handleEmailConfirmation(
 		// Magic link sent successfully
 		onSuccess();
 	} catch (error) {
-		console.error('Error sending signed magic link request:', error);
+		logger.error('Error sending signed magic link request:', error);
 		onError('common.connectionError');
 	}
 }

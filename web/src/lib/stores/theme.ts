@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { sessionManager } from '$lib/session-manager';
+import { logger } from '$lib/utils/logger';
 
 export type Theme = 'light' | 'dark';
 
@@ -41,7 +42,7 @@ export function applyTheme(newTheme: Theme) {
 
 	// Store in IndexedDB (async, fire-and-forget)
 	sessionManager.setThemePreference(newTheme).catch((error) => {
-		console.warn('Failed to save theme preference to IndexedDB:', error);
+		logger.warn('Failed to save theme preference to IndexedDB:', error);
 	});
 
 	// Update meta theme-color for mobile browser UI
@@ -91,7 +92,7 @@ async function loadThemeFromIndexedDB() {
 			theme.set(systemTheme);
 		}
 	} catch (error) {
-		console.warn('Failed to load theme from IndexedDB:', error);
+		logger.warn('Failed to load theme from IndexedDB:', error);
 	}
 }
 

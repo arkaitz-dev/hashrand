@@ -4,7 +4,7 @@
 
 use chrono::Utc;
 use spin_sdk::http::{Request, Response};
-use tracing::{error, debug};
+use tracing::{debug, error};
 
 use crate::utils::JwtUtils;
 use crate::utils::jwt_middleware_errors::create_auth_error_response;

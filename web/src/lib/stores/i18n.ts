@@ -3,6 +3,7 @@ import type { I18nTexts } from '$lib/types';
 import { getSupportedLanguageCodes } from '$lib/languageConfig';
 import { sessionManager } from '$lib/session-manager';
 import { initializeDebugUtilities } from './i18n-debug';
+import { logger } from '$lib/utils/logger';
 
 // Import individual language files
 import { en } from './translations/en';
@@ -75,7 +76,7 @@ async function loadLanguageFromIndexedDB() {
 			currentLanguage.set(currentLang);
 		}
 	} catch (error) {
-		console.warn('Failed to load language from IndexedDB:', error);
+		logger.warn('Failed to load language from IndexedDB:', error);
 	}
 }
 
@@ -85,7 +86,7 @@ currentLanguage.subscribe(async (language) => {
 		try {
 			await sessionManager.setLanguagePreference(language);
 		} catch (error) {
-			console.warn('Failed to save language preference to IndexedDB:', error);
+			logger.warn('Failed to save language preference to IndexedDB:', error);
 		}
 	}
 });

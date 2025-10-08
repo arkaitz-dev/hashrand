@@ -7,7 +7,7 @@ use super::shared_secret_types::constants::*;
 use crate::utils::pseudonimizer::blake3_keyed_variable;
 use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
-use tracing::{info, debug};
+use tracing::{debug, info};
 
 /// Shared secret cryptographic operations
 pub struct SharedSecretCrypto;

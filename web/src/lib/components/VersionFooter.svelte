@@ -13,6 +13,7 @@
 	import Icon from './Icon.svelte';
 	import type { VersionResponse } from '$lib/types';
 	import { getVersionWithCache } from '$lib/version-cache';
+	import { logger } from '$lib/utils/logger';
 
 	let versions: VersionResponse | null = null;
 	let loadingVersion = false;
@@ -22,7 +23,7 @@
 			loadingVersion = true;
 			versions = await getVersionWithCache();
 		} catch (error) {
-			console.error('Failed to load versions:', error);
+			logger.error('Failed to load versions:', error);
 		} finally {
 			loadingVersion = false;
 		}

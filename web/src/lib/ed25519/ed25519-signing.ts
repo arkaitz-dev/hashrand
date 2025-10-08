@@ -6,7 +6,7 @@
  */
 
 import { ed25519 } from '@noble/curves/ed25519';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { hexToBytes } from '@noble/hashes/utils';
 import { signatureBytesToBase58 } from './ed25519-core';
 import type { Ed25519KeyPair } from './ed25519-types';
 

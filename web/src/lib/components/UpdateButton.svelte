@@ -12,6 +12,7 @@
 	import { updateAvailable, acceptUpdate } from '$lib/stores/version-update';
 	import { isRTL } from '$lib/stores/rtl';
 	import { _ } from '$lib/stores/i18n';
+	import { logger } from '$lib/utils/logger';
 
 	let isProcessing = $state(false);
 
@@ -22,7 +23,7 @@
 			isProcessing = true;
 			await acceptUpdate();
 		} catch (error) {
-			console.error('Update failed:', error);
+			logger.error('Update failed:', error);
 			isProcessing = false;
 		}
 		// Note: If successful, page will reload so isProcessing reset is not needed

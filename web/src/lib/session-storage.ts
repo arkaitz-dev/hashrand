@@ -5,6 +5,8 @@
  * Part of auth system for tracking refresh cookie expiration synchronization
  */
 
+import { logger } from './utils/logger';
+
 const DB_NAME = 'hashrand-session';
 const DB_VERSION = 1;
 const STORE_NAME = 'session-metadata';
@@ -66,7 +68,7 @@ export async function storeSessionExpiration(expires_at: number): Promise<void> 
 			transaction.onerror = () => reject(transaction.error);
 		});
 	} catch (error) {
-		console.warn('Failed to store session expiration:', error);
+		logger.warn('Failed to store session expiration:', error);
 		// Non-blocking - session continues without persistent expiration tracking
 	}
 }
@@ -100,7 +102,7 @@ export async function getSessionExpiration(): Promise<number | null> {
 
 		return result.expires_at;
 	} catch (error) {
-		console.warn('Failed to retrieve session expiration:', error);
+		logger.warn('Failed to retrieve session expiration:', error);
 		return null;
 	}
 }
@@ -123,7 +125,7 @@ export async function clearSessionExpiration(): Promise<void> {
 			transaction.onerror = () => reject(transaction.error);
 		});
 	} catch (error) {
-		console.warn('Failed to clear session expiration:', error);
+		logger.warn('Failed to clear session expiration:', error);
 		// Non-blocking
 	}
 }
