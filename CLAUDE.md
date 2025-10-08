@@ -4,10 +4,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.9 + Web v0.27.14**
-- 🎯 **Latest**: LOGGING - Correct log levels for magic link debugging (info → debug for detailed troubleshooting)
-- 📊 **Latest**: DOCS - Add CRITICAL rule for log level semantics (info vs debug usage)
-- 🔍 **Previous**: DEBUG - Comprehensive magic link validation logging (detection → HTTP → backend → errors)
+**Last Update**: 2025-10-08 - **API v1.8.9 + Web v0.28.0**
+- 📊 **Latest**: TRACKING - Comprehensive user interaction logging (46 logs across 17 files: routes, clicks, forms, dialogs)
+- 🎯 **Previous**: LOGGING - Correct log levels for magic link debugging (info → debug for detailed troubleshooting)
+- 📊 **Previous**: DOCS - Add CRITICAL rule for log level semantics (info vs debug usage)
 - ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)

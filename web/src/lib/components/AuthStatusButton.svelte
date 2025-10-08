@@ -12,6 +12,7 @@
 	import { _ } from '../stores/i18n';
 	import Icon from './Icon.svelte';
 	import { sessionStatusStore } from '../stores/session-status';
+	import { logger } from '../utils/logger';
 
 	// Component state
 	let showUserDropdown = $state(false);
@@ -48,8 +49,10 @@
 	 * Uses global session status; if expired, launches auth dialog
 	 */
 	async function handleButtonClick() {
+		logger.info('[Click] Auth status button');
 		// If session is expired (per global store), launch auth dialog immediately
 		if (sessionExpired) {
+			logger.info('[Dialog] Opening login dialog (session expired)');
 			// Launch magic link auth dialog
 			const authConfig = {
 				destination: { route: '/' }
@@ -61,6 +64,7 @@
 		// Session is valid - proceed with original auth button logic
 		if (isAuthenticated) {
 			// User appears authenticated locally - show dropdown
+			logger.info('[Click] Toggling user dropdown menu');
 			showUserDropdown = !showUserDropdown;
 		} else {
 			// Check if we have local tokens without HTTP calls
@@ -74,6 +78,7 @@
 				showUserDropdown = true;
 			} else {
 				// No local tokens - show login dialog immediately
+				logger.info('[Dialog] Opening login dialog (no local tokens)');
 				// Clear any residual auth data before asking for email (defensive security)
 				authStore.clearPreventiveAuthData();
 
@@ -89,6 +94,8 @@
 	 * Handle logout confirmation - show logout confirmation dialog
 	 */
 	function handleLogout() {
+		logger.info('[Click] Logout from dropdown menu');
+		logger.info('[Dialog] Opening logout confirmation dialog');
 		showUserDropdown = false;
 		dialogStore.show('logout');
 	}

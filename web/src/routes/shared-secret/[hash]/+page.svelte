@@ -120,6 +120,7 @@
 
 	async function handleOtpSubmit(event: Event) {
 		event.preventDefault();
+		logger.info('[Form] Submitting OTP for shared secret access');
 
 		// Validate hash parameter
 		if (!hash) {
@@ -240,6 +241,7 @@
 	}
 
 	onMount(async () => {
+		logger.info('[Route] Shared Secret view page loaded');
 		// Check session expiration before loading
 		const sessionValid = await checkSessionAndHandle({
 			onExpired: 'launch-auth',

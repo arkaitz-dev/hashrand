@@ -1,6 +1,6 @@
 <script lang="ts">
 	// import { goto } from '$app/navigation'; // REPLACED by useGenerationWorkflow
-	// import { onMount } from 'svelte'; // REPLACED by useFormParams
+	import { onMount } from 'svelte';
 	// import { page } from '$app/stores'; // REPLACED by useFormParams
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
@@ -11,10 +11,16 @@
 	import { authStore } from '$lib/stores/auth';
 	import type { MnemonicParams } from '$lib/types';
 	// import { decryptPageParams, createEncryptedUrl } from '$lib/crypto'; // REPLACED by composables
+	import { logger } from '$lib/utils/logger';
 
 	// NEW: Enterprise-grade composables for SOLID/DRY architecture
 	import { useGenerationWorkflow } from '$lib/composables/useGenerationWorkflow';
 	import { useFormParams } from '$lib/composables/useFormParams';
+
+	// Track route loading
+	onMount(() => {
+		logger.info('[Route] Mnemonic page loaded');
+	});
 
 	// Default values
 	function getDefaultParams(): MnemonicParams {

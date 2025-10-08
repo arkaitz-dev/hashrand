@@ -5,15 +5,18 @@
 	import { authStore } from '$lib/stores/auth';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
 	import FlashMessages from '$lib/components/FlashMessages.svelte';
+	import { logger } from '$lib/utils/logger';
 
 	let isLoggingOut = false;
 
 	onMount(() => {
+		logger.info('[Route] Logout confirmation page loaded');
 		// Clear any existing flash messages
 		flashMessagesStore.clear();
 	});
 
 	async function handleLogout() {
+		logger.info('[Click] Logout confirmed');
 		isLoggingOut = true;
 
 		try {
@@ -35,6 +38,7 @@
 	}
 
 	function handleCancel() {
+		logger.info('[Click] Logout cancelled');
 		// Just go back to the previous page
 		goto('/');
 	}

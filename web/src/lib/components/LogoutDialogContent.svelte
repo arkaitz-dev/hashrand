@@ -13,6 +13,8 @@
 	 * Handle logout confirmation
 	 */
 	async function handleLogout() {
+		logger.info('[Click] Logout confirmed from dialog');
+		logger.info('[Dialog] Closing logout dialog');
 		try {
 			// Clear auth state (server-side session + local storage)
 			await authStore.logout();

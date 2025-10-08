@@ -1,7 +1,7 @@
 {
 	"name": "hashrand-web",
 	"private": true,
-	"version": "0.27.14",
+	"version": "0.28.0",
 	"description": "Professional web interface for HashRand API - hash, password, and API key generator",
 	"type": "module",
 	"scripts": {

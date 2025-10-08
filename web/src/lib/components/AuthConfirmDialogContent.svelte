@@ -12,6 +12,7 @@
 	import { goto } from '$app/navigation';
 	import { buildNextParameterFromConfig, type AuthDialogConfig } from '$lib/utils/navigation';
 	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { logger } from '../utils/logger';
 
 	// Props - Universal architecture
 	export let config: AuthDialogConfig;
@@ -24,6 +25,7 @@
 	 * Handle "Es correcto" - send email to API
 	 */
 	async function handleCorrect() {
+		logger.info('[Click] Confirm email and send magic link');
 		isSubmitting = true;
 
 		try {
@@ -37,10 +39,14 @@
 
 			// Add success flash message
 			flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
+			logger.info('[Form] Magic link request sent successfully');
 		} catch {
 			// Error sending magic link
+			logger.error('[Form] Magic link request failed');
 		} finally {
 			// ALWAYS close dialog and navigate to / regardless of success or error
+			logger.info('[Dialog] Closing auth confirmation dialog');
+			logger.info('[Navigation] Redirecting to: /');
 			onClose();
 			goto('/');
 		}
@@ -50,6 +56,8 @@
 	 * Handle "Corregir" - go back to auth dialog with prefilled email
 	 */
 	function handleEdit() {
+		logger.info('[Click] Edit email address');
+		logger.info('[Dialog] Opening auth dialog for email correction');
 		// Show auth dialog with same configuration but allow email editing
 		// This will automatically replace the current dialog
 		const editConfig: AuthDialogConfig = {

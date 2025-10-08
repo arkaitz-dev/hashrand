@@ -9,6 +9,7 @@
 	import { getUserEmail } from '$lib/session';
 	import { onMount } from 'svelte';
 	import type { CreateSharedSecretResponse } from '$lib/types';
+	import { logger } from '$lib/utils/logger';
 
 	// Form state
 	let senderEmail = $state('');
@@ -27,6 +28,7 @@
 
 	// Load user email from IndexedDB on mount
 	onMount(async () => {
+		logger.info('[Route] Shared Secret creation page loaded');
 		const email = await getUserEmail();
 		if (email) {
 			senderEmail = email;
@@ -69,6 +71,7 @@
 
 	async function handleCreate(event: Event) {
 		event.preventDefault();
+		logger.info('[Form] Submitting shared secret creation form');
 
 		if (!formValid) {
 			flashMessagesStore.addMessage($_('common.formInvalid'));

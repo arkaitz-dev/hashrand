@@ -10,6 +10,7 @@
 	import { dialogStore } from '../stores/dialog';
 	import { onMount } from 'svelte';
 	import type { AuthDialogConfig } from '$lib/utils/navigation';
+	import { logger } from '../utils/logger';
 
 	// Props - Universal architecture
 	export let onClose: () => void;
@@ -30,6 +31,9 @@
 		if (!isValidEmail(email)) {
 			return;
 		}
+
+		logger.info('[Form] Submitting login email');
+		logger.info('[Dialog] Opening auth confirmation dialog');
 
 		// Create config with entered email for confirmation dialog
 		const confirmConfig: AuthDialogConfig = {

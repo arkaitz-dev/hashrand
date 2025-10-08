@@ -16,6 +16,7 @@ import { authStore } from '$lib/stores/auth';
 import { createEncryptedUrl } from '$lib/crypto';
 import { checkSessionAndHandle } from '$lib/session-expiry-manager';
 import { get } from 'svelte/store';
+import { logger } from '$lib/utils/logger';
 
 export interface GenerationConfig<T = Record<string, unknown>> {
 	endpoint: string;
@@ -33,8 +34,10 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 	 */
 	async function handleGenerate(event: Event) {
 		event.preventDefault();
+		logger.info(`[Form] Submitting ${config.endpoint} generation form`);
 
 		if (!config.formValid) {
+			logger.warn(`[Form] ${config.endpoint} form validation failed`);
 			return;
 		}
 
@@ -109,9 +112,11 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 			});
 
 			// Navigate to result page with encrypted parameters
+			logger.info('[Navigation] Redirecting to: /result (encrypted params)');
 			goto(encryptedUrl);
 		} else {
 			// ERROR: Crypto tokens required for secure navigation
+			logger.error('[Navigation] Missing crypto tokens - returning to home');
 			// Missing crypto tokens - cannot create secure URL
 			goto('/'); // Return to home instead of unsecure URL
 		}

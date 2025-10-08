@@ -11,6 +11,8 @@
 	import { logger } from '$lib/utils/logger';
 
 	onMount(async () => {
+		logger.info('[Route] Home page loaded');
+
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
 

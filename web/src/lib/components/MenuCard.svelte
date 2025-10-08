@@ -3,6 +3,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import Iconize from '$lib/components/Iconize.svelte';
+	import { logger } from '$lib/utils/logger';
 
 	// Props
 	export let path: string;
@@ -11,6 +12,8 @@
 	export let description: string;
 
 	function handleClick() {
+		logger.info(`[Click] Menu card: ${title} (${path})`);
+		logger.info(`[Navigation] Redirecting to: ${path}`);
 		goto(path);
 	}
 </script>

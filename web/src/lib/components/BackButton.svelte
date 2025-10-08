@@ -3,6 +3,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { isRTL } from '$lib/stores/rtl';
 	import Icon from './Icon.svelte';
+	import { logger } from '$lib/utils/logger';
 
 	interface Props {
 		to: string;
@@ -12,6 +13,8 @@
 	let { to, class: className = '' }: Props = $props();
 
 	function handleBack() {
+		logger.info(`[Click] Back button to: ${to}`);
+		logger.info(`[Navigation] Redirecting to: ${to}`);
 		goto(to);
 	}
 </script>

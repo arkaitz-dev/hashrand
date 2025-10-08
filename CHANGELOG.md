@@ -4,6 +4,152 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.28.0] - 2025-10-08
+
+### Added
+
+**📊 TRACKING: Comprehensive user interaction logging across entire frontend**
+
+**Problem**:
+- Difficult to debug user flows without visibility into actions taken
+- No tracking of route navigation, button clicks, form submissions
+- Tablet development challenging without DevTools (need terminal logs)
+- When errors occur, unclear what user did before the error
+- Missing operational visibility for understanding user behavior
+
+**Solution - Systematic Operational Logging**:
+
+Added 46 `logger.info()` calls across 17 files covering ALL user interactions:
+
+**1. Route Loading Logs (9 routes)**:
+- Format: `[Route] {RouteName} page loaded`
+- Every page logs when it loads via onMount
+- Routes covered:
+  - Home (`/`)
+  - Custom Hash (`/custom`)
+  - Password (`/password`)
+  - API Key (`/api-key`)
+  - Mnemonic (`/mnemonic`)
+  - Result (`/result`)
+  - Shared Secret creation (`/shared-secret`)
+  - Shared Secret view (`/shared-secret/[hash]`)
+  - Logout confirmation (`/logout`)
+
+**2. Button/Link Clicks (14 logs)**:
+- Format: `[Click] {Description of action}`
+- ALL interactive elements tracked:
+  - Menu cards (home page navigation)
+  - Back to menu button
+  - Back button (generic)
+  - Auth status button + dropdown menu
+  - Copy to clipboard button
+  - Regenerate hash button
+  - Adjust settings button
+  - Logout confirmation/cancel buttons
+
+**3. Form Submissions (8 logs)**:
+- Format: `[Form] Submitting {form name}`
+- ALL forms tracked:
+  - Custom hash generation
+  - Password generation
+  - API key generation
+  - Mnemonic generation
+  - Shared secret creation
+  - OTP submission (view secret)
+  - Login email submission
+  - Magic link confirmation
+
+**4. Navigation/Redirects (8 logs)**:
+- Format: `[Navigation] Redirecting to: {path}`
+- Logged BEFORE every `goto()` call:
+  - Menu card navigation
+  - Back button navigation
+  - Form submission redirects to `/result`
+  - Logout redirects
+  - Session expiry redirects
+
+**5. Dialog Interactions (10 logs)**:
+- Format: `[Dialog] {Action} {dialog name}`
+- ALL dialog open/close/actions tracked:
+  - Login dialog (session expired / no tokens)
+  - Logout confirmation dialog
+  - Auth confirmation dialog (magic link sent)
+  - Seed reuse dialog
+  - Dialog close events
+  - User choices within dialogs
+
+**Log Format Categories**:
+```
+[Route]      → Page loads (onMount)
+[Click]      → User clicks buttons/links
+[Form]       → Form submissions
+[Navigation] → goto() redirects
+[Dialog]     → Dialog interactions
+```
+
+**Files Modified** (17 total):
+
+*Routes* (9 files):
+- `routes/+page.svelte`
+- `routes/custom/+page.svelte`
+- `routes/password/+page.svelte`
+- `routes/api-key/+page.svelte`
+- `routes/mnemonic/+page.svelte`
+- `routes/result/+page.svelte`
+- `routes/shared-secret/+page.svelte`
+- `routes/shared-secret/[hash]/+page.svelte`
+- `routes/logout/+page.svelte`
+
+*Components* (7 files):
+- `lib/components/MenuCard.svelte`
+- `lib/components/BackToMenuButton.svelte`
+- `lib/components/BackButton.svelte`
+- `lib/components/AuthStatusButton.svelte`
+- `lib/components/AuthDialogContent.svelte`
+- `lib/components/AuthConfirmDialogContent.svelte`
+- `lib/components/LogoutDialogContent.svelte`
+
+*Composables* (1 file):
+- `lib/composables/useGenerationWorkflow.ts` - Universal form handler
+
+**Benefits**:
+
+✅ **Complete user journey tracking** - Every page load, click, form submission visible
+✅ **Pre-error context** - Know exactly what user did before error occurred
+✅ **Navigation flow visibility** - See full navigation path through app
+✅ **Dialog interaction tracking** - Understand user choices in dialogs
+✅ **Tablet debugging** - Logs visible in terminal via WebSocket redirection
+✅ **Production safe** - All logs eliminated by terser in production builds
+✅ **Systematic coverage** - Zero gaps in user interaction tracking
+✅ **Operational level** - Uses info! (not debug), visible in normal development
+
+**Usage**:
+
+Development with full tracking:
+```bash
+just dev    # All operational logs visible (info level)
+```
+
+Example log sequence (user generates password):
+```
+[Route] Home page loaded
+[Click] Menu card: Password (/password)
+[Navigation] Redirecting to: /password
+[Route] Password page loaded
+[Form] Submitting password generation form
+[Navigation] Redirecting to: /result?p=...
+[Route] Result page loaded
+[Click] Copy result to clipboard
+[Click] Back to menu button
+[Navigation] Redirecting to: /
+[Route] Home page loaded
+```
+
+**Version Bump Rationale**:
+- Minor version bump (0.27 → 0.28) due to significant observability enhancement
+- 46 new logging points across entire frontend
+- Fundamental improvement to debugging and monitoring capabilities
+
 ## [Web v0.27.14] - 2025-10-08
 
 ### Fixed

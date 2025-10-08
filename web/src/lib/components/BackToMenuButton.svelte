@@ -3,6 +3,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { clearResult } from '$lib/stores/result';
 	import Iconize from './Iconize.svelte';
+	import { logger } from '$lib/utils/logger';
 
 	// Props
 	export let buttonClass: string =
@@ -10,6 +11,8 @@
 
 	// Handle back to menu with state reset
 	function handleBackToMenu() {
+		logger.info('[Click] Back to menu button');
+		logger.info('[Navigation] Redirecting to: /');
 		// Clear the result state to reset application state
 		clearResult();
 		// Navigate to home

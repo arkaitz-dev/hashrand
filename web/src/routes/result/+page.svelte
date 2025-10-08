@@ -15,6 +15,7 @@
 	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 	import { authStore } from '$lib/stores/auth';
 	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+	import { logger } from '$lib/utils/logger';
 
 	let copySuccess = $state(false);
 	let copyTimeout: ReturnType<typeof setTimeout>;
@@ -42,6 +43,7 @@
 
 	// Handle result state and API calls
 	onMount(async () => {
+		logger.info('[Route] Result page loaded');
 		// CHECK SESSION EXPIRATION FIRST - before any result processing
 		const currentUrl = $page.url.pathname + $page.url.search;
 		const sessionValid = await checkSessionAndHandle({
@@ -298,6 +300,7 @@
 
 	async function copyToClipboard() {
 		if (!$resultState?.value) return;
+		logger.info('[Click] Copy result to clipboard');
 
 		try {
 			await navigator.clipboard.writeText($resultState.value);
@@ -425,24 +428,31 @@
 			goto('/');
 			return;
 		}
+		logger.info('[Click] Adjust settings');
 
 		// If there's no seed, go directly without dialog
 		if (!$resultState.seed) {
+			logger.info('[Navigation] Redirecting to form (no seed)');
 			goto(await getPreviousPath());
 			return;
 		}
 
 		// Show seed dialog using new dialog system
+		logger.info('[Dialog] Opening seed reuse dialog');
 		dialogStore.show('seed', { onSeedChoice: handleSeedChoice });
 	}
 
 	async function handleSeedChoice(reuseExistingSeed: boolean) {
+		logger.info(`[Dialog] Seed choice: ${reuseExistingSeed ? 'reuse' : 'new'}`);
+		logger.info('[Dialog] Closing seed dialog');
 		dialogStore.close();
 		if (reuseExistingSeed) {
 			// Include seed in the URL parameters
+			logger.info('[Navigation] Redirecting to form (with seed)');
 			goto(await getPreviousPathWithSeed());
 		} else {
 			// Don't include seed in URL parameters
+			logger.info('[Navigation] Redirecting to form (without seed)');
 			goto(await getPreviousPath());
 		}
 	}
@@ -613,6 +623,7 @@
 
 	async function regenerateHash() {
 		if (!$resultState || $isLoading) return;
+		logger.info('[Click] Regenerate hash with same parameters');
 
 		// Reset copy success state immediately
 		copySuccess = false;
