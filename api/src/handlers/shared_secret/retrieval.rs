@@ -97,7 +97,9 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
         Err(e) => {
             // Detect authorization errors (403 Forbidden) vs server errors (500)
             if e.starts_with("FORBIDDEN:") {
-                Ok(create_forbidden_response(&e.replacen("FORBIDDEN:", "", 1).trim()))
+                Ok(create_forbidden_response(
+                    e.replacen("FORBIDDEN:", "", 1).trim(),
+                ))
             } else {
                 Ok(create_server_error_response(&e))
             }
@@ -151,7 +153,9 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
         Err(e) => {
             // Detect authorization errors (403 Forbidden) vs server errors (500)
             if e.starts_with("FORBIDDEN:") {
-                Ok(create_forbidden_response(&e.replacen("FORBIDDEN:", "", 1).trim()))
+                Ok(create_forbidden_response(
+                    e.replacen("FORBIDDEN:", "", 1).trim(),
+                ))
             } else {
                 Ok(create_server_error_response(&e))
             }

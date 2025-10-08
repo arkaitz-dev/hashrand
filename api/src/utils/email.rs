@@ -10,17 +10,17 @@ use crate::email_templates::render_magic_link_email;
 
 // ==================== DEV-MODE ONLY: Email Dry-Run System ====================
 // This entire block is ELIMINATED from production builds (cargo build --no-default-features)
-// In development: emails are NOT sent by default (dry-run ON), can be toggled via endpoint
+// In development: emails ARE sent by default (dry-run OFF), tests activate dry-run explicitly
 // In production: this code doesn't exist, emails ALWAYS sent
 
 #[cfg(feature = "dev-mode")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Global flag to control dry-run mode (DEV-MODE ONLY)
-/// Default: true (emails OFF) - must be explicitly disabled for manual browser testing
+/// Default: false (emails ON) - tests explicitly activate dry-run before execution
 /// This static is completely removed from production binaries
 #[cfg(feature = "dev-mode")]
-static EMAIL_DRY_RUN: AtomicBool = AtomicBool::new(true);
+static EMAIL_DRY_RUN: AtomicBool = AtomicBool::new(false);
 
 /// Toggle email dry-run mode (DEV-MODE ONLY)
 /// This function doesn't exist in production builds
@@ -267,7 +267,10 @@ pub async fn send_shared_secret_receiver_email(
     #[cfg(feature = "dev-mode")]
     {
         if is_email_dry_run_enabled() {
-            info!("📧 [DRY-RUN] Shared secret receiver email NOT sent → {}", secret_url);
+            info!(
+                "📧 [DRY-RUN] Shared secret receiver email NOT sent → {}",
+                secret_url
+            );
 
             return Ok(());
         }
@@ -397,7 +400,10 @@ pub async fn send_shared_secret_sender_email(
     #[cfg(feature = "dev-mode")]
     {
         if is_email_dry_run_enabled() {
-            info!("📧 [DRY-RUN] Shared secret sender (copy) email NOT sent → {}", secret_url);
+            info!(
+                "📧 [DRY-RUN] Shared secret sender (copy) email NOT sent → {}",
+                secret_url
+            );
 
             return Ok(());
         }

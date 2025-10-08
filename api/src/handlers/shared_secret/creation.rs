@@ -266,6 +266,12 @@ async fn create_shared_secret(
     let url_sender = build_complete_url(&request.ui_host, &sender_path);
     let url_receiver = build_complete_url(&request.ui_host, &receiver_path);
 
+    // Log shared secret creation with complete URLs and participants
+    info!(
+        "🔐 Shared secret created: {} → {} | Sender URL: {} | Receiver URL: {}",
+        request.sender_email, request.receiver_email, url_sender, url_receiver
+    );
+
     // Send email to receiver (always)
     let receiver_email_result = crate::utils::email::send_shared_secret_receiver_email(
         &request.receiver_email,
