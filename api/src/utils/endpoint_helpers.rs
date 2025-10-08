@@ -61,6 +61,11 @@ pub fn create_server_error_response(message: &str) -> Response {
     create_error_response(500, message)
 }
 
+/// Create forbidden error response (403) (DRY helper)
+pub fn create_forbidden_response(message: &str) -> Response {
+    create_error_response(403, message)
+}
+
 /// Helper function to check unwanted patterns for security
 pub fn contains_unwanted_patterns(s: &str) -> bool {
     s.contains("--") || s.contains("__")

@@ -29,7 +29,7 @@ pub use auth_validation_middleware::validate_no_simultaneous_tokens;
 pub use email::send_magic_link_email;
 pub use endpoint_helpers::{
     create_auth_error_response, create_client_error_response, create_error_response,
-    create_server_error_response, generate_avoiding_unwanted_patterns,
+    create_forbidden_response, create_server_error_response, generate_avoiding_unwanted_patterns,
     generate_password_avoiding_patterns, handle_signed_get_request,
 };
 pub use handler_helpers::{

@@ -11,9 +11,9 @@ use crate::database::operations::{
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
-    create_auth_error_response, create_client_error_response, create_server_error_response,
-    create_signed_endpoint_response, endpoint_helpers::extract_query_params,
-    extract_crypto_material_from_request,
+    create_auth_error_response, create_client_error_response, create_forbidden_response,
+    create_server_error_response, create_signed_endpoint_response,
+    endpoint_helpers::extract_query_params, extract_crypto_material_from_request,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -94,7 +94,14 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     // Retrieve secret with 3-layer validation (checksum → ownership → database)
     match retrieve_and_respond_v2(&encrypted_hash, &user_id_from_jwt, None, &crypto_material) {
         Ok(response) => Ok(response),
-        Err(e) => Ok(create_server_error_response(&e)),
+        Err(e) => {
+            // Detect authorization errors (403 Forbidden) vs server errors (500)
+            if e.starts_with("FORBIDDEN:") {
+                Ok(create_forbidden_response(&e.replacen("FORBIDDEN:", "", 1).trim()))
+            } else {
+                Ok(create_server_error_response(&e))
+            }
+        }
     }
 }
 
@@ -141,7 +148,14 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
         &crypto_material,
     ) {
         Ok(response) => Ok(response),
-        Err(e) => Ok(create_server_error_response(&e)),
+        Err(e) => {
+            // Detect authorization errors (403 Forbidden) vs server errors (500)
+            if e.starts_with("FORBIDDEN:") {
+                Ok(create_forbidden_response(&e.replacen("FORBIDDEN:", "", 1).trim()))
+            } else {
+                Ok(create_server_error_response(&e))
+            }
+        }
     }
 }
 
@@ -206,7 +220,7 @@ fn retrieve_and_respond_v2(
     // Layer 3: CRITICAL - Validate ownership (user_id from JWT must match user_id from hash)
     if user_id_from_jwt != &user_id_from_hash {
         return Err(
-            "Access denied: You cannot access a shared secret that doesn't belong to you"
+            "FORBIDDEN: Access denied: You cannot access a shared secret that doesn't belong to you"
                 .to_string(),
         );
     }

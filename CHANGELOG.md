@@ -4,6 +4,48 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.8.8] - 2025-10-08
+
+### Fixed
+
+**🔒 SECURITY: Fix shared secret ownership validation HTTP status (500 → 403)**
+
+**Problem**:
+- Accessing shared secret that doesn't belong to authenticated user returned HTTP 500 (Internal Server Error)
+- Correct response should be 403 Forbidden (authorization error)
+- Frontend interpreted 500 as token refresh error instead of access denial
+- Error logs: "Token refresh error: {status: 500, url: '/api/shared-secret/...'}"
+
+**Root Cause**:
+- `retrieve_and_respond_v2()` returns ownership errors as generic `Err(String)`
+- Handler (lines 95-98, 143-149) processed all errors with `create_server_error_response` (500)
+- No differentiation between server errors (500) and authorization errors (403)
+
+**Solution**:
+1. **Added `create_forbidden_response()` helper** (`utils/endpoint_helpers.rs:65-67`):
+   - New function for 403 Forbidden responses
+   - Follows same pattern as other error helpers (400, 401, 500)
+
+2. **Modified ownership error message** (`retrieval.rs:223`):
+   - Prefixed with "FORBIDDEN:" to identify authorization errors
+   - Pattern: `"FORBIDDEN: Access denied: You cannot access..."`
+
+3. **Updated error handling** (GET handler lines 97-104, POST handler lines 151-158):
+   - Detects "FORBIDDEN:" prefix in error string
+   - Routes to `create_forbidden_response()` for 403 status
+   - Other errors use `create_server_error_response()` for 500 status
+
+**Files Modified**:
+- `api/src/utils/endpoint_helpers.rs` - Added `create_forbidden_response()`
+- `api/src/utils/mod.rs` - Exported new function
+- `api/src/handlers/shared_secret/retrieval.rs` - Ownership error detection + 403 routing
+
+**Benefits**:
+- ✅ Correct HTTP semantics: 403 for authorization failures, not 500
+- ✅ Frontend properly handles access denial instead of token refresh error
+- ✅ Clearer API semantics for clients
+- ✅ Better error classification in logs
+
 ## [Web v0.27.11] - 2025-10-08
 
 ### Fixed
