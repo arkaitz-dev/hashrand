@@ -283,6 +283,7 @@ export const hi: I18nTexts = {
 		readsInvalid: 'अधिकतम पठन 1 और 10 के बीच होने चाहिए',
 		creationError: 'रहस्य बनाने में त्रुटि',
 		retrievalError: 'रहस्य प्राप्त करने में त्रुटि',
+		accessDenied: 'पहुंच अस्वीकृत: यह रहस्य किसी अन्य उपयोगकर्ता का है',
 		deletionError: 'रहस्य हटाने में त्रुटि',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

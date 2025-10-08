@@ -4,6 +4,69 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.12] - 2025-10-08
+
+### Added
+
+**🌍 UX: Add specific 403 Forbidden message with i18n support (13 languages)**
+
+**Problem**:
+- Frontend showed generic "Error retrieving secret" for 403 Forbidden responses
+- No clear indication that access was denied due to ownership validation
+- Same generic message used for all errors (403, 404, 410, 500)
+- Poor user experience when trying to access another user's secret
+
+**Root Cause**:
+- Error handler in `[hash]/+page.svelte` didn't distinguish 403 from other errors
+- Missing specific translation key for access denial
+- No logger messages for debugging 403 errors
+
+**Solution**:
+1. **Added `accessDenied` translations** in 13 languages:
+   - 🇬🇧 en: "Access denied: This secret belongs to another user"
+   - 🇪🇸 es: "Acceso denegado: Este secreto pertenece a otro usuario"
+   - 🇵🇹 pt: "Acesso negado: Este segredo pertence a outro usuário"
+   - 🇫🇷 fr: "Accès refusé : Ce secret appartient à un autre utilisateur"
+   - 🇩🇪 de: "Zugriff verweigert: Dieses Geheimnis gehört einem anderen Benutzer"
+   - 🇷🇺 ru: "Доступ запрещён: Этот секрет принадлежит другому пользователю"
+   - 🇨🇳 zh: "访问被拒绝：此秘密属于另一个用户"
+   - 🇸🇦 ar: "تم رفض الوصول: هذا السر يخص مستخدمًا آخر"
+   - 🇪🇺 eu: "Sarbidea ukatua: Sekretu hau beste erabiltzaile batena da"
+   - 🇨🇦 ca: "Accés denegat: Aquest secret pertany a un altre usuari"
+   - 🇬🇱 gl: "Acceso denegado: Este segredo pertence a outro usuario"
+   - 🇮🇳 hi: "पहुंच अस्वीकृत: यह रहस्य किसी अन्य उपयोगकर्ता का है"
+   - 🇯🇵 ja: "アクセス拒否：このシークレットは別のユーザーのものです"
+
+2. **Enhanced error handler** (`web/src/routes/shared-secret/[hash]/+page.svelte:107-110`):
+   - Added specific 403 detection: `else if (err.status === 403)`
+   - Shows translated `accessDenied` message with 2s delay before redirect
+   - Maintains same UX pattern as 404/410 errors
+
+3. **Added logger messages** for all error paths:
+   - `logger.warn('[SharedSecret] Access denied (403) - ownership validation failed:', hash)`
+   - `logger.warn('[SharedSecret] Secret not found (404):', hash)`
+   - `logger.warn('[SharedSecret] Secret expired (410):', hash)`
+   - `logger.error('[SharedSecret] Retrieval error:', { status, hash })`
+
+**setTimeout Rationale**:
+- **Terminal errors (403, 404, 410, 500)**: 2-second delay before redirect
+  - Gives user time to read the error message
+  - Page content is useless (secret unavailable), so redirect is appropriate
+- **Recoverable errors (invalid OTP)**: No redirect
+  - User can fix the issue and retry on same page
+
+**Files Modified**:
+- `web/src/lib/stores/translations/*.ts` (13 files) - Added `accessDenied` key
+- `web/src/routes/shared-secret/[hash]/+page.svelte` - Enhanced error handling + logging
+- `web/package.json` - Version 0.27.11 → 0.27.12
+
+**Benefits**:
+- ✅ Clear, specific error message for 403 (ownership validation failure)
+- ✅ Professional translations in all 13 supported languages
+- ✅ Better debugging with structured logger messages
+- ✅ Consistent UX across all error scenarios
+- ✅ User understands WHY access was denied
+
 ## [API v1.8.8] - 2025-10-08
 
 ### Fixed

@@ -294,6 +294,7 @@ export const fr: I18nTexts = {
 		readsInvalid: 'Les lectures maximales doivent être entre 1 et 10',
 		creationError: 'Erreur lors de la création du secret',
 		retrievalError: 'Erreur lors de la récupération du secret',
+		accessDenied: 'Accès refusé : Ce secret appartient à un autre utilisateur',
 		deletionError: 'Erreur lors de la suppression du secret',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

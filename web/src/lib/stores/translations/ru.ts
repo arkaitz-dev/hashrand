@@ -283,6 +283,7 @@ export const ru: I18nTexts = {
 		readsInvalid: 'Максимальное количество прочтений должно быть от 1 до 10',
 		creationError: 'Ошибка при создании секрета',
 		retrievalError: 'Ошибка при получении секрета',
+		accessDenied: 'Доступ запрещён: Этот секрет принадлежит другому пользователю',
 		deletionError: 'Ошибка при удалении секрета',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

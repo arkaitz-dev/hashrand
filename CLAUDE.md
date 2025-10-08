@@ -4,8 +4,9 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.8 + Web v0.27.11**
-- 🔒 **Latest**: SECURITY - Fix shared secret ownership validation HTTP status (500 → 403 Forbidden)
+**Last Update**: 2025-10-08 - **API v1.8.8 + Web v0.27.12**
+- 🌍 **Latest**: UX - Add specific 403 Forbidden message with i18n (13 languages) + logger messages
+- 🔒 **Previous**: SECURITY - Fix shared secret ownership validation HTTP status (500 → 403 Forbidden)
 - 🔒 **Previous**: AUTH - Fix duplicate magic link validation (race condition between forceMagicLink/handleMagicLink)
 - 🏗️ **Previous**: INFRA - Development build mode correction: debug builds for dev, release only for predeploy/deploy
 - 📝 **Previous**: INFRA - Frontend logging: logger wrapper + browser→terminal redirection (tablet dev) + ZERO logs in production

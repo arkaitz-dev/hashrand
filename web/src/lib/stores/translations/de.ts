@@ -295,6 +295,7 @@ export const de: I18nTexts = {
 		readsInvalid: 'Die maximalen Lesevorgänge müssen zwischen 1 und 10 liegen',
 		creationError: 'Fehler beim Erstellen des Geheimnisses',
 		retrievalError: 'Fehler beim Abrufen des Geheimnisses',
+		accessDenied: 'Zugriff verweigert: Dieses Geheimnis gehört einem anderen Benutzer',
 		deletionError: 'Fehler beim Löschen des Geheimnisses',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

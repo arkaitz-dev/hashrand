@@ -274,6 +274,7 @@ export const zh: I18nTexts = {
 		readsInvalid: '最大读取次数必须在1到10之间',
 		creationError: '创建秘密时出错',
 		retrievalError: '检索秘密时出错',
+		accessDenied: '访问被拒绝：此秘密属于另一个用户',
 		deletionError: '删除秘密时出错',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

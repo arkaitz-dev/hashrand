@@ -94,15 +94,22 @@
 			// 	}
 			// }
 		} catch (error: unknown) {
-			// Handle HTTP errors (404, 410, network errors, etc.)
+			// Handle HTTP errors (404, 410, 403, network errors, etc.)
 			const err = error as { status?: number; message?: string };
 			if (err.status === 404) {
+				logger.warn('[SharedSecret] Secret not found (404):', hash);
 				flashMessagesStore.addMessage($_('sharedSecret.secretNotFound'));
 				setTimeout(() => goto('/'), 2000);
 			} else if (err.status === 410) {
+				logger.warn('[SharedSecret] Secret expired (410):', hash);
 				flashMessagesStore.addMessage($_('sharedSecret.secretExpired'));
 				setTimeout(() => goto('/'), 2000);
+			} else if (err.status === 403) {
+				logger.warn('[SharedSecret] Access denied (403) - ownership validation failed:', hash);
+				flashMessagesStore.addMessage($_('sharedSecret.accessDenied'));
+				setTimeout(() => goto('/'), 2000);
 			} else {
+				logger.error('[SharedSecret] Retrieval error:', { status: err.status, hash });
 				flashMessagesStore.addMessage($_('sharedSecret.retrievalError'));
 				setTimeout(() => goto('/'), 2000);
 			}

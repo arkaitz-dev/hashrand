@@ -286,6 +286,7 @@ export const ca: I18nTexts = {
 		readsInvalid: "Les lectures màximes han d'estar entre 1 i 10",
 		creationError: 'Error en crear el secret',
 		retrievalError: 'Error en recuperar el secret',
+		accessDenied: 'Accés denegat: Aquest secret pertany a un altre usuari',
 		deletionError: 'Error en eliminar el secret',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

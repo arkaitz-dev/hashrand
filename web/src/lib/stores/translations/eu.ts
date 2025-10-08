@@ -281,6 +281,7 @@ export const eu: I18nTexts = {
 		readsInvalid: 'Irakurketa maximoak 1 eta 10 artean egon behar dira',
 		creationError: 'Errorea sekretua sortzerakoan',
 		retrievalError: 'Errorea sekretua eskuratzerakoan',
+		accessDenied: 'Sarbidea ukatua: Sekretu hau beste erabiltzaile batena da',
 		deletionError: 'Errorea sekretua ezabatzerakoan',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

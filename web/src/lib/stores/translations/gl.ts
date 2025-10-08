@@ -284,6 +284,7 @@ export const gl: I18nTexts = {
 		readsInvalid: 'As lecturas máximas deben estar entre 1 e 10',
 		creationError: 'Erro ao crear o segredo',
 		retrievalError: 'Erro ao recuperar o segredo',
+		accessDenied: 'Acceso denegado: Este segredo pertence a outro usuario',
 		deletionError: 'Erro ao eliminar o segredo',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

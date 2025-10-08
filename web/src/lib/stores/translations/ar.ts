@@ -282,6 +282,7 @@ export const ar: I18nTexts = {
 		readsInvalid: 'يجب أن تكون القراءات القصوى بين 1 و 10',
 		creationError: 'خطأ في إنشاء السر',
 		retrievalError: 'خطأ في استرداد السر',
+		accessDenied: 'تم رفض الوصول: هذا السر يخص مستخدمًا آخر',
 		deletionError: 'خطأ في حذف السر',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',

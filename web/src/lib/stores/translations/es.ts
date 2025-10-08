@@ -297,6 +297,7 @@ export const es: I18nTexts = {
 		readsInvalid: 'Las lecturas máximas deben estar entre 1 y 10',
 		creationError: 'Error al crear el secreto',
 		retrievalError: 'Error al recuperar el secreto',
+		accessDenied: 'Acceso denegado: Este secreto pertenece a otro usuario',
 		deletionError: 'Error al eliminar el secreto',
 		// M3: Metadata enriquecida
 		unlimitedHint: 'Como remitente, puedes ver este secreto ilimitadas veces',

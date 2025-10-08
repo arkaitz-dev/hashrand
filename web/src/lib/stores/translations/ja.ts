@@ -285,6 +285,7 @@ export const ja: I18nTexts = {
 		readsInvalid: '最大閲覧回数は1〜10の間である必要があります',
 		creationError: 'シークレットの作成エラー',
 		retrievalError: 'シークレットの取得エラー',
+		accessDenied: 'アクセス拒否：このシークレットは別のユーザーのものです',
 		deletionError: 'シークレットの削除エラー',
 		// M3: Enhanced metadata
 		unlimitedHint: 'As the sender, you can view this secret unlimited times',
