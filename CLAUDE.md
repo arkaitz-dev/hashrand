@@ -4,10 +4,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: Workspace with API Backend (`/api/` - Rust+Spin, port 3000) and Web Interface (`/web/` - SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-08 - **API v1.8.9 + Web v0.27.13**
-- 🔍 **Latest**: DEBUG - Comprehensive magic link validation logging (detection → HTTP → backend → errors)
-- 📧 **Previous**: DEV - Email dry-run OFF by default in development (ON only during tests)
-- 🔍 **Previous**: LOGGING - Shared secret creation visibility (URLs + sender/receiver info)
+**Last Update**: 2025-10-08 - **API v1.8.9 + Web v0.27.14**
+- 🎯 **Latest**: LOGGING - Correct log levels for magic link debugging (info → debug for detailed troubleshooting)
+- 📊 **Latest**: DOCS - Add CRITICAL rule for log level semantics (info vs debug usage)
+- 🔍 **Previous**: DEBUG - Comprehensive magic link validation logging (detection → HTTP → backend → errors)
 - ✅ **Quality**: ZERO errors across entire codebase (clippy + ESLint + svelte-check)
 
 **Token Durations**: Configured in `.env` (dev) / `.env-prod` (prod)
@@ -96,10 +96,23 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - ✅ `just dev` → **Normal development** - Sufficient for most debugging (shows all info! logs)
 - ✅ `just dev-debug` → **Deep troubleshooting** - Use when you need to see debug! logs or system internals
 
-**CRITICAL: When adding debugging logs**:
-- Use `info!` (Rust) or `logger.info()` (TypeScript) for debugging → **Visible in `just dev`**
-- Use `debug!` (Rust) or `logger.debug()` (TypeScript) for verbose details → **Requires `just dev-debug`**
-- **NEVER assume logs require dev-debug** - Most debugging uses info! level
+**CRITICAL: When adding logs - Choose the RIGHT level**:
+- `info!` / `logger.info()` → **General operations** - Succinct guide of what was used/touched, useful in normal development
+  - Examples: "User logged in", "Secret created", "Email sent"
+  - **NOT for detailed debugging** - Keep it high-level and production-friendly
+- `debug!` / `logger.debug()` → **Detailed debugging** - Exhaustive step-by-step for troubleshooting
+  - Examples: "Entering function X with params Y", "HTTP request to endpoint Z", "Token validation: step 1/5"
+  - **Use this for troubleshooting** - Shows exact execution flow with all details
+- `warn!` / `logger.warn()` → **Anomalous situations** - Potential issues, not normal flow
+  - Examples: "Token expiring soon", "Retry attempt 3/5", "Deprecated API used"
+  - **NOT for debugging** - Only for real anomalies
+- `error!` / `logger.error()` → **Critical failures** - Operations failed, security violations
+  - Examples: "Authentication failed", "Database connection lost", "Invalid signature"
+
+**Golden Rule**:
+- Debugging messages → `debug!` / `logger.debug()` (requires `just dev-debug`)
+- Normal operations → `info!` / `logger.info()` (visible in `just dev`)
+- **If you're troubleshooting a bug, use debug level** - That's what it's for
 
 **Copy this rule to EVERY project with logging** - Never delete when compacting/simplifying
 

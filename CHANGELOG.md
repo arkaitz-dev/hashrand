@@ -4,6 +4,64 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.27.14] - 2025-10-08
+
+### Fixed
+
+**🎯 LOGGING: Correct log levels for magic link debugging (info → debug)**
+
+**Problem**:
+- Magic link debugging logs used `logger.info()` instead of `logger.debug()`
+- Wrong semantic: info = general operations, debug = detailed troubleshooting
+- Required `just dev-debug` instead of being appropriate for normal development
+- Logs were too verbose for production-like info level
+
+**Root Cause**:
+- Misunderstanding of log level semantics:
+  - `info!` / `logger.info()` → General operations, high-level guide (production-friendly)
+  - `debug!` / `logger.debug()` → Detailed debugging, step-by-step troubleshooting
+- Previous implementation used info for detailed debugging messages
+
+**Solution - Correct Log Level Usage**:
+
+1. **Added CRITICAL rule to CLAUDE.md** (lines 99-117):
+   - `info` → General operations: "User logged in", "Secret created"
+   - `debug` → Detailed debugging: "Entering function X", "HTTP request to Y"
+   - `warn` → Anomalous situations (NOT debugging)
+   - `error` → Critical failures
+   - **Golden Rule**: "If troubleshooting a bug, use debug level"
+
+2. **Corrected magic link logs**:
+   - `login.ts` (lines 48-63): `.info()` → `.debug()` for entry/HTTP/response logs
+   - `auth-actions.ts` (lines 51-58): `.info()` → `.debug()` for entry/success
+   - `+layout.svelte`: Most logs → `.debug()`, kept only final success as `.info()`
+   - Duplicate detection: `.warn()` → `.debug()` (is debugging info, not warning)
+
+**Log Level Distribution** (after correction):
+- `logger.debug()` → Entry points, token details, HTTP requests, duplicate detection
+- `logger.info()` → Only final success: "Magic link validation successful"
+- `logger.error()` → Critical failures: "Magic link validation failed"
+
+**To Debug Magic Link Now**:
+```bash
+just stop
+just dev-debug    # Required for debug! logs (was incorrectly info before)
+```
+
+**Files Modified**:
+- `web/src/lib/api/api-auth-operations/login.ts` - info → debug (3 calls)
+- `web/src/lib/stores/auth/auth-actions.ts` - info → debug (2 calls)
+- `web/src/routes/+layout.svelte` - info/warn → debug (8 calls), kept 2 as info
+- `web/package.json` - Version 0.27.13 → 0.27.14
+- `CLAUDE.md` - Added log level semantics rule
+
+**Benefits**:
+- ✅ Semantically correct log levels
+- ✅ Info level clean for production-like development
+- ✅ Debug level shows exhaustive troubleshooting details
+- ✅ Clear rule for future logging decisions
+- ✅ Prevents similar mistakes in future sessions
+
 ## [Web v0.27.13] - 2025-10-08
 
 ### Added

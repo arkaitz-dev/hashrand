@@ -39,7 +39,7 @@
 	 * Force magic link validation - bypasses SvelteKit hydration issues
 	 */
 	async function forceMagicLinkValidation(magicToken: string) {
-		logger.info('[+layout] forceMagicLinkValidation called', {
+		logger.debug('[+layout] forceMagicLinkValidation called', {
 			magicLinkProcessing,
 			lastProcessedToken: lastProcessedToken.substring(0, 10) + '...',
 			currentToken: magicToken.substring(0, 10) + '...'
@@ -47,18 +47,18 @@
 
 		// CRITICAL: Prevent duplicate processing
 		if (magicLinkProcessing || lastProcessedToken === magicToken) {
-			logger.warn('[+layout] forceMagicLinkValidation: Duplicate detected, skipping');
+			logger.debug('[+layout] forceMagicLinkValidation: Duplicate detected, skipping');
 			return;
 		}
 
 		magicLinkProcessing = true;
 		lastProcessedToken = magicToken;
-		logger.info('[+layout] forceMagicLinkValidation: Starting validation');
+		logger.debug('[+layout] forceMagicLinkValidation: Starting validation');
 
 		try {
 			// Validate the magic link (Ed25519 verification by backend)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
-			logger.info('[+layout] forceMagicLinkValidation: Validation successful');
+			logger.info('[+layout] Magic link validation successful');
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
@@ -81,7 +81,7 @@
 				}
 			}
 		} catch (error) {
-			logger.error('[+layout] forceMagicLinkValidation: Validation failed', error);
+			logger.error('[+layout] Magic link validation failed', error);
 			try {
 				// Magic link validation failed
 				goto('/');
@@ -103,7 +103,7 @@
 		const urlParams = new URLSearchParams(window.location.search);
 		const magicToken = urlParams.get('magiclink');
 		if (magicToken && window.location.pathname === '/') {
-			logger.info('[+layout] Magic link detected in URL at browser load', {
+			logger.debug('[+layout] Magic link detected in URL at browser load', {
 				pathname: window.location.pathname,
 				tokenPrefix: magicToken.substring(0, 10) + '...'
 			});
@@ -117,7 +117,7 @@
 				}
 			}, 200);
 		} else {
-			logger.info('[+layout] No magic link in URL at browser load', {
+			logger.debug('[+layout] No magic link in URL at browser load', {
 				hasMagicToken: !!magicToken,
 				pathname: window.location.pathname
 			});
@@ -204,7 +204,7 @@
 	 * Handle magic link validation when present in URL
 	 */
 	async function handleMagicLinkValidation(magicToken: string) {
-		logger.info('[+layout] handleMagicLinkValidation called', {
+		logger.debug('[+layout] handleMagicLinkValidation called', {
 			magicLinkProcessing,
 			lastProcessedToken: lastProcessedToken.substring(0, 10) + '...',
 			currentToken: magicToken.substring(0, 10) + '...'
@@ -212,13 +212,13 @@
 
 		// CRITICAL: Prevent duplicate processing (same protection as forceMagicLinkValidation)
 		if (magicLinkProcessing || lastProcessedToken === magicToken) {
-			logger.warn('[+layout] handleMagicLinkValidation: Duplicate detected, skipping');
+			logger.debug('[+layout] handleMagicLinkValidation: Duplicate detected, skipping');
 			return;
 		}
 
 		magicLinkProcessing = true;
 		lastProcessedToken = magicToken;
-		logger.info('[+layout] handleMagicLinkValidation: Starting validation');
+		logger.debug('[+layout] handleMagicLinkValidation: Starting validation');
 
 		// Set validation state
 		isValidating = true;
@@ -230,7 +230,7 @@
 			// Validate the magic link (Ed25519 verification by backend)
 			loginResponse = await authStore.validateMagicLink(magicToken);
 			validationSuccessful = true;
-			logger.info('[+layout] handleMagicLinkValidation: Validation successful');
+			logger.info('[+layout] Magic link validation successful');
 
 			// Mark session as valid after successful authentication
 			sessionStatusStore.markValid();
@@ -238,7 +238,7 @@
 			// CRITICAL: Start session monitoring after successful login
 			await startMonitoringIfAuthenticated();
 		} catch (error) {
-			logger.error('[+layout] handleMagicLinkValidation: Validation failed', error);
+			logger.error('[+layout] Magic link validation failed', error);
 			// Show error and redirect to home page (URL already cleaned)
 			// Magic link validation failed
 			goto('/');
