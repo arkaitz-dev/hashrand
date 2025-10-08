@@ -4,6 +4,7 @@
 //! Part of magic_link_val.rs refactorization to apply SOLID principles
 
 use spin_sdk::http::Response;
+use tracing::{debug, error};
 
 use super::types::{ErrorResponse, MagicLinkValidationPayload, MagicLinkValidationRequest};
 use crate::utils::SignedRequestValidator;
@@ -19,12 +20,9 @@ pub fn parse_validation_request(
     request_body: &[u8],
 ) -> Result<MagicLinkValidationRequest, Response> {
     match serde_json::from_slice(request_body) {
-        Ok(signed_request) => {
-            println!("✅ Successfully parsed SignedRequest magic link validation");
-            Ok(signed_request)
-        }
+        Ok(signed_request) => Ok(signed_request),
         Err(e) => {
-            println!(
+            error!(
                 "❌ Failed to parse signed magic link validation request: {}",
                 e
             );
@@ -64,11 +62,11 @@ pub fn extract_request_data(
     let magic_token = payload.magiclink.clone();
     let signature_hex = signed_request.signature.clone();
 
-    println!(
+    debug!(
         "🔍 DEBUG: Magic token received for secure validation: '{}'",
         magic_token
     );
-    println!(
+    debug!(
         "🔍 DEBUG Ed25519: Received signature for validation: {}",
         signature_hex
     );

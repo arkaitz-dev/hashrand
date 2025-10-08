@@ -4,7 +4,7 @@
 //! Part of magic_link_val.rs refactorization to apply SOLID principles
 
 use spin_sdk::http::Response;
-use tracing::{error, info, warn};
+use tracing::{debug, error, warn};
 
 use super::types::ErrorResponse;
 use crate::database::operations::MagicLinkOperations;
@@ -66,7 +66,7 @@ pub fn validate_and_extract_token_data(
     };
 
     // println!("✅ Magic token validation and data extraction successful");
-    info!("✅ Magic token validation and data extraction successful");
+    debug!("✅ Magic token validation and data extraction successful");
 
     // Log ui_host extraction
     if let Some(ref host) = ui_host {
@@ -74,7 +74,7 @@ pub fn validate_and_extract_token_data(
         //     "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
         //     host
         // );
-        info!(
+        debug!(
             "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
             host
         );

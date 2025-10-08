@@ -9,6 +9,7 @@ use crate::database::get_database_connection;
 use bs58;
 use chrono::Utc;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
+use tracing::{debug, error};
 
 /// Magic link storage operations
 pub struct MagicLinkStorage;
@@ -72,7 +73,7 @@ impl MagicLinkStorage {
         let ui_host_bytes = ui_host.as_bytes();
         let ui_host_len = ui_host_bytes.len() as u16;
 
-        println!(
+        debug!(
             "🔒 [SECURITY] Storing ui_host in encrypted blob: '{}' (len: {})",
             ui_host, ui_host_len
         );
@@ -101,8 +102,6 @@ impl MagicLinkStorage {
         // Convert nanoseconds to hours for storage (cleanup purposes)
         let expires_at_hours = (expires_at_nanos / 1_000_000_000) / 3600;
 
-        println!("Database: Creating encrypted magic link with Blake3 hash");
-
         connection.execute(
             "INSERT INTO magiclinks (token_hash, expires_at, encrypted_payload) VALUES (?, ?, ?)",
             &[
@@ -112,7 +111,6 @@ impl MagicLinkStorage {
             ],
         )?;
 
-        println!("Database: Encrypted magic link stored successfully");
         Ok(())
     }
 
@@ -131,15 +129,9 @@ impl MagicLinkStorage {
             "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
             &[Value::Blob(user_id.to_vec())],
         ) {
-            Ok(_) => {
-                println!(
-                    "Database: Ensured user exists: {}",
-                    bs58::encode(user_id).into_string()
-                );
-                Ok(())
-            }
+            Ok(_) => Ok(()),
             Err(e) => {
-                println!("Database: Error ensuring user exists: {}", e);
+                error!("Database: Error ensuring user exists: {}", e);
                 Err(e)
             }
         }

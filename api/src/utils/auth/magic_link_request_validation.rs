@@ -4,6 +4,7 @@
 //! rate limiting, email validation, and signature verification.
 
 use spin_sdk::http::{Request, Response};
+use tracing::error;
 
 use super::types::{ErrorResponse, MagicLinkSignedRequest};
 use crate::utils::{SignedRequestValidator, check_rate_limit, extract_client_ip, validate_email};
@@ -83,12 +84,9 @@ impl MagicLinkRequestValidation {
     ) -> Result<String, Response> {
         // Use universal validation that automatically detects pub_key source
         match SignedRequestValidator::validate_universal(signed_request, request) {
-            Ok(pub_key_hex) => {
-                println!("✅ Universal SignedRequest validation successful (Base64 JSON payload)");
-                Ok(pub_key_hex)
-            }
+            Ok(pub_key_hex) => Ok(pub_key_hex),
             Err(e) => {
-                println!("❌ Universal SignedRequest validation failed: {}", e);
+                error!("❌ Universal SignedRequest validation failed: {}", e);
                 Err(Response::builder()
                     .status(400)
                     .header("content-type", "application/json")

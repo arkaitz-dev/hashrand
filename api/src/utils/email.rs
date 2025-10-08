@@ -4,7 +4,7 @@ use spin_sdk::{
     http::{Method, Request, Response},
     variables,
 };
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::email_templates::render_magic_link_email;
 
@@ -32,13 +32,7 @@ pub fn set_email_dry_run(enabled: bool) {
     EMAIL_DRY_RUN.store(enabled, Ordering::Relaxed);
     // eprintln!(
     //     "📧 [DEV-MODE] Email dry-run: {}",
-    //     if enabled {
-    //         "ON (emails will NOT be sent)"
-    //     } else {
-    //         "OFF (emails will be sent)"
-    //     }
-    // );
-    info!(
+    debug!(
         "📧 [DEV-MODE] Email dry-run: {}",
         if enabled {
             "ON (emails will NOT be sent)"
@@ -183,23 +177,10 @@ pub async fn send_magic_link_email(
     #[cfg(feature = "dev-mode")]
     {
         if is_email_dry_run_enabled() {
-            let (subject, html_content, text_content) =
+            let (_subject, _html_content, _text_content) =
                 render_magic_link_email(magic_link, language.unwrap_or("en"));
 
-            // eprintln!("📧 [DRY-RUN] Magic link email NOT sent (dev-mode, testing)");
-            // eprintln!("   📬 To: {}", recipient_email);
-            // eprintln!("   📝 Subject: {}", subject);
-            // eprintln!("   🔗 Magic Link: {}", magic_link);
-            // eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
-            // eprintln!("   📄 HTML length: {} bytes", html_content.len());
-            // eprintln!("   📄 Text length: {} bytes", text_content.len());
-            info!("📧 [DRY-RUN] Magic link email NOT sent (dev-mode, testing)");
-            info!("   📬 To: {}", recipient_email);
-            info!("   📝 Subject: {}", subject);
-            info!("   🔗 Magic Link: {}", magic_link);
-            info!("   🌐 Language: {}", language.unwrap_or("en"));
-            info!("   📄 HTML length: {} bytes", html_content.len());
-            info!("   📄 Text length: {} bytes", text_content.len());
+            info!("📧 [DRY-RUN] Magic link email NOT sent → {}", magic_link);
 
             return Ok(());
         }
@@ -227,13 +208,9 @@ pub async fn send_magic_link_email(
     // Check if the request was successful
     let status = response.status();
     if *status == 200 || *status == 202 {
-        // println!(
-        //     "✅ Magic link email sent successfully to: {} (Status: {})",
-        //     recipient_email, status
-        // );
         info!(
-            "✅ Magic link email sent successfully to: {} (Status: {})",
-            recipient_email, status
+            "📧 Magic link email sent to {} → {}",
+            recipient_email, magic_link
         );
         Ok(())
     } else {
@@ -290,30 +267,7 @@ pub async fn send_shared_secret_receiver_email(
     #[cfg(feature = "dev-mode")]
     {
         if is_email_dry_run_enabled() {
-            // eprintln!("📧 [DRY-RUN] Shared secret receiver email NOT sent (dev-mode, testing)");
-            // eprintln!("   📬 To: {}", recipient_email);
-            // eprintln!("   📝 Subject: {}", subject);
-            // eprintln!("   🔗 Secret URL: {}", secret_url);
-            // eprintln!("   🔑 Reference: {}", reference);
-            // eprintln!("   🔐 OTP: {}", otp.unwrap_or("N/A"));
-            // eprintln!("   👤 Sender: {}", sender_email);
-            // eprintln!("   ⏰ Expires: {} hours", expires_hours);
-            // eprintln!("   📖 Max reads: {}", max_reads);
-            // eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
-            // eprintln!("   📄 HTML length: {} bytes", html_content.len());
-            // eprintln!("   📄 Text length: {} bytes", text_content.len());
-            info!("📧 [DRY-RUN] Shared secret receiver email NOT sent (dev-mode, testing)");
-            info!("   📬 To: {}", recipient_email);
-            info!("   📝 Subject: {}", subject);
-            info!("   🔗 Secret URL: {}", secret_url);
-            info!("   🔑 Reference: {}", reference);
-            info!("   🔐 OTP: {}", otp.unwrap_or("N/A"));
-            info!("   👤 Sender: {}", sender_email);
-            info!("   ⏰ Expires: {} hours", expires_hours);
-            info!("   📖 Max reads: {}", max_reads);
-            info!("   🌐 Language: {}", language.unwrap_or("en"));
-            info!("   📄 HTML length: {} bytes", html_content.len());
-            info!("   📄 Text length: {} bytes", text_content.len());
+            info!("📧 [DRY-RUN] Shared secret receiver email NOT sent → {}", secret_url);
 
             return Ok(());
         }
@@ -390,13 +344,9 @@ pub async fn send_shared_secret_receiver_email(
 
     let status = response.status();
     if *status >= 200 && *status < 300 {
-        // println!(
-        //     "✅ Shared secret receiver email sent successfully to {}",
-        //     recipient_email
-        // );
         info!(
-            "✅ Shared secret receiver email sent successfully to {}",
-            recipient_email
+            "📧 Shared secret receiver email sent to {} → {}",
+            recipient_email, secret_url
         );
         Ok(())
     } else {
@@ -447,28 +397,7 @@ pub async fn send_shared_secret_sender_email(
     #[cfg(feature = "dev-mode")]
     {
         if is_email_dry_run_enabled() {
-            // eprintln!(
-            //     "📧 [DRY-RUN] Shared secret sender (copy) email NOT sent (dev-mode, testing)"
-            // );
-            // eprintln!("   📬 To: {}", sender_email);
-            // eprintln!("   📝 Subject: {}", subject);
-            // eprintln!("   🔗 Secret URL: {}", secret_url);
-            // eprintln!("   🔑 Reference: {}", reference);
-            // eprintln!("   👤 Receiver: {}", receiver_email);
-            // eprintln!("   ⏰ Expires: {} hours", expires_hours);
-            // eprintln!("   🌐 Language: {}", language.unwrap_or("en"));
-            // eprintln!("   📄 HTML length: {} bytes", html_content.len());
-            // eprintln!("   📄 Text length: {} bytes", text_content.len());
-            info!("📧 [DRY-RUN] Shared secret sender (copy) email NOT sent (dev-mode, testing)");
-            info!("   📬 To: {}", sender_email);
-            info!("   📝 Subject: {}", subject);
-            info!("   🔗 Secret URL: {}", secret_url);
-            info!("   🔑 Reference: {}", reference);
-            info!("   👤 Receiver: {}", receiver_email);
-            info!("   ⏰ Expires: {} hours", expires_hours);
-            info!("   🌐 Language: {}", language.unwrap_or("en"));
-            info!("   📄 HTML length: {} bytes", html_content.len());
-            info!("   📄 Text length: {} bytes", text_content.len());
+            info!("📧 [DRY-RUN] Shared secret sender (copy) email NOT sent → {}", secret_url);
 
             return Ok(());
         }
@@ -542,13 +471,9 @@ pub async fn send_shared_secret_sender_email(
 
     let status = response.status();
     if *status >= 200 && *status < 300 {
-        // println!(
-        //     "✅ Shared secret sender (copy) email sent successfully to {}",
-        //     sender_email
-        // );
         info!(
-            "✅ Shared secret sender (copy) email sent successfully to {}",
-            sender_email
+            "📧 Shared secret sender (copy) email sent to {} → {}",
+            sender_email, secret_url
         );
         Ok(())
     } else {

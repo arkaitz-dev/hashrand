@@ -4,7 +4,7 @@
 //! SOLID and DRY principles to eliminate code duplication.
 
 use spin_sdk::http::{Request, Response};
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 use super::magic_link_email_delivery::MagicLinkEmailDelivery;
 use super::magic_link_request_validation::MagicLinkRequestValidation;
@@ -84,7 +84,7 @@ pub async fn generate_magic_link_signed(
     let ui_host = match payload.ui_host.as_deref() {
         Some(host) if !host.is_empty() => {
             // println!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
-            info!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
+            debug!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
             host
         }
         Some(_) => {
@@ -115,7 +115,7 @@ pub async fn generate_magic_link_signed(
     //     "🔒 [SECURITY] Storing magic link with ui_host: '{}'",
     //     ui_host
     // );
-    info!(
+    debug!(
         "🔒 [SECURITY] Storing magic link with ui_host: '{}'",
         ui_host
     );

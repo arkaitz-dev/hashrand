@@ -16,9 +16,11 @@ use crate::utils::{
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::info;
 
 /// Main request handler for /api/password endpoint
 pub async fn handle_password_request(req: Request) -> anyhow::Result<Response> {
+    info!("🔐 Request to /api/password endpoint");
     match req.method() {
         Method::Get => handle_password_get(req),
         Method::Post => handle_password_post_signed(req).await,

@@ -3,7 +3,7 @@
 //! POST /api/shared-secret/create - Create shared secret with dual-URL system
 //! Requires JWT authentication and Ed25519 signature validation
 
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto,
@@ -100,6 +100,7 @@ struct CreateSecretResponse {
 
 /// Handle POST /api/shared-secret/create
 pub async fn handle_create_secret(req: Request) -> anyhow::Result<Response> {
+    info!("📤 Request to /api/shared-secret/create endpoint");
     let body_bytes = req.body();
 
     // Validate signed request using protected middleware

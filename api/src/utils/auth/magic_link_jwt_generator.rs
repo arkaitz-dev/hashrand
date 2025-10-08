@@ -5,7 +5,7 @@
 
 use chrono::{DateTime, Utc};
 use spin_sdk::http::Response;
-use tracing::{error, info};
+use tracing::{debug, error};
 
 use super::types::ErrorResponse;
 use crate::database::operations::MagicLinkOperations;
@@ -37,7 +37,7 @@ pub fn generate_jwt_tokens(
     //     "🔐 User {} authenticated successfully with Ed25519 verification",
     //     username
     // );
-    info!(
+    debug!(
         "🔐 User {} authenticated successfully with Ed25519 verification",
         username
     );
@@ -52,7 +52,7 @@ pub fn generate_jwt_tokens(
     let refresh_token = create_refresh_token(&username, pub_key_bytes)?;
 
     // println!("✅ JWT tokens generated successfully for user {}", username);
-    info!("✅ JWT tokens generated successfully for user {}", username);
+    debug!("✅ JWT tokens generated successfully for user {}", username);
 
     Ok(JwtTokens {
         access_token,
@@ -69,7 +69,7 @@ fn create_access_token(
     match JwtUtils::create_access_token_from_username(username, pub_key_bytes) {
         Ok((token, expires)) => {
             // println!("✅ Access token created successfully");
-            info!("✅ Access token created successfully");
+            debug!("✅ Access token created successfully");
             Ok((token, expires))
         }
         Err(e) => {
@@ -85,7 +85,7 @@ fn create_refresh_token(username: &str, pub_key_bytes: &[u8; 32]) -> Result<Stri
     match JwtUtils::create_refresh_token_from_username(username, pub_key_bytes) {
         Ok((token, _expires)) => {
             // println!("✅ Refresh token created successfully");
-            info!("✅ Refresh token created successfully");
+            debug!("✅ Refresh token created successfully");
             Ok(token)
         }
         Err(e) => {

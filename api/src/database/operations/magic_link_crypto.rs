@@ -57,7 +57,6 @@ impl MagicLinkCrypto {
             .encrypt(nonce, payload)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
 
-        println!("Database: Encrypted payload using Blake3 KDF");
         Ok(ciphertext)
     }
 
@@ -94,7 +93,6 @@ impl MagicLinkCrypto {
             .decrypt(nonce, ciphertext)
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
 
-        println!("Database: Decrypted payload using Blake3 KDF");
         Ok(plaintext)
     }
 

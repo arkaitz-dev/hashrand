@@ -1,6 +1,7 @@
 //! TRAMO 1/3: No key rotation logic (simple token refresh)
 
 use spin_sdk::http::Response;
+use tracing::error;
 
 use super::utilities::{
     create_error_response, decode_username_to_user_id, serialize_response_to_json,
@@ -25,7 +26,7 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
     let (access_token, _) = match JwtUtils::create_access_token_from_username(username, pub_key) {
         Ok((token, exp)) => (token, exp),
         Err(e) => {
-            println!("❌ Refresh: Failed to create access token: {}", e);
+            error!("❌ Refresh: Failed to create access token: {}", e);
             return create_error_response(500, &format!("Failed to create access token: {}", e));
         }
     };
@@ -34,7 +35,7 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
     let user_id = match decode_username_to_user_id(username) {
         Ok(bytes) => bytes,
         Err(e) => {
-            println!("❌ Refresh: {}", e);
+            error!("❌ Refresh: {}", e);
             return create_error_response(500, "Invalid username format");
         }
     };
@@ -56,7 +57,7 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
         match SignedResponseGenerator::create_signed_response(payload, &user_id, &pub_key_hex) {
             Ok(response) => response,
             Err(e) => {
-                println!("❌ CRITICAL: Cannot create signed response: {}", e);
+                error!("❌ CRITICAL: Cannot create signed response: {}", e);
                 return create_error_response(500, "Cryptographic signature failure");
             }
         };
@@ -65,7 +66,7 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
     let response_json = match serialize_response_to_json(&signed_response) {
         Ok(json) => json,
         Err(e) => {
-            println!("❌ Refresh: {}", e);
+            error!("❌ Refresh: {}", e);
             return create_error_response(500, "Response serialization failed");
         }
     };

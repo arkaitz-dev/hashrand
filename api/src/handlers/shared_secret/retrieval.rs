@@ -3,6 +3,8 @@
 //! GET/POST /api/shared-secret/{hash} - Retrieve shared secret with OTP validation
 //! Requires JWT authentication and Ed25519 signature validation
 
+use tracing::info;
+
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
     shared_secret_types::constants::*,
@@ -38,6 +40,7 @@ struct RetrieveSecretResponse {
 
 /// Main handler for GET/POST /api/shared-secret/{hash}
 pub async fn handle_retrieve_secret(req: Request, hash: &str) -> anyhow::Result<Response> {
+    info!("📥 Request to /api/shared-secret/{{hash}} GET/POST endpoint");
     match req.method() {
         Method::Get => handle_retrieve_secret_get(req, hash).await,
         Method::Post => handle_retrieve_secret_post(req, hash).await,

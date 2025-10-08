@@ -16,9 +16,11 @@ use crate::utils::{
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::info;
 
 /// Handle API key requests (both GET and POST)
 pub async fn handle_api_key_request(req: Request) -> anyhow::Result<Response> {
+    info!("🔑 Request to /api/api-key endpoint");
     match req.method() {
         Method::Get => handle_api_key_get(req),
         Method::Post => handle_api_key_post_signed(req).await,

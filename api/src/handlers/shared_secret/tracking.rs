@@ -4,7 +4,7 @@
 //! Confirms read by updating tracking record
 //! Requires JWT authentication and Ed25519 signature validation
 
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
@@ -20,6 +20,7 @@ use spin_sdk::http::{Request, Response};
 
 /// Handle GET /api/shared-secret/confirm-read?hash={hash}
 pub async fn handle_confirm_read(req: Request, hash: &str) -> anyhow::Result<Response> {
+    info!("✅ Request to /api/shared-secret/confirm-read endpoint");
     // Extract crypto material from JWT
     let crypto_material = match extract_crypto_material_from_request(&req) {
         Ok(material) => material,

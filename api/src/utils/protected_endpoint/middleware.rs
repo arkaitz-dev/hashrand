@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use spin_sdk::http::{Request, Response};
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 use super::super::SignedRequestValidator;
 use super::errors;
@@ -60,7 +60,7 @@ impl ProtectedEndpointMiddleware {
         //     "✅ Protected endpoint validation successful for user: {}",
         //     user_id
         // );
-        info!(
+        debug!(
             "✅ Protected endpoint validation successful for user: {}",
             user_id
         );
@@ -80,7 +80,7 @@ impl ProtectedEndpointMiddleware {
             };
 
         // println!("✅ Base64-encoded JSON payload deserialized successfully");
-        info!("✅ Base64-encoded JSON payload deserialized successfully");
+        debug!("✅ Base64-encoded JSON payload deserialized successfully");
 
         Ok(ProtectedEndpointResult {
             payload: deserialized_payload,

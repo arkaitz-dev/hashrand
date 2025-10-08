@@ -1,7 +1,7 @@
 //! Validation logic for refresh token requests
 
 use spin_sdk::http::{Method, Request, Response};
-use tracing::{error, info};
+use tracing::{debug, error};
 
 use super::super::types::{RefreshPayload, RefreshSignedRequest};
 use super::utilities::{create_error_response, extract_refresh_token_from_cookies};
@@ -145,7 +145,7 @@ pub fn parse_refresh_payload(
     //     "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
     //     &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
     // );
-    info!(
+    debug!(
         "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
         &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
     );

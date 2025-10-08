@@ -5,6 +5,7 @@
 
 use chrono::{DateTime, Duration, Utc};
 use spin_sdk::http::Response;
+use tracing::{debug, error};
 
 use super::types::ErrorResponse;
 use crate::utils::JwtUtils;
@@ -62,16 +63,16 @@ impl MagicLinkTokenGeneration {
     /// # Returns
     /// * `Result<String, Response>` - Host URL or error response if ui_host is missing
     pub fn determine_host_url(ui_host: Option<&str>) -> Result<String, Response> {
-        println!("DEBUG: Validating ui_host");
-        println!("DEBUG: ui_host = {:?}", ui_host);
+        debug!("DEBUG: Validating ui_host");
+        debug!("DEBUG: ui_host = {:?}", ui_host);
 
         match ui_host {
             Some(host) => {
-                println!("DEBUG: ui_host provided: {}", host);
+                debug!("DEBUG: ui_host provided: {}", host);
                 Ok(host.to_string())
             }
             None => {
-                println!("❌ ERROR: ui_host is required but was not provided by frontend");
+                error!("❌ ERROR: ui_host is required but was not provided by frontend");
                 Err(Response::builder()
                     .status(400)
                     .header("content-type", "application/json")
@@ -97,7 +98,7 @@ impl MagicLinkTokenGeneration {
     /// * `String` - Complete magic link URL
     pub fn create_magic_link_url(host_url: &str, magic_token: &str) -> String {
         let magic_link = JwtUtils::create_magic_link_url(host_url, magic_token);
-        println!("DEBUG: Generated magic_link = {}", magic_link);
+        debug!("DEBUG: Generated magic_link = {}", magic_link);
         magic_link
     }
 

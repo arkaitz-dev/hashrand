@@ -17,9 +17,11 @@ use crate::utils::{
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::info;
 
 /// Main request handler for /api/custom endpoint
 pub async fn handle_custom_request(req: Request) -> anyhow::Result<Response> {
+    info!("🎲 Request to /api/custom endpoint");
     match req.method() {
         Method::Get => handle_custom_get(req),
         Method::Post => handle_custom_post_signed(req).await,

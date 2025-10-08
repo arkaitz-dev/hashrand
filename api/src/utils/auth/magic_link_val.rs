@@ -4,6 +4,7 @@
 //! Part of enterprise-grade SOLID architecture transformation
 
 use spin_sdk::http::Response;
+use tracing::debug;
 
 use super::{
     magic_link_auth_response_builder::build_authentication_response,
@@ -29,7 +30,7 @@ use super::{
 /// # Returns
 /// * `anyhow::Result<Response>` - Complete HTTP response or error
 pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Response> {
-    println!("🔐 Starting secure magic link validation with Ed25519 verification");
+    debug!("Starting secure magic link validation with Ed25519 verification");
 
     // Step 1: Parse and validate request structure
     let signed_request = match parse_validation_request(request_body) {
@@ -41,7 +42,7 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
     let (magic_token, signature_hex) = match extract_request_data(&signed_request) {
         Ok(data) => data,
         Err(e) => {
-            println!("❌ DEBUG: Failed to extract request data: {}", e);
+            debug!("❌ DEBUG: Failed to extract request data: {}", e);
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
@@ -82,8 +83,6 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
         &token_data.pub_key_bytes,
         token_data.ui_host,
     )?;
-
-    println!("✅ Magic link validation completed successfully");
 
     Ok(auth_response)
 }

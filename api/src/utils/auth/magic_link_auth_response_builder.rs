@@ -4,6 +4,7 @@
 //! Part of magic_link_val.rs refactorization to apply SOLID principles
 
 use spin_sdk::http::Response;
+use tracing::{debug, warn};
 
 use super::magic_link_jwt_generator::JwtTokens;
 use crate::types::responses::JwtAuthResponse;
@@ -73,11 +74,6 @@ pub fn build_authentication_response(
         .body(signed_response.body().to_owned())
         .build();
 
-    if let Some(next) = next_param {
-        println!("✅ Added next parameter to SignedResponse: {}", next);
-    }
-    println!("✅ SignedResponse authentication response built successfully");
-
     Ok(response_with_cookie)
 }
 
@@ -98,7 +94,7 @@ fn create_secure_refresh_cookie(
     // - Domain: Explicit domain scope (from ui_host)
     // - Path=/: Available for all routes
     let cookie_value = if let Some(domain) = ui_host {
-        println!(
+        debug!(
             "🔒 [SECURITY] Creating refresh cookie with Domain: '{}'",
             domain
         );
@@ -110,23 +106,13 @@ fn create_secure_refresh_cookie(
         )
     } else {
         // Backward compatibility: No Domain attribute (old magic links without ui_host)
-        println!("⚠️ [COMPAT] Creating refresh cookie WITHOUT Domain (old format)");
+        warn!("⚠️ [COMPAT] Creating refresh cookie WITHOUT Domain (old format)");
         format!(
             "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Max-Age={}; Path=/",
             refresh_token,
             refresh_duration_minutes * 60
         )
     };
-
-    println!(
-        "✅ Secure refresh cookie created with {} minute duration{}",
-        refresh_duration_minutes,
-        if ui_host.is_some() {
-            " and Domain attribute"
-        } else {
-            " (no Domain)"
-        }
-    );
 
     Ok(cookie_value)
 }

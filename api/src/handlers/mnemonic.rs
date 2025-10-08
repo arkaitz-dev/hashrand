@@ -9,12 +9,14 @@ use bip39::{Language, Mnemonic};
 use spin_sdk::http::{Request, Response};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::info;
 
 // External crates
 extern crate hex;
 
 /// Handle mnemonic requests (GET and POST)
 pub async fn handle_mnemonic_request(req: Request) -> anyhow::Result<Response> {
+    info!("📝 Request to /api/mnemonic endpoint");
     match req.method() {
         spin_sdk::http::Method::Get => handle_mnemonic_get(req),
         spin_sdk::http::Method::Post => handle_mnemonic_post_signed(req).await,

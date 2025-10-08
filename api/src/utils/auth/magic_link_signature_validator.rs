@@ -5,7 +5,7 @@
 
 use hex;
 use spin_sdk::http::Response;
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 use super::types::ErrorResponse;
 use crate::utils::ed25519::{Ed25519Utils, SignatureVerificationResult};
@@ -76,7 +76,7 @@ pub fn verify_magic_link_signature(
     match signature_verification_result {
         SignatureVerificationResult::Valid => {
             // println!("✅ Ed25519 signature verification successful");
-            info!("✅ Ed25519 signature verification successful");
+            debug!("✅ Ed25519 signature verification successful");
             Ok(())
         }
         SignatureVerificationResult::Invalid => {

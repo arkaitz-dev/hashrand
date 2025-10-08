@@ -5,7 +5,7 @@ use super::extraction::extract_payload_components;
 use super::utilities::{copy_to_array, create_validation_error};
 use crate::database::get_database_connection;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
-use tracing::{error, info, warn};
+use tracing::{debug, error, warn};
 
 /// Magic link validation operations
 pub struct MagicLinkValidation;
@@ -34,7 +34,7 @@ impl MagicLinkValidation {
         let (encrypted_data, token_hash) = decode_and_hash_token(encrypted_token)?;
 
         // println!("Database: Validating encrypted magic link hash");
-        info!("Database: Validating encrypted magic link hash");
+        debug!("Database: Validating encrypted magic link hash");
 
         // Step 2: Retrieve encrypted payload from database
         let encrypted_payload_blob = match retrieve_encrypted_payload(&connection, &token_hash)? {
@@ -89,7 +89,7 @@ impl MagicLinkValidation {
                 )?;
 
                 // println!("Database: Encrypted magic link validated and consumed");
-                info!("Database: Encrypted magic link validated and consumed");
+                debug!("Database: Encrypted magic link validated and consumed");
                 Ok((
                     true,
                     next_param,

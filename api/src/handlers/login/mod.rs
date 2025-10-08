@@ -8,6 +8,7 @@
 
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
+use tracing::info;
 
 use crate::utils::auth::validate_magic_link_secure;
 
@@ -43,6 +44,7 @@ pub async fn handle_login(
 
     // Handle specific endpoint: POST /api/login/magiclink/ (secure validation with Ed25519)
     if path == "/api/login/magiclink/" && *req.method() == Method::Post {
+        info!("🔐 Request to /api/login/magiclink/ (magic link validation) endpoint");
         return validate_magic_link_secure(req.body());
     }
 

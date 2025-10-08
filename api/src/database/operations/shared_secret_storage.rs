@@ -7,7 +7,7 @@ use super::shared_secret_types::{SecretRole, constants::*};
 use crate::database::get_database_connection;
 use chrono::Utc;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 /// Type alias for secret retrieval result tuple: (encrypted_payload, expires_at, role)
 type SecretData = (Vec<u8>, i64, SecretRole);
@@ -43,7 +43,7 @@ impl SharedSecretStorage {
         //     role.to_str(),
         //     expires_at
         // );
-        info!(
+        debug!(
             "🔒 SharedSecret: Storing secret with role '{}', expires_at={} (using db_index)",
             role.to_str(),
             expires_at
@@ -60,7 +60,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("✅ SharedSecret: Stored successfully with db_index");
-        info!("✅ SharedSecret: Stored successfully with db_index");
+        debug!("✅ SharedSecret: Stored successfully with db_index");
         Ok(())
     }
 
@@ -88,7 +88,7 @@ impl SharedSecretStorage {
         //     role.to_str(),
         //     expires_at
         // );
-        info!(
+        debug!(
             "🔒 SharedSecret: Storing secret with role '{}', expires_at={}",
             role.to_str(),
             expires_at
@@ -105,7 +105,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("✅ SharedSecret: Stored successfully");
-        info!("✅ SharedSecret: Stored successfully");
+        debug!("✅ SharedSecret: Stored successfully");
         Ok(())
     }
 
@@ -251,7 +251,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("🗑️  SharedSecret: Deleted successfully (db_index)");
-        info!("🗑️  SharedSecret: Deleted successfully (db_index)");
+        debug!("🗑️  SharedSecret: Deleted successfully (db_index)");
         Ok(true)
     }
 
@@ -277,7 +277,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("🗑️  SharedSecret: Deleted successfully");
-        info!("🗑️  SharedSecret: Deleted successfully");
+        debug!("🗑️  SharedSecret: Deleted successfully");
         Ok(true)
     }
 
@@ -328,7 +328,7 @@ impl SharedSecretStorage {
         // Don't decrement if sender (unlimited reads = -1)
         if pending_reads == UNLIMITED_READS {
             // println!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
-            info!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
+            debug!("📖 SharedSecret: Sender has unlimited reads, not decrementing");
             return Ok(UNLIMITED_READS);
         }
 
@@ -351,7 +351,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("📖 SharedSecret: Decremented to {} reads", new_reads);
-        info!("📖 SharedSecret: Decremented to {} reads", new_reads);
+        debug!("📖 SharedSecret: Decremented to {} reads", new_reads);
         Ok(new_reads)
     }
 
@@ -377,7 +377,7 @@ impl SharedSecretStorage {
         //     "📊 SharedSecret: Storing tracking record (pending_reads={}, expires_at={}, created_at={})",
         //     pending_reads, expires_at, created_at
         // );
-        info!(
+        debug!(
             "📊 SharedSecret: Storing tracking record (pending_reads={}, expires_at={}, created_at={})",
             pending_reads, expires_at, created_at
         );
@@ -393,7 +393,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("✅ SharedSecret: Tracking record stored");
-        info!("✅ SharedSecret: Tracking record stored");
+        debug!("✅ SharedSecret: Tracking record stored");
         Ok(())
     }
 
@@ -435,11 +435,11 @@ impl SharedSecretStorage {
 
             if read_at.is_some() {
                 // println!("📖 SharedSecret: Tracking updated with read_at={}", now);
-                info!("📖 SharedSecret: Tracking updated with read_at={}", now);
+                debug!("📖 SharedSecret: Tracking updated with read_at={}", now);
                 Ok(true)
             } else {
                 // println!("ℹ️  SharedSecret: Tracking read_at was already set");
-                info!("ℹ️  SharedSecret: Tracking read_at was already set");
+                debug!("ℹ️  SharedSecret: Tracking read_at was already set");
                 Ok(false)
             }
         } else {
@@ -472,7 +472,7 @@ impl SharedSecretStorage {
         )?;
 
         // println!("🧹 SharedSecret: Cleaned up expired records");
-        info!("🧹 SharedSecret: Cleaned up expired records");
+        debug!("🧹 SharedSecret: Cleaned up expired records");
         // Spin SQLite doesn't provide rows_affected, return placeholder
         Ok((1, 1))
     }

@@ -1,7 +1,7 @@
 use spin_sdk::http::{IntoResponse, Request};
 use spin_sdk::http_component;
 use std::sync::Once;
-use tracing::info;
+use tracing::debug;
 
 // Initialize rust-i18n for email templates
 rust_i18n::i18n!("locales");
@@ -87,8 +87,7 @@ async fn handle_hashrand_spin(req: Request) -> anyhow::Result<impl IntoResponse>
         .unwrap_or("")
         .to_string(); // Clone to avoid borrowing issues
 
-    // println!("Handling request to: {}", full_url);
-    info!("Handling request to: {}", full_url);
+    debug!("Handling request to: {}", full_url);
 
     // Parse the URL to get path and query parameters
     let url_parts: Vec<&str> = full_url.split('?').collect();

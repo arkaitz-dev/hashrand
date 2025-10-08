@@ -3,6 +3,7 @@
 //! Handles POST /api/login/ - Generates magic link using universal SignedRequest
 
 use spin_sdk::http::{Request, Response};
+use tracing::info;
 
 use super::utilities::create_error_response;
 use crate::utils::SignedRequestValidator;
@@ -14,6 +15,7 @@ use crate::utils::auth::{MagicLinkSignedRequest, generate_magic_link_signed};
 /// Parses the request body as a SignedRequest structure, validates the
 /// Base64-encoded JSON payload, and delegates to the magic link generator
 pub async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> {
+    info!("🔗 Request to /api/login/ (magic link generation) endpoint");
     // Parse request body
     let body_bytes = req.body();
 

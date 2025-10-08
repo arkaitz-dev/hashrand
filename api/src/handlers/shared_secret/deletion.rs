@@ -4,6 +4,8 @@
 //! Requires JWT authentication and Ed25519 signature validation
 //! Only allows deletion if pending_reads > 0
 
+use tracing::info;
+
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
     shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
@@ -18,6 +20,7 @@ use spin_sdk::http::{Request, Response};
 
 /// Handle DELETE /api/shared-secret/{hash}
 pub async fn handle_delete_secret(req: Request, hash: &str) -> anyhow::Result<Response> {
+    info!("🗑️ Request to /api/shared-secret/{{hash}} DELETE endpoint");
     // Extract crypto material from JWT
     let crypto_material = match extract_crypto_material_from_request(&req) {
         Ok(material) => material,
