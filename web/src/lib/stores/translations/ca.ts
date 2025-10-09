@@ -29,8 +29,7 @@ export const ca: I18nTexts = {
 		characters: 'caràcters',
 		alphabet: 'Alfabet',
 		generatedValue: 'Valor generat',
-		clickToSelect:
-			"Feu clic a l'àrea de text per seleccionar-ho tot, o utilitzeu el botó de copiar",
+		clickToSelect: "Feu clic a l'àrea de text per copiar el contingut",
 		waitGenerating: 'Si us plau, espereu mentre es genera un nou valor...',
 		unknownEndpoint: "Tipus d'endpoint desconegut",
 		failedToCopy: 'Ha fallat la còpia',

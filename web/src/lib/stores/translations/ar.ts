@@ -29,7 +29,7 @@ export const ar: I18nTexts = {
 		characters: 'حرف',
 		alphabet: 'الأبجدية',
 		generatedValue: 'القيمة المولدة',
-		clickToSelect: 'انقر على منطقة النص لتحديد الكل، أو استخدم زر النسخ',
+		clickToSelect: 'انقر على منطقة النص لنسخ المحتوى',
 		waitGenerating: 'يرجى الانتظار أثناء توليد قيمة جديدة...',
 		unknownEndpoint: 'نوع نقطة نهاية غير معروف',
 		failedToCopy: 'فشل في النسخ',

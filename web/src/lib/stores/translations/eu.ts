@@ -29,7 +29,7 @@ export const eu: I18nTexts = {
 		characters: 'hizki',
 		alphabet: 'Alfabetoa',
 		generatedValue: 'Sortutako Balioa',
-		clickToSelect: 'Testu-eremuan klik egin guztia hautatzeko, edo kopiatzeko botoia erabili',
+		clickToSelect: 'Testu-eremuan klik egin edukia kopiatzeko',
 		waitGenerating: 'Mesedez, itxaron balio berria sortzen den bitartean...',
 		unknownEndpoint: 'Amaiera-puntu mota ezezaguna',
 		failedToCopy: 'Kopiatzeak huts egin du',

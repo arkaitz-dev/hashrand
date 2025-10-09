@@ -29,7 +29,7 @@ export const zh: I18nTexts = {
 		characters: '个字符',
 		alphabet: '字母表',
 		generatedValue: '生成的值',
-		clickToSelect: '点击文本区域全选，或使用复制按钮',
+		clickToSelect: '点击文本区域复制内容',
 		waitGenerating: '请等待生成新值...',
 		unknownEndpoint: '未知的端点类型',
 		failedToCopy: '复制失败',

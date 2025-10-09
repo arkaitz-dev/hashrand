@@ -29,7 +29,7 @@ export const gl: I18nTexts = {
 		characters: 'caracteres',
 		alphabet: 'Alfabeto',
 		generatedValue: 'Valor xerado',
-		clickToSelect: 'Fai clic na área de texto para seleccionar todo, ou usa o botón copiar',
+		clickToSelect: 'Fai clic na área de texto para copiar o contido',
 		waitGenerating: 'Por favor, agarda mentres se xera un novo valor...',
 		unknownEndpoint: 'Tipo de endpoint descoñecido',
 		failedToCopy: 'Fallou ao copiar',

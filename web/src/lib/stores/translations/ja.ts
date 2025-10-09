@@ -29,7 +29,7 @@ export const ja: I18nTexts = {
 		characters: '文字',
 		alphabet: 'アルファベット',
 		generatedValue: '生成された値',
-		clickToSelect: 'テキストエリアをクリックして全選択するか、コピーボタンをお使いください',
+		clickToSelect: 'テキストエリアをクリックして内容をコピー',
 		waitGenerating: '新しい値を生成中です。しばらくお待ちください...',
 		unknownEndpoint: '不明なエンドポイントタイプ',
 		failedToCopy: 'コピーに失敗しました',

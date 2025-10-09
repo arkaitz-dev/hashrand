@@ -29,7 +29,7 @@ export const hi: I18nTexts = {
 		characters: 'अक्षर',
 		alphabet: 'अल्फाबेट',
 		generatedValue: 'जनरेट हुई वैल्यू',
-		clickToSelect: 'सब सेलेक्ट करने के लिए टेक्स्ट एरिया पर क्लिक करें, या कॉपी बटन का उपयोग करें',
+		clickToSelect: 'सामग्री कॉपी करने के लिए टेक्स्ट एरिया पर क्लिक करें',
 		waitGenerating: 'कृपया नई वैल्यू जनरेट होने तक प्रतीक्षा करें...',
 		unknownEndpoint: 'अज्ञात एंडपॉइंट प्रकार',
 		failedToCopy: 'कॉपी नहीं हो सका',

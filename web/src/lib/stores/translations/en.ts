@@ -29,7 +29,7 @@ export const en: I18nTexts = {
 		characters: 'letters',
 		alphabet: 'Alphabet',
 		generatedValue: 'Generated Value',
-		clickToSelect: 'Click the text area to select all, or use the copy button',
+		clickToSelect: 'Click the text area to copy the content',
 		waitGenerating: 'Please wait while generating new value...',
 		unknownEndpoint: 'Unknown endpoint type',
 		failedToCopy: 'Failed to copy',
