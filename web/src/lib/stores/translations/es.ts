@@ -284,7 +284,10 @@ export const es: I18nTexts = {
 		deleteSecret: 'Eliminar Secreto',
 		deleting: 'Eliminando...',
 		secretDeleted: 'Secreto eliminado correctamente',
-		confirmDelete: '¿Estás seguro de que quieres eliminar este secreto?',
+		confirmDelete: 'Eliminar Secreto Compartido',
+		confirmDeleteMessage: '¿Estás seguro de que quieres eliminar este secreto compartido?',
+		confirmDeleteWarning:
+			'Esta acción no se puede deshacer. El secreto será eliminado permanentemente.',
 		otpRequired: 'Este secreto requiere un OTP para acceder',
 		invalidOtp: 'OTP inválido',
 		invalidHash: 'Identificador de secreto inválido o ausente',
