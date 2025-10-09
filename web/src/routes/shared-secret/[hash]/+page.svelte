@@ -430,8 +430,8 @@
 						</div>
 					</div>
 
-					<!-- Delete Button (hidden only when consumed: pending_reads === 0) -->
-					{#if secret.pending_reads !== 0}
+					<!-- Delete Button (always shown for sender, hidden for consumed receiver) -->
+					{#if secret.role === 'sender' || secret.pending_reads > 0}
 						<button
 							onclick={handleDelete}
 							disabled={isDeleting}
