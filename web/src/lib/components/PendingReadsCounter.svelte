@@ -97,7 +97,10 @@
 			}
 		} catch (cacheError) {
 			// IndexedDB not available (private mode, restricted browser, etc.)
-			logger.warn('[PendingReadsCounter] Cache unavailable, proceeding without caching:', cacheError);
+			logger.warn(
+				'[PendingReadsCounter] Cache unavailable, proceeding without caching:',
+				cacheError
+			);
 			useCaching = false;
 		}
 

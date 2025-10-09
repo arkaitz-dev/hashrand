@@ -332,29 +332,6 @@
 						{$_('sharedSecret.secretContent')}
 					</h2>
 
-					<!-- ⚠️ Last Read Warning Banner -->
-					{#if secret.pending_reads === 1 && secret.role === 'receiver'}
-						<div
-							class="mb-6 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 dark:border-amber-600 rounded-r-lg shadow-sm"
-						>
-							<div class="flex p-4">
-								<div class="flex-shrink-0">
-									<span class="text-3xl" aria-hidden="true">⚠️</span>
-								</div>
-								<div class="ml-4 flex-1">
-									<h3 class="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">
-										{$_('sharedSecret.lastReadWarningTitle')}
-									</h3>
-									<p class="text-sm text-amber-700 dark:text-amber-300">
-										{$_('sharedSecret.lastReadWarningMessage')}
-									</p>
-									<p class="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
-										💡 {$_('sharedSecret.lastReadWarningTip')}
-									</p>
-								</div>
-							</div>
-						</div>
-					{/if}
 					<!-- Secret Text -->
 					<div class="mb-6">
 						<div class="relative">
