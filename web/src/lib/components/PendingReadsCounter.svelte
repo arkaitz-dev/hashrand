@@ -1,8 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { _ } from '$lib/stores/i18n';
 	import { logger } from '$lib/utils/logger';
+	import { flashMessagesStore } from '$lib/stores/flashMessages';
+	import {
+		getCachedConfirmation,
+		setCachedConfirmation,
+		clearCachedConfirmation,
+		CONFIRM_READ_CACHE_TIMEOUT
+	} from '$lib/utils/confirm-read-cache';
 
 	/**
 	 * Reactive counter for shared secret pending reads
@@ -24,61 +32,116 @@
 
 	onMount(async () => {
 		// Only confirm read for receiver role and if hash exists
-		if (role === 'receiver' && hash) {
-			// CRITICAL: Wait for access token to be available before confirming read
-			// This prevents 401 errors when navigating immediately after magic link validation
-			const { authStore } = await import('$lib/stores/auth');
-			let tokenReady = false;
-			let attempts = 0;
-			const maxAttempts = 50; // 5 seconds max wait
+		if (role !== 'receiver' || !hash) return;
 
-			logger.debug('[PendingReadsCounter] Waiting for access token to be available');
+		// CRITICAL: Wait for access token to be available before confirming read
+		// This prevents 401 errors when navigating immediately after magic link validation
+		const { authStore } = await import('$lib/stores/auth');
+		let tokenReady = false;
+		let attempts = 0;
+		const maxAttempts = 50; // 5 seconds max wait
 
-			while (!tokenReady && attempts < maxAttempts) {
-				const accessToken = authStore.getAccessToken();
+		logger.debug('[PendingReadsCounter] Waiting for access token to be available');
 
-				logger.debug('[PendingReadsCounter] Token check attempt', {
-					attempt: attempts + 1,
-					hasAccessToken: !!accessToken,
-					accessTokenLength: accessToken?.length || 0
+		while (!tokenReady && attempts < maxAttempts) {
+			const accessToken = authStore.getAccessToken();
+
+			logger.debug('[PendingReadsCounter] Token check attempt', {
+				attempt: attempts + 1,
+				hasAccessToken: !!accessToken,
+				accessTokenLength: accessToken?.length || 0
+			});
+
+			if (accessToken) {
+				tokenReady = true;
+				logger.debug('[PendingReadsCounter] Access token ready, proceeding with confirmation');
+			} else {
+				await new Promise((resolve) => setTimeout(resolve, 100));
+				attempts++;
+			}
+		}
+
+		if (!tokenReady) {
+			logger.warn(
+				'[PendingReadsCounter] Access token not ready after waiting, skipping confirmation'
+			);
+			return;
+		}
+
+		// NEW LOGIC: Check cache before confirming read (with graceful fallback if IndexedDB unavailable)
+		let useCaching = true;
+		let cachedTimestamp: number | null = null;
+
+		// Try to check cache, but don't fail if IndexedDB is unavailable
+		try {
+			logger.debug('[PendingReadsCounter] Attempting to access IndexedDB cache');
+			cachedTimestamp = await getCachedConfirmation(hash);
+			logger.debug('[PendingReadsCounter] Cache check successful', { hasCache: !!cachedTimestamp });
+
+			if (cachedTimestamp) {
+				const age = Date.now() - cachedTimestamp;
+
+				if (age < CONFIRM_READ_CACHE_TIMEOUT) {
+					// Cache hit: SKIP API call
+					logger.info('[PendingReadsCounter] Confirmation already cached, skipping API call', {
+						age: Math.round(age / 1000) + 's',
+						timeout: Math.round(CONFIRM_READ_CACHE_TIMEOUT / 1000) + 's'
+					});
+					return;
+				}
+
+				// Cache expired: revalidate
+				logger.debug('[PendingReadsCounter] Cache expired, revalidating...', {
+					age: Math.round(age / 1000) + 's'
 				});
-
-				if (accessToken) {
-					tokenReady = true;
-					logger.debug('[PendingReadsCounter] Access token ready, proceeding with confirmation');
-				} else {
-					await new Promise((resolve) => setTimeout(resolve, 100));
-					attempts++;
-				}
 			}
+		} catch (cacheError) {
+			// IndexedDB not available (private mode, restricted browser, etc.)
+			logger.warn('[PendingReadsCounter] Cache unavailable, proceeding without caching:', cacheError);
+			useCaching = false;
+		}
 
-			if (!tokenReady) {
-				logger.warn('[PendingReadsCounter] Access token not ready after waiting, skipping confirmation');
-				return;
-			}
+		// Call confirmRead (first time, revalidation, or no cache available)
+		try {
+			const confirmResult = await api.confirmRead(hash);
+			pendingReads = confirmResult.pending_reads;
 
-			try {
-				const confirmResult = await api.confirmRead(hash);
-				pendingReads = confirmResult.pending_reads;
-				logger.info(
-					'[PendingReadsCounter] Confirmed read, new pending_reads:',
-					confirmResult.pending_reads
-				);
-			} catch (err: unknown) {
-				// Retry once on failure
-				logger.warn('[PendingReadsCounter] Failed to confirm read, retrying...', err);
+			// Update cache only if caching is available
+			if (useCaching) {
 				try {
-					const retryResult = await api.confirmRead(hash);
-					pendingReads = retryResult.pending_reads;
-					logger.info(
-						'[PendingReadsCounter] Retry successful, new pending_reads:',
-						retryResult.pending_reads
-					);
-				} catch (retryErr: unknown) {
-					// Silent failure after retry: log for debugging but don't alert user
-					logger.error('[PendingReadsCounter] Retry failed (non-critical):', retryErr);
+					await setCachedConfirmation(hash);
+					logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+						pending_reads: confirmResult.pending_reads,
+						cached: true
+					});
+				} catch (cacheError) {
+					logger.warn('[PendingReadsCounter] Failed to cache confirmation:', cacheError);
+					logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+						pending_reads: confirmResult.pending_reads,
+						cached: false
+					});
+				}
+			} else {
+				logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+					pending_reads: confirmResult.pending_reads,
+					cached: false
+				});
+			}
+		} catch (err: unknown) {
+			// Error calling confirmRead API: clear cache + redirect + flash message
+			logger.error('[PendingReadsCounter] Error confirming read:', err);
+
+			// Try to clear cache, but don't fail if IndexedDB is unavailable
+			if (useCaching) {
+				try {
+					await clearCachedConfirmation(hash);
+				} catch (clearError) {
+					logger.warn('[PendingReadsCounter] Failed to clear cache (non-critical):', clearError);
 				}
 			}
+
+			flashMessagesStore.addMessage($_('sharedSecret.accessError'));
+			await goto('/');
 		}
 	});
 </script>

@@ -317,7 +317,8 @@ export const en: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		lastReadWarningTip: 'Save the information now if you need to keep it.'
+		lastReadWarningTip: 'Save the information now if you need to keep it.',
+		accessError: 'Cannot access shared secret'
 	},
 	logout: {
 		title: 'Log Out',

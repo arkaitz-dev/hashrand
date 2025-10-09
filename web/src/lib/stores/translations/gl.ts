@@ -305,7 +305,8 @@ export const gl: I18nTexts = {
 		confirmLastRead:
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
-		readsRemainingAfter: 'You will have'
+		readsRemainingAfter: 'You will have',
+		accessError: 'Non se pode acceder ao segredo compartido'
 	},
 	logout: {
 		title: 'Pechar Sesión',

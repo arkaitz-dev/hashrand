@@ -318,7 +318,8 @@ export const es: I18nTexts = {
 		confirmLastRead:
 			'⚠️ Esto consumirá tu última lectura disponible. El secreto se autodestruirá después.\n\n¿Estás seguro de que deseas continuar?',
 		confirmReadConsumption: 'Leer este secreto consumirá 1 lectura.',
-		readsRemainingAfter: 'Te quedarán'
+		readsRemainingAfter: 'Te quedarán',
+		accessError: 'No se puede acceder al secreto compartido'
 	},
 	logout: {
 		title: 'Cerrar Sesión',

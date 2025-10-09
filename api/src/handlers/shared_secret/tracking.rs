@@ -150,13 +150,20 @@ fn confirm_read_validated_v2(
         // Continue anyway - don't block legitimate users
     }
 
-    // Decrement pending_reads in tracking table
+    // Decrement pending_reads (simple decrement, no idempotency)
     let new_pending_reads = SharedSecretStorage::decrement_tracking_reads(&reference_hash)
         .map_err(|e| format!("Failed to decrement pending_reads: {}", e))?;
 
-    // Update tracking record with read timestamp (only if receiver and not already set)
+    // Update tracking record with read timestamp (always mark timestamp)
     let read_confirmed = SharedSecretOps::confirm_read(&reference_hash)
         .map_err(|e| format!("Failed to confirm read: {}", e))?;
+
+    // Auto-delete shared_secret if pending_reads reached 0 (consumed)
+    if new_pending_reads == 0 {
+        SharedSecretStorage::delete_secret(&db_index)
+            .map_err(|e| format!("Failed to auto-delete secret: {}", e))?;
+        info!("🗑️  Auto-deleted shared_secret (pending_reads=0, hash consumed)");
+    }
 
     // Create response (use role from hash, not database)
     let response_json = json!({
@@ -164,11 +171,7 @@ fn confirm_read_validated_v2(
         "pending_reads": new_pending_reads,
         "read_confirmed": read_confirmed,
         "role": role.to_str(),
-        "message": if read_confirmed {
-            "Read confirmed and counter decremented"
-        } else {
-            "Counter decremented (read already confirmed)"
-        }
+        "message": "Read confirmed and counter decremented"
     });
 
     // Create signed response

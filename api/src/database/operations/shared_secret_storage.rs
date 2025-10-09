@@ -316,6 +316,9 @@ impl SharedSecretStorage {
     ///
     /// # Returns
     /// * `Result<i64, SqliteError>` - New pending_reads value
+    ///
+    /// Decrement tracking reads (simple decrement, no idempotency)
+    /// Frontend handles duplicate prevention via IndexedDB cache
     pub fn decrement_tracking_reads(
         reference_hash: &[u8; REFERENCE_HASH_LENGTH],
     ) -> Result<i64, SqliteError> {

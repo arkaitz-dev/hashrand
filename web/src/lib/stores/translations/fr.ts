@@ -315,7 +315,8 @@ export const fr: I18nTexts = {
 		confirmLastRead:
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
-		readsRemainingAfter: 'You will have'
+		readsRemainingAfter: 'You will have',
+		accessError: "Impossible d'accéder au secret partagé"
 	},
 	logout: {
 		title: 'Se Déconnecter',
