@@ -430,8 +430,8 @@
 						</div>
 					</div>
 
-					<!-- Delete Button (only if pending_reads > 0) -->
-					{#if secret.pending_reads > 0}
+					<!-- Delete Button (hidden only when consumed: pending_reads === 0) -->
+					{#if secret.pending_reads !== 0}
 						<button
 							onclick={handleDelete}
 							disabled={isDeleting}
