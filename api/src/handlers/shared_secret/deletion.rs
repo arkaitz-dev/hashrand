@@ -114,36 +114,71 @@ fn delete_secret_validated_v2(
     let db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &user_id_from_hash)
         .map_err(|e| format!("Failed to generate db_index: {}", e))?;
 
-    // Read secret to get pending_reads from tracking
-    let (_, pending_reads, _, _role_from_db) = SharedSecretOps::read_secret(&db_index)
-        .map_err(|e| format!("Failed to read secret: {}", e))?;
+    // ============================================================================
+    // ROLE-BASED DELETION LOGIC
+    // ============================================================================
 
-    // Check if deletion is allowed (pending_reads > 0 or sender with unlimited reads)
-    if pending_reads <= 0 {
-        return Err(
-            "Cannot delete secret: all reads have been consumed or it's already deleted"
-                .to_string(),
-        );
+    use crate::database::operations::shared_secret_types::SecretRole;
+
+    match role {
+        SecretRole::Sender => {
+            // EMISOR: Borrar TODO (shared_secrets + tracking)
+            // No validar pending_reads (emisor puede borrar siempre)
+
+            // 1. Delete from shared_secrets
+            let deleted = SharedSecretStorage::delete_secret(&db_index)
+                .map_err(|e| format!("Failed to delete secret: {}", e))?;
+
+            if !deleted {
+                return Err("Secret not found or already deleted".to_string());
+            }
+
+            // 2. Delete from tracking (elimina referencia compartida)
+            SharedSecretStorage::delete_tracking_by_reference_hash(&reference_hash)
+                .map_err(|e| format!("Failed to delete tracking: {}", e))?;
+
+            // Success response
+            let response_json = json!({
+                "success": true,
+                "message": "Secret deleted successfully (sender - full deletion)",
+                "role": "sender"
+            });
+
+            create_signed_endpoint_response(&response_json, crypto_material)
+                .map_err(|e| format!("Failed to create signed response: {}", e))
+        }
+
+        SecretRole::Receiver => {
+            // RECEPTOR: Validar pending_reads > 0, borrar solo shared_secrets
+
+            // Read secret to get pending_reads from tracking
+            let (_, pending_reads, _, _) = SharedSecretOps::read_secret(&db_index)
+                .map_err(|e| format!("Failed to read secret: {}", e))?;
+
+            // Validate: Only allow deletion if pending_reads > 0
+            if pending_reads == 0 {
+                return Err("Cannot delete secret: all reads have been consumed".to_string());
+            }
+
+            // Delete only from shared_secrets (tracking permanece)
+            let deleted = SharedSecretStorage::delete_secret(&db_index)
+                .map_err(|e| format!("Failed to delete secret: {}", e))?;
+
+            if !deleted {
+                return Err("Secret not found or already deleted".to_string());
+            }
+
+            // Success response
+            let response_json = json!({
+                "success": true,
+                "message": "Secret deleted successfully (receiver - partial deletion)",
+                "role": "receiver"
+            });
+
+            create_signed_endpoint_response(&response_json, crypto_material)
+                .map_err(|e| format!("Failed to create signed response: {}", e))
+        }
     }
-
-    // Delete the secret
-    let deleted = SharedSecretStorage::delete_secret(&db_index)
-        .map_err(|e| format!("Failed to delete secret: {}", e))?;
-
-    if !deleted {
-        return Err("Secret not found or already deleted".to_string());
-    }
-
-    // Create success response (use role from hash, not database)
-    let response_json = json!({
-        "success": true,
-        "message": "Secret deleted successfully",
-        "role": role.to_str()
-    });
-
-    // Create signed response
-    create_signed_endpoint_response(&response_json, crypto_material)
-        .map_err(|e| format!("Failed to create signed response: {}", e))
 }
 
 /// Decode Base58 hash to encrypted ID (OLD - deprecated)

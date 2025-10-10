@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
-    shared_secret_types::constants::*,
+    shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
@@ -232,6 +232,21 @@ fn retrieve_and_respond_v2(
     // Generate db_index for database lookup
     let db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &user_id_from_hash)
         .map_err(|e| format!("Failed to generate db_index: {}", e))?;
+
+    // ============================================================================
+    // VALIDATION: Check if tracking exists (if sender deleted, cleanup receiver)
+    // ============================================================================
+    if !SharedSecretStorage::tracking_exists(&reference_hash)
+        .map_err(|e| format!("Failed to check tracking existence: {}", e))?
+    {
+        // Tracking doesn't exist → Sender deleted everything
+        // Cleanup: delete receiver's shared_secrets entry if exists
+        let _ = SharedSecretStorage::delete_secret(&db_index); // Ignore errors (may not exist)
+
+        return Err(
+            "SECRET_DELETED: Secret no longer available: sender has deleted it".to_string(),
+        );
+    }
 
     // Read secret from database (no decrement - that happens in confirm-read endpoint)
     let (payload, pending_reads, expires_at, _role_from_db) =
