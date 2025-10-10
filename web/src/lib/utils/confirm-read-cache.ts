@@ -63,6 +63,21 @@ async function getDB(): Promise<IDBDatabase> {
 }
 
 /**
+ * Initialize confirm-read cache database
+ * Called during login to ensure DB is ready before first use
+ * Triggers onupgradeneeded if DB doesn't exist
+ */
+export async function initConfirmReadCache(): Promise<void> {
+	const { logger } = await import('./logger');
+	logger.debug('[ConfirmReadCache] Initializing cache database');
+
+	const db = await getDB();
+	db.close(); // Close immediately - just needed to trigger onupgradeneeded
+
+	logger.info('[ConfirmReadCache] ✅ Cache database initialized');
+}
+
+/**
  * Retrieves cached confirmation timestamp for a hash
  *
  * @param hash - Shared secret hash (Base58 encoded)

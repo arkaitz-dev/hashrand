@@ -109,6 +109,14 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		// Magic link: Crypto tokens already exist
 	}
 
+	// Initialize confirm-read cache database (ensures DB is ready before first use)
+	try {
+		const { initConfirmReadCache } = await import('../../utils/confirm-read-cache');
+		await initConfirmReadCache();
+	} catch {
+		// Failed to initialize confirm-read cache (non-blocking)
+	}
+
 	// Clear pending auth email - no longer needed after successful authentication
 	try {
 		const { sessionManager } = await import('../../session-manager');

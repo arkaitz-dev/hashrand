@@ -153,9 +153,12 @@
 			}
 		} catch (cacheError: unknown) {
 			// IndexedDB not available (private mode, restricted browser, etc.)
+			const error = cacheError as Error;
 			logger.warn('[PendingReadsCounter] ⚠️ Cache unavailable, proceeding without caching', {
 				hash,
-				error: cacheError
+				errorType: error?.constructor?.name,
+				errorMessage: error?.message,
+				errorString: String(cacheError)
 			});
 			useCaching = false;
 		}
