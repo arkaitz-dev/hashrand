@@ -21,6 +21,7 @@ interface ConfirmReadCache {
 
 /**
  * Opens IndexedDB connection, creates object store if needed
+ * Includes integrity verification to detect and recover from corrupted databases
  */
 async function getDB(): Promise<IDBDatabase> {
 	// Import logger dynamically to avoid circular dependencies
@@ -45,8 +46,53 @@ async function getDB(): Promise<IDBDatabase> {
 			};
 
 			request.onsuccess = () => {
+				const db = request.result;
 				logger.debug('[ConfirmReadCache] IndexedDB opened successfully');
-				resolve(request.result);
+
+				// CRITICAL: Verify DB integrity - check object store exists
+				if (!db.objectStoreNames.contains(STORE_NAME)) {
+					logger.error('[ConfirmReadCache] 🚨 DB INTEGRITY CHECK FAILED - Object store missing', {
+						STORE_NAME,
+						DB_VERSION,
+						existingStores: Array.from(db.objectStoreNames),
+						diagnosis: 'Database corrupted or schema mismatch'
+					});
+
+					// Close corrupted DB before deletion
+					db.close();
+
+					// Delete corrupted DB to force recreation on next access
+					logger.warn('[ConfirmReadCache] Deleting corrupted IndexedDB', { DB_NAME });
+					const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+					deleteRequest.onsuccess = () => {
+						logger.info(
+							'[ConfirmReadCache] ✅ Corrupted DB deleted - will be recreated on next access',
+							{
+								DB_NAME
+							}
+						);
+					};
+
+					deleteRequest.onerror = () => {
+						logger.error('[ConfirmReadCache] Failed to delete corrupted DB', {
+							DB_NAME,
+							error: deleteRequest.error
+						});
+					};
+
+					// Reject to signal caller that DB needs retry
+					reject(new Error('IndexedDB object store missing - DB deleted and will be recreated'));
+					return;
+				}
+
+				// DB integrity verified
+				logger.debug('[ConfirmReadCache] ✅ DB Integrity Check PASSED', {
+					STORE_NAME,
+					existingStores: Array.from(db.objectStoreNames)
+				});
+
+				resolve(db);
 			};
 
 			request.onupgradeneeded = (event) => {
@@ -57,7 +103,7 @@ async function getDB(): Promise<IDBDatabase> {
 				});
 				if (!db.objectStoreNames.contains(STORE_NAME)) {
 					db.createObjectStore(STORE_NAME, { keyPath: 'hash' });
-					logger.debug('[ConfirmReadCache] Created object store', { STORE_NAME });
+					logger.info('[ConfirmReadCache] ✅ Created object store', { STORE_NAME });
 				}
 			};
 		} catch (error) {
@@ -82,40 +128,54 @@ export async function getCachedConfirmation(hash: string): Promise<number | null
 	});
 
 	const db = await getDB();
+
 	return new Promise((resolve, reject) => {
-		const tx = db.transaction(STORE_NAME, 'readonly');
-		const store = tx.objectStore(STORE_NAME);
-		const request = store.get(hash);
+		try {
+			// Protected: These operations can throw synchronously if object store doesn't exist
+			const tx = db.transaction(STORE_NAME, 'readonly');
+			const store = tx.objectStore(STORE_NAME);
+			const request = store.get(hash);
 
-		request.onerror = () => {
-			logger.error('[ConfirmReadCache] Error retrieving cached confirmation', {
-				hash,
-				error: request.error
-			});
-			reject(request.error);
-		};
-
-		request.onsuccess = () => {
-			const result = request.result as ConfirmReadCache | undefined;
-			const timestamp = result?.timestamp || null;
-
-			if (timestamp) {
-				const age = Date.now() - timestamp;
-				logger.debug('[ConfirmReadCache] Cache HIT - Found cached confirmation', {
+			request.onerror = () => {
+				logger.error('[ConfirmReadCache] Request error retrieving cached confirmation', {
 					hash,
-					timestamp,
-					age_ms: age,
-					age_seconds: Math.round(age / 1000),
-					cached_at: new Date(timestamp).toISOString()
+					error: request.error
 				});
-			} else {
-				logger.debug('[ConfirmReadCache] Cache MISS - No cached confirmation found', {
-					hash
-				});
-			}
+				reject(request.error);
+			};
 
-			resolve(timestamp);
-		};
+			request.onsuccess = () => {
+				const result = request.result as ConfirmReadCache | undefined;
+				const timestamp = result?.timestamp || null;
+
+				if (timestamp) {
+					const age = Date.now() - timestamp;
+					logger.debug('[ConfirmReadCache] Cache HIT - Found cached confirmation', {
+						hash,
+						timestamp,
+						age_ms: age,
+						age_seconds: Math.round(age / 1000),
+						cached_at: new Date(timestamp).toISOString()
+					});
+				} else {
+					logger.debug('[ConfirmReadCache] Cache MISS - No cached confirmation found', {
+						hash
+					});
+				}
+
+				resolve(timestamp);
+			};
+		} catch (syncError: unknown) {
+			// Catch synchronous errors (e.g., object store not found)
+			const error = syncError as Error;
+			logger.error('[ConfirmReadCache] Synchronous error in getCachedConfirmation', {
+				hash,
+				errorType: error?.constructor?.name,
+				errorMessage: error?.message,
+				errorStack: error?.stack
+			});
+			reject(syncError);
+		}
 	});
 }
 
@@ -135,28 +195,43 @@ export async function setCachedConfirmation(hash: string): Promise<void> {
 	});
 
 	const db = await getDB();
+
 	return new Promise((resolve, reject) => {
-		const tx = db.transaction(STORE_NAME, 'readwrite');
-		const store = tx.objectStore(STORE_NAME);
-		const request = store.put({ hash, timestamp });
+		try {
+			// Protected: These operations can throw synchronously if object store doesn't exist
+			const tx = db.transaction(STORE_NAME, 'readwrite');
+			const store = tx.objectStore(STORE_NAME);
+			const request = store.put({ hash, timestamp });
 
-		request.onerror = () => {
-			logger.error('[ConfirmReadCache] Error storing cached confirmation', {
+			request.onerror = () => {
+				logger.error('[ConfirmReadCache] Request error storing cached confirmation', {
+					hash,
+					timestamp,
+					error: request.error
+				});
+				reject(request.error);
+			};
+
+			request.onsuccess = () => {
+				logger.info('[ConfirmReadCache] ✅ Cache SAVED successfully', {
+					hash,
+					timestamp,
+					datetime: new Date(timestamp).toISOString()
+				});
+				resolve();
+			};
+		} catch (syncError: unknown) {
+			// Catch synchronous errors (e.g., object store not found)
+			const error = syncError as Error;
+			logger.error('[ConfirmReadCache] Synchronous error in setCachedConfirmation', {
 				hash,
 				timestamp,
-				error: request.error
+				errorType: error?.constructor?.name,
+				errorMessage: error?.message,
+				errorStack: error?.stack
 			});
-			reject(request.error);
-		};
-
-		request.onsuccess = () => {
-			logger.info('[ConfirmReadCache] ✅ Cache SAVED successfully', {
-				hash,
-				timestamp,
-				datetime: new Date(timestamp).toISOString()
-			});
-			resolve();
-		};
+			reject(syncError);
+		}
 	});
 }
 
@@ -171,22 +246,36 @@ export async function clearCachedConfirmation(hash: string): Promise<void> {
 	logger.debug('[ConfirmReadCache] clearCachedConfirmation() called', { hash });
 
 	const db = await getDB();
+
 	return new Promise((resolve, reject) => {
-		const tx = db.transaction(STORE_NAME, 'readwrite');
-		const store = tx.objectStore(STORE_NAME);
-		const request = store.delete(hash);
+		try {
+			// Protected: These operations can throw synchronously if object store doesn't exist
+			const tx = db.transaction(STORE_NAME, 'readwrite');
+			const store = tx.objectStore(STORE_NAME);
+			const request = store.delete(hash);
 
-		request.onerror = () => {
-			logger.error('[ConfirmReadCache] Error clearing cached confirmation', {
+			request.onerror = () => {
+				logger.error('[ConfirmReadCache] Request error clearing cached confirmation', {
+					hash,
+					error: request.error
+				});
+				reject(request.error);
+			};
+
+			request.onsuccess = () => {
+				logger.info('[ConfirmReadCache] 🗑️ Cache CLEARED successfully', { hash });
+				resolve();
+			};
+		} catch (syncError: unknown) {
+			// Catch synchronous errors (e.g., object store not found)
+			const error = syncError as Error;
+			logger.error('[ConfirmReadCache] Synchronous error in clearCachedConfirmation', {
 				hash,
-				error: request.error
+				errorType: error?.constructor?.name,
+				errorMessage: error?.message,
+				errorStack: error?.stack
 			});
-			reject(request.error);
-		};
-
-		request.onsuccess = () => {
-			logger.info('[ConfirmReadCache] 🗑️ Cache CLEARED successfully', { hash });
-			resolve();
-		};
+			reject(syncError);
+		}
 	});
 }
