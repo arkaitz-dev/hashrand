@@ -56,7 +56,7 @@
 		try {
 			// Validate the magic link (Ed25519 verification by backend)
 			const loginResponse = await authStore.validateMagicLink(magicToken);
-			logger.info('[+layout] Magic link validation successful');
+			logger.debug('[+layout] Magic link validation successful');
 			logger.debug('[+layout] Login response received', {
 				hasNext: !!loginResponse.next,
 				nextValue: loginResponse.next
@@ -249,7 +249,7 @@
 			// Validate the magic link (Ed25519 verification by backend)
 			loginResponse = await authStore.validateMagicLink(magicToken);
 			validationSuccessful = true;
-			logger.info('[+layout] Magic link validation successful');
+			logger.debug('[+layout] Magic link validation successful');
 			logger.debug('[+layout] Login response received (handleMagicLinkValidation)', {
 				hasNext: !!loginResponse.next,
 				nextValue: loginResponse.next

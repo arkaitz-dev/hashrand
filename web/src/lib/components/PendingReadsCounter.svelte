@@ -83,7 +83,7 @@
 
 				if (age < CONFIRM_READ_CACHE_TIMEOUT) {
 					// Cache hit: SKIP API call
-					logger.info('[PendingReadsCounter] Confirmation already cached, skipping API call', {
+					logger.debug('[PendingReadsCounter] Confirmation already cached, skipping API call', {
 						age: Math.round(age / 1000) + 's',
 						timeout: Math.round(CONFIRM_READ_CACHE_TIMEOUT / 1000) + 's'
 					});
@@ -113,19 +113,19 @@
 			if (useCaching) {
 				try {
 					await setCachedConfirmation(hash);
-					logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+					logger.debug('[PendingReadsCounter] Read confirmed, new pending_reads:', {
 						pending_reads: confirmResult.pending_reads,
 						cached: true
 					});
 				} catch (cacheError) {
 					logger.warn('[PendingReadsCounter] Failed to cache confirmation:', cacheError);
-					logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+					logger.debug('[PendingReadsCounter] Read confirmed, new pending_reads:', {
 						pending_reads: confirmResult.pending_reads,
 						cached: false
 					});
 				}
 			} else {
-				logger.info('[PendingReadsCounter] Read confirmed, new pending_reads:', {
+				logger.debug('[PendingReadsCounter] Read confirmed, new pending_reads:', {
 					pending_reads: confirmResult.pending_reads,
 					cached: false
 				});

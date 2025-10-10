@@ -87,7 +87,7 @@ export function blake3KeyedVariable(
  * Ensures compatibility with Rust backend implementation
  */
 export function testBlake3KeyedVariable(): void {
-	logger.info('Testing blake3KeyedVariable...');
+	logger.debug('Testing blake3KeyedVariable...');
 
 	// Test 0: Validate 64-byte requirement (SECURITY)
 	const invalidKey32 = new Uint8Array(32).fill(1); // Only 32 bytes
@@ -172,5 +172,5 @@ export function testBlake3KeyedVariable(): void {
 		`Short vs long test: ${!outputShort.every((byte, i) => byte === outputLong[i]) ? 'PASS' : 'FAIL'}`
 	);
 
-	logger.info('✅ All blake3KeyedVariable tests passed!');
+	logger.debug('✅ All blake3KeyedVariable tests passed!');
 }

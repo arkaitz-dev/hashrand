@@ -44,7 +44,7 @@
 
 			// Add success flash message
 			flashMessagesStore.addMessage($_('auth.magicLinkSentFlash'));
-			logger.info('[Form] Magic link request sent successfully');
+			logger.debug('[Form] Magic link request sent successfully');
 		} catch {
 			// Error sending magic link
 			logger.error('[Form] Magic link request failed');
