@@ -152,16 +152,10 @@
 				});
 			}
 		} catch (cacheError: unknown) {
-			// IndexedDB not available (private mode, restricted browser, corrupted, etc.)
-			const error = cacheError as Error;
+			// IndexedDB not available (private mode, restricted browser, etc.)
 			logger.warn('[PendingReadsCounter] ⚠️ Cache unavailable, proceeding without caching', {
 				hash,
-				errorType: error?.constructor?.name,
-				errorMessage: error?.message,
-				errorString: String(cacheError),
-				errorStack: error?.stack,
-				decision: 'CALL_API_NO_CACHE',
-				note: 'Will retry cache on next page load (DB may auto-recover if corrupted)'
+				error: cacheError
 			});
 			useCaching = false;
 		}

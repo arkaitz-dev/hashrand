@@ -27,6 +27,13 @@ export async function clearPreventiveAuthData(): Promise<void> {
 			// Failed to clear Ed25519 keypairs
 		}
 
+		// Clear confirm-read cache database
+		try {
+			indexedDB.deleteDatabase('hashrand-cache');
+		} catch {
+			// Failed to clear confirm-read cache
+		}
+
 		// Preventive auth data cleanup completed
 	} catch {
 		// Failed to clear preventive auth data
@@ -46,6 +53,13 @@ export async function clearSensitiveAuthData(): Promise<void> {
 	try {
 		// Use unified cleanup function (complete logout cleanup)
 		await clearLocalAuthData();
+
+		// Clear confirm-read cache database
+		try {
+			indexedDB.deleteDatabase('hashrand-cache');
+		} catch {
+			// Failed to clear confirm-read cache
+		}
 	} catch {
 		// Failed to clear sensitive auth data
 	}
