@@ -23,10 +23,16 @@ interface ConfirmReadCache {
  * Opens IndexedDB connection, creates object store if needed
  */
 async function getDB(): Promise<IDBDatabase> {
+	// Import logger dynamically to avoid circular dependencies
+	const { logger } = await import('./logger');
+
 	// Check if IndexedDB is available
 	if (typeof indexedDB === 'undefined') {
+		logger.error('[ConfirmReadCache] IndexedDB not available in this browser');
 		throw new Error('IndexedDB not available in this browser');
 	}
+
+	logger.debug('[ConfirmReadCache] Opening IndexedDB', { DB_NAME, DB_VERSION });
 
 	return new Promise((resolve, reject) => {
 		try {
@@ -34,18 +40,28 @@ async function getDB(): Promise<IDBDatabase> {
 
 			request.onerror = () => {
 				const error = request.error || new Error('IndexedDB open failed');
+				logger.error('[ConfirmReadCache] IndexedDB open failed', { error });
 				reject(error);
 			};
 
-			request.onsuccess = () => resolve(request.result);
+			request.onsuccess = () => {
+				logger.debug('[ConfirmReadCache] IndexedDB opened successfully');
+				resolve(request.result);
+			};
 
 			request.onupgradeneeded = (event) => {
 				const db = (event.target as IDBOpenDBRequest).result;
+				logger.debug('[ConfirmReadCache] Upgrading IndexedDB schema', {
+					oldVersion: event.oldVersion,
+					newVersion: event.newVersion
+				});
 				if (!db.objectStoreNames.contains(STORE_NAME)) {
 					db.createObjectStore(STORE_NAME, { keyPath: 'hash' });
+					logger.debug('[ConfirmReadCache] Created object store', { STORE_NAME });
 				}
 			};
 		} catch (error) {
+			logger.error('[ConfirmReadCache] Exception opening IndexedDB', { error });
 			reject(error);
 		}
 	});
@@ -58,16 +74,47 @@ async function getDB(): Promise<IDBDatabase> {
  * @returns Timestamp (ms since epoch) if cached, null otherwise
  */
 export async function getCachedConfirmation(hash: string): Promise<number | null> {
+	const { logger } = await import('./logger');
+
+	logger.debug('[ConfirmReadCache] getCachedConfirmation() called', {
+		hash,
+		hashLength: hash.length
+	});
+
 	const db = await getDB();
 	return new Promise((resolve, reject) => {
 		const tx = db.transaction(STORE_NAME, 'readonly');
 		const store = tx.objectStore(STORE_NAME);
 		const request = store.get(hash);
 
-		request.onerror = () => reject(request.error);
+		request.onerror = () => {
+			logger.error('[ConfirmReadCache] Error retrieving cached confirmation', {
+				hash,
+				error: request.error
+			});
+			reject(request.error);
+		};
+
 		request.onsuccess = () => {
 			const result = request.result as ConfirmReadCache | undefined;
-			resolve(result?.timestamp || null);
+			const timestamp = result?.timestamp || null;
+
+			if (timestamp) {
+				const age = Date.now() - timestamp;
+				logger.debug('[ConfirmReadCache] Cache HIT - Found cached confirmation', {
+					hash,
+					timestamp,
+					age_ms: age,
+					age_seconds: Math.round(age / 1000),
+					cached_at: new Date(timestamp).toISOString()
+				});
+			} else {
+				logger.debug('[ConfirmReadCache] Cache MISS - No cached confirmation found', {
+					hash
+				});
+			}
+
+			resolve(timestamp);
 		};
 	});
 }
@@ -78,14 +125,38 @@ export async function getCachedConfirmation(hash: string): Promise<number | null
  * @param hash - Shared secret hash (Base58 encoded)
  */
 export async function setCachedConfirmation(hash: string): Promise<void> {
+	const { logger } = await import('./logger');
+	const timestamp = Date.now();
+
+	logger.debug('[ConfirmReadCache] setCachedConfirmation() called', {
+		hash,
+		timestamp,
+		datetime: new Date(timestamp).toISOString()
+	});
+
 	const db = await getDB();
 	return new Promise((resolve, reject) => {
 		const tx = db.transaction(STORE_NAME, 'readwrite');
 		const store = tx.objectStore(STORE_NAME);
-		const request = store.put({ hash, timestamp: Date.now() });
+		const request = store.put({ hash, timestamp });
 
-		request.onerror = () => reject(request.error);
-		request.onsuccess = () => resolve();
+		request.onerror = () => {
+			logger.error('[ConfirmReadCache] Error storing cached confirmation', {
+				hash,
+				timestamp,
+				error: request.error
+			});
+			reject(request.error);
+		};
+
+		request.onsuccess = () => {
+			logger.info('[ConfirmReadCache] ✅ Cache SAVED successfully', {
+				hash,
+				timestamp,
+				datetime: new Date(timestamp).toISOString()
+			});
+			resolve();
+		};
 	});
 }
 
@@ -95,13 +166,27 @@ export async function setCachedConfirmation(hash: string): Promise<void> {
  * @param hash - Shared secret hash (Base58 encoded)
  */
 export async function clearCachedConfirmation(hash: string): Promise<void> {
+	const { logger } = await import('./logger');
+
+	logger.debug('[ConfirmReadCache] clearCachedConfirmation() called', { hash });
+
 	const db = await getDB();
 	return new Promise((resolve, reject) => {
 		const tx = db.transaction(STORE_NAME, 'readwrite');
 		const store = tx.objectStore(STORE_NAME);
 		const request = store.delete(hash);
 
-		request.onerror = () => reject(request.error);
-		request.onsuccess = () => resolve();
+		request.onerror = () => {
+			logger.error('[ConfirmReadCache] Error clearing cached confirmation', {
+				hash,
+				error: request.error
+			});
+			reject(request.error);
+		};
+
+		request.onsuccess = () => {
+			logger.info('[ConfirmReadCache] 🗑️ Cache CLEARED successfully', { hash });
+			resolve();
+		};
 	});
 }
