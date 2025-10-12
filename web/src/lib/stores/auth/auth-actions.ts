@@ -139,6 +139,7 @@ export async function validateMagicLink(magicToken: string): Promise<{
  * 1. Clear Ed25519 keypairs (security)
  * 2. Clear ALL IndexedDB session data
  * 3. Clear session expiration timestamp
+ * 4. Clear confirm-read cache database
  *
  * @returns Promise<void>
  */
@@ -165,6 +166,34 @@ export async function clearLocalAuthData(): Promise<void> {
 		await clearSessionExpiration();
 	} catch (error) {
 		logger.warn('Failed to clear session expiration during logout:', error);
+		// Non-blocking - logout continues
+	}
+
+	// Clear confirm-read cache database (await completion for clean logout)
+	try {
+		await new Promise<void>((resolve, reject) => {
+			const deleteRequest = indexedDB.deleteDatabase('hashrand-confirm-read-cache');
+
+			deleteRequest.onsuccess = () => {
+				logger.info('[clearLocalAuthData] Confirm-read cache deleted successfully');
+				resolve();
+			};
+
+			deleteRequest.onerror = () => {
+				logger.warn('[clearLocalAuthData] Failed to delete confirm-read cache', {
+					error: deleteRequest.error
+				});
+				reject(deleteRequest.error);
+			};
+
+			deleteRequest.onblocked = () => {
+				logger.warn('[clearLocalAuthData] Confirm-read cache deletion blocked');
+				// Resolve anyway to not block logout
+				resolve();
+			};
+		});
+	} catch (error) {
+		logger.warn('Failed to clear confirm-read cache during logout:', error);
 		// Non-blocking - logout continues
 	}
 }

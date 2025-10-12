@@ -46,20 +46,15 @@ export async function clearPreventiveAuthData(): Promise<void> {
  * UNIFIED APPROACH: Uses clearLocalAuthData() for complete cleanup
  * Silent version (no flash message) - for programmatic cleanup
  * More aggressive than preventive cleanup - used when tokens are inconsistent
+ *
+ * Note: clearLocalAuthData() already handles confirm-read cache deletion
  */
 export async function clearSensitiveAuthData(): Promise<void> {
 	if (typeof window === 'undefined') return;
 
 	try {
-		// Use unified cleanup function (complete logout cleanup)
+		// Use unified cleanup function (complete logout cleanup + cache deletion)
 		await clearLocalAuthData();
-
-		// Clear confirm-read cache database
-		try {
-			indexedDB.deleteDatabase('hashrand-confirm-read-cache');
-		} catch {
-			// Failed to clear confirm-read cache
-		}
 	} catch {
 		// Failed to clear sensitive auth data
 	}
