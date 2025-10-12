@@ -44,8 +44,23 @@ async function getDB(): Promise<IDBDatabase> {
 		};
 
 		request.onsuccess = () => {
+			const db = request.result;
+
+			// Integrity check: verify object store exists (defensive fallback)
+			if (!db.objectStoreNames.contains(STORE_NAME)) {
+				logger.error('[ConfirmReadCache] ❌ Object store missing - DB corrupted', {
+					dbName: DB_NAME,
+					expectedStore: STORE_NAME,
+					actualStores: Array.from(db.objectStoreNames),
+					hint: 'initConfirmReadCache() should have fixed this - possible race condition'
+				});
+				db.close();
+				reject(new Error('Database corrupted - missing object store'));
+				return;
+			}
+
 			logger.debug('[ConfirmReadCache] IndexedDB opened successfully');
-			resolve(request.result);
+			resolve(db);
 		};
 
 		request.onupgradeneeded = (event) => {
@@ -65,16 +80,54 @@ async function getDB(): Promise<IDBDatabase> {
 /**
  * Initialize confirm-read cache database
  * Called during login to ensure DB is ready before first use
- * Triggers onupgradeneeded if DB doesn't exist
+ * Detects and repairs corrupted DBs (missing object stores)
  */
 export async function initConfirmReadCache(): Promise<void> {
 	const { logger } = await import('./logger');
 	logger.debug('[ConfirmReadCache] Initializing cache database');
 
 	const db = await getDB();
-	db.close(); // Close immediately - just needed to trigger onupgradeneeded
 
-	logger.info('[ConfirmReadCache] ✅ Cache database initialized');
+	// Integrity check: verify object store exists
+	if (!db.objectStoreNames.contains(STORE_NAME)) {
+		logger.warn('[ConfirmReadCache] ⚠️ Object store missing - DB corrupted, recreating...', {
+			dbName: DB_NAME,
+			expectedStore: STORE_NAME,
+			actualStores: Array.from(db.objectStoreNames)
+		});
+		db.close();
+
+		// Delete corrupted DB and wait for completion
+		await new Promise<void>((resolve, reject) => {
+			const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+			deleteRequest.onsuccess = () => {
+				logger.info('[ConfirmReadCache] 🗑️ Corrupted DB deleted successfully');
+				resolve();
+			};
+
+			deleteRequest.onerror = () => {
+				logger.error('[ConfirmReadCache] ❌ Failed to delete corrupted DB', {
+					error: deleteRequest.error
+				});
+				reject(deleteRequest.error);
+			};
+
+			deleteRequest.onblocked = () => {
+				logger.warn('[ConfirmReadCache] ⏳ DB deletion blocked (connections still open)');
+			};
+		});
+
+		// Reopen - this will trigger onupgradeneeded (DB doesn't exist now)
+		logger.debug('[ConfirmReadCache] Reopening DB after deletion');
+		const freshDb = await getDB();
+		freshDb.close();
+
+		logger.info('[ConfirmReadCache] ✅ Cache database recreated successfully');
+	} else {
+		db.close();
+		logger.info('[ConfirmReadCache] ✅ Cache database already initialized correctly');
+	}
 }
 
 /**
