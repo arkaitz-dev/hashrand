@@ -5,7 +5,7 @@
  * Timeout: 15 min (prod) / 3 min (dev)
  */
 
-const DB_NAME = 'hashrand-cache';
+const DB_NAME = 'hashrand-confirm-read-cache';
 const STORE_NAME = 'confirm-read';
 const DB_VERSION = 1;
 
@@ -86,9 +86,47 @@ export async function initConfirmReadCache(): Promise<void> {
 	const { logger } = await import('./logger');
 	logger.debug('[ConfirmReadCache] Initializing cache database');
 
-	const db = await getDB();
+	let db: IDBDatabase;
 
-	// Integrity check: verify object store exists
+	try {
+		db = await getDB();
+	} catch (error) {
+		// getDB() failed (DB corrupted or missing object store)
+		logger.warn('[ConfirmReadCache] ⚠️ Failed to open DB, will recreate', {
+			error: error instanceof Error ? error.message : String(error)
+		});
+
+		// Delete corrupted/conflicting DB and wait for completion
+		await new Promise<void>((resolve, reject) => {
+			const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+			deleteRequest.onsuccess = () => {
+				logger.info('[ConfirmReadCache] 🗑️ DB deleted successfully');
+				resolve();
+			};
+
+			deleteRequest.onerror = () => {
+				logger.error('[ConfirmReadCache] ❌ Failed to delete DB', {
+					error: deleteRequest.error
+				});
+				reject(deleteRequest.error);
+			};
+
+			deleteRequest.onblocked = () => {
+				logger.warn('[ConfirmReadCache] ⏳ DB deletion blocked (connections still open)');
+			};
+		});
+
+		// Reopen - this will trigger onupgradeneeded (DB doesn't exist now)
+		logger.debug('[ConfirmReadCache] Reopening DB after deletion');
+		const freshDb = await getDB();
+		freshDb.close();
+
+		logger.info('[ConfirmReadCache] ✅ Cache database recreated successfully');
+		return;
+	}
+
+	// DB opened successfully - verify object store exists
 	if (!db.objectStoreNames.contains(STORE_NAME)) {
 		logger.warn('[ConfirmReadCache] ⚠️ Object store missing - DB corrupted, recreating...', {
 			dbName: DB_NAME,

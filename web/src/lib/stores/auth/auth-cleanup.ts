@@ -29,7 +29,7 @@ export async function clearPreventiveAuthData(): Promise<void> {
 
 		// Clear confirm-read cache database
 		try {
-			indexedDB.deleteDatabase('hashrand-cache');
+			indexedDB.deleteDatabase('hashrand-confirm-read-cache');
 		} catch {
 			// Failed to clear confirm-read cache
 		}
@@ -56,7 +56,7 @@ export async function clearSensitiveAuthData(): Promise<void> {
 
 		// Clear confirm-read cache database
 		try {
-			indexedDB.deleteDatabase('hashrand-cache');
+			indexedDB.deleteDatabase('hashrand-confirm-read-cache');
 		} catch {
 			// Failed to clear confirm-read cache
 		}
