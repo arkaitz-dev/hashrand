@@ -13,6 +13,7 @@
 	import { buildNextParameterFromConfig, type AuthDialogConfig } from '$lib/utils/navigation';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 	import { logger } from '../utils/logger';
+	import { onMount } from 'svelte';
 
 	// Props - Universal architecture
 	export let config: AuthDialogConfig;
@@ -20,6 +21,13 @@
 
 	// Component state
 	let isSubmitting = false;
+	// eslint-disable-next-line no-undef
+	let dialogElement: HTMLDivElement;
+
+	// Focus dialog on mount to enable keyboard events
+	onMount(() => {
+		dialogElement?.focus();
+	});
 
 	/**
 	 * Handle "Es correcto" - send email to API
@@ -63,73 +71,97 @@
 	function handleEdit() {
 		logger.info('[Click] Edit email address');
 		logger.info('[Dialog] Opening auth dialog for email correction');
-		// Show auth dialog with same configuration but allow email editing
+		// Show auth dialog with same configuration and prefilled email for correction
 		// This will automatically replace the current dialog
 		const editConfig: AuthDialogConfig = {
-			// Don't prefill email - let user edit it
+			email: config.email, // Prefill email so user can edit it
 			destination: config.destination
 		};
 		dialogStore.show('auth', editConfig as unknown as Record<string, unknown>);
 	}
+
+	/**
+	 * Handle keyboard events - Enter key activates confirm button
+	 */
+	// eslint-disable-next-line no-undef
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' && !isSubmitting) {
+			logger.info('[Keyboard] Enter pressed, activating confirm button');
+			handleCorrect();
+		}
+	}
 </script>
 
-<!-- Header -->
-<div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-	<h2
-		class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL
-			? 'text-right'
-			: 'text-left'}"
-	>
-		{$_('auth.confirmEmail')}
-	</h2>
-	<button
-		onclick={onClose}
-		class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-		aria-label={$_('common.close')}
-	>
-		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
-			></path>
-		</svg>
-	</button>
-</div>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div
+	role="dialog"
+	tabindex="0"
+	bind:this={dialogElement}
+	onkeydown={handleKeydown}
+	class="outline-none"
+>
+	<!-- Header -->
+	<div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+		<h2
+			class="text-xl font-semibold text-gray-900 dark:text-white {$isRTL
+				? 'text-right'
+				: 'text-left'}"
+		>
+			{$_('auth.confirmEmail')}
+		</h2>
+		<button
+			onclick={onClose}
+			class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+			aria-label={$_('common.close')}
+		>
+			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M6 18L18 6M6 6l12 12"
+				></path>
+			</svg>
+		</button>
+	</div>
 
-<!-- Body Content -->
-<div class="p-6">
-	<div class="space-y-4">
-		<p class="text-sm text-gray-600 dark:text-gray-400">
-			{$_('auth.confirmEmailDescription')}
-		</p>
-
-		<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-			<p class="text-lg font-medium text-gray-900 dark:text-gray-100 text-center">
-				{config.email || ''}
+	<!-- Body Content -->
+	<div class="p-6">
+		<div class="space-y-4">
+			<p class="text-sm text-gray-600 dark:text-gray-400">
+				{$_('auth.confirmEmailDescription')}
 			</p>
+
+			<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+				<p class="text-lg font-medium text-gray-900 dark:text-gray-100 text-center">
+					{config.email || ''}
+				</p>
+			</div>
 		</div>
 	</div>
-</div>
 
-<!-- Footer Actions -->
-<div
-	class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
-		? 'flex-row-reverse'
-		: ''}"
->
-	<button
-		onclick={handleEdit}
-		disabled={isSubmitting}
-		class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+	<!-- Footer Actions -->
+	<div
+		class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 {$isRTL
+			? 'flex-row-reverse'
+			: ''}"
 	>
-		{$_('common.correct')}
-	</button>
-	<button
-		onclick={handleCorrect}
-		disabled={isSubmitting}
-		class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-	>
-		{#if isSubmitting}
-			<LoadingSpinner size="sm" />
-		{/if}
-		{$_('auth.isCorrect')}
-	</button>
+		<button
+			onclick={handleEdit}
+			disabled={isSubmitting}
+			class="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+		>
+			{$_('common.correct')}
+		</button>
+		<button
+			onclick={handleCorrect}
+			disabled={isSubmitting}
+			class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+		>
+			{#if isSubmitting}
+				<LoadingSpinner size="sm" class="text-white" />
+			{/if}
+			{$_('auth.isCorrect')}
+		</button>
+	</div>
 </div>

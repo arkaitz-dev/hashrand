@@ -16,9 +16,33 @@
 		// Clear result state when returning to menu - this resets all form values to defaults
 		clearResult();
 
-		// Validate that home route only accepts 'magiclink' parameter
+		// Validate that home route only accepts 'magiclink' and 'shared' parameters
 		const searchParams = $page.url.searchParams;
-		const allowedParams = ['magiclink'];
+		const allowedParams = ['magiclink', 'shared'];
+
+		// Handle shared secret parameter (similar to magic link flow)
+		const sharedHash = searchParams.get('shared');
+		if (sharedHash) {
+			logger.info('[Route] Shared secret hash detected, checking auth and redirecting');
+
+			// Import checkSessionAndHandle dynamically
+			const { checkSessionAndHandle } = await import('$lib/session-expiry-manager');
+
+			// Check session - if expired, shows auth dialog with next=/shared-secret/[hash]
+			// If valid, returns true and we redirect below
+			const sessionValid = await checkSessionAndHandle({
+				onExpired: 'launch-auth',
+				next: `/shared-secret/${sharedHash}`
+			});
+
+			if (sessionValid) {
+				// Session is valid, redirect directly to shared-secret
+				goto(`/shared-secret/${sharedHash}`);
+			}
+
+			// If session expired, checkSessionAndHandle already showed auth dialog
+			return;
+		}
 
 		// Check for any unauthorized parameters
 		for (const [key] of searchParams) {
@@ -29,6 +53,9 @@
 				cleanUrl.search = '';
 				if (searchParams.has('magiclink')) {
 					cleanUrl.searchParams.set('magiclink', searchParams.get('magiclink')!);
+				}
+				if (searchParams.has('shared')) {
+					cleanUrl.searchParams.set('shared', searchParams.get('shared')!);
 				}
 				goto(cleanUrl.pathname + cleanUrl.search, { replaceState: true });
 				break;

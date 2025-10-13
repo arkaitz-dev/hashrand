@@ -15,10 +15,10 @@
 	};
 </script>
 
-<div class="inline-flex items-center justify-center {className}">
+<div class="inline-flex items-center justify-center">
 	<Icon
 		name="spinner"
-		size="{sizeClasses[size]} animate-spin"
-		class="text-blue-600 dark:text-blue-400"
+		size={`${sizeClasses[size]} animate-spin`}
+		class={className || 'text-blue-600 dark:text-blue-400'}
 	/>
 </div>

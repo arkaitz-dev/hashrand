@@ -62,10 +62,10 @@ fn default_max_reads() -> i64 {
 ///
 /// # Arguments
 /// * `ui_host` - Hostname from frontend (e.g., "localhost", "app.domain.com")
-/// * `path` - Path to append (e.g., "/shared-secret/abc123")
+/// * `path` - Path to append (e.g., "?shared=abc123")
 ///
 /// # Returns
-/// Complete URL with protocol (e.g., "http://localhost/shared-secret/abc123")
+/// Complete URL with protocol (e.g., "http://localhost?shared=abc123")
 fn build_complete_url(ui_host: &str, path: &str) -> String {
     let base_url = ui_host.trim_end_matches('/');
     let clean_path = path.trim_start_matches('/');
@@ -254,12 +254,10 @@ async fn create_shared_secret(
     let reference_base58 = bs58::encode(&reference_hash).into_string();
 
     // Generate complete URLs with encrypted hashes (Base58 encoded)
-    let sender_path = format!(
-        "shared-secret/{}",
-        bs58::encode(&sender_encrypted).into_string()
-    );
+    // Using query parameter format (?shared=hash) for cleaner UX, similar to magic links
+    let sender_path = format!("?shared={}", bs58::encode(&sender_encrypted).into_string());
     let receiver_path = format!(
-        "shared-secret/{}",
+        "?shared={}",
         bs58::encode(&receiver_encrypted).into_string()
     );
 
