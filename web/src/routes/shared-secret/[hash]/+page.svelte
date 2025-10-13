@@ -440,21 +440,29 @@
 						</div>
 					</div>
 
-					<!-- Delete Button (always shown for sender, hidden for consumed receiver) -->
-					{#if secret.role === 'sender' || secret.pending_reads > 0}
-						<button
-							onclick={openDeleteDialog}
-							disabled={isDeleting}
-							class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-						>
-							{isDeleting ? $_('sharedSecret.deleting') : $_('sharedSecret.deleteSecret')}
-						</button>
-					{/if}
+					<!-- Action Buttons (Delete + Back to Menu) -->
+					<div class="flex flex-col sm:flex-row gap-3">
+						<!-- Delete Button (always shown for sender, hidden for consumed receiver) -->
+						{#if secret.role === 'sender' || secret.pending_reads > 0}
+							<button
+								onclick={openDeleteDialog}
+								disabled={isDeleting}
+								class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+							>
+								{isDeleting ? $_('sharedSecret.deleting') : $_('sharedSecret.deleteSecret')}
+							</button>
+						{/if}
+
+						<!-- Back to Menu Button (shown after content loads) -->
+						<BackToMenuButton />
+					</div>
 				</div>
 			{/if}
 
-			<!-- Back Button -->
-			<BackToMenuButton />
+			<!-- Back Button (shown during loading, OTP required, or error states) -->
+			{#if !secret}
+				<BackToMenuButton />
+			{/if}
 		</div>
 	</div>
 </div>
