@@ -41,6 +41,17 @@ else
 fi
 
 if [ "$NPM_SUCCESS" = true ] || [ "$SPIN_SUCCESS" = true ]; then
+    # Cleanup: Ensure dry-run mode is OFF (recovery from abruptly failed tests)
+    # This guarantees normal email operation in development
+    if [ "$SPIN_SUCCESS" = true ]; then
+        echo ""
+        echo "Ensuring email dry-run mode is OFF..."
+        sleep 1  # Give server time to be fully ready
+        curl -s http://localhost:3000/api/test/dry-run?enabled=false > /dev/null 2>&1 && \
+            echo "✓ Email mode: NORMAL (dry-run OFF)" || \
+            echo "• Could not verify dry-run state (server may still be starting)"
+    fi
+
     echo ""
     echo "🚀 Development environment ready!"
     echo "================================="

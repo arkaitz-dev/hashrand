@@ -1,5 +1,12 @@
 echo "Stopping development servers..."
 
+# Cleanup: Deactivate dry-run mode before stopping (in case tests failed abruptly)
+# This ensures development starts with clean state (emails enabled)
+echo "Cleaning up dry-run state..."
+curl -s http://localhost:3000/api/test/dry-run?enabled=false > /dev/null 2>&1 && \
+    echo "✓ Dry-run mode deactivated" || \
+    echo "• Server not running or dry-run already off"
+
 # Kill background server if PID file exists
 if [ -f .spin-dev.pid ]; then
     PID=$(cat .spin-dev.pid)
