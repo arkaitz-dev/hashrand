@@ -113,13 +113,18 @@ export function verifySignatureWithPublicKey(
 	const messageBytes = typeof message === 'string' ? new TextEncoder().encode(message) : message;
 
 	// const signatureBytes = hexToBytes(signatureHex);
-	const signatureBytes = signatureBase58ToBytes(signatureBase58);
+	try {
+		const signatureBytes = signatureBase58ToBytes(signatureBase58);
 
-	if (signatureBytes.length !== 64) {
-		throw new Error(`Invalid Ed25519 signature length: ${signatureBytes.length}, expected 64`);
+		if (signatureBytes.length !== 64) {
+			return false; // Invalid signature length
+		}
+
+		return ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
+	} catch (error) {
+		// Base58 decode failed or invalid signature format
+		return false;
 	}
-
-	return ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
 }
 
 /**

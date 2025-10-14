@@ -6,8 +6,10 @@
 use tracing::info;
 
 use crate::database::operations::{
-    shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
-    shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
+    shared_secret_crypto::SharedSecretCrypto,
+    shared_secret_ops::SharedSecretOps,
+    shared_secret_storage::SharedSecretStorage,
+    shared_secret_types::{SecretRole, constants::*},
 };
 use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
@@ -236,9 +238,9 @@ fn retrieve_and_respond(
 
     // Note: We use 'role' from hash (validated via checksum), not from database
 
-    // Validate OTP if present
-    if payload.otp.is_some() && provided_otp.is_none() {
-        // OTP required but not provided
+    // Validate OTP if present (only for receiver - sender bypasses OTP)
+    if payload.otp.is_some() && provided_otp.is_none() && role == SecretRole::Receiver {
+        // OTP required but not provided (receiver only)
         let error_json = json!({
             "error": "OTP_REQUIRED",
             "message": "This secret requires a 9-digit OTP"

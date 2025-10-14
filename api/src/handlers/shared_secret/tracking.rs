@@ -7,8 +7,10 @@
 use tracing::{info, warn};
 
 use crate::database::operations::{
-    shared_secret_crypto::SharedSecretCrypto, shared_secret_ops::SharedSecretOps,
-    shared_secret_storage::SharedSecretStorage, shared_secret_types::constants::*,
+    shared_secret_crypto::SharedSecretCrypto,
+    shared_secret_ops::SharedSecretOps,
+    shared_secret_storage::SharedSecretStorage,
+    shared_secret_types::{SecretRole, constants::*},
 };
 use crate::utils::{
     CryptoMaterial, SignedRequestValidator, create_auth_error_response,
@@ -108,6 +110,11 @@ fn confirm_read_validated(
             "Access denied: You cannot confirm read for a shared secret that doesn't belong to you"
                 .to_string(),
         );
+    }
+
+    // SECURITY: Only receiver can confirm read (sender has unlimited access)
+    if role == SecretRole::Sender {
+        return Err("Sender cannot confirm read (unlimited access)".to_string());
     }
 
     // Generate db_index for database lookup

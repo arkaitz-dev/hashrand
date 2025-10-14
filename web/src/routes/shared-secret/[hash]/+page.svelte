@@ -12,6 +12,7 @@
 	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
 	import type { ViewSharedSecretResponse } from '$lib/types';
 	import { logger } from '$lib/utils/logger';
+	import { getCachedOtp, setCachedOtp, clearCachedOtp } from '$lib/utils/confirm-read-cache';
 
 	// Route parameter
 	let hash = $derived($page.params.hash);
@@ -45,7 +46,23 @@
 		isLoading = true;
 
 		try {
-			const otpRequest = otp ? { otp } : undefined;
+			// 1. If no manual OTP provided, try to get cached OTP
+			let finalOtp = otp;
+			if (!finalOtp) {
+				try {
+					const cachedOtp = await getCachedOtp(hash);
+					if (cachedOtp) {
+						logger.info('[SharedSecret] Using cached OTP for automatic access');
+						finalOtp = cachedOtp;
+					}
+				} catch (error) {
+					// Cache read failed - continue without cached OTP
+					logger.warn('[SharedSecret] Failed to read cached OTP, continuing without it:', error);
+				}
+			}
+
+			// 2. Request with OTP (manual or cached)
+			const otpRequest = finalOtp ? { otp: finalOtp } : undefined;
 			const response = await api.viewSharedSecret(hash, otpRequest);
 
 			// CRITICAL: Backend returns OTP errors as HTTP 200 with 'error' field in SignedResponse
@@ -58,7 +75,19 @@
 					return;
 				} else if (response.error === 'INVALID_OTP') {
 					// Invalid OTP provided
+
+					// 3. If cached OTP was invalid, clear it
+					if (!otp && finalOtp) {
+						logger.warn('[SharedSecret] Cached OTP invalid, clearing cache');
+						try {
+							await clearCachedOtp(hash);
+						} catch (error) {
+							logger.error('[SharedSecret] Failed to clear invalid cached OTP:', error);
+						}
+					}
+
 					flashMessagesStore.addMessage($_('sharedSecret.invalidOtp'));
+					otpRequired = true; // Show OTP form again
 					isLoading = false;
 					return;
 				}
@@ -67,6 +96,17 @@
 			// If we reach here, response is valid ViewSharedSecretResponse
 			secret = response;
 			otpRequired = false;
+
+			// 4. If manual OTP was provided and valid, cache it
+			if (otp && !('error' in response)) {
+				logger.info('[SharedSecret] Caching valid OTP for future reloads');
+				try {
+					await setCachedOtp(hash, otp);
+				} catch (error) {
+					// Cache write failed - non-critical, just log
+					logger.error('[SharedSecret] Failed to cache OTP:', error);
+				}
+			}
 
 			// NOTE: Confirm read logic moved to PendingReadsCounter component
 			// if (response.role === 'receiver') {
