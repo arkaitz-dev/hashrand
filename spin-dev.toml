@@ -45,6 +45,8 @@ mailtrap_inbox_id = { required = true }
 from_email = { default = "noreply@mailer.hashrand.com" }
 # Database configuration
 database_name = { default = "hashrand-dev" }
+# Logging configuration (info=default, override with dev-debug or dev-app-debug)
+rust_log = { default = "info" }
 
 [[trigger.http]]
 route = "/api/..."
@@ -86,6 +88,7 @@ mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"
 from_email = "{{ from_email }}"
 database_name = "{{ database_name }}"
+rust_log = "{{ rust_log }}"
 [component.hashrand.build]
 command = "cargo build --target wasm32-wasip1 --manifest-path api/Cargo.toml"
 watch = ["api/src/**/*.rs", "api/Cargo.toml"]

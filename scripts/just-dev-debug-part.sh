@@ -1,17 +1,16 @@
-echo "Starting complete development environment with DEBUG logging..."
+echo "Starting complete development environment with DEBUG logging (app-only)..."
 
 # Load and export environment variables from .env
 echo "Loading environment variables from .env..."
 export $(cat .env | grep -v '^#' | xargs)
 
-# Set DEBUG logging level for both backend and frontend
-export RUST_LOG=debug
+# Set DEBUG logging level for frontend
 export VITE_LOG_LEVEL=debug
-echo "Setting RUST_LOG=debug and VITE_LOG_LEVEL=debug for verbose debugging output"
+echo "Setting rust_log=hashrand=debug,info (app-only debug for backend)"
 
-# Start spin-cli watch in background (first - API backend)
-echo "Starting spin-cli watch in background with DEBUG logging..."
-nohup spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml > .spin-dev.log 2>&1 &
+# Start spin-cli watch in background with rust_log override (first - API backend)
+echo "Starting spin-cli watch in background with app-only DEBUG logging..."
+nohup spin-cli watch --runtime-config-file runtime-config.toml -f spin-dev.toml --variable rust_log="hashrand=debug,info" > .spin-dev.log 2>&1 &
 SPIN_PID=$!
 echo $SPIN_PID > .spin-dev.pid
 
@@ -60,15 +59,15 @@ if [ "$NPM_SUCCESS" = true ] || [ "$SPIN_SUCCESS" = true ]; then
     echo ""
     echo "🚀 Development environment ready (DEBUG MODE)!"
     echo "=============================================="
-    [ "$SPIN_SUCCESS" = true ] && echo "  API: http://localhost:3000 (RUST_LOG=debug)"
+    [ "$SPIN_SUCCESS" = true ] && echo "  API: http://localhost:3000 (rust_log=hashrand=debug,info)"
     [ "$NPM_SUCCESS" = true ] && echo "  Web: http://localhost:5173 (VITE_LOG_LEVEL=debug)"
     echo ""
     echo "Management commands:"
-    echo "  Logs: tail -f .spin-dev.log .npm-dev.log"
+    echo "  Logs: just la (API) / just lw (Web) / just w (both)"
     echo "  Stop: just stop"
     echo "  Status: just status"
     echo ""
-    echo "⚠️  DEBUG logging active - expect verbose output in both .spin-dev.log and browser console"
+    echo "⚠️  DEBUG logging active for hashrand (no Spin/Wasmtime noise)"
 
     # Start Tailscale serve for frontend if npm is running
     if [ "$NPM_SUCCESS" = true ]; then

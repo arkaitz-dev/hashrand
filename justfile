@@ -172,7 +172,8 @@ dev: stop
     #!/usr/bin/env bash
     source scripts/just-dev-part.sh
 
-# Start complete development environment with DEBUG logging (RUST_LOG=debug)
+# Start complete development environment with DEBUG logging (app-only, no Spin/Wasmtime noise)
+# Shows hashrand debug logs + info logs from Spin/Wasmtime
 dev-debug: stop
     #!/usr/bin/env bash
     source scripts/just-dev-debug-part.sh
