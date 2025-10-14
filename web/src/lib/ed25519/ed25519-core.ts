@@ -121,7 +121,7 @@ export function verifySignatureWithPublicKey(
 		}
 
 		return ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);
-	} catch (error) {
+	} catch {
 		// Base58 decode failed or invalid signature format
 		return false;
 	}

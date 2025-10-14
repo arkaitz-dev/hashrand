@@ -20,27 +20,24 @@
 		const searchParams = $page.url.searchParams;
 		const allowedParams = ['magiclink', 'shared'];
 
-		// Handle shared secret parameter (similar to magic link flow)
+		// Handle shared secret parameter (?shared=[hash] from email link)
 		const sharedHash = searchParams.get('shared');
 		if (sharedHash) {
 			logger.info('[Route] Shared secret hash detected, checking auth and redirecting');
 
-			// Import checkSessionAndHandle dynamically
-			const { checkSessionAndHandle } = await import('$lib/session-expiry-manager');
+			// Import checkSessionOrAutoLogout dynamically
+			const { checkSessionOrAutoLogout } = await import('$lib/session-expiry-manager');
 
-			// Check session - if expired, shows auth dialog with next=/shared-secret/[hash]
+			// Check session - if expired, performs automatic logout (redirect + cleanup + flash)
 			// If valid, returns true and we redirect below
-			const sessionValid = await checkSessionAndHandle({
-				onExpired: 'launch-auth',
-				next: `/shared-secret/${sharedHash}`
-			});
+			const sessionValid = await checkSessionOrAutoLogout();
 
 			if (sessionValid) {
 				// Session is valid, redirect directly to shared-secret
 				goto(`/shared-secret/${sharedHash}`);
 			}
 
-			// If session expired, checkSessionAndHandle already showed auth dialog
+			// If session expired, checkSessionOrAutoLogout already performed auto-logout
 			return;
 		}
 

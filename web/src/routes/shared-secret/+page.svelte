@@ -5,7 +5,7 @@
 	import { _, currentLanguage } from '$lib/stores/i18n';
 	import { api } from '$lib/api';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
-	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+	import { checkSessionOrAutoLogout } from '$lib/session-expiry-manager';
 	import { getUserEmail } from '$lib/session';
 	import { onMount } from 'svelte';
 	import type { CreateSharedSecretResponse } from '$lib/types';
@@ -79,12 +79,11 @@
 		}
 
 		// Check session expiration before creation
-		const sessionValid = await checkSessionAndHandle({
-			onExpired: 'launch-auth',
-			next: '/shared-secret'
-		});
+		// If expired, performs automatic logout (redirect + cleanup + flash)
+		const sessionValid = await checkSessionOrAutoLogout();
 
 		if (!sessionValid) {
+			// Session expired, auto-logout already performed
 			return;
 		}
 

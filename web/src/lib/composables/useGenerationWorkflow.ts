@@ -11,11 +11,9 @@
  */
 
 import { goto } from '$app/navigation';
-import { page } from '$app/stores';
 import { authStore } from '$lib/stores/auth';
 import { createEncryptedUrl } from '$lib/crypto';
-import { checkSessionAndHandle } from '$lib/session-expiry-manager';
-import { get } from 'svelte/store';
+import { checkSessionOrAutoLogout } from '$lib/session-expiry-manager';
 import { logger } from '$lib/utils/logger';
 
 export interface GenerationConfig<T = Record<string, unknown>> {
@@ -42,16 +40,11 @@ export function useGenerationWorkflow<T = Record<string, unknown>>(config: Gener
 		}
 
 		// Check session expiration before generation
-		const currentPage = get(page);
-		const currentRoute = currentPage.url.pathname;
-
-		const sessionValid = await checkSessionAndHandle({
-			onExpired: 'launch-auth', // Launch auth dialog if expired
-			next: currentRoute // Current generation route as next parameter
-		});
+		// If expired, performs automatic logout (redirect + cleanup + flash)
+		const sessionValid = await checkSessionOrAutoLogout();
 
 		if (!sessionValid) {
-			// Session was expired and auth dialog launched - stop generation
+			// Session expired, auto-logout already performed
 			return;
 		}
 

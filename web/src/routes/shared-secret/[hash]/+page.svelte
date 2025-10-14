@@ -9,7 +9,7 @@
 	import { _ } from '$lib/stores/i18n';
 	import { api } from '$lib/api';
 	import { flashMessagesStore } from '$lib/stores/flashMessages';
-	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+	import { authStore } from '$lib/stores/auth';
 	import type { ViewSharedSecretResponse } from '$lib/types';
 	import { logger } from '$lib/utils/logger';
 	import { getCachedOtp, setCachedOtp, clearCachedOtp } from '$lib/utils/confirm-read-cache';
@@ -292,13 +292,13 @@
 
 	onMount(async () => {
 		logger.info('[Route] Shared Secret view page loaded');
-		// Check session expiration before loading
-		const sessionValid = await checkSessionAndHandle({
-			onExpired: 'launch-auth',
-			next: `/shared-secret/${hash}`
-		});
 
-		if (!sessionValid) {
+		// Verify user is authenticated (normal flow: comes from /?shared=[hash])
+		// If not authenticated, redirect to home (sessionMonitor handles expiration)
+		if (!$authStore.user?.isAuthenticated) {
+			logger.warn('[Route] Attempted to access shared secret without authentication, redirecting');
+			flashMessagesStore.addMessage($_('auth.loginRequired'));
+			goto('/');
 			return;
 		}
 

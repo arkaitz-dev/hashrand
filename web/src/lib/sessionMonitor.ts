@@ -7,17 +7,12 @@
  * - Checks session expiration every 10 seconds
  * - Pauses monitoring when tab is in background (battery savings)
  * - Performs immediate check when tab becomes active again
- * - Shows flash message in user's language before logout
- * - Redirects to home page after logout
+ * - Uses centralized handleAutoLogout for consistent behavior
  * - Only activates when user is authenticated
  */
 
 import { browser } from '$app/environment';
-import { goto } from '$app/navigation';
-import { get } from 'svelte/store';
-import { isSessionExpired, handleExpiredSession } from './session-expiry-manager';
-import { flashMessagesStore } from './stores/flashMessages';
-import { _ } from './stores/i18n';
+import { isSessionExpired, handleAutoLogout } from './session-expiry-manager';
 import { logger } from './utils/logger';
 
 /**
@@ -64,40 +59,15 @@ async function checkAndHandleExpiration(): Promise<void> {
 		const expired = await isSessionExpired();
 
 		if (expired) {
-			await performAutoLogout();
+			// Stop monitoring immediately
+			stopMonitoring();
+
+			// Use centralized auto-logout handler
+			await handleAutoLogout();
 		}
 	} catch (error) {
 		logger.warn('Session monitor check failed:', error);
 		// Don't logout on check errors - could be temporary
-	}
-}
-
-/**
- * Perform automatic logout on session expiration
- */
-async function performAutoLogout(): Promise<void> {
-	// Stop monitoring immediately
-	stopMonitoring();
-
-	try {
-		// Get translated message before cleanup (i18n store needs to be accessible)
-		const translateFn = get(_);
-		const message = translateFn('common.sessionExpired');
-
-		// Show flash message to user
-		flashMessagesStore.addMessage(message);
-
-		// Clean up all session data (IndexedDB, Ed25519 keys, etc)
-		await handleExpiredSession();
-
-		// Redirect to home page
-		await goto('/');
-	} catch (error) {
-		logger.error('Auto-logout failed:', error);
-		// Fallback - force redirect even if cleanup failed
-		if (browser) {
-			window.location.href = '/';
-		}
 	}
 }
 

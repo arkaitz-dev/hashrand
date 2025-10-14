@@ -14,7 +14,7 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 	import { authStore } from '$lib/stores/auth';
-	import { checkSessionAndHandle } from '$lib/session-expiry-manager';
+	import { checkSessionOrAutoLogout } from '$lib/session-expiry-manager';
 	import { logger } from '$lib/utils/logger';
 
 	let copySuccess = $state(false);
@@ -45,14 +45,11 @@
 	onMount(async () => {
 		logger.info('[Route] Result page loaded');
 		// CHECK SESSION EXPIRATION FIRST - before any result processing
-		const currentUrl = $page.url.pathname + $page.url.search;
-		const sessionValid = await checkSessionAndHandle({
-			onExpired: 'launch-auth', // Launch auth dialog if expired
-			next: currentUrl // Current result URL ("result?p=...") as next parameter
-		});
+		// If expired, performs automatic logout (redirect + cleanup + flash)
+		const sessionValid = await checkSessionOrAutoLogout();
 
 		if (!sessionValid) {
-			// Session expired - cleanup done and auth dialog launched
+			// Session expired, auto-logout already performed
 			return; // Stop all result processing
 		}
 
