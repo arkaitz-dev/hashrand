@@ -618,6 +618,93 @@
 		return basePath;
 	}
 
+	async function handleShare() {
+		if (!$resultState) {
+			goto('/');
+			return;
+		}
+		logger.info('[Click] Share hash to create shared secret');
+
+		// Only allow sharing if we have a seed (to reproduce the exact hash)
+		if (!$resultState.seed) {
+			logger.warn('[Share] Cannot share without seed - hash cannot be reproduced');
+			// Could show a flash message here if needed
+			return;
+		}
+
+		// Build parameters object with seed for reproduction
+		// Import conversion functions
+		const { alphabetToInt, mnemonicLangToInt } = await import('$lib/types');
+
+		const shareParams: Record<string, unknown> = {
+			endpoint: $resultState.endpoint
+		};
+
+		// Add common parameters
+		if ($resultState.params.length) {
+			shareParams.length = $resultState.params.length;
+		}
+		if ($resultState.params.alphabet) {
+			// CRITICAL: Convert alphabet string to integer BEFORE encryption
+			const alphabetStr = String($resultState.params.alphabet);
+			shareParams.alphabet = alphabetToInt(
+				alphabetStr as import('$lib/types').AlphabetTypeString
+			);
+		}
+
+		// Add endpoint-specific parameters
+		if ($resultState.endpoint === 'custom' || $resultState.endpoint === 'generate') {
+			if ($resultState.params.prefix) {
+				shareParams.prefix = String($resultState.params.prefix);
+			}
+			if ($resultState.params.suffix) {
+				shareParams.suffix = String($resultState.params.suffix);
+			}
+		} else if ($resultState.endpoint === 'mnemonic') {
+			if ($resultState.params.language) {
+				// CRITICAL: Convert language string to integer BEFORE encryption
+				const langStr = String($resultState.params.language);
+				shareParams.language = mnemonicLangToInt(
+					langStr as import('$lib/types').MnemonicLanguageString
+				);
+			}
+			if ($resultState.params.words) {
+				shareParams.words = $resultState.params.words;
+			}
+		}
+
+		// Add seed for exact reproduction
+		if ($resultState.seed) {
+			shareParams.seed = $resultState.seed;
+		}
+
+		// Get crypto tokens for parameter encryption (REQUIRED - no insecure fallback)
+		const cipherToken = authStore.getCipherToken();
+		const nonceToken = authStore.getNonceToken();
+		const hmacKey = authStore.getHmacKey();
+
+		if (!cipherToken || !nonceToken || !hmacKey) {
+			logger.error('[Share] Missing crypto tokens - cannot create secure URL');
+			// Missing crypto tokens - abort (no insecure fallback)
+			return;
+		}
+
+		if (Object.keys(shareParams).length > 0) {
+			// Create encrypted URL for privacy (ONLY secure method allowed)
+			const encryptedUrl = await createEncryptedUrl('/shared-secret', shareParams, {
+				cipherToken,
+				nonceToken,
+				hmacKey
+			});
+
+			logger.info('[Navigation] Redirecting to: /shared-secret (encrypted params)');
+			goto(encryptedUrl);
+		} else {
+			// No parameters to share
+			goto('/shared-secret');
+		}
+	}
+
 	async function regenerateHash() {
 		if (!$resultState || $isLoading) return;
 		logger.info('[Click] Regenerate hash with same parameters');
@@ -738,24 +825,47 @@
 								onclick={(e) => (e.target as HTMLTextAreaElement)?.select()}
 							></textarea>
 							{#if !$isLoading}
-								<!-- RTL-aware copy button -->
-								<button
-									onclick={copyToClipboard}
+								<!-- RTL-aware action buttons container -->
+								<div
 									class="absolute bottom-3 {$isRTL
 										? 'left-3'
-										: 'right-3'} px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySuccess
-										? 'bg-green-600 hover:bg-green-700 text-white'
-										: 'bg-blue-600 hover:bg-blue-700 text-white'}"
+										: 'right-3'} flex items-center gap-2"
 								>
-									<Iconize
-										conf={{
-											icon: copySuccess ? 'check' : 'copy',
-											iconSize: 'w-3 h-3'
-										}}
+									<!-- Share button (only if seed is available) -->
+									{#if $resultState.seed}
+										<button
+											onclick={handleShare}
+											class="px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
+											title={$_('common.shareToCreateSecret')}
+										>
+											<Iconize
+												conf={{
+													icon: 'share',
+													iconSize: 'w-3 h-3'
+												}}
+											>
+												{$_('common.share')}
+											</Iconize>
+										</button>
+									{/if}
+
+									<!-- Copy button -->
+									<button
+										onclick={copyToClipboard}
+										class="px-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-1 {copySuccess
+											? 'bg-green-600 hover:bg-green-700 text-white'
+											: 'bg-blue-600 hover:bg-blue-700 text-white'}"
 									>
-										{copySuccess ? $_('common.copied') : $_('common.copy')}
-									</Iconize>
-								</button>
+										<Iconize
+											conf={{
+												icon: copySuccess ? 'check' : 'copy',
+												iconSize: 'w-3 h-3'
+											}}
+										>
+											{copySuccess ? $_('common.copied') : $_('common.copy')}
+										</Iconize>
+									</button>
+								</div>
 							{/if}
 						</div>
 					</div>

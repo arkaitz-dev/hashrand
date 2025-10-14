@@ -18,6 +18,7 @@ export const iconEmojis: Record<string, string> = {
 	heart: '❤️', // Heart for "made with love"
 	check: '✅', // Checkmark for success states
 	copy: '📋', // Copy to clipboard
+	share: '🔗', // Share/link icon
 	refresh: '🔄', // Refresh/regenerate icon
 	settings: '⚙️', // Settings/gear icon
 	play: '▶️', // Play button for generate actions
