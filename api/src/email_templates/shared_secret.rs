@@ -6,7 +6,6 @@ use rust_i18n::t;
 /// # Arguments
 /// * `secret_url` - The complete secret URL for the receiver
 /// * `reference` - The reference hash (Base58)
-/// * `otp` - Optional 9-digit OTP
 /// * `sender_email` - Email of the sender
 /// * `expires_hours` - Expiration time in hours
 /// * `max_reads` - Maximum number of reads allowed
@@ -18,7 +17,6 @@ use rust_i18n::t;
 pub fn render_shared_secret_receiver_email(
     secret_url: &str,
     reference: &str,
-    otp: Option<&str>,
     sender_email: &str,
     expires_hours: i64,
     max_reads: i64,
@@ -35,7 +33,6 @@ pub fn render_shared_secret_receiver_email(
     let html_body = render_receiver_html_body(
         secret_url,
         reference,
-        otp,
         sender_email,
         expires_hours,
         max_reads,
@@ -44,7 +41,6 @@ pub fn render_shared_secret_receiver_email(
     let text_body = render_receiver_text_body(
         secret_url,
         reference,
-        otp,
         sender_email,
         expires_hours,
         max_reads,
@@ -103,7 +99,6 @@ pub fn render_shared_secret_sender_email(
 fn render_receiver_html_body(
     secret_url: &str,
     reference: &str,
-    otp: Option<&str>,
     sender_email: &str,
     expires_hours: i64,
     max_reads: i64,
@@ -153,14 +148,6 @@ fn render_receiver_html_body(
                                 "👀 " strong { (t!("email.shared_secret.receiver.reads_label")) ": " }
                                 (t!("email.shared_secret.receiver.reads_value", reads = max_reads))
                             }
-                            @if let Some(otp_value) = otp {
-                                p style="margin: 15px 0 5px 0; font-size: 16px;" {
-                                    "🔐 " strong { (t!("email.shared_secret.receiver.otp_label")) ": " }
-                                    code style="font-size: 18px; background: #fff; padding: 5px 10px; border-radius: 4px;" {
-                                        (otp_value)
-                                    }
-                                }
-                            }
                         }
 
                         div style="text-align: center; margin: 30px 0;" {
@@ -199,7 +186,6 @@ fn render_receiver_html_body(
 fn render_receiver_text_body(
     secret_url: &str,
     reference: &str,
-    otp: Option<&str>,
     sender_email: &str,
     expires_hours: i64,
     max_reads: i64,
@@ -207,16 +193,6 @@ fn render_receiver_text_body(
 ) -> String {
     // Ensure locale is set for this text rendering
     rust_i18n::set_locale(language);
-
-    let otp_section = if let Some(otp_value) = otp {
-        format!(
-            "\n🔐 {}: {}\n",
-            t!("email.shared_secret.receiver.otp_label"),
-            otp_value
-        )
-    } else {
-        String::new()
-    };
 
     format!(
         r#"{title} - {subtitle}
@@ -230,7 +206,7 @@ fn render_receiver_text_body(
 📧 {sender_label}: {sender_email}
 🔢 {reference_label}: {reference}
 ⏰ {expires_label}: {expires_value}
-👀 {reads_label}: {reads_value}{otp_section}
+👀 {reads_label}: {reads_value}
 
 {access_instructions}
 {secret_url}
@@ -277,8 +253,7 @@ fn render_receiver_text_body(
         no_reply_notice = t!("email.shared_secret.receiver.no_reply_notice"),
         sender_email = sender_email,
         reference = reference,
-        secret_url = secret_url,
-        otp_section = otp_section
+        secret_url = secret_url
     )
 }
 

@@ -271,11 +271,12 @@ async fn create_shared_secret(
     );
 
     // Send email to receiver (always)
+    // NOTE: OTP is NOT sent via email for security reasons
+    // Sender must communicate OTP to receiver through a separate channel
     let receiver_email_result = crate::utils::email::send_shared_secret_receiver_email(
         &request.receiver_email,
         &url_receiver,
         &reference_base58,
-        otp.as_deref(),
         &request.sender_email,
         request.expires_hours,
         request.max_reads,

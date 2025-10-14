@@ -271,7 +271,6 @@ pub async fn send_magic_link_email(
 /// * `recipient_email` - The receiver email address
 /// * `secret_url` - The full secret URL for the receiver
 /// * `reference` - The reference hash (Base58)
-/// * `otp` - Optional 9-digit OTP
 /// * `sender_email` - Email of the sender
 /// * `expires_hours` - Expiration time in hours
 /// * `max_reads` - Maximum number of reads allowed
@@ -280,12 +279,10 @@ pub async fn send_magic_link_email(
 /// # Returns
 /// * `Ok(())` if the email was sent successfully
 /// * `Err(anyhow::Error)` if there was an error sending the email
-#[allow(clippy::too_many_arguments)]
 pub async fn send_shared_secret_receiver_email(
     recipient_email: &str,
     secret_url: &str,
     reference: &str,
-    otp: Option<&str>,
     sender_email: &str,
     expires_hours: i64,
     max_reads: i64,
@@ -297,7 +294,6 @@ pub async fn send_shared_secret_receiver_email(
     let (subject, html_content, text_content) = render_shared_secret_receiver_email(
         secret_url,
         reference,
-        otp,
         sender_email,
         expires_hours,
         max_reads,
