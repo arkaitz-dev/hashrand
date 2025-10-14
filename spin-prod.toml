@@ -58,6 +58,7 @@ component = "static-fileserver"
 source = "target/wasm32-wasip1/release/hashrand.wasm"
 allowed_outbound_hosts = ["https://send.api.mailtrap.io"]
 sqlite_databases = ["hashrand"]
+key_value_stores = ["default"]
 # Reference application variables in component variables
 [component.hashrand.variables]
 jwt_secret = "{{ jwt_secret }}"

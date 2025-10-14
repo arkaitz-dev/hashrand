@@ -70,7 +70,8 @@ pub fn initialize_database() -> Result<(), SqliteError> {
             pending_reads INTEGER NOT NULL,   -- Countdown reads counter (moved from shared_secrets)
             read_at INTEGER,                  -- Timestamp of first read by receiver (NULL if unread)
             expires_at INTEGER NOT NULL,      -- Expiration timestamp (matches shared_secrets.expires_at)
-            created_at INTEGER NOT NULL       -- Creation timestamp
+            created_at INTEGER NOT NULL,      -- Creation timestamp
+            encrypted_payload BLOB NOT NULL   -- v3: Centralized encrypted payload (ChaCha20-Poly1305)
         )
         "#,
         &[],

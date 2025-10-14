@@ -413,6 +413,81 @@ impl SharedSecretStorage {
         Ok(())
     }
 
+    /// Store tracking record with encrypted payload (v3 - NEW)
+    ///
+    /// # Arguments
+    /// * `reference_hash` - Reference hash (16 bytes)
+    /// * `pending_reads` - Initial pending_reads counter
+    /// * `expires_at` - Expiration timestamp in hours
+    /// * `created_at` - Creation timestamp in seconds
+    /// * `encrypted_payload` - Encrypted payload blob (NEW)
+    ///
+    /// # Returns
+    /// * `Result<(), SqliteError>` - Success or error
+    pub fn store_tracking_with_payload(
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+        pending_reads: i64,
+        expires_at: i64,
+        created_at: i64,
+        encrypted_payload: &[u8],
+    ) -> Result<(), SqliteError> {
+        let connection = get_database_connection()?;
+
+        debug!(
+            "📊 SharedSecret: Storing tracking record WITH payload (size={}, pending_reads={}, expires_at={}, created_at={})",
+            encrypted_payload.len(), pending_reads, expires_at, created_at
+        );
+
+        connection.execute(
+            "INSERT INTO shared_secrets_tracking (reference_hash, pending_reads, read_at, expires_at, created_at, encrypted_payload) VALUES (?, ?, NULL, ?, ?, ?)",
+            &[
+                Value::Blob(reference_hash.to_vec()),
+                Value::Integer(pending_reads),
+                Value::Integer(expires_at),
+                Value::Integer(created_at),
+                Value::Blob(encrypted_payload.to_vec()),
+            ],
+        )?;
+
+        debug!("✅ SharedSecret: Tracking record stored WITH payload");
+        Ok(())
+    }
+
+    /// Retrieve encrypted payload from tracking table (v3 - NEW)
+    ///
+    /// # Arguments
+    /// * `reference_hash` - Reference hash (16 bytes)
+    ///
+    /// # Returns
+    /// * `Result<Option<Vec<u8>>, SqliteError>` - Encrypted payload or None
+    pub fn retrieve_tracking_payload(
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+    ) -> Result<Option<Vec<u8>>, SqliteError> {
+        let connection = get_database_connection()?;
+
+        let result = connection.execute(
+            "SELECT encrypted_payload FROM shared_secrets_tracking WHERE reference_hash = ?",
+            &[Value::Blob(reference_hash.to_vec())],
+        )?;
+
+        if let Some(row) = result.rows.first() {
+            let encrypted_payload = match &row.values[0] {
+                Value::Blob(data) => data.clone(),
+                _ => {
+                    return Err(SqliteError::Io(
+                        "Invalid encrypted_payload type in tracking".to_string(),
+                    ));
+                }
+            };
+
+            debug!("🔍 SharedSecret: Retrieved encrypted_payload from tracking (size={})", encrypted_payload.len());
+            Ok(Some(encrypted_payload))
+        } else {
+            warn!("⚠️  SharedSecret: Tracking payload not found");
+            Ok(None)
+        }
+    }
+
     /// Delete tracking record by reference_hash
     ///
     /// # Arguments
@@ -500,20 +575,33 @@ impl SharedSecretStorage {
 
         let now_hours = Utc::now().timestamp() / 3600;
 
-        // Delete expired secrets
+        // ============================================================================
+        // CRITICAL: Delete ORDER matters (v3)
+        // ============================================================================
+        // shared_secrets contains: encrypted_key_material[44]
+        // tracking contains: encrypted_payload[~100-200 bytes]
+        //
+        // If we delete tracking first:
+        //   → shared_secrets remains with key_material but no payload to decrypt
+        //   → key_material becomes useless orphan
+        //
+        // Correct order: Delete key_material FIRST, then payload
+        // ============================================================================
+
+        // Delete expired secrets (key_material) - FIRST
         connection.execute(
             "DELETE FROM shared_secrets WHERE expires_at < ?",
             &[Value::Integer(now_hours)],
         )?;
 
-        // Delete expired tracking records
+        // Delete expired tracking records (payload) - SECOND
         connection.execute(
             "DELETE FROM shared_secrets_tracking WHERE expires_at < ?",
             &[Value::Integer(now_hours)],
         )?;
 
         // println!("🧹 SharedSecret: Cleaned up expired records");
-        debug!("🧹 SharedSecret: Cleaned up expired records");
+        debug!("🧹 SharedSecret: Cleaned up expired records (shared_secrets first, then tracking)");
         // Spin SQLite doesn't provide rows_affected, return placeholder
         Ok((1, 1))
     }

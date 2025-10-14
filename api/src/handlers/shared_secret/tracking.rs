@@ -114,23 +114,13 @@ fn confirm_read_validated_v2(
     let db_index = SharedSecretCrypto::generate_db_index(&reference_hash, &user_id_from_hash)
         .map_err(|e| format!("Failed to generate db_index: {}", e))?;
 
-    // Retrieve secret to get payload for validation
-    let secret_data = SharedSecretStorage::retrieve_secret(&db_index)
-        .map_err(|e| format!("Failed to retrieve secret: {}", e))?;
+    // ============================================================================
+    // v3: Use read_secret() for simplified payload retrieval (centralized decryption)
+    // ============================================================================
+    let (payload, _, _, _role_from_db) = SharedSecretOps::read_secret(&db_index, &reference_hash)
+        .map_err(|e| format!("Failed to read secret: {}", e))?;
 
-    let (encrypted_payload, _, _role_from_db) = match secret_data {
-        Some(data) => data,
-        None => {
-            return Err("Secret not found".to_string());
-        }
-    };
-
-    // Decrypt payload to extract reference_hash and max_reads
-    let decrypted = SharedSecretCrypto::decrypt_payload_v2(&db_index, &encrypted_payload)
-        .map_err(|e| format!("Failed to decrypt payload: {}", e))?;
-
-    let payload = SharedSecretOps::deserialize_payload(&decrypted)
-        .map_err(|e| format!("Failed to deserialize payload: {}", e))?;
+    // No need for manual decryption - read_secret() handles all layers
 
     // VALIDATION: Check for manual DB tampering (pending_reads should never exceed max_reads)
     let current_pending_reads =

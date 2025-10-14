@@ -152,7 +152,8 @@ fn delete_secret_validated_v2(
             // RECEPTOR: Validar pending_reads > 0, borrar solo shared_secrets
 
             // Read secret to get pending_reads from tracking
-            let (_, pending_reads, _, _) = SharedSecretOps::read_secret(&db_index)
+            // v3: Pass reference_hash for centralized payload retrieval
+            let (_, pending_reads, _, _) = SharedSecretOps::read_secret(&db_index, &reference_hash)
                 .map_err(|e| format!("Failed to read secret: {}", e))?;
 
             // Validate: Only allow deletion if pending_reads > 0
@@ -201,43 +202,17 @@ fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
     Ok(id)
 }
 
-/// Delete secret with validation (OLD - deprecated)
+// Delete secret with validation (OLD - deprecated)
+// OBSOLETE: Not compatible with v3 (centralized payload architecture)
+// Use delete_secret_validated_v2() instead
+/*
 #[allow(dead_code)]
 fn delete_secret_validated(
     encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
     _user_id: &[u8; USER_ID_LENGTH],
     crypto_material: &CryptoMaterial,
 ) -> Result<Response, String> {
-    // TODO: Validate that user_id from JWT matches user_id encrypted in hash
-
-    // Read secret to get pending_reads from tracking
-    let (_, pending_reads, _, role) = SharedSecretOps::read_secret(encrypted_id)
-        .map_err(|e| format!("Failed to read secret: {}", e))?;
-
-    // Check if deletion is allowed (pending_reads > 0 or sender with unlimited reads)
-    if pending_reads <= 0 {
-        return Err(
-            "Cannot delete secret: all reads have been consumed or it's already deleted"
-                .to_string(),
-        );
-    }
-
-    // Delete the secret
-    let deleted = SharedSecretStorage::delete_secret(encrypted_id)
-        .map_err(|e| format!("Failed to delete secret: {}", e))?;
-
-    if !deleted {
-        return Err("Secret not found or already deleted".to_string());
-    }
-
-    // Create success response
-    let response_json = json!({
-        "success": true,
-        "message": "Secret deleted successfully",
-        "role": role.to_str()
-    });
-
-    // Create signed response
-    create_signed_endpoint_response(&response_json, crypto_material)
-        .map_err(|e| format!("Failed to create signed response: {}", e))
+    // This function is obsolete and not compatible with v3
+    Err("delete_secret_validated() is obsolete - use delete_secret_validated_v2() instead".to_string())
 }
+*/

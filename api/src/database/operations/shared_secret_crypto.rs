@@ -56,6 +56,203 @@ impl SharedSecretCrypto {
         otp.to_string()
     }
 
+    // ============================================================================
+    // NEW FUNCTIONS FOR PAYLOAD CENTRALIZATION (v3)
+    // ============================================================================
+
+    /// Generate cryptographically secure random key material for payload encryption
+    ///
+    /// Uses ChaCha8Rng for secure random generation with Blake3 seed
+    ///
+    /// # Returns
+    /// * `[u8; 44]` - Random 44-byte key material (nonce[12] + cipher_key[32])
+    pub fn generate_random_key_material() -> [u8; KEY_MATERIAL_LENGTH] {
+        use rand::RngCore;
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        // Generate seed using Blake3 of current timestamp + process-specific data
+        let seed_material = format!("{:?}_key_material", std::time::SystemTime::now());
+        let seed_hash = blake3::hash(seed_material.as_bytes());
+        let seed: [u8; 32] = *seed_hash.as_bytes();
+
+        let mut rng = ChaCha8Rng::from_seed(seed);
+        let mut key_material = [0u8; KEY_MATERIAL_LENGTH];
+        rng.fill_bytes(&mut key_material);
+
+        debug!("🔑 SharedSecret: Generated random key_material[{}]", KEY_MATERIAL_LENGTH);
+        key_material
+    }
+
+    /// Encrypt random key material using ChaCha20 stream cipher
+    ///
+    /// Process:
+    /// 1. Derive nonce[12] + cipher_key[32] from db_index using Blake3 KDF
+    /// 2. Encrypt key_material with ChaCha20 (maintains 44-byte size)
+    ///
+    /// NOTE: Uses ChaCha20 WITHOUT Poly1305 MAC (integrity guaranteed by layer 2)
+    ///
+    /// # Arguments
+    /// * `db_index` - Database index (32 bytes) - unique per entry
+    /// * `key_material` - Random key material [44 bytes] to encrypt
+    ///
+    /// # Returns
+    /// * `Result<Vec<u8>, SqliteError>` - Encrypted key material (44 bytes)
+    pub fn encrypt_key_material_v3(
+        db_index: &[u8; DB_INDEX_LENGTH],
+        key_material: &[u8; KEY_MATERIAL_LENGTH],
+    ) -> Result<Vec<u8>, SqliteError> {
+        use crate::utils::jwt::config::get_shared_secret_content_key;
+        use chacha20::ChaCha20;
+        use chacha20::cipher::{KeyIvInit, StreamCipher};
+
+        let content_key = get_shared_secret_content_key()
+            .map_err(|e| SqliteError::Io(format!("Failed to get content key: {}", e)))?;
+
+        // Derive nonce[12] + cipher_key[32] using Blake3 KDF
+        let derived = blake3_keyed_variable(&content_key, db_index, 44);
+
+        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
+
+        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
+
+        // Initialize ChaCha20 cipher (stream cipher, NO Poly1305)
+        let mut cipher = ChaCha20::new(&cipher_key.into(), &nonce_bytes.into());
+
+        // Encrypt in-place
+        let mut encrypted = *key_material;
+        cipher.apply_keystream(&mut encrypted);
+
+        debug!("🔐 SharedSecret: Encrypted key_material[44] with ChaCha20 (no MAC)");
+        Ok(encrypted.to_vec())
+    }
+
+    /// Decrypt random key material using ChaCha20 stream cipher
+    ///
+    /// # Arguments
+    /// * `db_index` - Database index (32 bytes)
+    /// * `ciphertext` - Encrypted key material (44 bytes)
+    ///
+    /// # Returns
+    /// * `Result<[u8; KEY_MATERIAL_LENGTH], SqliteError>` - Decrypted key material
+    pub fn decrypt_key_material_v3(
+        db_index: &[u8; DB_INDEX_LENGTH],
+        ciphertext: &[u8],
+    ) -> Result<[u8; KEY_MATERIAL_LENGTH], SqliteError> {
+        use crate::utils::jwt::config::get_shared_secret_content_key;
+        use chacha20::ChaCha20;
+        use chacha20::cipher::{KeyIvInit, StreamCipher};
+
+        if ciphertext.len() != KEY_MATERIAL_LENGTH {
+            return Err(SqliteError::Io(format!(
+                "Invalid ciphertext length: expected {}, got {}",
+                KEY_MATERIAL_LENGTH,
+                ciphertext.len()
+            )));
+        }
+
+        let content_key = get_shared_secret_content_key()
+            .map_err(|e| SqliteError::Io(format!("Failed to get content key: {}", e)))?;
+
+        // Derive nonce[12] + cipher_key[32] using Blake3 KDF (same as encryption)
+        let derived = blake3_keyed_variable(&content_key, db_index, 44);
+
+        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
+
+        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
+
+        // Initialize ChaCha20 cipher
+        let mut cipher = ChaCha20::new(&cipher_key.into(), &nonce_bytes.into());
+
+        // Decrypt in-place (ChaCha20 is symmetric)
+        let mut decrypted = [0u8; KEY_MATERIAL_LENGTH];
+        decrypted.copy_from_slice(ciphertext);
+        cipher.apply_keystream(&mut decrypted);
+
+        debug!("🔓 SharedSecret: Decrypted key_material[44] with ChaCha20");
+        Ok(decrypted)
+    }
+
+    /// Encrypt payload using random key material (ChaCha20-Poly1305 AEAD)
+    ///
+    /// Process:
+    /// 1. Extract nonce[12] + cipher_key[32] from key_material[44]
+    /// 2. Encrypt with ChaCha20-Poly1305 (adds 16-byte tag)
+    ///
+    /// # Arguments
+    /// * `key_material` - Random key material [44 bytes]
+    /// * `payload` - Raw payload to encrypt
+    ///
+    /// # Returns
+    /// * `Result<Vec<u8>, SqliteError>` - Encrypted payload + tag
+    pub fn encrypt_payload_with_material(
+        key_material: &[u8; KEY_MATERIAL_LENGTH],
+        payload: &[u8],
+    ) -> Result<Vec<u8>, SqliteError> {
+        // Extract nonce and cipher_key from key_material
+        let nonce_bytes: [u8; NONCE_LENGTH] = key_material[0..NONCE_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract nonce from key_material".to_string()))?;
+
+        let cipher_key: [u8; SECRET_KEY_LENGTH] = key_material[NONCE_LENGTH..KEY_MATERIAL_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract cipher_key from key_material".to_string()))?;
+
+        let nonce = Nonce::from_slice(&nonce_bytes);
+        let key = Key::from_slice(&cipher_key);
+
+        // Encrypt with ChaCha20-Poly1305 AEAD
+        let cipher = ChaCha20Poly1305::new(key);
+        let ciphertext = cipher
+            .encrypt(nonce, payload)
+            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
+
+        debug!("🔒 SharedSecret: Encrypted payload with key_material (ChaCha20-Poly1305)");
+        Ok(ciphertext)
+    }
+
+    /// Decrypt payload using random key material (ChaCha20-Poly1305 AEAD)
+    ///
+    /// # Arguments
+    /// * `key_material` - Random key material [44 bytes]
+    /// * `ciphertext` - Encrypted payload to decrypt
+    ///
+    /// # Returns
+    /// * `Result<Vec<u8>, SqliteError>` - Decrypted payload or error
+    pub fn decrypt_payload_with_material(
+        key_material: &[u8; KEY_MATERIAL_LENGTH],
+        ciphertext: &[u8],
+    ) -> Result<Vec<u8>, SqliteError> {
+        // Extract nonce and cipher_key from key_material
+        let nonce_bytes: [u8; NONCE_LENGTH] = key_material[0..NONCE_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract nonce from key_material".to_string()))?;
+
+        let cipher_key: [u8; SECRET_KEY_LENGTH] = key_material[NONCE_LENGTH..KEY_MATERIAL_LENGTH]
+            .try_into()
+            .map_err(|_| SqliteError::Io("Failed to extract cipher_key from key_material".to_string()))?;
+
+        let nonce = Nonce::from_slice(&nonce_bytes);
+        let key = Key::from_slice(&cipher_key);
+
+        // Decrypt with ChaCha20-Poly1305 AEAD
+        let cipher = ChaCha20Poly1305::new(key);
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
+
+        debug!("🔓 SharedSecret: Decrypted payload with key_material (ChaCha20-Poly1305)");
+        Ok(plaintext)
+    }
+
     /// Get shared secret content encryption key from environment
     ///
     /// Uses the same key as magic links for consistency

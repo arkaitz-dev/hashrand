@@ -54,6 +54,7 @@ component = "hashrand"
 source = "target/wasm32-wasip1/debug/hashrand.wasm"
 allowed_outbound_hosts = ["https://send.api.mailtrap.io", "https://sandbox.api.mailtrap.io"]
 sqlite_databases = ["hashrand-dev"]
+key_value_stores = ["default"]
 # Reference application variables in component variables
 [component.hashrand.variables]
 jwt_secret = "{{ jwt_secret }}"

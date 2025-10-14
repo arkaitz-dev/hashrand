@@ -100,6 +100,9 @@ pub mod constants {
     /// Database index length (for PRIMARY KEY)
     pub const DB_INDEX_LENGTH: usize = 32;
 
+    /// Key material length for payload encryption (nonce[12] + cipher_key[32])
+    pub const KEY_MATERIAL_LENGTH: usize = 44;
+
     /// Minimum expiration hours
     pub const MIN_EXPIRES_HOURS: i64 = 1;
 

@@ -896,8 +896,8 @@ if [[ -n "$JWT_TOKEN" ]]; then
         echo "Receiver URL: ${RECEIVER_URL:0:80}..."
 
         # Extract hash from URL (last segment after /shared-secret/)
-        sender_hash="${SENDER_URL##*/}"
-        receiver_hash="${RECEIVER_URL##*/}"
+        sender_hash=$(echo "$SENDER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
+        receiver_hash=$(echo "$RECEIVER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Validate hash length (~55 chars for 40-byte Base58 encrypted)
         sender_hash_len=${#sender_hash}
@@ -1030,7 +1030,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         test_start=$(date +%s)
 
         # Extract hash from receiver URL
-        receiver_hash="${RECEIVER_URL##*/}"
+        receiver_hash=$(echo "$RECEIVER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Add OTP parameter
         retrieve_url="$BASE_URL/api/shared-secret/${receiver_hash}?otp=123456789"
@@ -1088,7 +1088,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         test_start=$(date +%s)
 
         # Extract hash from sender URL
-        sender_hash="${SENDER_URL##*/}"
+        sender_hash=$(echo "$SENDER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Generate signed URL for sender
         sender_retrieve_url=$(generate_signed_url "$BASE_URL/api/shared-secret/${sender_hash}")
@@ -1127,7 +1127,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         ((TOTAL++))
 
         # Extract hash from receiver URL
-        receiver_hash="${RECEIVER_URL##*/}"
+        receiver_hash=$(echo "$RECEIVER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Try to access receiver URL with sender JWT
         cross_url=$(generate_signed_url "$BASE_URL/api/shared-secret/${receiver_hash}")
@@ -1163,7 +1163,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         ((TOTAL++))
 
         # Extract hash from sender URL
-        sender_hash="${SENDER_URL##*/}"
+        sender_hash=$(echo "$SENDER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Temporarily swap keypair for receiver signing
         mv .test-magiclink-pubkey .test-magiclink-pubkey-sender
@@ -1216,7 +1216,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         test_start=$(date +%s)
 
         # Extract hash from receiver URL
-        receiver_hash="${RECEIVER_URL##*/}"
+        receiver_hash=$(echo "$RECEIVER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Temporarily swap keypair for receiver signing
         mv .test-magiclink-pubkey .test-magiclink-pubkey-sender
@@ -1270,7 +1270,7 @@ if [[ -n "$JWT_TOKEN" ]]; then
         test_start=$(date +%s)
 
         # Extract hash from sender URL
-        sender_hash="${SENDER_URL##*/}"
+        sender_hash=$(echo "$SENDER_URL" | sed 's/.*shared=\([^&]*\).*/\1/')
 
         # Generate signed URL for deletion
         delete_url=$(generate_signed_url "$BASE_URL/api/shared-secret/${sender_hash}")

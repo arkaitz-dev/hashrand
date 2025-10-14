@@ -249,8 +249,9 @@ fn retrieve_and_respond_v2(
     }
 
     // Read secret from database (no decrement - that happens in confirm-read endpoint)
+    // v3: Pass reference_hash for centralized payload retrieval
     let (payload, pending_reads, expires_at, _role_from_db) =
-        SharedSecretOps::read_secret(&db_index)
+        SharedSecretOps::read_secret(&db_index, &reference_hash)
             .map_err(|e| format!("Failed to read secret: {}", e))?;
 
     // Note: We use 'role' from hash (validated via checksum), not from database
@@ -300,7 +301,10 @@ fn retrieve_and_respond_v2(
         .map_err(|e| format!("Failed to create signed response: {}", e))
 }
 
-/// Retrieve secret and create response (OLD - deprecated)
+// Retrieve secret and create response (OLD - deprecated)
+// OBSOLETE: Not compatible with v3 (centralized payload architecture)
+// Use retrieve_and_respond_v2() instead
+/*
 #[allow(dead_code)]
 fn retrieve_and_respond(
     encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
@@ -308,54 +312,7 @@ fn retrieve_and_respond(
     provided_otp: Option<&str>,
     crypto_material: &CryptoMaterial,
 ) -> Result<Response, String> {
-    // TODO: Validate that user_id from JWT matches user_id encrypted in hash
-    // For now, just proceed with retrieval
-
-    // Read secret (no decrement - that happens in confirm-read endpoint)
-    let (payload, pending_reads, expires_at, role) = SharedSecretOps::read_secret(encrypted_id)
-        .map_err(|e| format!("Failed to read secret: {}", e))?;
-
-    // Validate OTP if present
-    if payload.otp.is_some() && provided_otp.is_none() {
-        // OTP required but not provided
-        let error_json = json!({
-            "error": "OTP_REQUIRED",
-            "message": "This secret requires a 9-digit OTP"
-        });
-        return create_signed_endpoint_response(&error_json, crypto_material)
-            .map_err(|e| format!("Failed to create error response: {}", e));
-    }
-
-    if let Some(stored_otp) = &payload.otp
-        && let Some(provided) = provided_otp
-        && stored_otp != provided
-    {
-        let error_json = json!({
-            "error": "INVALID_OTP",
-            "message": "Invalid OTP provided"
-        });
-        return create_signed_endpoint_response(&error_json, crypto_material)
-            .map_err(|e| format!("Failed to create error response: {}", e));
-    }
-
-    // Convert reference_hash to Base58
-    let reference_base58 = bs58::encode(&payload.reference_hash).into_string();
-
-    // Create response
-    let response_data = RetrieveSecretResponse {
-        secret_text: payload.secret_text,
-        sender_email: payload.sender_email,
-        receiver_email: payload.receiver_email,
-        pending_reads,
-        max_reads: payload.max_reads,
-        expires_at,
-        reference: reference_base58,
-        role: role.to_str().to_string(),
-    };
-
-    let response_json = json!(response_data);
-
-    // Create signed response
-    create_signed_endpoint_response(&response_json, crypto_material)
-        .map_err(|e| format!("Failed to create signed response: {}", e))
+    // This function is obsolete and not compatible with v3
+    Err("retrieve_and_respond() is obsolete - use retrieve_and_respond_v2() instead".to_string())
 }
+*/

@@ -345,7 +345,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const senderHash = createData.payload.url_sender.split('/').pop();
+		const senderHash = new URL(createData.payload.url_sender).searchParams.get('shared');
 
 		// View as sender (GET request needs signature in query params)
 		const viewUrl = `http://localhost:3000/api/shared-secret/${senderHash}`;
@@ -419,7 +419,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const receiverHash = createData.payload.url_receiver.split('/').pop();
+		const receiverHash = new URL(createData.payload.url_receiver).searchParams.get('shared');
 
 		// View as receiver (first time)
 		const viewUrl = `http://localhost:3000/api/shared-secret/${receiverHash}`;
@@ -494,7 +494,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const receiverHash = createData.payload.url_receiver.split('/').pop();
+		const receiverHash = new URL(createData.payload.url_receiver).searchParams.get('shared');
 		const otpCode = createData.payload.otp;
 
 		console.log('✅ Created OTP-protected secret');
@@ -583,7 +583,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const receiverHash = createData.payload.url_receiver.split('/').pop();
+		const receiverHash = new URL(createData.payload.url_receiver).searchParams.get('shared');
 
 		console.log('✅ Created secret to delete');
 
@@ -733,7 +733,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const receiverHash = createData.payload.url_receiver.split('/').pop();
+		const receiverHash = new URL(createData.payload.url_receiver).searchParams.get('shared');
 
 		console.log('✅ Created secret for cross-user test');
 
@@ -802,7 +802,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const senderHash = createData.payload.url_sender.split('/').pop();
+		const senderHash = new URL(createData.payload.url_sender).searchParams.get('shared');
 
 		console.log('✅ Created secret for reverse cross-user test');
 
@@ -871,7 +871,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		const createSignedResponse = await createResponse.json();
 		const createData = verifySignedResponse(createSignedResponse, serverPubKey);
-		const receiverHash = createData.payload.url_receiver.split('/').pop();
+		const receiverHash = new URL(createData.payload.url_receiver).searchParams.get('shared');
 
 		console.log('✅ Created secret with max_reads=3');
 
