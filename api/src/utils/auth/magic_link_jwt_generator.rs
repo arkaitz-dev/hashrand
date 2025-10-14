@@ -33,7 +33,6 @@ pub fn generate_jwt_tokens(
     // Convert user_id to Base58 username
     let username = JwtUtils::user_id_to_username(user_id_bytes);
 
-    // println!(
     //     "🔐 User {} authenticated successfully with Ed25519 verification",
     //     username
     // );
@@ -51,7 +50,6 @@ pub fn generate_jwt_tokens(
     // Generate refresh token with Ed25519 public key for /api/refresh signature validation
     let refresh_token = create_refresh_token(&username, pub_key_bytes)?;
 
-    // println!("✅ JWT tokens generated successfully for user {}", username);
     debug!("✅ JWT tokens generated successfully for user {}", username);
 
     Ok(JwtTokens {
@@ -68,12 +66,10 @@ fn create_access_token(
 ) -> Result<(String, DateTime<Utc>), Response> {
     match JwtUtils::create_access_token_from_username(username, pub_key_bytes) {
         Ok((token, expires)) => {
-            // println!("✅ Access token created successfully");
             debug!("✅ Access token created successfully");
             Ok((token, expires))
         }
         Err(e) => {
-            // println!("❌ Failed to create access token: {}", e);
             error!("❌ Failed to create access token: {}", e);
             Err(create_jwt_error_response("Failed to create access token"))
         }
@@ -84,12 +80,10 @@ fn create_access_token(
 fn create_refresh_token(username: &str, pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
     match JwtUtils::create_refresh_token_from_username(username, pub_key_bytes) {
         Ok((token, _expires)) => {
-            // println!("✅ Refresh token created successfully");
             debug!("✅ Refresh token created successfully");
             Ok(token)
         }
         Err(e) => {
-            // println!("❌ Failed to create refresh token: {}", e);
             error!("❌ Failed to create refresh token: {}", e);
             Err(create_jwt_error_response("Failed to create refresh token"))
         }

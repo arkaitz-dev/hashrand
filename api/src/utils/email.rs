@@ -4,7 +4,7 @@ use spin_sdk::{
     http::{Method, Request, Response},
     variables,
 };
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 use crate::email_templates::render_magic_link_email;
 
@@ -138,7 +138,6 @@ fn create_email_request(
         chrono::Utc::now()
             .timestamp_nanos_opt()
             .unwrap_or_else(|| {
-                // println!("⚠️ CRITICAL: timestamp_nanos_opt() overflow - server clock may be misconfigured (date > year 2262)");
                 error!("⚠️ CRITICAL: timestamp_nanos_opt() overflow - server clock may be misconfigured (date > year 2262)");
                 chrono::Utc::now()
                     .timestamp_millis()

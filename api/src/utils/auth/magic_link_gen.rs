@@ -41,7 +41,6 @@ pub async fn generate_magic_link_signed(
         match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
             Ok(payload) => payload,
             Err(e) => {
-                // println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
                 error!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
                 return Ok(Response::builder()
                     .status(400)
@@ -52,7 +51,6 @@ pub async fn generate_magic_link_signed(
                     .build());
             }
         };
-    // println!("✅ DEBUG: Deserialized Base64 JSON payload for magic link generation");
     debug!("✅ DEBUG: Deserialized Base64 JSON payload for magic link generation");
     debug!("📍 DEBUG: Magic link next parameter: '{}'", payload.next);
 
@@ -84,13 +82,11 @@ pub async fn generate_magic_link_signed(
     // Step 3: Validate ui_host is provided (MANDATORY - no fallback)
     let ui_host = match payload.ui_host.as_deref() {
         Some(host) if !host.is_empty() => {
-            // println!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
-            debug!("🔒 [SECURITY] ui_host OBLIGATORIO recibido: '{}'", host);
+            debug!("🔒 [SECURITY] ui_host MANDATORY received: '{}'", host);
             host
         }
         Some(_) => {
-            // println!("❌ [SECURITY] ui_host está vacío - RECHAZADO");
-            error!("❌ [SECURITY] ui_host está vacío - RECHAZADO");
+            error!("❌ [SECURITY] ui_host is empty - REJECTED");
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
@@ -100,8 +96,7 @@ pub async fn generate_magic_link_signed(
                 .build());
         }
         None => {
-            // println!("❌ [SECURITY] ui_host no proporcionado - RECHAZADO");
-            error!("❌ [SECURITY] ui_host no proporcionado - RECHAZADO");
+            error!("❌ [SECURITY] ui_host not provided - REJECTED");
             return Ok(Response::builder()
                 .status(400)
                 .header("content-type", "application/json")
@@ -112,7 +107,6 @@ pub async fn generate_magic_link_signed(
         }
     };
 
-    // println!(
     //     "🔒 [SECURITY] Storing magic link with ui_host: '{}'",
     //     ui_host
     // );
@@ -148,7 +142,6 @@ pub async fn generate_magic_link_signed(
             match create_signed_magic_link_response(&payload.email, &pub_key_hex) {
                 Ok(response) => Ok(response),
                 Err(e) => {
-                    // println!("❌ CRITICAL: Cannot create signed response: {}", e);
                     error!("❌ CRITICAL: Cannot create signed response: {}", e);
                     // SECURITY: Never fallback to unsigned response - fail secure
                     Ok(Response::builder()

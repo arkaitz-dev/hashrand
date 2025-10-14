@@ -80,7 +80,10 @@ impl SharedSecretCrypto {
         let mut key_material = [0u8; KEY_MATERIAL_LENGTH];
         rng.fill_bytes(&mut key_material);
 
-        debug!("🔑 SharedSecret: Generated random key_material[{}]", KEY_MATERIAL_LENGTH);
+        debug!(
+            "🔑 SharedSecret: Generated random key_material[{}]",
+            KEY_MATERIAL_LENGTH
+        );
         key_material
     }
 
@@ -98,7 +101,7 @@ impl SharedSecretCrypto {
     ///
     /// # Returns
     /// * `Result<Vec<u8>, SqliteError>` - Encrypted key material (44 bytes)
-    pub fn encrypt_key_material_v3(
+    pub fn encrypt_key_material(
         db_index: &[u8; DB_INDEX_LENGTH],
         key_material: &[u8; KEY_MATERIAL_LENGTH],
     ) -> Result<Vec<u8>, SqliteError> {
@@ -139,7 +142,7 @@ impl SharedSecretCrypto {
     ///
     /// # Returns
     /// * `Result<[u8; KEY_MATERIAL_LENGTH], SqliteError>` - Decrypted key material
-    pub fn decrypt_key_material_v3(
+    pub fn decrypt_key_material(
         db_index: &[u8; DB_INDEX_LENGTH],
         ciphertext: &[u8],
     ) -> Result<[u8; KEY_MATERIAL_LENGTH], SqliteError> {
@@ -198,13 +201,16 @@ impl SharedSecretCrypto {
         payload: &[u8],
     ) -> Result<Vec<u8>, SqliteError> {
         // Extract nonce and cipher_key from key_material
-        let nonce_bytes: [u8; NONCE_LENGTH] = key_material[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce from key_material".to_string()))?;
+        let nonce_bytes: [u8; NONCE_LENGTH] =
+            key_material[0..NONCE_LENGTH].try_into().map_err(|_| {
+                SqliteError::Io("Failed to extract nonce from key_material".to_string())
+            })?;
 
         let cipher_key: [u8; SECRET_KEY_LENGTH] = key_material[NONCE_LENGTH..KEY_MATERIAL_LENGTH]
             .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher_key from key_material".to_string()))?;
+            .map_err(|_| {
+                SqliteError::Io("Failed to extract cipher_key from key_material".to_string())
+            })?;
 
         let nonce = Nonce::from_slice(&nonce_bytes);
         let key = Key::from_slice(&cipher_key);
@@ -232,13 +238,16 @@ impl SharedSecretCrypto {
         ciphertext: &[u8],
     ) -> Result<Vec<u8>, SqliteError> {
         // Extract nonce and cipher_key from key_material
-        let nonce_bytes: [u8; NONCE_LENGTH] = key_material[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce from key_material".to_string()))?;
+        let nonce_bytes: [u8; NONCE_LENGTH] =
+            key_material[0..NONCE_LENGTH].try_into().map_err(|_| {
+                SqliteError::Io("Failed to extract nonce from key_material".to_string())
+            })?;
 
         let cipher_key: [u8; SECRET_KEY_LENGTH] = key_material[NONCE_LENGTH..KEY_MATERIAL_LENGTH]
             .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher_key from key_material".to_string()))?;
+            .map_err(|_| {
+                SqliteError::Io("Failed to extract cipher_key from key_material".to_string())
+            })?;
 
         let nonce = Nonce::from_slice(&nonce_bytes);
         let key = Key::from_slice(&cipher_key);
@@ -250,192 +259,6 @@ impl SharedSecretCrypto {
             .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
 
         debug!("🔓 SharedSecret: Decrypted payload with key_material (ChaCha20-Poly1305)");
-        Ok(plaintext)
-    }
-
-    /// Get shared secret content encryption key from environment
-    ///
-    /// Uses the same key as magic links for consistency
-    ///
-    /// # Returns
-    /// * `Result<[u8; 64], SqliteError>` - 64-byte encryption key
-    fn get_content_encryption_key() -> Result<[u8; 64], SqliteError> {
-        use crate::utils::jwt::config::get_mlink_content_key;
-        get_mlink_content_key().map_err(SqliteError::Io)
-    }
-
-    /// Get shared secret content encryption key (v2 - NEW)
-    fn get_shared_secret_content_key() -> Result<[u8; 64], SqliteError> {
-        use crate::utils::jwt::config::get_shared_secret_content_key;
-        get_shared_secret_content_key().map_err(SqliteError::Io)
-    }
-
-    /// Encrypt payload using Blake3 KDF + ChaCha20-Poly1305
-    ///
-    /// Process:
-    /// 1. blake3_keyed_variable(CONTENT_KEY, encrypted_id, 44) → nonce[12] + cipher_key[32]
-    /// 2. ChaCha20-Poly1305.encrypt(payload, nonce, cipher_key) → encrypted_blob
-    ///
-    /// # Arguments
-    /// * `encrypted_id` - The encrypted shared secret ID bytes (32 bytes)
-    /// * `payload` - Data to encrypt (sender_email || receiver_email || text || otp || created_at || reference_hash)
-    ///
-    /// # Returns
-    /// * `Result<Vec<u8>, SqliteError>` - Encrypted payload or error
-    #[allow(dead_code)]
-    pub fn encrypt_payload(
-        encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
-        payload: &[u8],
-    ) -> Result<Vec<u8>, SqliteError> {
-        let content_key = Self::get_content_encryption_key()?;
-
-        // Step 1: Derive nonce + cipher_key using Blake3 KDF
-        let derived = blake3_keyed_variable(&content_key, encrypted_id, 44);
-
-        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
-
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
-
-        // Step 2: Encrypt with ChaCha20-Poly1305
-        let cipher = ChaCha20Poly1305::new(key);
-        let ciphertext = cipher
-            .encrypt(nonce, payload)
-            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
-
-        // println!("🔒 SharedSecret: Encrypted payload using Blake3 KDF + ChaCha20-Poly1305");
-        debug!("🔒 SharedSecret: Encrypted payload using Blake3 KDF + ChaCha20-Poly1305");
-        Ok(ciphertext)
-    }
-
-    /// Decrypt payload using Blake3 KDF + ChaCha20-Poly1305 (reverse process)
-    ///
-    /// # Arguments
-    /// * `encrypted_id` - The encrypted shared secret ID bytes (32 bytes)
-    /// * `ciphertext` - Encrypted payload to decrypt
-    ///
-    /// # Returns
-    /// * `Result<Vec<u8>, SqliteError>` - Decrypted payload or error
-    pub fn decrypt_payload(
-        encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
-        ciphertext: &[u8],
-    ) -> Result<Vec<u8>, SqliteError> {
-        let content_key = Self::get_content_encryption_key()?;
-
-        // Step 1: Derive nonce + cipher_key using Blake3 KDF (same as encryption)
-        let derived = blake3_keyed_variable(&content_key, encrypted_id, 44);
-
-        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
-
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
-
-        // Step 2: Decrypt with ChaCha20-Poly1305
-        let cipher = ChaCha20Poly1305::new(key);
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
-
-        // println!("🔓 SharedSecret: Decrypted payload using Blake3 KDF + ChaCha20-Poly1305");
-        debug!("🔓 SharedSecret: Decrypted payload using Blake3 KDF + ChaCha20-Poly1305");
-        Ok(plaintext)
-    }
-
-    /// Encrypt payload using Blake3 KDF + ChaCha20-Poly1305 (v2 - NEW with db_index)
-    ///
-    /// Process:
-    /// 1. Derive nonce[12] + cipher_key[32] via `blake3_keyed_variable(SHARED_SECRET_CONTENT_KEY, db_index, 44)`
-    /// 2. Encrypt with ChaCha20-Poly1305 (adds 16-byte tag)
-    ///
-    /// # Arguments
-    /// * `db_index` - Database index (32 bytes)
-    /// * `payload` - Raw payload to encrypt
-    ///
-    /// # Returns
-    /// * `Result<Vec<u8>, SqliteError>` - Encrypted payload or error
-    pub fn encrypt_payload_v2(
-        db_index: &[u8; DB_INDEX_LENGTH],
-        payload: &[u8],
-    ) -> Result<Vec<u8>, SqliteError> {
-        let content_key = Self::get_shared_secret_content_key()?;
-
-        // Step 1: Derive nonce + cipher_key using Blake3 KDF
-        let derived = blake3_keyed_variable(&content_key, db_index, 44);
-
-        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
-
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
-
-        // Step 2: Encrypt with ChaCha20-Poly1305
-        let cipher = ChaCha20Poly1305::new(key);
-        let ciphertext = cipher
-            .encrypt(nonce, payload)
-            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 encryption error: {:?}", e)))?;
-
-        // println!(
-        //     "🔒 SharedSecret: Encrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
-        // );
-        debug!(
-            "🔒 SharedSecret: Encrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
-        );
-        Ok(ciphertext)
-    }
-
-    /// Decrypt payload using Blake3 KDF + ChaCha20-Poly1305 (v2 - NEW with db_index)
-    ///
-    /// # Arguments
-    /// * `db_index` - Database index (32 bytes)
-    /// * `ciphertext` - Encrypted payload to decrypt
-    ///
-    /// # Returns
-    /// * `Result<Vec<u8>, SqliteError>` - Decrypted payload or error
-    pub fn decrypt_payload_v2(
-        db_index: &[u8; DB_INDEX_LENGTH],
-        ciphertext: &[u8],
-    ) -> Result<Vec<u8>, SqliteError> {
-        let content_key = Self::get_shared_secret_content_key()?;
-
-        // Step 1: Derive nonce + cipher_key using Blake3 KDF (same as encryption)
-        let derived = blake3_keyed_variable(&content_key, db_index, 44);
-
-        let nonce_bytes: [u8; NONCE_LENGTH] = derived[0..NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
-        let cipher_key: [u8; SECRET_KEY_LENGTH] = derived[NONCE_LENGTH..44]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
-
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
-
-        // Step 2: Decrypt with ChaCha20-Poly1305
-        let cipher = ChaCha20Poly1305::new(key);
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| SqliteError::Io(format!("ChaCha20-Poly1305 decryption error: {:?}", e)))?;
-
-        // println!(
-        //     "🔓 SharedSecret: Decrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
-        // );
-        debug!(
-            "🔓 SharedSecret: Decrypted payload v2 using Blake3 KDF + ChaCha20-Poly1305 (db_index)"
-        );
         Ok(plaintext)
     }
 
@@ -520,7 +343,6 @@ impl SharedSecretCrypto {
         checksum[0..7].copy_from_slice(&checksum_base[0..7]);
         checksum[7] = role_byte;
 
-        // println!("🔒 SharedSecret: Generated checksum with role {:?}", role);
         debug!("🔒 SharedSecret: Generated checksum with role {:?}", role);
         Ok(checksum)
     }
@@ -555,7 +377,6 @@ impl SharedSecretCrypto {
         hash[16..32].copy_from_slice(&user_id);
         hash[32..40].copy_from_slice(&checksum);
 
-        // println!("✅ SharedSecret: Generated 40-byte hash for {:?}", role);
         debug!("✅ SharedSecret: Generated 40-byte hash for {:?}", role);
         Ok(hash)
     }
@@ -602,7 +423,6 @@ impl SharedSecretCrypto {
         let mut encrypted = *hash_40;
         cipher.apply_keystream(&mut encrypted);
 
-        // println!("🔐 SharedSecret: Encrypted 40-byte hash with ChaCha20");
         debug!("🔐 SharedSecret: Encrypted 40-byte hash with ChaCha20");
         Ok(encrypted)
     }
@@ -645,7 +465,6 @@ impl SharedSecretCrypto {
         let mut decrypted = *encrypted_hash;
         cipher.apply_keystream(&mut decrypted);
 
-        // println!("🔓 SharedSecret: Decrypted 40-byte hash with ChaCha20");
         debug!("🔓 SharedSecret: Decrypted 40-byte hash with ChaCha20");
         Ok(decrypted)
     }
@@ -712,7 +531,6 @@ impl SharedSecretCrypto {
             ));
         }
 
-        // println!(
         //     "✅ SharedSecret: Validated checksum and extracted role {:?}",
         //     role
         // );
@@ -754,7 +572,6 @@ impl SharedSecretCrypto {
         let mut db_index = [0u8; 32];
         db_index.copy_from_slice(&db_index_vec[0..32]);
 
-        // println!("🔑 SharedSecret: Generated 32-byte database index");
         debug!("🔑 SharedSecret: Generated 32-byte database index");
         Ok(db_index)
     }

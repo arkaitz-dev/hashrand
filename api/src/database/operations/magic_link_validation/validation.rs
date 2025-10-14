@@ -33,14 +33,12 @@ impl MagicLinkValidation {
         // Step 1: Decode and hash encrypted token
         let (encrypted_data, token_hash) = decode_and_hash_token(encrypted_token)?;
 
-        // println!("Database: Validating encrypted magic link hash");
         debug!("Database: Validating encrypted magic link hash");
 
         // Step 2: Retrieve encrypted payload from database
         let encrypted_payload_blob = match retrieve_encrypted_payload(&connection, &token_hash)? {
             Some(blob) => blob,
             None => {
-                // println!("Database: Encrypted magic link not found in database");
                 warn!("Database: Encrypted magic link not found in database");
                 return Ok(create_validation_error());
             }
@@ -53,7 +51,6 @@ impl MagicLinkValidation {
         ) {
             Ok(payload) => payload,
             Err(e) => {
-                // println!("Database: Encrypted payload decryption failed: {}", e);
                 error!("Database: Encrypted payload decryption failed: {}", e);
                 return Ok(create_validation_error());
             }
@@ -88,7 +85,6 @@ impl MagicLinkValidation {
                     &[Value::Blob(token_hash.to_vec())],
                 )?;
 
-                // println!("Database: Encrypted magic link validated and consumed");
                 debug!("Database: Encrypted magic link validated and consumed");
                 Ok((
                     true,
@@ -99,7 +95,6 @@ impl MagicLinkValidation {
                 ))
             }
             Err(e) => {
-                // println!("Database: Magic link internal validation failed: {}", e);
                 error!("Database: Magic link internal validation failed: {}", e);
                 Ok(create_validation_error())
             }
@@ -144,7 +139,6 @@ fn retrieve_encrypted_payload(
         match &row.values[1] {
             Value::Blob(blob) => Ok(Some(blob.clone())),
             _ => {
-                // println!("Database: Invalid encrypted_payload type");
                 error!("Database: Invalid encrypted_payload type");
                 Ok(None)
             }

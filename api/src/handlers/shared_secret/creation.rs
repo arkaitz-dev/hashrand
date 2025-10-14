@@ -284,7 +284,6 @@ async fn create_shared_secret(
     .await;
 
     if let Err(e) = receiver_email_result {
-        // println!("⚠️  Warning: Failed to send receiver email: {}", e);
         warn!("⚠️  Warning: Failed to send receiver email: {}", e);
         // Don't fail the entire operation, just log the error
     }
@@ -302,7 +301,6 @@ async fn create_shared_secret(
         .await;
 
         if let Err(e) = sender_email_result {
-            // println!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
             warn!("⚠️  Warning: Failed to send sender (copy) email: {}", e);
             // Don't fail the entire operation, just log the error
         }

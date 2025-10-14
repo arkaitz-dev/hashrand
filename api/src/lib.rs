@@ -37,7 +37,8 @@ fn init_tracing() {
         {
             // DEVELOPMENT: Read logging level from Spin variable
             // Usage: just dev (info), just dev-debug (hashrand=debug,info - no Spin/Wasmtime noise)
-            let log_level = spin_sdk::variables::get("rust_log").unwrap_or_else(|_| "info".to_string());
+            let log_level =
+                spin_sdk::variables::get("rust_log").unwrap_or_else(|_| "info".to_string());
 
             fmt()
                 .with_env_filter(EnvFilter::new(log_level))

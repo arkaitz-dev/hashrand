@@ -79,7 +79,7 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     }
 
     // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
-    let encrypted_hash = match decode_hash_v2(hash) {
+    let encrypted_hash = match decode_hash(hash) {
         Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
@@ -92,7 +92,7 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with 3-layer validation (checksum → ownership → database)
-    match retrieve_and_respond_v2(&encrypted_hash, &user_id_from_jwt, None, &crypto_material) {
+    match retrieve_and_respond(&encrypted_hash, &user_id_from_jwt, None, &crypto_material) {
         Ok(response) => Ok(response),
         Err(e) => {
             // Detect authorization errors (403 Forbidden) vs server errors (500)
@@ -130,7 +130,7 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     };
 
     // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
-    let encrypted_hash = match decode_hash_v2(hash) {
+    let encrypted_hash = match decode_hash(hash) {
         Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
@@ -143,7 +143,7 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with OTP validation and 3-layer validation
-    match retrieve_and_respond_v2(
+    match retrieve_and_respond(
         &encrypted_hash,
         &user_id_from_jwt,
         Some(&result.payload.otp),
@@ -163,8 +163,8 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     }
 }
 
-/// Decode Base58 hash to encrypted 40-byte hash (v2 - NEW)
-fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
+/// Decode Base58 hash to encrypted 40-byte hash
+fn decode_hash(hash: &str) -> Result<[u8; 40], String> {
     let decoded = bs58::decode(hash)
         .into_vec()
         .map_err(|_| "Invalid Base58 hash".to_string())?;
@@ -181,28 +181,8 @@ fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
     Ok(encrypted_hash)
 }
 
-/// Decode Base58 hash to encrypted ID (OLD - deprecated)
-#[allow(dead_code)]
-fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
-    let decoded = bs58::decode(hash)
-        .into_vec()
-        .map_err(|_| "Invalid Base58 hash".to_string())?;
-
-    if decoded.len() != ENCRYPTED_ID_LENGTH {
-        return Err(format!(
-            "Invalid hash length: expected {}, got {}",
-            ENCRYPTED_ID_LENGTH,
-            decoded.len()
-        ));
-    }
-
-    let mut id = [0u8; ENCRYPTED_ID_LENGTH];
-    id.copy_from_slice(&decoded);
-    Ok(id)
-}
-
-/// Retrieve secret and create response (v2 - NEW with 3-layer validation)
-fn retrieve_and_respond_v2(
+/// Retrieve secret and create response with 3-layer validation
+fn retrieve_and_respond(
     encrypted_hash: &[u8; 40],
     user_id_from_jwt: &[u8; USER_ID_LENGTH],
     provided_otp: Option<&str>,
@@ -300,19 +280,3 @@ fn retrieve_and_respond_v2(
     create_signed_endpoint_response(&response_json, crypto_material)
         .map_err(|e| format!("Failed to create signed response: {}", e))
 }
-
-// Retrieve secret and create response (OLD - deprecated)
-// OBSOLETE: Not compatible with v3 (centralized payload architecture)
-// Use retrieve_and_respond_v2() instead
-/*
-#[allow(dead_code)]
-fn retrieve_and_respond(
-    encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
-    _user_id: &[u8; USER_ID_LENGTH],
-    provided_otp: Option<&str>,
-    crypto_material: &CryptoMaterial,
-) -> Result<Response, String> {
-    // This function is obsolete and not compatible with v3
-    Err("retrieve_and_respond() is obsolete - use retrieve_and_respond_v2() instead".to_string())
-}
-*/

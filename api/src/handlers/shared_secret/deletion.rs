@@ -46,7 +46,7 @@ pub async fn handle_delete_secret(req: Request, hash: &str) -> anyhow::Result<Re
     }
 
     // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
-    let encrypted_hash = match decode_hash_v2(hash) {
+    let encrypted_hash = match decode_hash(hash) {
         Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
@@ -59,14 +59,14 @@ pub async fn handle_delete_secret(req: Request, hash: &str) -> anyhow::Result<Re
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Validate and delete with 3-layer validation
-    match delete_secret_validated_v2(&encrypted_hash, &user_id_from_jwt, &crypto_material) {
+    match delete_secret_validated(&encrypted_hash, &user_id_from_jwt, &crypto_material) {
         Ok(response) => Ok(response),
         Err(e) => Ok(create_server_error_response(&e)),
     }
 }
 
-/// Decode Base58 hash to encrypted 40-byte hash (v2 - NEW)
-fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
+/// Decode Base58 hash to encrypted 40-byte hash
+fn decode_hash(hash: &str) -> Result<[u8; 40], String> {
     let decoded = bs58::decode(hash)
         .into_vec()
         .map_err(|_| "Invalid Base58 hash".to_string())?;
@@ -83,8 +83,8 @@ fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
     Ok(encrypted_hash)
 }
 
-/// Delete secret with 3-layer validation (v2 - NEW)
-fn delete_secret_validated_v2(
+/// Delete secret with 3-layer validation
+fn delete_secret_validated(
     encrypted_hash: &[u8; 40],
     user_id_from_jwt: &[u8; USER_ID_LENGTH],
     crypto_material: &CryptoMaterial,
@@ -181,38 +181,3 @@ fn delete_secret_validated_v2(
         }
     }
 }
-
-/// Decode Base58 hash to encrypted ID (OLD - deprecated)
-#[allow(dead_code)]
-fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
-    let decoded = bs58::decode(hash)
-        .into_vec()
-        .map_err(|_| "Invalid Base58 hash".to_string())?;
-
-    if decoded.len() != ENCRYPTED_ID_LENGTH {
-        return Err(format!(
-            "Invalid hash length: expected {}, got {}",
-            ENCRYPTED_ID_LENGTH,
-            decoded.len()
-        ));
-    }
-
-    let mut id = [0u8; ENCRYPTED_ID_LENGTH];
-    id.copy_from_slice(&decoded);
-    Ok(id)
-}
-
-// Delete secret with validation (OLD - deprecated)
-// OBSOLETE: Not compatible with v3 (centralized payload architecture)
-// Use delete_secret_validated_v2() instead
-/*
-#[allow(dead_code)]
-fn delete_secret_validated(
-    encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
-    _user_id: &[u8; USER_ID_LENGTH],
-    crypto_material: &CryptoMaterial,
-) -> Result<Response, String> {
-    // This function is obsolete and not compatible with v3
-    Err("delete_secret_validated() is obsolete - use delete_secret_validated_v2() instead".to_string())
-}
-*/

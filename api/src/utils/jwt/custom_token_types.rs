@@ -97,7 +97,6 @@ impl CustomTokenClaims {
         let refresh_expires_at = now + refresh_config.duration;
 
         // DEBUG: Log token creation details (commented out for production)
-        // println!("🔍 DEBUG new_from_user_id: token_type={:?}, duration_minutes={}, expires_at={}",
         //          token_type, config.duration.num_minutes(), expires_at);
 
         Ok(CustomTokenClaims {

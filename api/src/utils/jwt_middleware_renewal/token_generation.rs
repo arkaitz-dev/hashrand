@@ -46,7 +46,6 @@ pub fn generate_renewed_tokens(
         ) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                // println!(
                 //     "Failed to create new access token during proactive renewal: {}",
                 //     e
                 // );
@@ -66,7 +65,6 @@ pub fn generate_renewed_tokens(
         match JwtUtils::create_refresh_token_from_username(username, &pub_key) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                // println!(
                 //     "Failed to create new refresh token during proactive renewal: {}",
                 //     e
                 // );

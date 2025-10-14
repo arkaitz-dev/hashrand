@@ -39,7 +39,6 @@ impl ProtectedEndpointMiddleware {
         let signed_request: ProtectedSignedRequest = match serde_json::from_slice(body_bytes) {
             Ok(req) => req,
             Err(e) => {
-                // println!("🔍 DEBUG: Failed to parse SignedRequest: {}", e);
                 debug!("🔍 DEBUG: Failed to parse SignedRequest: {}", e);
                 return Err(errors::bad_request("Invalid SignedRequest structure"));
             }
@@ -51,12 +50,10 @@ impl ProtectedEndpointMiddleware {
             &signed_request.signature,
             &pub_key_hex,
         ) {
-            // println!("🔍 DEBUG: SignedRequest validation failed: {}", e);
             debug!("🔍 DEBUG: SignedRequest validation failed: {}", e);
             return Err(errors::unauthorized(format!("Invalid signature: {}", e)));
         }
 
-        // println!(
         //     "✅ Protected endpoint validation successful for user: {}",
         //     user_id
         // );
@@ -70,7 +67,6 @@ impl ProtectedEndpointMiddleware {
             match SignedRequestValidator::deserialize_base64_payload(&signed_request.payload) {
                 Ok(payload) => payload,
                 Err(e) => {
-                    // println!("❌ DEBUG: Failed to deserialize Base64 payload: {}", e);
                     error!("❌ Failed to deserialize Base64 payload: {}", e);
                     return Err(errors::bad_request(format!(
                         "Invalid payload format: {}",
@@ -79,7 +75,6 @@ impl ProtectedEndpointMiddleware {
                 }
             };
 
-        // println!("✅ Base64-encoded JSON payload deserialized successfully");
         debug!("✅ Base64-encoded JSON payload deserialized successfully");
 
         Ok(ProtectedEndpointResult {
@@ -91,7 +86,6 @@ impl ProtectedEndpointMiddleware {
     fn extract_jwt_info(req: &Request) -> Result<(String, String), Response> {
         // SECURITY: Validate that request doesn't contain both Authorization header AND refresh cookie
         if let Err(e) = crate::utils::validate_no_simultaneous_tokens(req) {
-            // println!(
             //     "🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens"
             // );
             error!("🚨 [SECURITY VIOLATION] Protected endpoint received request with both tokens");
@@ -111,7 +105,6 @@ impl ProtectedEndpointMiddleware {
 
         // Validate JWT token and extract claims
         let claims = crate::utils::JwtUtils::validate_access_token(token).map_err(|e| {
-            // println!("🔍 DEBUG: JWT validation failed: {}", e);
             debug!("🔍 DEBUG: JWT validation failed: {}", e);
             errors::unauthorized(format!("Invalid JWT token: {}", e))
         })?;

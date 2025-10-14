@@ -42,7 +42,6 @@ impl MagicLinkEmailDelivery {
                 Ok(())
             }
             Err(e) => {
-                // println!(
                 //     "⚠️ Email sending failed, falling back to console logging: {}",
                 //     e
                 // );

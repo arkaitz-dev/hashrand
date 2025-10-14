@@ -877,7 +877,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 		// Confirm read as receiver
 		const confirmUrl = `http://localhost:3000/api/shared-secret/confirm-read`;
-		const confirmParams = { hash: receiverHash };
+		const confirmParams = { hash: receiverHash! };
 		const signature = signQueryParamsWithKeyPair(confirmParams, receiverKeyPair);
 		const signedConfirmUrl = `${confirmUrl}?hash=${receiverHash}&signature=${signature}`;
 

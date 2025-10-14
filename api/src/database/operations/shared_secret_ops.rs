@@ -115,10 +115,10 @@ impl SharedSecretOps {
         // 4. LAYER 1: Encrypt key_material TWICE (ChaCha20 for sender + receiver)
         // ============================================================================
         let encrypted_key_material_sender =
-            SharedSecretCrypto::encrypt_key_material_v3(sender_db_index, &random_key_material)?;
+            SharedSecretCrypto::encrypt_key_material(sender_db_index, &random_key_material)?;
 
         let encrypted_key_material_receiver =
-            SharedSecretCrypto::encrypt_key_material_v3(receiver_db_index, &random_key_material)?;
+            SharedSecretCrypto::encrypt_key_material(receiver_db_index, &random_key_material)?;
 
         // ============================================================================
         // 5. Calculate expiration timestamp
@@ -351,20 +351,23 @@ impl SharedSecretOps {
         // 3. DECRYPT KEY_MATERIAL (Layer 1: ChaCha20)
         // ============================================================================
         let random_key_material =
-            SharedSecretCrypto::decrypt_key_material_v3(db_index, &encrypted_key_material)?;
+            SharedSecretCrypto::decrypt_key_material(db_index, &encrypted_key_material)?;
 
         // ============================================================================
         // 4. RETRIEVE ENCRYPTED_PAYLOAD from tracking
         // ============================================================================
         let encrypted_payload_tracking =
-            SharedSecretStorage::retrieve_tracking_payload(reference_hash)?
-                .ok_or_else(|| SqliteError::Io("Payload not found in tracking table".to_string()))?;
+            SharedSecretStorage::retrieve_tracking_payload(reference_hash)?.ok_or_else(|| {
+                SqliteError::Io("Payload not found in tracking table".to_string())
+            })?;
 
         // ============================================================================
         // 5. DECRYPT PAYLOAD (Layer 2: ChaCha20-Poly1305)
         // ============================================================================
-        let decrypted_payload =
-            SharedSecretCrypto::decrypt_payload_with_material(&random_key_material, &encrypted_payload_tracking)?;
+        let decrypted_payload = SharedSecretCrypto::decrypt_payload_with_material(
+            &random_key_material,
+            &encrypted_payload_tracking,
+        )?;
 
         // ============================================================================
         // 6. DESERIALIZE PAYLOAD
@@ -374,16 +377,14 @@ impl SharedSecretOps {
         // ============================================================================
         // 7. VALIDATION: reference_hash must match payload
         // ============================================================================
-        let reference_hash_from_payload: [u8; REFERENCE_HASH_LENGTH] = payload
-            .reference_hash
-            .as_slice()
-            .try_into()
-            .map_err(|_| SqliteError::Io("Invalid reference_hash length in payload".to_string()))?;
+        let reference_hash_from_payload: [u8; REFERENCE_HASH_LENGTH] =
+            payload.reference_hash.as_slice().try_into().map_err(|_| {
+                SqliteError::Io("Invalid reference_hash length in payload".to_string())
+            })?;
 
         // Debug assertion - detects bugs in derivation logic
         debug_assert_eq!(
-            &reference_hash_from_payload,
-            reference_hash,
+            &reference_hash_from_payload, reference_hash,
             "Reference hash mismatch - impossible condition"
         );
 
@@ -441,13 +442,11 @@ impl SharedSecretOps {
                     debug!("✅ SharedSecret: OTP validated successfully");
                     Ok(true)
                 } else {
-                    // println!("❌ SharedSecret: Invalid OTP");
                     warn!("❌ SharedSecret: Invalid OTP");
                     Ok(false)
                 }
             }
             (Some(_), None) => {
-                // println!("⚠️  SharedSecret: OTP required but not provided");
                 warn!("⚠️  SharedSecret: OTP required but not provided");
                 Err(SqliteError::Io("OTP required".to_string()))
             }

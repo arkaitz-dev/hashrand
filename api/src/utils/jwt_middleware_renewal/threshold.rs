@@ -24,7 +24,6 @@ pub fn is_in_renewal_window(refresh_expires_at: i64, now: i64) -> Result<bool, S
     let two_thirds_threshold = (refresh_duration_seconds * 2) / 3;
 
     if time_remaining < two_thirds_threshold as i64 {
-        // println!(
         //     "Proactive renewal triggered: {}s remaining < {}s threshold",
         //     time_remaining, two_thirds_threshold
         // );

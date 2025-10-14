@@ -46,7 +46,7 @@ pub async fn handle_confirm_read(req: Request, hash: &str) -> anyhow::Result<Res
     }
 
     // Decode hash from Base58 (40 bytes - encrypted with ChaCha20)
-    let encrypted_hash = match decode_hash_v2(hash) {
+    let encrypted_hash = match decode_hash(hash) {
         Ok(hash) => hash,
         Err(e) => return Ok(create_client_error_response(&e)),
     };
@@ -59,14 +59,14 @@ pub async fn handle_confirm_read(req: Request, hash: &str) -> anyhow::Result<Res
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Confirm read with 3-layer validation
-    match confirm_read_validated_v2(&encrypted_hash, &user_id_from_jwt, &crypto_material) {
+    match confirm_read_validated(&encrypted_hash, &user_id_from_jwt, &crypto_material) {
         Ok(response) => Ok(response),
         Err(e) => Ok(create_server_error_response(&e)),
     }
 }
 
-/// Decode Base58 hash to encrypted 40-byte hash (v2 - NEW)
-fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
+/// Decode Base58 hash to encrypted 40-byte hash
+fn decode_hash(hash: &str) -> Result<[u8; 40], String> {
     let decoded = bs58::decode(hash)
         .into_vec()
         .map_err(|_| "Invalid Base58 hash".to_string())?;
@@ -83,8 +83,8 @@ fn decode_hash_v2(hash: &str) -> Result<[u8; 40], String> {
     Ok(encrypted_hash)
 }
 
-/// Confirm read with 3-layer validation (v2 - NEW)
-fn confirm_read_validated_v2(
+/// Confirm read with 3-layer validation
+fn confirm_read_validated(
     encrypted_hash: &[u8; 40],
     user_id_from_jwt: &[u8; USER_ID_LENGTH],
     crypto_material: &CryptoMaterial,
@@ -129,7 +129,6 @@ fn confirm_read_validated_v2(
             .unwrap_or(0);
 
     if current_pending_reads > payload.max_reads {
-        // println!(
         //     "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
         //     current_pending_reads, payload.max_reads
         // );
@@ -162,109 +161,6 @@ fn confirm_read_validated_v2(
         "read_confirmed": read_confirmed,
         "role": role.to_str(),
         "message": "Read confirmed and counter decremented"
-    });
-
-    // Create signed response
-    create_signed_endpoint_response(&response_json, crypto_material)
-        .map_err(|e| format!("Failed to create signed response: {}", e))
-}
-
-/// Decode Base58 hash to encrypted ID (OLD - deprecated)
-#[allow(dead_code)]
-fn decode_hash(hash: &str) -> Result<[u8; ENCRYPTED_ID_LENGTH], String> {
-    let decoded = bs58::decode(hash)
-        .into_vec()
-        .map_err(|_| "Invalid Base58 hash".to_string())?;
-
-    if decoded.len() != ENCRYPTED_ID_LENGTH {
-        return Err(format!(
-            "Invalid hash length: expected {}, got {}",
-            ENCRYPTED_ID_LENGTH,
-            decoded.len()
-        ));
-    }
-
-    let mut id = [0u8; ENCRYPTED_ID_LENGTH];
-    id.copy_from_slice(&decoded);
-    Ok(id)
-}
-
-/// Confirm read with validation (OLD - deprecated)
-#[allow(dead_code)]
-fn confirm_read_validated(
-    encrypted_id: &[u8; ENCRYPTED_ID_LENGTH],
-    _user_id: &[u8; USER_ID_LENGTH],
-    crypto_material: &CryptoMaterial,
-) -> Result<Response, String> {
-    // TODO: Validate that user_id from JWT matches receiver_user_id in hash
-
-    // Retrieve secret to get reference_hash
-    let secret_data = SharedSecretStorage::retrieve_secret(encrypted_id)
-        .map_err(|e| format!("Failed to retrieve secret: {}", e))?;
-
-    let (encrypted_payload, _, role) = match secret_data {
-        Some(data) => data,
-        None => {
-            return Err("Secret not found".to_string());
-        }
-    };
-
-    // Decrypt payload to extract reference_hash
-    let decrypted = SharedSecretCrypto::decrypt_payload(encrypted_id, &encrypted_payload)
-        .map_err(|e| format!("Failed to decrypt payload: {}", e))?;
-
-    let payload = SharedSecretOps::deserialize_payload(&decrypted)
-        .map_err(|e| format!("Failed to deserialize payload: {}", e))?;
-
-    // Convert reference_hash to [u8; REFERENCE_HASH_LENGTH]
-    if payload.reference_hash.len() != REFERENCE_HASH_LENGTH {
-        return Err(format!(
-            "Invalid reference_hash length: expected {}, got {}",
-            REFERENCE_HASH_LENGTH,
-            payload.reference_hash.len()
-        ));
-    }
-
-    let mut reference_hash = [0u8; REFERENCE_HASH_LENGTH];
-    reference_hash.copy_from_slice(&payload.reference_hash);
-
-    // VALIDATION: Check for manual DB tampering (pending_reads should never exceed max_reads)
-    let current_pending_reads =
-        SharedSecretStorage::get_pending_reads_from_tracking(&reference_hash)
-            .map_err(|e| format!("Failed to get pending_reads: {}", e))?
-            .unwrap_or(0);
-
-    if current_pending_reads > payload.max_reads {
-        // println!(
-        //     "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
-        //     current_pending_reads, payload.max_reads
-        // );
-        warn!(
-            "⚠️  WARNING: Potential DB tampering detected! pending_reads ({}) > max_reads ({})",
-            current_pending_reads, payload.max_reads
-        );
-        // Continue anyway - don't block legitimate users
-    }
-
-    // Decrement pending_reads in tracking table
-    let new_pending_reads = SharedSecretStorage::decrement_tracking_reads(&reference_hash)
-        .map_err(|e| format!("Failed to decrement pending_reads: {}", e))?;
-
-    // Update tracking record with read timestamp (only if receiver and not already set)
-    let read_confirmed = SharedSecretOps::confirm_read(&reference_hash)
-        .map_err(|e| format!("Failed to confirm read: {}", e))?;
-
-    // Create response
-    let response_json = json!({
-        "success": true,
-        "pending_reads": new_pending_reads,
-        "read_confirmed": read_confirmed,
-        "role": role.to_str(),
-        "message": if read_confirmed {
-            "Read confirmed and counter decremented"
-        } else {
-            "Counter decremented (read already confirmed)"
-        }
     });
 
     // Create signed response

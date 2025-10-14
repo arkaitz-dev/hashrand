@@ -39,7 +39,6 @@ pub fn check_proactive_renewal(
     let needs_renewal = match is_in_renewal_window(refresh_expires_at, now) {
         Ok(result) => result,
         Err(e) => {
-            // println!("❌ Renewal threshold check failed: {}", e);
             error!("❌ Renewal threshold check failed: {}", e);
             return Err(super::jwt_middleware_errors::create_auth_error_response(
                 "Server configuration error",

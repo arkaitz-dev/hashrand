@@ -36,7 +36,6 @@ pub fn validate_no_simultaneous_tokens(req: &Request) -> Result<(), String> {
         .unwrap_or(false);
 
     if has_auth_header && has_refresh_cookie {
-        // println!(
         //     "🚨 [SECURITY VIOLATION] Request contains BOTH Authorization header AND refresh_token cookie - REJECTED"
         // );
         error!(
@@ -45,10 +44,8 @@ pub fn validate_no_simultaneous_tokens(req: &Request) -> Result<(), String> {
         Err("SECURITY: Request contains both Authorization header and refresh cookie - forbidden. Use only one authentication method.".to_string())
     } else {
         if has_auth_header {
-            // println!("✅ [SECURITY] Request validated: Authorization header only (no cookie)");
             debug!("✅ [SECURITY] Request validated: Authorization header only (no cookie)");
         } else if has_refresh_cookie {
-            // println!(
             //     "✅ [SECURITY] Request validated: refresh_token cookie only (no Authorization header)"
             // );
             debug!(
