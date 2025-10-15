@@ -647,9 +647,7 @@
 		if ($resultState.params.alphabet) {
 			// CRITICAL: Convert alphabet string to integer BEFORE encryption
 			const alphabetStr = String($resultState.params.alphabet);
-			shareParams.alphabet = alphabetToInt(
-				alphabetStr as import('$lib/types').AlphabetTypeString
-			);
+			shareParams.alphabet = alphabetToInt(alphabetStr as import('$lib/types').AlphabetTypeString);
 		}
 
 		// Add endpoint-specific parameters
@@ -827,9 +825,7 @@
 							{#if !$isLoading}
 								<!-- RTL-aware action buttons container -->
 								<div
-									class="absolute bottom-3 {$isRTL
-										? 'left-3'
-										: 'right-3'} flex items-center gap-2"
+									class="absolute bottom-3 {$isRTL ? 'left-3' : 'right-3'} flex items-center gap-2"
 								>
 									<!-- Share button (only if seed is available) -->
 									{#if $resultState.seed}

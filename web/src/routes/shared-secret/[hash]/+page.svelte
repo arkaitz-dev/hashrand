@@ -268,6 +268,12 @@
 		return new Date(timestampHours * 3600 * 1000).toLocaleString();
 	}
 
+	function formatDateSeconds(timestampSeconds: number): string {
+		// Backend stores read_at in SECONDS (standard Unix timestamp)
+		// Convert seconds to milliseconds: seconds * 1000
+		return new Date(timestampSeconds * 1000).toLocaleString();
+	}
+
 	function formatTimeRemaining(expiresAtHours: number): string {
 		const expiresAtMs = expiresAtHours * 3600 * 1000;
 		const nowMs = Date.now();
@@ -478,7 +484,57 @@
 								</p>
 							</div>
 						</div>
+
+						<!-- First Access (sender only) -->
+						{#if secret.role === 'sender'}
+							<div class="md:col-span-2 mt-2">
+								<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+									{$_('sharedSecret.firstAccessAt')}
+								</div>
+								{#if secret.read_at}
+									<p class="text-gray-900 dark:text-white font-medium">
+										📖 {formatDateSeconds(secret.read_at)}
+									</p>
+								{:else}
+									<span
+										class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+									>
+										⏳ {$_('sharedSecret.notAccessedYet')}
+									</span>
+								{/if}
+							</div>
+						{/if}
 					</div>
+
+					<!-- OTP Section (sender only) -->
+					{#if secret.role === 'sender' && secret.otp}
+						<div
+							class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-300 dark:border-purple-600 rounded-lg"
+						>
+							<label
+								for="sender-otp-input"
+								class="block text-sm font-medium text-purple-900 dark:text-purple-200 mb-2"
+							>
+								{$_('sharedSecret.senderOtp')}
+							</label>
+							<div class="flex gap-2">
+								<input
+									id="sender-otp-input"
+									type="text"
+									readonly
+									value={secret.otp}
+									onclick={(e) => {
+										e.currentTarget.select();
+										copyToClipboard(e.currentTarget.value);
+									}}
+									class="flex-1 px-4 py-3 border-2 border-purple-300 dark:border-purple-600 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-100 font-mono text-2xl text-center tracking-widest cursor-pointer focus:ring-2 focus:ring-purple-500 transition-all hover:bg-purple-200 dark:hover:bg-purple-900/40"
+								/>
+							</div>
+							<p class="mt-2 text-sm text-purple-700 dark:text-purple-300 text-center">
+								🔐 {$_('sharedSecret.otpInstructions')}
+							</p>
+						</div>
+					{/if}
 
 					<!-- Action Buttons (Delete + Back to Menu) -->
 					<div class="flex flex-col sm:flex-row gap-3">

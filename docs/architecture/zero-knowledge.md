@@ -211,6 +211,115 @@ pub struct AuthContext {
 }
 ```
 
+## Shared Secret Zero Knowledge Architecture (v1.8.0+)
+
+### URL Hash Role Encoding
+
+**CRITICAL ZERO KNOWLEDGE PRINCIPLE**: Role discrimination (sender vs receiver) is **encoded directly in the URL hash**, NOT in database queries. This ensures complete privacy and Zero Knowledge compliance.
+
+### Hash Structure (40 bytes total)
+
+```
+URL Hash (40 bytes) = reference_hash[16] + user_id[16] + checksum[7] + role[1 bit]
+                                                                          ↓
+                                                              sender=0, receiver=1
+```
+
+### Role Encoding Implementation
+
+```rust
+// api/src/utils/shared_secret/hash_generation.rs
+pub fn encode_role_in_hash(
+    reference_hash: &[u8; 16],
+    user_id: &[u8; 16],
+    checksum: &[u8; 7],
+    role: SecretRole
+) -> [u8; 40] {
+    let mut hash = [0u8; 40];
+    hash[0..16].copy_from_slice(reference_hash);
+    hash[16..32].copy_from_slice(user_id);
+    hash[32..39].copy_from_slice(checksum);
+
+    // CRITICAL: Role encoded in last bit of final byte
+    hash[39] = match role {
+        SecretRole::Sender => 0,    // Bit 0 = sender
+        SecretRole::Receiver => 1,  // Bit 1 = receiver
+    };
+
+    hash
+}
+
+pub fn decode_role_from_hash(hash: &[u8; 40]) -> SecretRole {
+    // Extract role from last bit of final byte
+    match hash[39] & 0x01 {
+        0 => SecretRole::Sender,
+        _ => SecretRole::Receiver,
+    }
+}
+```
+
+### Zero Knowledge Properties
+
+- **No Database Role Storage**: Database contains ONLY reference_hash - role never stored
+- **URL-Based Authorization**: All sender/receiver permissions derived from URL hash itself
+- **Client-Side Role Detection**: Frontend extracts role from hash without server queries
+- **Complete Privacy**: Server cannot correlate sender/receiver without the URL hash
+- **Metadata Leak Prevention**: No `created_at` column in tracking table (removed v1.8.10)
+
+### Security Architecture
+
+```
+User Creates Secret → Two Hashes Generated (sender bit=0, receiver bit=1)
+                              ↓
+                    Database Stores: reference_hash[16] ONLY
+                              ↓
+                    URL Contains: Full 40-byte hash with role
+                              ↓
+              Retrieval: Role extracted from hash[39] bit
+                              ↓
+              Authorization: Server checks role → Shows OTP to sender only
+```
+
+### Metadata Leak Prevention (v1.8.10+)
+
+**Security Enhancement**: Removed `created_at` column from `shared_secrets_tracking` table.
+
+**Rationale**:
+- Timestamp in database + email receipt time = potential correlation attack vector
+- Even remote possibility violates Zero Knowledge principles
+- Created timestamp already exists in encrypted payload (sufficient for sender tracking)
+
+### Tracking Table Schema (v1.8.10+)
+
+```sql
+CREATE TABLE shared_secrets_tracking (
+    reference_hash BLOB PRIMARY KEY,    -- 16-byte reference (no role information)
+    pending_reads INTEGER NOT NULL,
+    read_at INTEGER,                     -- Timestamp in seconds when first accessed
+    expires_at INTEGER NOT NULL,         -- Expiration timestamp in hours
+    encrypted_payload BLOB NOT NULL      -- Contains: content + OTP + created_at + metadata
+    -- NOTE: No created_at column - prevents metadata correlation attacks
+);
+```
+
+### OTP and Tracking Visibility
+
+**Sender-Only Information** (role=0):
+- **OTP**: 9-digit code visible ONLY to sender (for sharing with receiver)
+- **read_at**: Timestamp when secret was first accessed (tracking)
+- **Delete Permission**: Can delete secret if wrong recipient
+
+**Receiver Information** (role=1):
+- **Content**: Encrypted secret content after OTP validation
+- **Reads Remaining**: Counter decremented on each access
+- **Expiration**: When secret will be permanently deleted
+
+### Implementation Files
+
+- **api/src/utils/shared_secret/hash_generation.rs**: Role encoding/decoding logic
+- **api/src/handlers/shared_secret/retrieval.rs**: Role-based response generation
+- **api/src/database/operations/shared_secret_storage.rs**: Zero Knowledge storage operations
+
 ## Zero Knowledge Benefits Summary
 
 ### Technical Benefits
@@ -220,6 +329,7 @@ pub struct AuthContext {
 - **🔧 Maintainability**: Universal blake3_keyed_variable() function eliminates code duplication
 - **📈 Future-Proofing**: Blake3 optimized for modern SIMD-capable processors (wasm32_simd)
 - **🛡️ Security**: Enhanced triple-key cryptographic protection with domain separation
+- **🔐 URL-Based Authorization**: Shared secret roles encoded in hash, not database (v1.8.0+)
 
 ### Business Benefits
 
@@ -239,6 +349,7 @@ pub struct AuthContext {
 
 ---
 
-_For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)_  
-_For security considerations, see [Security Documentation](./security.md)_  
+_For cryptographic details, see [Cryptography Documentation](../api/cryptography.md)_
+_For security considerations, see [Security Documentation](./security.md)_
 _For authentication flow, see [Authentication Documentation](../api/authentication.md)_
+_For shared secret endpoints, see [API Endpoints Documentation](../api/endpoints.md)_

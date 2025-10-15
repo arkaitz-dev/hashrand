@@ -312,6 +312,34 @@ impl SharedSecretStorage {
         Ok(Self::get_pending_reads_from_tracking(reference_hash)?.is_some())
     }
 
+    /// Get read_at timestamp from tracking table by reference_hash
+    ///
+    /// # Arguments
+    /// * `reference_hash` - Reference hash (16 bytes)
+    ///
+    /// # Returns
+    /// * `Result<Option<i64>, SqliteError>` - read_at timestamp (seconds) or None if not set/not found
+    pub fn get_read_at_from_tracking(
+        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
+    ) -> Result<Option<i64>, SqliteError> {
+        let connection = get_database_connection()?;
+
+        let result = connection.execute(
+            "SELECT read_at FROM shared_secrets_tracking WHERE reference_hash = ?",
+            &[Value::Blob(reference_hash.to_vec())],
+        )?;
+
+        if let Some(row) = result.rows.first() {
+            match &row.values[0] {
+                Value::Integer(val) => Ok(Some(*val)),
+                Value::Null => Ok(None),
+                _ => Err(SqliteError::Io("Invalid read_at type".to_string())),
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
     /// Decrement pending_reads in tracking table
     ///
     /// # Arguments
@@ -364,7 +392,6 @@ impl SharedSecretStorage {
     /// * `reference_hash` - Reference hash (16 bytes)
     /// * `pending_reads` - Initial pending_reads counter
     /// * `expires_at` - Expiration timestamp in hours
-    /// * `created_at` - Creation timestamp in seconds
     /// * `encrypted_payload` - Encrypted payload blob (NEW)
     ///
     /// # Returns
@@ -373,26 +400,23 @@ impl SharedSecretStorage {
         reference_hash: &[u8; REFERENCE_HASH_LENGTH],
         pending_reads: i64,
         expires_at: i64,
-        created_at: i64,
         encrypted_payload: &[u8],
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
         debug!(
-            "📊 SharedSecret: Storing tracking record WITH payload (size={}, pending_reads={}, expires_at={}, created_at={})",
+            "📊 SharedSecret: Storing tracking record WITH payload (size={}, pending_reads={}, expires_at={})",
             encrypted_payload.len(),
             pending_reads,
-            expires_at,
-            created_at
+            expires_at
         );
 
         connection.execute(
-            "INSERT INTO shared_secrets_tracking (reference_hash, pending_reads, read_at, expires_at, created_at, encrypted_payload) VALUES (?, ?, NULL, ?, ?, ?)",
+            "INSERT INTO shared_secrets_tracking (reference_hash, pending_reads, read_at, expires_at, encrypted_payload) VALUES (?, ?, NULL, ?, ?)",
             &[
                 Value::Blob(reference_hash.to_vec()),
                 Value::Integer(pending_reads),
                 Value::Integer(expires_at),
-                Value::Integer(created_at),
                 Value::Blob(encrypted_payload.to_vec()),
             ],
         )?;

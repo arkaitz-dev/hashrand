@@ -4,9 +4,9 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: API Backend (Rust+Spin, port 3000) + Web Interface (SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-14 - **API v1.8.10 + Web v0.28.0**
-- 🐛 **Latest**: TEST FIX - Email dry-run persistence (KV Store) + hash extraction (100% tests)
-- 📊 **Previous**: TRACKING - User interaction logging (46 logs across 17 files)
+**Last Update**: 2025-10-15 - **API v1.8.10 + Web v0.28.0**
+- 🔐 **Latest**: SECURITY - Shared secret sender tracking (OTP display + read_at + metadata leak prevention)
+- 🐛 **Previous**: TEST FIX - Email dry-run persistence (KV Store) + hash extraction (100% tests)
 - ✅ **Quality**: ZERO errors (clippy + ESLint + svelte-check + 43/43 tests)
 
 ## Security Standards - CRITICAL RULE
@@ -125,6 +125,35 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - **CHANGELOG.md = Detailed session history**
 - **Copy this to EVERY project** - Never delete
 
+## Shared Secret Security Standards - CRITICAL RULE - NEVER DELETE
+**🔐 MANDATORY: Zero Knowledge role authorization for shared secrets:**
+
+**URL Hash Role Encoding (v1.8.0+):**
+- **Role encoded in URL hash** (sender=0, receiver=1) - NOT in database
+- **Hash structure**: `reference_hash[16] + user_id[16] + checksum[7] + role[1 bit]`
+- **Zero Knowledge**: Server cannot correlate sender/receiver without URL hash
+- **Client-side authorization**: All role checks via hash extraction, never DB queries
+
+**Metadata Leak Prevention (v1.8.10+):**
+- **NO created_at column** in `shared_secrets_tracking` table
+- **Rationale**: Timestamp + email receipt time = correlation attack vector (violates Zero Knowledge)
+- **Created timestamp** exists ONLY in encrypted payload (sufficient for tracking)
+
+**Sender-Only Features (role=0 in hash):**
+- **OTP Display**: 9-digit code visible ONLY to sender (for sharing with receiver)
+- **read_at Tracking**: Timestamp when secret first accessed by receiver
+- **Auto-redirect**: Creating secret → `/shared-secret/[sender_hash]` (not success screen)
+- **Delete Permission**: Sender can delete if wrong recipient
+
+**Receiver Features (role=1 in hash):**
+- **Content Access**: Encrypted secret after OTP validation
+- **Reads Remaining**: Counter visible in tracking
+- **No OTP visibility**: OTP never exposed to receiver (security)
+
+**Documentation**: See `docs/architecture/zero-knowledge.md` for complete architecture
+
+**Copy this rule to EVERY project with role-based auth** - Never delete
+
 ---
 
 ## Commands
@@ -139,6 +168,7 @@ just check / just build      # Quality/Build
 - **Backend**: Rust+Spin+WASM+SQLite (Zero Knowledge auth, ChaCha20, Ed25519)
 - **Frontend**: SvelteKit+TypeScript+TailwindCSS (13 languages, AuthGuard)
 - **Auth**: Magic links + JWT + Ed25519 + 2/3 key rotation
+- **Shared Secrets**: URL hash role encoding (sender/receiver), OTP tracking, metadata leak prevention
 - **Tests**: 43 tests (35 bash + 8 Playwright), 100% pass rate
 
 ## Endpoints

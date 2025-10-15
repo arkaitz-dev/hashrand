@@ -38,6 +38,10 @@ struct RetrieveSecretResponse {
     expires_at: i64,
     reference: String,
     role: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    otp: Option<String>, // Only included for sender role
+    #[serde(skip_serializing_if = "Option::is_none")]
+    read_at: Option<i64>, // Timestamp in seconds, None if not yet read
 }
 
 /// Main handler for GET/POST /api/shared-secret/{hash}
@@ -264,6 +268,27 @@ fn retrieve_and_respond(
     // Convert reference_hash to Base58
     let reference_base58 = bs58::encode(&payload.reference_hash).into_string();
 
+    // Get read_at from tracking table
+    let reference_hash_array: [u8; 16] = payload
+        .reference_hash
+        .as_slice()
+        .try_into()
+        .map_err(|_| "Invalid reference_hash length".to_string())?;
+    let read_at = SharedSecretStorage::get_read_at_from_tracking(&reference_hash_array)
+        .map_err(|e| format!("Failed to get read_at: {}", e))?;
+
+    // Include OTP and read_at only for sender (role from hash, not DB)
+    let otp_for_response = if role == SecretRole::Sender {
+        payload.otp.clone()
+    } else {
+        None
+    };
+    let read_at_for_response = if role == SecretRole::Sender {
+        read_at
+    } else {
+        None
+    };
+
     // Create response
     let response_data = RetrieveSecretResponse {
         secret_text: payload.secret_text,
@@ -274,6 +299,8 @@ fn retrieve_and_respond(
         expires_at,
         reference: reference_base58,
         role: role.to_str().to_string(),
+        otp: otp_for_response,
+        read_at: read_at_for_response,
     };
 
     let response_json = json!(response_data);

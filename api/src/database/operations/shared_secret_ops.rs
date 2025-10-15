@@ -136,7 +136,6 @@ impl SharedSecretOps {
             reference_hash,
             max_reads,
             expires_at,
-            created_at,
             &encrypted_payload_tracking,
         )?;
 

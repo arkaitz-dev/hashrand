@@ -295,6 +295,8 @@ export interface ViewSharedSecretResponse {
 	expires_at: number; // Unix timestamp
 	reference: string; // Base58 reference hash
 	role: 'sender' | 'receiver';
+	otp?: string; // 9-digit OTP (only for sender role)
+	read_at?: number; // First access timestamp in seconds (only for sender, null if not yet accessed)
 }
 
 // Shared Secret Error Responses (returned as HTTP 200 with error field in SignedResponse)
