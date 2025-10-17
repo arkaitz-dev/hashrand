@@ -282,6 +282,7 @@ export const ja: I18nTexts = {
 		secretNotFound: 'シークレットが見つからないか、期限切れです',
 		secretExpired: 'シークレットが期限切れまたは全ての閲覧回数が使用されました',
 		emailInvalid: '無効なメールアドレス',
+		emailSameAsSender: '受信者のメールアドレスは送信者と同じにできません',
 		secretTooLong: 'シークレットテキストは512文字を超えることはできません',
 		secretEmpty: 'シークレットテキストを空にすることはできません',
 		expiresInvalid: '有効期限は1〜72時間の間である必要があります',

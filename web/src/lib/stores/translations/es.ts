@@ -297,6 +297,7 @@ export const es: I18nTexts = {
 		secretNotFound: 'Secreto no encontrado o caducado',
 		secretExpired: 'El secreto ha caducado o se han consumido todas las lecturas',
 		emailInvalid: 'Dirección de email inválida',
+		emailSameAsSender: 'El email del destinatario no puede ser igual al del emisor',
 		secretTooLong: 'El texto del secreto no puede exceder 512 caracteres',
 		secretEmpty: 'El texto del secreto no puede estar vacío',
 		expiresInvalid: 'La caducidad debe estar entre 1 y 72 horas',

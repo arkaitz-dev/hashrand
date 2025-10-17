@@ -290,6 +290,7 @@ export const fr: I18nTexts = {
 		secretNotFound: 'Secret introuvable ou expiré',
 		secretExpired: 'Le secret a expiré ou toutes les lectures ont été consommées',
 		emailInvalid: 'Adresse email invalide',
+		emailSameAsSender: "L'email du destinataire ne peut pas être identique à celui de l'expéditeur",
 		secretTooLong: 'Le texte du secret ne peut pas dépasser 512 caractères',
 		secretEmpty: 'Le texte du secret ne peut pas être vide',
 		expiresInvalid: "L'expiration doit être entre 1 et 72 heures",

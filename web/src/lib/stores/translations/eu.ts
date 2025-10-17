@@ -278,6 +278,7 @@ export const eu: I18nTexts = {
 		secretNotFound: 'Sekretua ez da aurkitu edo iraungi da',
 		secretExpired: 'Sekretua iraungi da edo irakurketa guztiak erabili dira',
 		emailInvalid: 'Helbide elektroniko baliogabea',
+		emailSameAsSender: 'Hartzailearen helbide elektronikoa ezin da bidaltzailearekin bera izan',
 		secretTooLong: 'Sekretuaren testua ezin da 512 karaktere baino luzeagoa izan',
 		secretEmpty: 'Sekretuaren testua ezin da hutsik egon',
 		expiresInvalid: 'Iraungitzea 1 eta 72 ordu artean egon behar da',

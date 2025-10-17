@@ -291,6 +291,7 @@ export const de: I18nTexts = {
 		secretNotFound: 'Geheimnis nicht gefunden oder abgelaufen',
 		secretExpired: 'Das Geheimnis ist abgelaufen oder alle Lesevorgänge wurden verbraucht',
 		emailInvalid: 'Ungültige E-Mail-Adresse',
+		emailSameAsSender: 'Die E-Mail des Empfängers kann nicht mit der des Absenders identisch sein',
 		secretTooLong: 'Der Geheimnistext darf 512 Zeichen nicht überschreiten',
 		secretEmpty: 'Der Geheimnistext darf nicht leer sein',
 		expiresInvalid: 'Der Ablauf muss zwischen 1 und 72 Stunden liegen',

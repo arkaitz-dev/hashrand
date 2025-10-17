@@ -271,6 +271,7 @@ export const zh: I18nTexts = {
 		secretNotFound: '秘密未找到或已过期',
 		secretExpired: '秘密已过期或所有读取次数已用完',
 		emailInvalid: '无效的邮箱地址',
+		emailSameAsSender: '收件人邮箱不能与发件人相同',
 		secretTooLong: '秘密文本不能超过512个字符',
 		secretEmpty: '秘密文本不能为空',
 		expiresInvalid: '过期时间必须在1到72小时之间',

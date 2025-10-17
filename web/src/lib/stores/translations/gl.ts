@@ -281,6 +281,7 @@ export const gl: I18nTexts = {
 		secretNotFound: 'Segredo non atopado ou caducado',
 		secretExpired: 'O segredo caducou ou consumíronse todas as lecturas',
 		emailInvalid: 'Enderezo de correo non válido',
+		emailSameAsSender: 'O correo do destinatario non pode ser igual ao do remitente',
 		secretTooLong: 'O texto do segredo non pode superar 512 caracteres',
 		secretEmpty: 'O texto do segredo non pode estar baleiro',
 		expiresInvalid: 'A caducidade debe estar entre 1 e 72 horas',

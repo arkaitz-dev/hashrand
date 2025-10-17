@@ -282,6 +282,7 @@ export const ca: I18nTexts = {
 		secretNotFound: 'Secret no trobat o caducat',
 		secretExpired: "El secret ha caducat o s'han consumit totes les lectures",
 		emailInvalid: 'Adreça de correu no vàlida',
+		emailSameAsSender: 'El correu del destinatari no pot ser igual al del remitent',
 		secretTooLong: 'El text del secret no pot superar 512 caràcters',
 		secretEmpty: 'El text del secret no pot estar buit',
 		expiresInvalid: "La caducitat ha d'estar entre 1 i 72 hores",

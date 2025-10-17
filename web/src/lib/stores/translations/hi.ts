@@ -280,6 +280,7 @@ export const hi: I18nTexts = {
 		secretNotFound: 'रहस्य नहीं मिला या समाप्त हो गया',
 		secretExpired: 'रहस्य समाप्त हो गया है या सभी पठन उपयोग किए जा चुके हैं',
 		emailInvalid: 'अमान्य ईमेल पता',
+		emailSameAsSender: 'प्राप्तकर्ता का ईमेल प्रेषक के समान नहीं हो सकता',
 		secretTooLong: 'रहस्य का पाठ 512 वर्णों से अधिक नहीं हो सकता',
 		secretEmpty: 'रहस्य का पाठ खाली नहीं हो सकता',
 		expiresInvalid: 'समाप्ति 1 और 72 घंटों के बीच होनी चाहिए',
