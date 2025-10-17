@@ -1,7 +1,7 @@
 <script lang="ts">
-	// import { goto } from '$app/navigation'; // REPLACED by useGenerationWorkflow
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	// import { page } from '$app/stores'; // REPLACED by useFormParams
+	import { page } from '$app/stores';
 	// import Button from '$lib/components/Button.svelte';
 	import GenerateButton from '$lib/components/GenerateButton.svelte';
 	import BackToMenuButton from '$lib/components/BackToMenuButton.svelte';
@@ -23,6 +23,17 @@
 	// Track route loading
 	onMount(() => {
 		logger.info('[Route] Custom Hash page loaded');
+
+		// 🔒 SECURITY: Only allow 'p' parameter (encrypted params from result page)
+		// Any other parameter is a potential attack vector - redirect to home
+		const searchParams = $page.url.searchParams;
+		for (const [key] of searchParams) {
+			if (key !== 'p') {
+				logger.warn(`[Security] Unauthorized parameter '${key}' detected, redirecting to home`);
+				goto('/');
+				return;
+			}
+		}
 	});
 
 	// Default values

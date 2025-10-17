@@ -44,14 +44,24 @@
 	onMount(async () => {
 		logger.info('[Route] Result page loaded');
 
+		// Access searchParams directly from $page (not from $derived variable)
+		// because $derived values are not guaranteed to be updated in onMount
+		const currentSearchParams = $page.url.searchParams;
+
+		// 🔒 SECURITY: Only allow 'p' parameter (encrypted params from result page)
+		// Any other parameter is a potential attack vector - redirect to home
+		for (const [key] of currentSearchParams) {
+			if (key !== 'p') {
+				logger.warn(`[Security] Unauthorized parameter '${key}' detected, redirecting to home`);
+				goto('/');
+				return;
+			}
+		}
+
 		// REACTIVE APPROACH: No proactive session checks
 		// If session is expired, the API call will return 401
 		// and the reactive interceptor will handle refresh/login automatically
 		// This prevents race conditions with session timestamp storage
-
-		// Access searchParams directly from $page (not from $derived variable)
-		// because $derived values are not guaranteed to be updated in onMount
-		const currentSearchParams = $page.url.searchParams;
 		logger.debug('[Result] URL search params check', {
 			hasParams: currentSearchParams.size > 0,
 			paramsCount: currentSearchParams.size,
