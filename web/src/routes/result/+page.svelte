@@ -14,7 +14,6 @@
 	import { dialogStore } from '$lib/stores/dialog';
 	import { decryptPageParams, createEncryptedUrl } from '$lib/crypto';
 	import { authStore } from '$lib/stores/auth';
-	import { checkSessionOrAutoLogout } from '$lib/session-expiry-manager';
 	import { logger } from '$lib/utils/logger';
 
 	let copySuccess = $state(false);
@@ -31,8 +30,8 @@
 		showParametersUsed = !showParametersUsed;
 	}
 
-	// Get URL parameters reactively
-	let searchParams = $derived($page.url.searchParams);
+	// NOTE: URL parameters are now accessed directly from $page in onMount
+	// instead of using $derived to avoid reactivity issues
 
 	// Only treat as "provided seed" if seed parameter comes from URL GET parameters
 	// (this controls whether to show the regenerate button)
@@ -44,30 +43,37 @@
 	// Handle result state and API calls
 	onMount(async () => {
 		logger.info('[Route] Result page loaded');
-		// CHECK SESSION EXPIRATION FIRST - before any result processing
-		// If expired, performs automatic logout (redirect + cleanup + flash)
-		const sessionValid = await checkSessionOrAutoLogout();
 
-		if (!sessionValid) {
-			// Session expired, auto-logout already performed
-			return; // Stop all result processing
-		}
+		// REACTIVE APPROACH: No proactive session checks
+		// If session is expired, the API call will return 401
+		// and the reactive interceptor will handle refresh/login automatically
+		// This prevents race conditions with session timestamp storage
 
-		// Session is valid - proceed with result processing
+		// Access searchParams directly from $page (not from $derived variable)
+		// because $derived values are not guaranteed to be updated in onMount
+		const currentSearchParams = $page.url.searchParams;
+		logger.debug('[Result] URL search params check', {
+			hasParams: currentSearchParams.size > 0,
+			paramsCount: currentSearchParams.size,
+			keys: Array.from(currentSearchParams.keys())
+		});
 
 		// If there are URL parameters, ALWAYS generate from them (override any existing state)
-		if (searchParams.size > 0) {
-			await generateFromParams();
+		if (currentSearchParams.size > 0) {
+			logger.info('[Result] URL parameters detected, generating from params');
+			await generateFromParams(currentSearchParams);
 			return;
 		}
 
 		// If no URL parameters and no result state, redirect to home
 		if (!$resultState) {
+			logger.info('[Result] No URL params and no result state, redirecting to home');
 			// Redirect to home silently
 			goto('/');
 			return;
 		}
 
+		logger.info('[Result] Using existing result state');
 		// Using existing result state
 	});
 
@@ -75,26 +81,38 @@
 	async function buildParamsFromUrlParams(
 		urlParams: Record<string, unknown>
 	): Promise<Record<string, string | number | boolean>> {
+		logger.debug('[buildParams] Starting params conversion', { urlParams });
+
 		const { intToAlphabet, isAlphabetInt, intToMnemonicLang, isMnemonicLangInt } = await import(
 			'$lib/types'
 		);
 		const params: Record<string, string | number | boolean> = {};
 
 		// Convert and validate parameters
-		if (urlParams.length) params.length = parseInt(String(urlParams.length));
+		if (urlParams.length) {
+			params.length = parseInt(String(urlParams.length));
+			logger.debug('[buildParams] Length converted', { length: params.length });
+		}
 
 		// CRITICAL: Alphabet MUST be integer (0-4) in encrypted URLs
 		// Strings are INVALID and indicate an error
 		if (urlParams.alphabet !== undefined) {
 			const alphabetValue = urlParams.alphabet;
+			logger.debug('[buildParams] Processing alphabet', {
+				alphabetValue,
+				type: typeof alphabetValue,
+				isInt: typeof alphabetValue === 'number' && isAlphabetInt(alphabetValue)
+			});
+
 			if (typeof alphabetValue === 'number' && isAlphabetInt(alphabetValue)) {
 				// Convert integer to string for display
 				params.alphabet = intToAlphabet(alphabetValue);
+				logger.debug('[buildParams] Alphabet converted', { alphabet: params.alphabet });
 			} else {
 				// STRING IS INVALID - encrypted URLs must use integers
-				throw new Error(
-					`Invalid alphabet format: expected integer 0-4, got ${typeof alphabetValue}`
-				);
+				const error = `Invalid alphabet format: expected integer 0-4, got ${typeof alphabetValue} = ${alphabetValue}`;
+				logger.error('[buildParams] Alphabet validation failed:', error);
+				throw new Error(error);
 			}
 		}
 
@@ -120,7 +138,9 @@
 	}
 
 	// Function to generate result from URL parameters
-	async function generateFromParams() {
+	async function generateFromParams(urlSearchParams: URLSearchParams) {
+		logger.debug('[Result] generateFromParams called');
+
 		// REACTIVE APPROACH: No proactive auth checks
 		// If tokens are invalid/expired, the API call will get 401
 		// and reactive interceptor will handle refresh/login automatically
@@ -134,28 +154,82 @@
 		const nonceToken = authStore.getNonceToken();
 		const hmacKey = authStore.getHmacKey();
 
-		// Check crypto token availability
+		logger.debug('[Result] Crypto tokens check', {
+			hasCipher: !!cipherToken,
+			hasNonce: !!nonceToken,
+			hasHmac: !!hmacKey
+		});
 
+		// Check crypto token availability
 		if (cipherToken && nonceToken && hmacKey) {
+			logger.debug('[Result] Crypto tokens available, attempting decryption');
 			try {
-				const decryptedParams = await decryptPageParams(searchParams, {
+				const decryptedParams = await decryptPageParams(urlSearchParams, {
 					cipherToken,
 					nonceToken,
 					hmacKey
 				});
 
 				if (decryptedParams) {
+					logger.debug('[Result] Parameters decrypted successfully', {
+						endpoint: decryptedParams.endpoint
+					});
+
+					// FIX: Convert string numbers to actual numbers
+					// JSON serialization in magic link flow converts numbers to strings
+					// Example: alphabet: 0 → "alphabet":"0" → alphabet: "0"
+					// We need to convert back: alphabet: "0" → alphabet: 0
+					if (decryptedParams.alphabet !== undefined) {
+						const alphabetValue = decryptedParams.alphabet;
+						if (typeof alphabetValue === 'string' && /^\d+$/.test(alphabetValue)) {
+							decryptedParams.alphabet = parseInt(alphabetValue);
+							logger.debug('[Result] Converted alphabet string to number', {
+								from: alphabetValue,
+								to: decryptedParams.alphabet
+							});
+						}
+					}
+					if (decryptedParams.language !== undefined) {
+						const langValue = decryptedParams.language;
+						if (typeof langValue === 'string' && /^\d+$/.test(langValue)) {
+							decryptedParams.language = parseInt(langValue);
+							logger.debug('[Result] Converted language string to number', {
+								from: langValue,
+								to: decryptedParams.language
+							});
+						}
+					}
+					if (decryptedParams.length !== undefined) {
+						const lengthValue = decryptedParams.length;
+						if (typeof lengthValue === 'string' && /^\d+$/.test(lengthValue)) {
+							decryptedParams.length = parseInt(lengthValue);
+						}
+					}
+					if (decryptedParams.words !== undefined) {
+						const wordsValue = decryptedParams.words;
+						if (typeof wordsValue === 'string' && /^\d+$/.test(wordsValue)) {
+							decryptedParams.words = parseInt(wordsValue);
+						}
+					}
+
 					urlParams = decryptedParams;
 				} else {
 					// Failed to decrypt parameters - redirect to home
+					logger.error('[Result] Decryption returned null, redirecting to home');
 					goto('/');
 					return;
 				}
-			} catch {
+			} catch (error) {
 				// Error during decryption - redirect to home
+				logger.error('[Result] Decryption error, redirecting to home:', error);
 				goto('/');
 				return;
 			}
+		} else {
+			// Missing crypto tokens - redirect to home
+			logger.error('[Result] Missing crypto tokens, redirecting to home');
+			goto('/');
+			return;
 		}
 
 		// NO fallback to direct URL parameters - only encrypted params are supported
@@ -163,9 +237,11 @@
 
 		// Extract and validate endpoint
 		const endpoint = String(urlParams.endpoint || '');
+		logger.debug('[Result] Endpoint extracted', { endpoint });
 
 		if (!endpoint) {
 			// No valid endpoint, redirecting to home
+			logger.error('[Result] No endpoint found, redirecting to home');
 			goto('/');
 			return;
 		}
@@ -173,12 +249,16 @@
 		// Check if we have a provided seed (only from decrypted params)
 		const hasProvidedSeed = Boolean(urlParams.seed);
 		usedProvidedSeed = hasProvidedSeed;
+		logger.debug('[Result] Seed check', { hasProvidedSeed });
 
 		// Build parameters object using DRY helper function
+		logger.debug('[Result] Building params from URL params');
 		const params = await buildParamsFromUrlParams(urlParams);
+		logger.debug('[Result] Params built successfully', { params });
 
 		// CREATE TEMPORARY resultState to show UI immediately (before API call)
 		// This provides instant feedback to the user instead of blank screen
+		logger.debug('[Result] Setting temporary result state');
 		setResult({
 			value: '', // Empty - textarea will show "Loading..." via $isLoading check
 			seed: undefined,
@@ -187,12 +267,16 @@
 			endpoint: endpoint,
 			timestamp: new Date() // Temporary timestamp, will be updated with real one
 		});
+		logger.debug('[Result] Temporary result state set');
 
 		// NOW start loading indicator and call API
+		logger.debug('[Result] Starting loading indicator');
 		setLoading(true);
 
 		try {
+			logger.debug('[Result] Importing API module');
 			const { api } = await import('$lib/api');
+			logger.debug('[Result] API module imported successfully');
 
 			const inputSeed = urlParams.seed ? String(urlParams.seed) : null;
 
@@ -282,15 +366,20 @@
 				endpoint,
 				timestamp: responseTimestamp
 			});
-		} catch {
+		} catch (error) {
 			// For ANY error, redirect to home with flash message as requested
+			logger.error('[Result] Error during generation:', error);
 
 			// Handle API generation errors
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			logger.error('[Result] Error details:', { errorMessage, error });
 
 			// Always redirect to home on errors
+			logger.debug('[Result] Redirecting to home due to error');
 			await goto('/');
 			return;
 		} finally {
+			logger.debug('[Result] Generation process finished, clearing loading state');
 			setLoading(false);
 		}
 	}

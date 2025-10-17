@@ -154,6 +154,33 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Copy this rule to EVERY project with role-based auth** - Never delete
 
+## Database Management - CRITICAL RULE - NEVER DELETE
+**💾 MANDATORY: Database locations and schema management:**
+
+**⚠️ CRITICAL WARNING - DATABASE DELETION:**
+- **ALWAYS ASK USER PERMISSION BEFORE DELETING ANY DATABASE** - Zero exceptions
+- **NEVER assume safe to delete** - Even in dev, data may be critical/valuable
+- **When schema errors occur** → Suggest deletion → Wait for explicit approval → Then delete
+
+**Active Databases (2):**
+1. **`/data/hashrand-dev.db`** - Main application database
+   - Tables: `users`, `magiclinks`, `shared_secrets`, `shared_secrets_tracking`
+   - Managed by Spin SQLite component
+2. **`/.spin/sqlite_key_value.db`** - Spin KV Store
+   - Used for: Email dry-run mode state persistence (tests)
+   - Managed by Spin runtime
+
+**Schema Updates (ONLY after explicit user approval):**
+- **When schema changes**: Ask user permission to delete databases
+- **Command** (only after approval): `rm -f data/*.db .spin/sqlite*.db`
+- **Auto-recreation**: Spin recreates with correct schema on next startup
+- **Why deletion helps**: Prevents "NOT NULL constraint failed" and schema mismatch errors
+- **Why ask first**: Even in dev, could be production changes or valuable data
+
+**Schema Source of Truth**: `api/src/database/connection.rs::initialize_database()`
+
+**Copy this rule to EVERY Spin project with SQLite** - Never delete
+
 ---
 
 ## Commands
