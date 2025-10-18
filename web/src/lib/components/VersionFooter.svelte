@@ -31,7 +31,9 @@
 </script>
 
 <!-- Version Information and Footer -->
-<div class="text-center py-6 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+<div
+	class="text-center py-6 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800"
+>
 	<div class="text-sm text-gray-500 dark:text-gray-400">
 		{#if loadingVersion}
 			<div class="flex items-center justify-center">

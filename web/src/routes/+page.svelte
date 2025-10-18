@@ -23,21 +23,42 @@
 		// Handle shared secret parameter (?shared=[hash] from email link)
 		const sharedHash = searchParams.get('shared');
 		if (sharedHash) {
-			logger.info('[Route] Shared secret hash detected, checking auth and redirecting');
+			logger.info('[Route] Shared secret hash detected, checking auth');
 
-			// Import checkSessionOrAutoLogout dynamically
-			const { checkSessionOrAutoLogout } = await import('$lib/session-expiry-manager');
+			// 1. Check if user has local auth tokens (no HTTP call)
+			const { hasLocalAuthTokens } = await import('$lib/stores/auth/auth-session');
+			const hasTokens = await hasLocalAuthTokens();
 
-			// Check session - if expired, performs automatic logout (redirect + cleanup + flash)
-			// If valid, returns true and we redirect below
-			const sessionValid = await checkSessionOrAutoLogout();
-
-			if (sessionValid) {
-				// Session is valid, redirect directly to shared-secret
-				goto(`/shared-secret/${sharedHash}`);
+			if (!hasTokens) {
+				// No tokens → show auth dialog with destination
+				logger.info('[Route] No tokens found, showing auth dialog');
+				const { dialogStore } = await import('$lib/stores/dialog');
+				dialogStore.show('auth', {
+					destination: { route: `/shared-secret/${sharedHash}` }
+				});
+				return;
 			}
 
-			// If session expired, checkSessionOrAutoLogout already performed auto-logout
+			// 2. Has tokens → check if session expired (manual check, no auto-redirect)
+			const { isSessionExpired } = await import('$lib/session-expiry-manager');
+			const expired = await isSessionExpired();
+
+			if (expired) {
+				// Session expired → cleanup + show auth dialog with destination
+				logger.info('[Route] Session expired, cleaning up and showing auth dialog');
+				const { clearLocalAuthData } = await import('$lib/stores/auth/auth-actions');
+				await clearLocalAuthData();
+
+				const { dialogStore } = await import('$lib/stores/dialog');
+				dialogStore.show('auth', {
+					destination: { route: `/shared-secret/${sharedHash}` }
+				});
+				return;
+			}
+
+			// 3. Session is valid → redirect directly to shared-secret
+			logger.info('[Route] Session valid, redirecting to shared-secret');
+			goto(`/shared-secret/${sharedHash}`);
 			return;
 		}
 
@@ -110,7 +131,9 @@
 	<meta name="description" content={$_('menu.description')} />
 </svelte:head>
 
-<div class="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+<div
+	class="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
+>
 	<div class="container mx-auto px-4 py-8">
 		<!-- Header -->
 		<header class="text-center mb-12">
