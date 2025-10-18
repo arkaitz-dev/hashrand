@@ -94,7 +94,7 @@ export const pt: I18nTexts = {
 		description: 'Gerador criptograficamente seguro de hashes, senhas e chaves API'
 	},
 	custom: {
-		title: 'Gerador de Hash Personalizado',
+		title: 'Hash Personalizado',
 		description: 'Gere hashes aleatórios personalizados',
 		generateHash: 'Gerar Hash',
 		length: 'Comprimento',
@@ -110,7 +110,7 @@ export const pt: I18nTexts = {
 		failedToGenerateHash: 'Falha ao gerar hash'
 	},
 	password: {
-		title: 'Gerador de Senhas Seguras',
+		title: 'Senhas Seguras',
 		description: 'Gere senhas seguras',
 		generatePassword: 'Gerar Senha',
 		length: 'Comprimento',
@@ -127,7 +127,7 @@ export const pt: I18nTexts = {
 		failedToGeneratePassword: 'Falha ao gerar senha'
 	},
 	apiKey: {
-		title: 'Gerador de Chaves API',
+		title: 'Chaves API',
 		description: 'Gere chaves API com prefixo ak_',
 		generateApiKey: 'Gerar Chave API',
 		length: 'Comprimento',
@@ -147,7 +147,7 @@ export const pt: I18nTexts = {
 		failedToGenerateApiKey: 'Falha ao gerar chave API'
 	},
 	mnemonic: {
-		title: 'Gerador de Frases Mnemônicas BIP39',
+		title: 'Frases Mnemônicas BIP39',
 		description: 'Gere frases mnemônicas BIP39 para carteiras de criptomoedas',
 		generateMnemonic: 'Gerar Frase Mnemônica',
 		language: 'Idioma',
@@ -231,7 +231,7 @@ export const pt: I18nTexts = {
 		keyRotationCompleted: '✅ Rotação de chaves concluída (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token renovado sem rotação (1/3)',
 		tokenRefreshSuccess: '✅ Token renovado com sucesso',
-		tokenRefreshError: '❌ Erro ao renovar token',
+		tokenRefreshError: '❌ Erro ao renovar a sessão',
 		sessionExpiredRequireLogin: '⚠️ Sessão expirada - novo login necessário',
 		cryptoTokensMissing: '🔐 Tokens criptográficos ausentes - autenticação necessária',
 		sessionCorrupted: '⚠️ Sessão corrompida - por favor, faça login novamente',

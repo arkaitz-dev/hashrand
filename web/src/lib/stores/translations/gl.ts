@@ -94,7 +94,7 @@ export const gl: I18nTexts = {
 		description: 'Xerador criptograficamente seguro de hashes, contrasinais e chaves API'
 	},
 	custom: {
-		title: 'Xerador de Hash personalizado',
+		title: 'Hash Personalizado',
 		description: 'Xera hashes aleatorios personalizados',
 		generateHash: 'Xerar Hash',
 		length: 'Lonxitude',
@@ -110,7 +110,7 @@ export const gl: I18nTexts = {
 		failedToGenerateHash: 'Fallou xerar o hash'
 	},
 	password: {
-		title: 'Xerador de contrasinais seguros',
+		title: 'Contrasinais Seguros',
 		description: 'Xera contrasinais seguros',
 		generatePassword: 'Xerar Contrasinal',
 		length: 'Lonxitude',
@@ -127,7 +127,7 @@ export const gl: I18nTexts = {
 		failedToGeneratePassword: 'Fallou xerar o contrasinal'
 	},
 	apiKey: {
-		title: 'Xerador de chaves API',
+		title: 'Chaves API',
 		description: 'Xera chaves API con prefixo ak_',
 		generateApiKey: 'Xerar Chave API',
 		length: 'Lonxitude',
@@ -156,7 +156,7 @@ export const gl: I18nTexts = {
 		numeric: 'Numérico (0-9)'
 	},
 	mnemonic: {
-		title: 'Xerador de frases mnemónicas BIP39',
+		title: 'Frases Mnemónicas BIP39',
 		description: 'Xera frases mnemónicas BIP39 para carteiras de criptomoedas',
 		generateMnemonic: 'Xerar frase mnemónica',
 		language: 'Idioma',
@@ -225,7 +225,7 @@ export const gl: I18nTexts = {
 		keyRotationCompleted: '✅ Rotación de chaves completada (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token renovado sen rotación (1/3)',
 		tokenRefreshSuccess: '✅ Token renovado correctamente',
-		tokenRefreshError: '❌ Erro na renovación do token',
+		tokenRefreshError: '❌ Erro ao renovar a sesión',
 		sessionExpiredRequireLogin: '⚠️ Sesión expirada - requírese novo inicio de sesión',
 		cryptoTokensMissing: '🔐 Tokens criptográficos ausentes - requírese autenticación',
 		sessionCorrupted: '⚠️ Sesión corrompida - por favor, inicia sesión de novo',

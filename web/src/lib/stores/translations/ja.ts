@@ -94,7 +94,7 @@ export const ja: I18nTexts = {
 		description: '暗号学的に安全なハッシュ、パスワード、APIキーの生成器'
 	},
 	custom: {
-		title: 'カスタムハッシュ生成器',
+		title: 'カスタムハッシュ',
 		description: 'カスタムランダムハッシュを生成',
 		generateHash: 'ハッシュを生成',
 		length: '文字数',
@@ -110,7 +110,7 @@ export const ja: I18nTexts = {
 		numericDescription: '0-9の数字のみ、より長い長さが必要'
 	},
 	password: {
-		title: '安全なパスワード生成器',
+		title: '安全なパスワード',
 		description: '安全なパスワードを生成',
 		generatePassword: 'パスワードを生成',
 		length: '文字数',
@@ -127,7 +127,7 @@ export const ja: I18nTexts = {
 		failedToGeneratePassword: 'パスワードの生成に失敗しました'
 	},
 	apiKey: {
-		title: 'APIキー生成器',
+		title: 'APIキー',
 		description: 'ak_プレフィックス付きAPIキーを生成',
 		generateApiKey: 'APIキーを生成',
 		length: '文字数',
@@ -156,7 +156,7 @@ export const ja: I18nTexts = {
 		numeric: '数字（0-9）'
 	},
 	mnemonic: {
-		title: 'BIP39ニーモニック生成器',
+		title: 'BIP39ニーモニックフレーズ',
 		description: '暗号通貨ウォレット用のBIP39ニーモニックフレーズを生成',
 		generateMnemonic: 'ニーモニックを生成',
 		language: '言語',
@@ -226,7 +226,7 @@ export const ja: I18nTexts = {
 		keyRotationCompleted: '✅ キーローテーションが完了しました (2/3)',
 		tokenRenewedNoRotation: '⏭️ ローテーションなしでトークンを更新しました (1/3)',
 		tokenRefreshSuccess: '✅ トークンの更新に成功しました',
-		tokenRefreshError: '❌ トークンの更新エラー',
+		tokenRefreshError: '❌ セッションの更新エラー',
 		sessionExpiredRequireLogin: '⚠️ セッションが期限切れです - 再ログインが必要です',
 		cryptoTokensMissing: '🔐 暗号化トークンがありません - 認証が必要です',
 		sessionCorrupted: '⚠️ セッションが破損しています - 再度ログインしてください',

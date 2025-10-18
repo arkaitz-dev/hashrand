@@ -94,7 +94,7 @@ export const ca: I18nTexts = {
 		description: 'Generador criptogràficament segur de hashs, contrasenyes i claus API'
 	},
 	custom: {
-		title: 'Generador de Hash personalitzat',
+		title: 'Hash Personalitzat',
 		description: 'Genereu hashs aleatoris personalitzats',
 		generateHash: 'Generar Hash',
 		length: 'Longitud',
@@ -110,7 +110,7 @@ export const ca: I18nTexts = {
 		failedToGenerateHash: 'Ha fallat generar el hash'
 	},
 	password: {
-		title: 'Generador de contrasenyes segures',
+		title: 'Contrasenyes Segures',
 		description: 'Genereu contrasenyes segures',
 		generatePassword: 'Generar Contrasenya',
 		length: 'Longitud',
@@ -127,7 +127,7 @@ export const ca: I18nTexts = {
 		failedToGeneratePassword: 'Ha fallat generar la contrasenya'
 	},
 	apiKey: {
-		title: 'Generador de claus API',
+		title: 'Claus API',
 		description: 'Genereu claus API amb prefix ak_',
 		generateApiKey: 'Generar Clau API',
 		length: 'Longitud',
@@ -156,7 +156,7 @@ export const ca: I18nTexts = {
 		numeric: 'Numèric (0-9)'
 	},
 	mnemonic: {
-		title: 'Generador de frases mnemòniques BIP39',
+		title: 'Frases Mnemòniques BIP39',
 		description: 'Genereu frases mnemòniques BIP39 per a monederes de criptomonedes',
 		generateMnemonic: 'Generar frase mnemònica',
 		language: 'Idioma',
@@ -226,7 +226,7 @@ export const ca: I18nTexts = {
 		keyRotationCompleted: '✅ Rotació de claus completada (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token renovat sense rotació (1/3)',
 		tokenRefreshSuccess: '✅ Token renovat correctament',
-		tokenRefreshError: '❌ Error en renovar el token',
+		tokenRefreshError: '❌ Error en renovar la sessió',
 		sessionExpiredRequireLogin: '⚠️ Sessió expirada - cal un nou inici de sessió',
 		cryptoTokensMissing: '🔐 Tokens criptogràfics absents - cal autenticació',
 		sessionCorrupted: '⚠️ Sessió corrupta - si us plau, inicieu sessió de nou',

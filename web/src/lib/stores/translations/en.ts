@@ -98,7 +98,7 @@ export const en: I18nTexts = {
 		description: 'Cryptographically secure hash, password, and API key generator'
 	},
 	custom: {
-		title: 'Custom Hash Generator',
+		title: 'Custom Hash',
 		description: 'Generate customized random hashes',
 		generateHash: 'Generate Hash',
 		length: 'Length',
@@ -114,7 +114,7 @@ export const en: I18nTexts = {
 		failedToGenerateHash: 'Failed to generate hash'
 	},
 	password: {
-		title: 'Secure Password Generator',
+		title: 'Secure Passwords',
 		description: 'Generate secure passwords',
 		generatePassword: 'Generate Password',
 		length: 'Length',
@@ -131,7 +131,7 @@ export const en: I18nTexts = {
 		failedToGeneratePassword: 'Failed to generate password'
 	},
 	apiKey: {
-		title: 'API Key Generator',
+		title: 'API Keys',
 		description: 'Generate API keys with ak_ prefix',
 		generateApiKey: 'Generate API Key',
 		length: 'Length',
@@ -153,7 +153,7 @@ export const en: I18nTexts = {
 		failedToGenerateApiKey: 'Failed to generate API key'
 	},
 	mnemonic: {
-		title: 'BIP39 Mnemonic Generator',
+		title: 'BIP39 Mnemonic Phrases',
 		description: 'Generate BIP39 mnemonic phrases for cryptocurrency wallets',
 		generateMnemonic: 'Generate Mnemonic',
 		language: 'Language',
@@ -238,7 +238,7 @@ export const en: I18nTexts = {
 		keyRotationCompleted: '✅ Key rotation completed (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token renewed without rotation (1/3)',
 		tokenRefreshSuccess: '✅ Token renewed successfully',
-		tokenRefreshError: '❌ Error renewing token',
+		tokenRefreshError: '❌ Error renewing session',
 		sessionExpiredRequireLogin: '⚠️ Session expired - new login required',
 		cryptoTokensMissing: '🔐 Crypto tokens missing - authentication required',
 		sessionCorrupted: '⚠️ Session corrupted - please login again',

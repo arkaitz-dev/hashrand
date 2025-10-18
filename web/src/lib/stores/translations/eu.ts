@@ -94,7 +94,7 @@ export const eu: I18nTexts = {
 		description: 'Hash, pasahitz eta API gako kriptografikoki seguruak sortzeko tresna'
 	},
 	custom: {
-		title: 'Hash-Sortzaile Pertsonalizatua',
+		title: 'Hash Pertsonalizatua',
 		description: 'Nahi bezalako ausazko hash-ak sortu',
 		generateHash: 'Hash-a sortu',
 		length: 'Luzeera',
@@ -110,7 +110,7 @@ export const eu: I18nTexts = {
 		failedToGenerateHash: 'Hash-a sortzeak huts egin du'
 	},
 	password: {
-		title: 'Pasahitz Seguruen Sortzailea',
+		title: 'Pasahitz Seguruak',
 		description: 'Pasahitz seguruak sortu',
 		generatePassword: 'Pasahitza sortu',
 		length: 'Luzeera',
@@ -127,7 +127,7 @@ export const eu: I18nTexts = {
 		failedToGeneratePassword: 'Pasahitza sortzeak huts egin du'
 	},
 	apiKey: {
-		title: 'API Gakoen Sortzailea',
+		title: 'API Gakoak',
 		description: 'ak_ aurrizkidun API gakoak sortu',
 		generateApiKey: 'API gakoa sortu',
 		length: 'Luzeera',
@@ -147,7 +147,7 @@ export const eu: I18nTexts = {
 		failedToGenerateApiKey: 'API gakoa sortzeak huts egin du'
 	},
 	mnemonic: {
-		title: 'BIP39 Esaldi Mnemonikoen Sortzailea',
+		title: 'BIP39 Esaldi Mnemonikoak',
 		description: 'Kriptodiru-diruzorroetarako BIP39 esaldi mnemonikoak sortu',
 		generateMnemonic: 'Esaldi Mnemonikoa Sortu',
 		language: 'Hizkuntza',
@@ -223,7 +223,7 @@ export const eu: I18nTexts = {
 		keyRotationCompleted: '✅ Gakoen biraketa osatua (2/3)',
 		tokenRenewedNoRotation: '⏭️ Tokena berritu da biraketagabe (1/3)',
 		tokenRefreshSuccess: '✅ Tokena ongi berritu da',
-		tokenRefreshError: '❌ Akatsa tokena berritzean',
+		tokenRefreshError: '❌ Akatsa saioa berritzean',
 		sessionExpiredRequireLogin: '⚠️ Saioa iraungitu da - saio-hasiera berri bat behar da',
 		cryptoTokensMissing: '🔐 Kriptografia-tokenak falta dira - autentifikazioa beharrezkoa',
 		sessionCorrupted: '⚠️ Saioa hondatuta - mesedez, hasi saioa berriro',

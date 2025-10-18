@@ -94,7 +94,7 @@ export const de: I18nTexts = {
 		description: 'Kryptographisch sicherer Generator für Hashes, Passwörter und API-Schlüssel'
 	},
 	custom: {
-		title: 'Benutzerdefinierter Hash-Generator',
+		title: 'Benutzerdefinierter Hash',
 		description: 'Generieren Sie benutzerdefinierte zufällige Hashes',
 		generateHash: 'Hash Generieren',
 		length: 'Länge',
@@ -110,7 +110,7 @@ export const de: I18nTexts = {
 		failedToGenerateHash: 'Hash-Generierung fehlgeschlagen'
 	},
 	password: {
-		title: 'Sicherer Passwort-Generator',
+		title: 'Sichere Passwörter',
 		description: 'Generieren Sie sichere Passwörter',
 		generatePassword: 'Passwort generieren',
 		length: 'Länge',
@@ -127,7 +127,7 @@ export const de: I18nTexts = {
 		failedToGeneratePassword: 'Passwort-Generierung fehlgeschlagen'
 	},
 	apiKey: {
-		title: 'API-Schlüssel-Generator',
+		title: 'API-Schlüssel',
 		description: 'Generieren Sie API-Schlüssel mit ak_-Präfix',
 		generateApiKey: 'API-Schlüssel generieren',
 		length: 'Länge',
@@ -147,7 +147,7 @@ export const de: I18nTexts = {
 		failedToGenerateApiKey: 'API-Schlüssel-Generierung fehlgeschlagen'
 	},
 	mnemonic: {
-		title: 'BIP39 Mnemonik-Generator',
+		title: 'BIP39 Mnemonik-Phrasen',
 		description: 'Generieren Sie BIP39-Mnemonikphrasen für Kryptowährungs-Wallets',
 		generateMnemonic: 'Mnemonik Generieren',
 		language: 'Sprache',
@@ -234,7 +234,7 @@ export const de: I18nTexts = {
 		keyRotationCompleted: '✅ Schlüsselrotation abgeschlossen (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token erneuert ohne Rotation (1/3)',
 		tokenRefreshSuccess: '✅ Token erfolgreich erneuert',
-		tokenRefreshError: '❌ Fehler bei Token-Erneuerung',
+		tokenRefreshError: '❌ Fehler bei Sitzungserneuerung',
 		sessionExpiredRequireLogin: '⚠️ Sitzung abgelaufen - neue Anmeldung erforderlich',
 		cryptoTokensMissing: '🔐 Kryptografische Token fehlen - Authentifizierung erforderlich',
 		sessionCorrupted: '⚠️ Sitzung beschädigt - bitte melden Sie sich erneut an',

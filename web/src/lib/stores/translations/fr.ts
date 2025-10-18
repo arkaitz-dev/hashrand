@@ -94,7 +94,7 @@ export const fr: I18nTexts = {
 		description: 'Générateur cryptographiquement sécurisé de hashs, mots de passe et clés API'
 	},
 	custom: {
-		title: 'Générateur de Hash Personnalisé',
+		title: 'Hash Personnalisé',
 		description: 'Générez des hashs aléatoires personnalisés',
 		generateHash: 'Générer Hash',
 		length: 'Longueur',
@@ -110,7 +110,7 @@ export const fr: I18nTexts = {
 		failedToGenerateHash: 'Échec de la génération du hash'
 	},
 	password: {
-		title: 'Générateur de Mots de Passe Sécurisés',
+		title: 'Mots de Passe Sécurisés',
 		description: 'Générez des mots de passe sécurisés',
 		generatePassword: 'Générer Mot de Passe',
 		length: 'Longueur',
@@ -127,7 +127,7 @@ export const fr: I18nTexts = {
 		failedToGeneratePassword: 'Échec de la génération du mot de passe'
 	},
 	apiKey: {
-		title: 'Générateur de Clés API',
+		title: 'Clés API',
 		description: 'Générez des clés API avec le préfixe ak_',
 		generateApiKey: 'Générer Clé API',
 		length: 'Longueur',
@@ -147,7 +147,7 @@ export const fr: I18nTexts = {
 		failedToGenerateApiKey: 'Échec de la génération de la clé API'
 	},
 	mnemonic: {
-		title: 'Générateur de Phrases Mnémotechniques BIP39',
+		title: 'Phrases Mnémotechniques BIP39',
 		description:
 			'Générez des phrases mnémotechniques BIP39 pour les portefeuilles de cryptomonnaies',
 		generateMnemonic: 'Générer Phrase Mnémotechnique',
@@ -234,7 +234,7 @@ export const fr: I18nTexts = {
 		keyRotationCompleted: '✅ Rotation des clés terminée (2/3)',
 		tokenRenewedNoRotation: '⏭️ Jeton renouvelé sans rotation (1/3)',
 		tokenRefreshSuccess: '✅ Jeton renouvelé avec succès',
-		tokenRefreshError: '❌ Erreur lors du renouvellement du jeton',
+		tokenRefreshError: '❌ Erreur lors du renouvellement de la session',
 		sessionExpiredRequireLogin: '⚠️ Session expirée - nouvelle connexion requise',
 		cryptoTokensMissing: '🔐 Jetons cryptographiques manquants - authentification requise',
 		sessionCorrupted: '⚠️ Session corrompue - veuillez vous reconnecter',

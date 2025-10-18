@@ -93,7 +93,7 @@ export const zh: I18nTexts = {
 		description: '密码学安全的哈希、密码和API密钥生成器'
 	},
 	custom: {
-		title: '自定义哈希生成器',
+		title: '自定义哈希',
 		description: '生成自定义随机哈希',
 		generateHash: '生成哈希',
 		length: '长度',
@@ -109,7 +109,7 @@ export const zh: I18nTexts = {
 		numericDescription: '仅数字0-9，需要更长的长度'
 	},
 	password: {
-		title: '安全密码生成器',
+		title: '安全密码',
 		description: '生成安全密码',
 		generatePassword: '生成密码',
 		length: '长度',
@@ -123,7 +123,7 @@ export const zh: I18nTexts = {
 		failedToGeneratePassword: '生成密码失败'
 	},
 	apiKey: {
-		title: 'API密钥生成器',
+		title: 'API密钥',
 		description: '生成带ak_前缀的API密钥',
 		generateApiKey: '生成API密钥',
 		length: '长度',
@@ -143,7 +143,7 @@ export const zh: I18nTexts = {
 		noLookAlikeNote: '无混淆字母表排除易混淆字符。等效安全性至少需要{0}个字符。'
 	},
 	mnemonic: {
-		title: 'BIP39助记词生成器',
+		title: 'BIP39助记词',
 		description: '为加密货币钱包生成BIP39助记词',
 		generateMnemonic: '生成助记词',
 		language: '语言',
@@ -216,7 +216,7 @@ export const zh: I18nTexts = {
 		keyRotationCompleted: '✅ 密钥轮换已完成 (2/3)',
 		tokenRenewedNoRotation: '⏭️ 令牌已更新，无轮换 (1/3)',
 		tokenRefreshSuccess: '✅ 令牌更新成功',
-		tokenRefreshError: '❌ 令牌更新错误',
+		tokenRefreshError: '❌ 会话更新错误',
 		sessionExpiredRequireLogin: '⚠️ 会话已过期 - 需要重新登录',
 		cryptoTokensMissing: '🔐 缺少加密令牌 - 需要身份验证',
 		sessionCorrupted: '⚠️ 会话已损坏 - 请重新登录',
