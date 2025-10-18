@@ -16,12 +16,16 @@
 	import { goto } from '$app/navigation';
 	import { setCachedOtp } from '$lib/utils/confirm-read-cache';
 
+	// Expires hours allowed values (for slider with discrete jumps)
+	const expiresHoursValues = [1, 3, 6, 12, 24, 36, 48, 60, 72];
+
 	// Form state
 	let senderEmail = $state('');
 	let receiverEmail = $state('');
 	let receiverLanguage = $state($currentLanguage); // Default to current UI language
 	let secretText = $state('');
-	let expiresHours = $state(24);
+	let expiresHoursIndex = $state(4); // Default to index 4 = 24 hours
+	let expiresHours = $derived(expiresHoursValues[expiresHoursIndex]);
 	let maxReads = $state(3);
 	let requireOtp = $state(false);
 	let sendCopyToSender = $state(false);
@@ -309,7 +313,7 @@
 	function resetForm() {
 		receiverEmail = '';
 		secretText = '';
-		expiresHours = 24;
+		expiresHoursIndex = 4; // Reset to index 4 = 24 hours
 		maxReads = 3;
 		requireOtp = false;
 		sendCopyToSender = false;
@@ -453,17 +457,19 @@
 						<div class="mb-4">
 							<label
 								for="expires-hours"
-								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+								class="flex justify-between items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 							>
-								{$_('sharedSecret.expiresHours')}
+								<span>{$_('sharedSecret.expiresHours')}</span>
+								<span class="text-indigo-600 dark:text-indigo-400 font-bold">{expiresHours}h</span>
 							</label>
 							<input
-								type="number"
+								type="range"
 								id="expires-hours"
-								bind:value={expiresHours}
-								min="1"
-								max="72"
-								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+								bind:value={expiresHoursIndex}
+								min="0"
+								max="8"
+								step="1"
+								class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-indigo-600"
 								required
 							/>
 							{#if expiresError}
@@ -475,17 +481,19 @@
 						<div class="mb-4">
 							<label
 								for="max-reads"
-								class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+								class="flex justify-between items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 							>
-								{$_('sharedSecret.maxReads')}
+								<span>{$_('sharedSecret.maxReads')}</span>
+								<span class="text-indigo-600 dark:text-indigo-400 font-bold">{maxReads}</span>
 							</label>
 							<input
-								type="number"
+								type="range"
 								id="max-reads"
 								bind:value={maxReads}
 								min="1"
 								max="10"
-								class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+								step="1"
+								class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-indigo-600"
 								required
 							/>
 							{#if readsError}
