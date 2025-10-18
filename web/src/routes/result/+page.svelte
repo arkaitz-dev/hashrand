@@ -878,7 +878,7 @@
 {#if $resultState}
 	{@const color = getEndpointColor($resultState.endpoint)}
 	<div
-		class="min-h-screen bg-gradient-to-br from-{color}-50 to-{color}-100 dark:from-gray-900 dark:to-gray-800"
+		class="flex-1 min-h-full bg-gradient-to-br from-{color}-50 to-{color}-100 dark:from-gray-900 dark:to-gray-800"
 	>
 		<div class="container mx-auto px-4 py-8">
 			<!-- Header -->
@@ -1129,7 +1129,7 @@
 	<!-- Seed dialog removed - using new dialog system now -->
 {:else if $error}
 	<div
-		class="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800"
+		class="flex-1 min-h-full bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800"
 	>
 		<div class="container mx-auto px-4 py-8">
 			<div class="max-w-2xl mx-auto text-center">

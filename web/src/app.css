@@ -8,6 +8,19 @@
 	color-scheme: light dark;
 }
 
+/* CRITICAL: Ensure html and body fill 100% of viewport for flexbox to work */
+html,
+body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+/* Consistent background */
+body {
+	@apply bg-gray-50 dark:bg-gray-900;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
 	width: 8px;

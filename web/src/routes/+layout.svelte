@@ -362,18 +362,23 @@
 	<meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
-<main class="min-h-screen relative">
-	<!-- Top Controls Container -->
-	<TopControls />
+<!-- Flex container for proper footer positioning -->
+<div class="h-full flex flex-col">
+	<main class="flex-1 flex flex-col relative min-h-0">
+		<!-- Top Controls Container -->
+		<TopControls />
 
-	<!-- Update Button - appears when new frontend version available -->
-	<UpdateButton />
+		<!-- Update Button - appears when new frontend version available -->
+		<UpdateButton />
 
-	{@render children?.()}
-</main>
+		<div class="flex-1 min-h-0">
+			{@render children?.()}
+		</div>
+	</main>
 
-<!-- Version Footer - Global for all pages -->
-<VersionFooter />
+	<!-- Version Footer - Global for all pages -->
+	<VersionFooter />
+</div>
 
 <!-- Global Dialog Container -->
 <DialogContainer />
