@@ -318,7 +318,7 @@
 </svelte:head>
 
 <div
-	class="flex-1 min-h-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
+	class="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
 >
 	<div class="container mx-auto px-4 py-8">
 		<div class="max-w-3xl mx-auto">

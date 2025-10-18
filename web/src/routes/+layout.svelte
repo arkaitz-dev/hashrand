@@ -363,7 +363,7 @@
 </svelte:head>
 
 <!-- Flex container for proper footer positioning -->
-<div class="h-full flex flex-col">
+<div class="min-h-screen flex flex-col">
 	<main class="flex-1 flex flex-col relative min-h-0">
 		<!-- Top Controls Container -->
 		<TopControls />
@@ -371,7 +371,7 @@
 		<!-- Update Button - appears when new frontend version available -->
 		<UpdateButton />
 
-		<div class="flex-1 min-h-0">
+		<div class="flex-1 min-h-0 flex flex-col">
 			{@render children?.()}
 		</div>
 	</main>
