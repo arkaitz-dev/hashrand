@@ -243,7 +243,7 @@ export const ar: I18nTexts = {
 		secretTextPlaceholder: 'أدخل رسالتك الآمنة (512 حرفًا كحد أقصى)',
 		expiresHours: 'تنتهي صلاحيته بعد (ساعات)',
 		maxReads: 'الحد الأقصى للقراءات',
-		requireOtp: 'طلب رمز OTP من 9 أرقام',
+		requireOtp: 'طلب رمز أمان من 9 أرقام من المستلم',
 		sendCopyToSender: 'أرسل لي نسخة إلى بريدي الإلكتروني',
 		createSecret: 'إنشاء سر مشترك',
 		creating: 'جارٍ الإنشاء...',

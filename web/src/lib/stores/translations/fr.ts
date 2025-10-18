@@ -254,7 +254,7 @@ export const fr: I18nTexts = {
 		secretTextPlaceholder: 'Entrez votre message sécurisé (maximum 512 caractères)',
 		expiresHours: 'Expire dans (heures)',
 		maxReads: 'Lectures maximales',
-		requireOtp: 'Exiger un OTP à 9 chiffres',
+		requireOtp: 'Demander un code de sécurité à 9 chiffres au destinataire',
 		sendCopyToSender: "M'envoyer une copie par email",
 		createSecret: 'Créer un Secret Partagé',
 		creating: 'Création...',

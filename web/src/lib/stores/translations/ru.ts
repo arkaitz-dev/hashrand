@@ -243,7 +243,7 @@ export const ru: I18nTexts = {
 		secretTextPlaceholder: 'Введите ваше безопасное сообщение (максимум 512 символов)',
 		expiresHours: 'Истекает через (часов)',
 		maxReads: 'Максимум прочтений',
-		requireOtp: 'Требовать 9-значный OTP',
+		requireOtp: 'Запросить 9-значный код безопасности у получателя',
 		sendCopyToSender: 'Отправить мне копию на email',
 		createSecret: 'Создать Общий Секрет',
 		creating: 'Создание...',

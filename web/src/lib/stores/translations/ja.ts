@@ -246,7 +246,7 @@ export const ja: I18nTexts = {
 		secretTextPlaceholder: '安全なメッセージを入力してください（最大512文字）',
 		expiresHours: '有効期限（時間）',
 		maxReads: '最大閲覧回数',
-		requireOtp: '9桁のOTPを必須にする',
+		requireOtp: '受信者に9桁のセキュリティコードを要求する',
 		sendCopyToSender: '自分のメールにもコピーを送信',
 		createSecret: '共有シークレットを作成',
 		creating: '作成中...',

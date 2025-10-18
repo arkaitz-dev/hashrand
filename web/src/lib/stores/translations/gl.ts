@@ -245,7 +245,7 @@ export const gl: I18nTexts = {
 		secretTextPlaceholder: 'Introduce a túa mensaxe segura (máximo 512 caracteres)',
 		expiresHours: 'Caduca en (horas)',
 		maxReads: 'Lecturas máximas',
-		requireOtp: 'Requirir OTP de 9 díxitos',
+		requireOtp: 'Solicitar 9 díxitos de seguridade ao receptor',
 		sendCopyToSender: 'Enviarme unha copia ao meu correo',
 		createSecret: 'Crear Segredo Compartido',
 		creating: 'Creando...',

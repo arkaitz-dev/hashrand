@@ -244,7 +244,7 @@ export const hi: I18nTexts = {
 		secretTextPlaceholder: 'अपना सुरक्षित संदेश दर्ज करें (अधिकतम 512 वर्ण)',
 		expiresHours: 'समाप्ति समय (घंटों में)',
 		maxReads: 'अधिकतम पठन',
-		requireOtp: '9 अंकों का OTP आवश्यक',
+		requireOtp: 'प्राप्तकर्ता से 9 अंकों का सुरक्षा कोड अनुरोध करें',
 		sendCopyToSender: 'मुझे मेरे ईमेल पर एक प्रति भेजें',
 		createSecret: 'साझा रहस्य बनाएं',
 		creating: 'बनाया जा रहा है...',

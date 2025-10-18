@@ -242,7 +242,7 @@ export const eu: I18nTexts = {
 		secretTextPlaceholder: 'Sartu zure mezu segurua (gehienez 512 karaktere)',
 		expiresHours: 'Iraungitzen da (orduetan)',
 		maxReads: 'Irakurketa maximoak',
-		requireOtp: 'Eskatu 9 digituko OTPa',
+		requireOtp: 'Eskatu 9 digituko segurtasun kodea hartzaileari',
 		sendCopyToSender: 'Bidali kopia bat nire helbidera',
 		createSecret: 'Sortu Sekretu Partekatua',
 		creating: 'Sortzen...',

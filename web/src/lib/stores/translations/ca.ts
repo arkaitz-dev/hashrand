@@ -246,7 +246,7 @@ export const ca: I18nTexts = {
 		secretTextPlaceholder: 'Introduïu el vostre missatge segur (màxim 512 caràcters)',
 		expiresHours: 'Caduca en (hores)',
 		maxReads: 'Lectures màximes',
-		requireOtp: 'Requerir OTP de 9 dígits',
+		requireOtp: 'Sol·licitar 9 dígits de seguretat al receptor',
 		sendCopyToSender: 'Enviar-me una còpia al meu correu',
 		createSecret: 'Crear Secret Compartit',
 		creating: 'Creant...',

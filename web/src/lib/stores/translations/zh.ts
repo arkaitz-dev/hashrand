@@ -235,7 +235,7 @@ export const zh: I18nTexts = {
 		secretTextPlaceholder: '输入您的安全消息（最多512个字符）',
 		expiresHours: '过期时间（小时）',
 		maxReads: '最大读取次数',
-		requireOtp: '需要9位数OTP',
+		requireOtp: '向接收者请求9位数安全码',
 		sendCopyToSender: '发送副本到我的邮箱',
 		createSecret: '创建共享秘密',
 		creating: '创建中...',
