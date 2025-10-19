@@ -304,7 +304,9 @@ export const zh: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: '无法访问共享秘密'
+		accessError: '无法访问共享秘密',
+		backendKeyNotAvailable: '服务器加密密钥不可用',
+		privateKeyNotAvailable: '私钥不可用 - 请重新登录'
 	},
 	logout: {
 		title: '退出登录',

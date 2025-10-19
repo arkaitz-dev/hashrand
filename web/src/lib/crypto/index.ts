@@ -37,3 +37,9 @@ export {
 	decryptPageParams,
 	createEncryptedUrl
 } from './crypto-utils';
+
+// Shared secret E2E encryption (ChaCha20-Poly1305 + ECDH)
+export {
+	encryptSecretForCreation,
+	decryptSecretAfterRetrieval
+} from './shared-secret-crypto';

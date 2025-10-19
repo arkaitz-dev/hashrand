@@ -13,12 +13,18 @@
 	import type { ViewSharedSecretResponse } from '$lib/types';
 	import { logger } from '$lib/utils/logger';
 	import { getCachedOtp, setCachedOtp, clearCachedOtp } from '$lib/utils/confirm-read-cache';
+	import { decryptSecretAfterRetrieval } from '$lib/crypto';
+	import { getServerX25519PubKey } from '$lib/session';
+	import { base64ToBytes } from '$lib/crypto/crypto-encoding';
+	import { getKeyPair } from '$lib/ed25519';
+	import { privateKeyBytesToHex } from '$lib/ed25519/ed25519-core';
 
 	// Route parameter
 	let hash = $derived($page.params.hash);
 
 	// Secret data
 	let secret: ViewSharedSecretResponse | null = $state(null);
+	let decryptedSecretText: string | null = $state(null); // E2E decrypted secret text
 	let otpRequired = $state(false);
 
 	// UI state
@@ -27,6 +33,9 @@
 	let isSubmittingOtp = $state(false);
 	let isDeleting = $state(false);
 	let showDeleteDialog = $state(false);
+
+	// E2E encryption state
+	let backendPublicKey: string | null = $state(null); // Backend's X25519 public key for ECDH
 
 	// OTP validation
 	let otpError = $derived(
@@ -96,6 +105,46 @@
 			// If we reach here, response is valid ViewSharedSecretResponse
 			secret = response;
 			otpRequired = false;
+
+			// E2E Decryption: Decrypt secret after receiving from backend
+			try {
+				logger.debug('[SharedSecret] Decrypting secret with E2E encryption');
+
+				// Get backend public key from session if not cached
+				if (!backendPublicKey) {
+					backendPublicKey = await getServerX25519PubKey();
+					if (!backendPublicKey) {
+						throw new Error('Backend X25519 public key not found in session');
+					}
+					logger.debug('[SharedSecret] Backend X25519 public key loaded from session');
+				}
+
+				// Get requester's Ed25519 private key
+				const keyPair = await getKeyPair();
+				if (!keyPair || !keyPair.privateKeyBytes) {
+					throw new Error('Private key not available');
+				}
+				const requesterPrivateKeyHex = privateKeyBytesToHex(keyPair.privateKeyBytes);
+
+				// Convert base64 encrypted data to Uint8Array
+				const encryptedSecret = base64ToBytes(response.encrypted_secret);
+				const encryptedKeyMaterial = base64ToBytes(response.encrypted_key_material);
+
+				// Decrypt secret text
+				decryptedSecretText = decryptSecretAfterRetrieval(
+					encryptedSecret,
+					encryptedKeyMaterial,
+					requesterPrivateKeyHex,
+					backendPublicKey
+				);
+
+				logger.debug('[SharedSecret] Secret decrypted successfully');
+			} catch (decryptError) {
+				logger.error('[SharedSecret] Failed to decrypt secret:', decryptError);
+				flashMessagesStore.addMessage($_('sharedSecret.decryptionError'));
+				// Set null so UI shows error state
+				decryptedSecretText = null;
+			}
 
 			// 4. If manual OTP was provided and valid, cache it
 			if (otp && !('error' in response)) {
@@ -417,10 +466,12 @@
 						<div class="relative">
 							<textarea
 								readonly
-								value={secret.secret_text}
+								value={decryptedSecretText || ''}
 								onclick={(e) => {
 									e.currentTarget.select();
-									copyToClipboard(secret!.secret_text);
+									if (decryptedSecretText) {
+										copyToClipboard(decryptedSecretText);
+									}
 								}}
 								class="w-full px-4 py-4 border-2 border-indigo-300 dark:border-indigo-600 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 dark:text-white resize-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-lg"
 								rows="6"

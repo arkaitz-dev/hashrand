@@ -11,6 +11,7 @@ use crate::types::responses::JwtAuthResponse;
 use crate::utils::JwtUtils;
 use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_username;
 use crate::utils::signed_response::SignedResponseGenerator;
+use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
 /// Handle token refresh with key rotation (TRAMO 2/3)
 ///
@@ -80,6 +81,17 @@ pub fn handle_key_rotation(
         }
     };
 
+    // Get backend's per-user X25519 public key for E2E encryption
+    // CRITICAL: Use NEW pub_key for derivation (client is rotating to new keypair)
+    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, new_pub_key_hex) {
+        Ok(key) => key,
+        Err(e) => {
+            error!("❌ Refresh: Failed to derive backend X25519 public key (per-user, NEW): {}", e);
+            return create_error_response(500, "Failed to derive backend public key");
+        }
+    };
+    let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
+
     // Create payload with expires_at
     let payload = JwtAuthResponse::new(
         access_token,
@@ -87,6 +99,7 @@ pub fn handle_key_rotation(
         None,
         Some(expires_at),
         None, // server_pub_key will be added by create_signed_response_with_rotation
+        Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
     );
 
     // Generate signed response with key rotation

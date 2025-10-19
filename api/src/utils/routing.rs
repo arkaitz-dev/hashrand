@@ -1,9 +1,9 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_confirm_read, handle_create_secret, handle_delete_secret,
-    handle_login, handle_mnemonic_request, handle_password_request, handle_retrieve_secret,
-    handle_version,
+    handle_api_key_request, handle_confirm_read, handle_create_secret,
+    handle_delete_secret, handle_login, handle_mnemonic_request, handle_password_request,
+    handle_retrieve_secret, handle_version,
 };
 
 // Test endpoint handler (DEV-MODE ONLY - eliminated in production builds)
@@ -90,7 +90,7 @@ pub async fn route_request_with_req(
             }
         }
 
-        // GET-only endpoints
+        // GET-only public endpoints (no authentication required)
         path if path.ends_with("/api/version") => match *method {
             Method::Get => handle_version(),
             _ => handle_method_not_allowed(),

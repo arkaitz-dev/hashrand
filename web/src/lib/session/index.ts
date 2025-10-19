@@ -27,6 +27,9 @@ export {
 	setServerPubKey,
 	getServerPubKey,
 	clearServerPubKey,
+	setServerX25519PubKey,
+	getServerX25519PubKey,
+	clearServerX25519PubKey,
 	getPrivKey,
 	setPrivKey,
 	clearPrivKey

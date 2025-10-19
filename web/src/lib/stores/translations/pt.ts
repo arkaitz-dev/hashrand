@@ -320,7 +320,9 @@ export const pt: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: 'Não é possível aceder ao segredo partilhado'
+		accessError: 'Não é possível aceder ao segredo partilhado',
+		backendKeyNotAvailable: 'Chave de encriptação do servidor não disponível',
+		privateKeyNotAvailable: 'Chave privada não disponível - Por favor, inicie sessão novamente'
 	},
 	logout: {
 		title: 'Sair',

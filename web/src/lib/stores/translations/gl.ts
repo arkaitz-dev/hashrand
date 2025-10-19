@@ -314,7 +314,9 @@ export const gl: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: 'Non se pode acceder ao segredo compartido'
+		accessError: 'Non se pode acceder ao segredo compartido',
+		backendKeyNotAvailable: 'Chave de cifrado do servidor non disponible',
+		privateKeyNotAvailable: 'Chave privada non disponible - Por favor, inicie sesión de novo'
 	},
 	logout: {
 		title: 'Pechar Sesión',

@@ -9,7 +9,7 @@
 export type { Ed25519KeyPair } from './ed25519-types';
 
 // Key generation operations
-export { generateEd25519KeyPair, generateEd25519KeyPairFallback } from './ed25519-keygen';
+export { generateEd25519KeyPair } from './ed25519-keygen';
 
 // Database operations
 export { storeKeyPair, getKeyPair, clearAllKeyPairs } from './ed25519-database';
@@ -35,5 +35,4 @@ export {
 } from './ed25519-core';
 
 // Alias for backward compatibility and convenience
-export { generateEd25519KeyPairFallback as generateKeyPair } from './ed25519-keygen';
 export { privateKeyBytesToHex as privateKeyToHex } from './ed25519-core';

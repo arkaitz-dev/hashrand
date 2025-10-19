@@ -5,7 +5,12 @@
  * No fallback allowed - prevents server impersonation attacks
  */
 
-import { isSignedResponse, extractServerPubKey, validateSignedResponse } from './signedResponse';
+import {
+	isSignedResponse,
+	extractServerPubKey,
+	extractServerX25519PubKey,
+	validateSignedResponse
+} from './signedResponse';
 import { sessionManager } from './session-manager';
 import { logger } from './utils/logger';
 
@@ -61,6 +66,14 @@ export async function handleSignedResponseStrict<T>(
 				// Key rotation detected: update stored server_pub_key
 				await sessionManager.setServerPubKey(newServerPubKey);
 			}
+		}
+
+		// Extract and store server X25519 public key for E2E encryption (if present)
+		// This key is ALWAYS included in login/refresh responses (unlike server_pub_key which is only in rotation)
+		const serverX25519PubKey = extractServerX25519PubKey(responseData);
+		if (serverX25519PubKey) {
+			logger.debug('📦 Storing server X25519 public key for E2E encryption');
+			await sessionManager.setServerX25519PubKey(serverX25519PubKey);
 		}
 
 		return validatedPayload;

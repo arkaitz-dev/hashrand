@@ -20,7 +20,7 @@ export async function refreshToken(): Promise<boolean> {
 	// Import dependencies
 	const { flashMessagesStore } = await import('../../stores/flashMessages');
 	const { sessionManager } = await import('../../session-manager');
-	const { generateEd25519KeyPairFallback, publicKeyToHex } = await import('../../ed25519');
+	const { generateEd25519KeyPair, publicKeyToHex } = await import('../../ed25519');
 	const { privateKeyBytesToHex } = await import('../../ed25519/ed25519-core');
 	const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
 	const { authStore } = await import('../../stores/auth');
@@ -31,7 +31,7 @@ export async function refreshToken(): Promise<boolean> {
 
 	try {
 		// Generate NEW Ed25519 keypair for potential rotation
-		const newKeyPair = await generateEd25519KeyPairFallback();
+		const newKeyPair = await generateEd25519KeyPair();
 		const newPubKeyHex = publicKeyToHex(newKeyPair.publicKeyBytes);
 		const newPrivKeyHex = privateKeyBytesToHex(newKeyPair.privateKeyBytes!);
 

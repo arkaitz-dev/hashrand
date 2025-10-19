@@ -313,7 +313,9 @@ export const hi: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: 'साझा रहस्य तक पहुंच नहीं हो सकती'
+		accessError: 'साझा रहस्य तक पहुंच नहीं हो सकती',
+		backendKeyNotAvailable: 'सर्वर एन्क्रिप्शन कुंजी उपलब्ध नहीं है',
+		privateKeyNotAvailable: 'निजी कुंजी उपलब्ध नहीं है - कृपया फिर से लॉगिन करें'
 	},
 	logout: {
 		title: 'लॉग आउट करें',

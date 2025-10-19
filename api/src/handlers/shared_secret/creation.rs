@@ -15,11 +15,17 @@ use crate::utils::{
     create_auth_error_response, create_server_error_response, create_signed_endpoint_response,
     extract_crypto_material_from_request, validate_email,
 };
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use spin_sdk::http::{Request, Response};
 
-/// Request payload for creating a shared secret
+/// Request payload for creating a shared secret with E2E encryption
+///
+/// E2E Encryption Flow:
+/// - Frontend encrypts secret_text with ChaCha20-Poly1305 using random key_material[44]
+/// - Frontend encrypts key_material with ECDH (sender private key + backend public key)
+/// - Backend decrypts key_material with ECDH using sender's pub_key from JWT
 ///
 /// NOTE: receiver_language and sender_language are EXCEPTIONS to the integer
 /// encoding policy (see api/src/utils/auth/types.rs module doc).
@@ -28,7 +34,11 @@ use spin_sdk::http::{Request, Response};
 struct CreateSecretRequest {
     sender_email: String,
     receiver_email: String,
-    secret_text: String,
+    /// ChaCha20-Poly1305 encrypted secret from frontend (base64 encoded)
+    encrypted_secret: String,
+    /// ECDH encrypted key_material from frontend (base64 encoded, 60 bytes: 44 + 16 MAC)
+    /// Encrypted with sender's private key + backend's public key
+    encrypted_key_material: String,
     #[serde(default = "default_expires_hours")]
     expires_hours: i64,
     #[serde(default = "default_max_reads")]
@@ -160,17 +170,8 @@ async fn create_shared_secret(
         return Err("Invalid receiver email format".to_string());
     }
 
-    // Validate secret text length
-    let char_count = request.secret_text.chars().count();
-    if char_count == 0 {
-        return Err("Secret text cannot be empty".to_string());
-    }
-    if char_count > MAX_TEXT_LENGTH {
-        return Err(format!(
-            "Secret text exceeds {} characters",
-            MAX_TEXT_LENGTH
-        ));
-    }
+    // Note: Encrypted secret validation happens in SharedSecretOps::create_secret_pair
+    // Frontend is responsible for validating plaintext before encryption
 
     // Validate expiration hours
     if request.expires_hours < MIN_EXPIRES_HOURS || request.expires_hours > MAX_EXPIRES_HOURS {
@@ -236,19 +237,31 @@ async fn create_shared_secret(
         SharedSecretCrypto::generate_db_index(&reference_hash, &receiver_user_id)
             .map_err(|e| format!("Failed to generate receiver db_index: {}", e))?;
 
-    // Create secret pair using SharedSecretOps (pass pre-generated reference_hash)
-    let _created_reference = SharedSecretOps::create_secret_pair(
+    // Decode E2E encrypted data from base64
+    let encrypted_secret = BASE64
+        .decode(&request.encrypted_secret)
+        .map_err(|e| format!("Failed to decode encrypted_secret: {}", e))?;
+
+    let encrypted_key_material = BASE64
+        .decode(&request.encrypted_key_material)
+        .map_err(|e| format!("Failed to decode encrypted_key_material: {}", e))?;
+
+    // Create secret pair using SharedSecretOps with E2E encryption
+    // Sender's public key comes from JWT (crypto_material.pub_key_hex)
+    let _created_reference = SharedSecretOps::create_secret_pair_with_ecdh(
         &request.sender_email,
         &request.receiver_email,
-        &request.secret_text,
+        &encrypted_secret,
+        &encrypted_key_material,
+        &crypto_material.pub_key_hex, // From JWT
         otp.clone(),
         request.expires_hours,
         request.max_reads,
         &sender_db_index,
         &receiver_db_index,
-        &reference_hash, // Pass the already-generated reference_hash
+        &reference_hash,
     )
-    .map_err(|e| format!("Failed to create secret: {}", e))?;
+    .map_err(|e| format!("Failed to create secret with ECDH: {}", e))?;
 
     // Convert reference_hash to Base58 for response
     let reference_base58 = bs58::encode(&reference_hash).into_string();

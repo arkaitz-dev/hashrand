@@ -5,7 +5,7 @@
 
 mod errors;
 mod http_helpers;
-mod key_derivation;
+pub mod key_derivation;
 mod signing;
 mod types;
 

@@ -15,22 +15,30 @@ use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
     create_auth_error_response, create_client_error_response, create_forbidden_response,
     create_server_error_response, create_signed_endpoint_response,
+    crypto::{ed25519_public_to_x25519, encrypt_with_ecdh, get_backend_x25519_private_key},
     endpoint_helpers::extract_query_params, extract_crypto_material_from_request,
 };
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use spin_sdk::http::{Method, Request, Response};
 
 /// Request payload for POST with OTP
+///
+/// Requester's Ed25519 public key comes from JWT (crypto_material.pub_key_hex)
+/// and is used for ECDH encryption of key_material in the response
 #[derive(Debug, Deserialize, Serialize)]
 struct RetrieveSecretRequest {
     otp: String,
 }
 
-/// Response payload for retrieved shared secret
+/// Response payload for retrieved shared secret with E2E encryption
 #[derive(Debug, Serialize)]
 struct RetrieveSecretResponse {
-    secret_text: String,
+    /// ChaCha20-Poly1305 encrypted secret (base64 encoded)
+    encrypted_secret: String,
+    /// ECDH encrypted key_material for receiver (base64 encoded, 60 bytes)
+    encrypted_key_material: String,
     sender_email: String,
     receiver_email: String,
     pending_reads: i64,
@@ -98,7 +106,14 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with 3-layer validation (checksum → ownership → database)
-    match retrieve_and_respond(&encrypted_hash, &user_id_from_jwt, None, &crypto_material) {
+    // Requester's public key comes from JWT for ECDH encryption of key_material
+    match retrieve_and_respond(
+        &encrypted_hash,
+        &user_id_from_jwt,
+        None,
+        &crypto_material.pub_key_hex,
+        &crypto_material,
+    ) {
         Ok(response) => Ok(response),
         Err(e) => {
             // Detect authorization errors (403 Forbidden) vs server errors (500)
@@ -149,10 +164,12 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with OTP validation and 3-layer validation
+    // Requester's public key comes from JWT for ECDH encryption of key_material
     match retrieve_and_respond(
         &encrypted_hash,
         &user_id_from_jwt,
         Some(&result.payload.otp),
+        &crypto_material.pub_key_hex,
         &crypto_material,
     ) {
         Ok(response) => Ok(response),
@@ -192,6 +209,7 @@ fn retrieve_and_respond(
     encrypted_hash: &[u8; 40],
     user_id_from_jwt: &[u8; USER_ID_LENGTH],
     provided_otp: Option<&str>,
+    requester_public_key_hex: &str,
     crypto_material: &CryptoMaterial,
 ) -> Result<Response, String> {
     // ============================================================================
@@ -289,9 +307,57 @@ fn retrieve_and_respond(
         None
     };
 
+    // ============================================================================
+    // E2E ENCRYPTION: Encrypt key_material with ECDH for requester
+    // ============================================================================
+
+    // 1. Validate requester's public key format
+    if requester_public_key_hex.len() != 64 {
+        return Err(format!(
+            "Invalid requester public key hex length: {} (expected 64)",
+            requester_public_key_hex.len()
+        ));
+    }
+
+    let requester_ed25519_public = hex::decode(requester_public_key_hex)
+        .map_err(|e| format!("Failed to decode requester public key hex: {}", e))?;
+
+    if requester_ed25519_public.len() != 32 {
+        return Err(format!(
+            "Invalid requester public key byte length: {} (expected 32)",
+            requester_ed25519_public.len()
+        ));
+    }
+
+    let requester_ed25519_public_array: [u8; 32] = requester_ed25519_public
+        .try_into()
+        .map_err(|_| "Failed to convert requester public key to array".to_string())?;
+
+    // 2. Convert requester's Ed25519 public key → X25519 public key
+    let requester_x25519_public = ed25519_public_to_x25519(&requester_ed25519_public_array)
+        .map_err(|e| format!("Failed to convert requester Ed25519→X25519: {}", e))?;
+
+    // 3. Get backend's per-user X25519 private key
+    // Use requester's user_id (from JWT) and pub_key for per-user derivation
+    let backend_x25519_private = get_backend_x25519_private_key(user_id_from_jwt, requester_public_key_hex)
+        .map_err(|e| format!("Failed to derive backend X25519 private key (per-user): {}", e))?;
+
+    // 4. Encrypt key_material with ECDH
+    let encrypted_key_material = encrypt_with_ecdh(
+        &payload.key_material,
+        &backend_x25519_private,
+        &requester_x25519_public,
+    )
+    .map_err(|e| format!("Failed to encrypt key_material with ECDH: {}", e))?;
+
+    // 5. Encode encrypted data to base64 for JSON response
+    let encrypted_secret_base64 = BASE64.encode(&payload.encrypted_secret);
+    let encrypted_key_material_base64 = BASE64.encode(&encrypted_key_material);
+
     // Create response
     let response_data = RetrieveSecretResponse {
-        secret_text: payload.secret_text,
+        encrypted_secret: encrypted_secret_base64,
+        encrypted_key_material: encrypted_key_material_base64,
         sender_email: payload.sender_email,
         receiver_email: payload.receiver_email,
         pending_reads,

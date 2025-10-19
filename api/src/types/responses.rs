@@ -61,6 +61,9 @@ pub struct JwtAuthResponse {
     /// Server Ed25519 public key (only included during key rotation in 2/3 tramo)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_pub_key: Option<String>,
+    /// Server X25519 public key for ECDH (E2E encryption) - ALWAYS included
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server_x25519_pub_key: Option<String>,
 }
 
 impl JwtAuthResponse {
@@ -71,13 +74,15 @@ impl JwtAuthResponse {
     /// * `user_id` - Base58-encoded user ID
     /// * `next` - Optional next parameter for redirect
     /// * `expires_at` - Optional refresh cookie expiration timestamp (included when new refresh cookie is set)
-    /// * `server_pub_key` - Optional server public key (included during key rotation)
+    /// * `server_pub_key` - Optional server Ed25519 public key (included during key rotation)
+    /// * `server_x25519_pub_key` - Optional server X25519 public key for ECDH (E2E encryption)
     pub fn new(
         access_token: String,
         user_id: String,
         next: Option<String>,
         expires_at: Option<i64>,
         server_pub_key: Option<String>,
+        server_x25519_pub_key: Option<String>,
     ) -> Self {
         Self {
             access_token,
@@ -86,6 +91,7 @@ impl JwtAuthResponse {
             next,
             expires_at,
             server_pub_key,
+            server_x25519_pub_key,
         }
     }
 }

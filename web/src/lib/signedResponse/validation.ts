@@ -86,7 +86,7 @@ export class SignedResponseValidator {
 	 * Extract server public key from signed response payload
 	 *
 	 * @param responseData - Raw response data
-	 * @returns Server public key hex string or null if not found
+	 * @returns Server Ed25519 public key hex string or null if not found
 	 */
 	static extractServerPubKey(responseData: unknown): string | null {
 		try {
@@ -114,6 +114,51 @@ export class SignedResponseValidator {
 					const serverKey = deserializedPayload.server_pub_key;
 					if (typeof serverKey === 'string' && isValidHexKey(serverKey, 64)) {
 						return serverKey;
+					}
+				}
+			} catch {
+				// Base64 decoding or JSON parsing failed
+				return null;
+			}
+
+			return null;
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Extract server X25519 public key from signed response payload (E2E encryption)
+	 *
+	 * @param responseData - Raw response data
+	 * @returns Server X25519 public key hex string or null if not found
+	 */
+	static extractServerX25519PubKey(responseData: unknown): string | null {
+		try {
+			// Parse response data using DRY utility
+			const signedResponse = parseResponseData(responseData, 'extractServerX25519PubKey');
+
+			if (!signedResponse) {
+				return null;
+			}
+
+			if (!checkSignedResponse(signedResponse)) {
+				return null;
+			}
+
+			// Decode Base64 payload and parse JSON to extract server_x25519_pub_key
+			try {
+				const originalJsonPayload = decodePayloadBase64(signedResponse.payload);
+				const deserializedPayload = JSON.parse(originalJsonPayload) as Record<string, unknown>;
+
+				if (
+					deserializedPayload &&
+					typeof deserializedPayload === 'object' &&
+					'server_x25519_pub_key' in deserializedPayload
+				) {
+					const serverX25519Key = deserializedPayload.server_x25519_pub_key;
+					if (typeof serverX25519Key === 'string' && isValidHexKey(serverX25519Key, 64)) {
+						return serverX25519Key;
 					}
 				}
 			} catch {

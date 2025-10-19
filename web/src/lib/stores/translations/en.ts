@@ -326,7 +326,9 @@ export const en: I18nTexts = {
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
 		lastReadWarningTip: 'Save the information now if you need to keep it.',
-		accessError: 'Cannot access shared secret'
+		accessError: 'Cannot access shared secret',
+		backendKeyNotAvailable: 'Backend encryption key not available',
+		privateKeyNotAvailable: 'Private key not available - Please log in again'
 	},
 	logout: {
 		title: 'Log Out',

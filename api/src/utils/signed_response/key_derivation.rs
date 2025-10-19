@@ -66,7 +66,7 @@ pub fn derive_session_private_key(
 ///
 /// # Returns
 /// * `Result<[u8; 64], SignedResponseError>` - 64-byte derivation key or error
-fn get_ed25519_derivation_key() -> Result<[u8; 64], SignedResponseError> {
+pub fn get_ed25519_derivation_key() -> Result<[u8; 64], SignedResponseError> {
     let key_hex = variables::get("ed25519_derivation_key").map_err(|e| {
         SignedResponseError::ConfigurationError(format!("ed25519_derivation_key not found: {}", e))
     })?;

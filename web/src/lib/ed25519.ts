@@ -9,7 +9,6 @@
 export type { Ed25519KeyPair } from './ed25519/index';
 export {
 	generateEd25519KeyPair,
-	generateEd25519KeyPairFallback,
 	storeKeyPair,
 	getKeyPair,
 	clearAllKeyPairs,

@@ -14,12 +14,14 @@ export async function getAuthData(): Promise<{
 	user: { user_id: string; email: string; isAuthenticated: boolean } | null;
 	access_token: string | null;
 	server_pub_key: string | null;
+	server_x25519_pub_key: string | null;
 }> {
 	const session = await sessionDB.getSession();
 	return {
 		user: session.auth_user,
 		access_token: session.access_token,
-		server_pub_key: session.server_pub_key
+		server_pub_key: session.server_pub_key,
+		server_x25519_pub_key: session.server_x25519_pub_key
 	};
 }
 
@@ -80,6 +82,32 @@ export async function clearServerPubKey(): Promise<void> {
 }
 
 /**
+ * Set server X25519 public key for ECDH (E2E encryption)
+ */
+export async function setServerX25519PubKey(serverX25519PubKey: string): Promise<void> {
+	await sessionDB.updateSession({
+		server_x25519_pub_key: serverX25519PubKey
+	});
+}
+
+/**
+ * Get server X25519 public key for ECDH (E2E encryption)
+ */
+export async function getServerX25519PubKey(): Promise<string | null> {
+	const session = await sessionDB.getSession();
+	return session.server_x25519_pub_key;
+}
+
+/**
+ * Clear server X25519 public key (called during logout)
+ */
+export async function clearServerX25519PubKey(): Promise<void> {
+	await sessionDB.updateSession({
+		server_x25519_pub_key: null
+	});
+}
+
+/**
  * Get client private key (for Ed25519 signing and key rotation)
  */
 export async function getPrivKey(): Promise<string | null> {
@@ -118,7 +146,8 @@ export async function clearAuthData(): Promise<void> {
 	session.prehashSeeds = [];
 	session.auth_user = null;
 	session.access_token = null;
-	session.server_pub_key = null; // Clear server public key on logout
+	session.server_pub_key = null; // Clear server Ed25519 public key on logout
+	session.server_x25519_pub_key = null; // Clear server X25519 public key on logout
 	session.priv_key = null; // Clear client private key on logout
 	session.authFlow.pending_email = null;
 

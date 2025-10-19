@@ -26,5 +26,7 @@ export {
 	parseNextUrl,
 	encryptNextUrl,
 	decryptPageParams,
-	createEncryptedUrl
+	createEncryptedUrl,
+	encryptSecretForCreation,
+	decryptSecretAfterRetrieval
 } from './crypto/index';

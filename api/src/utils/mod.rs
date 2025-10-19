@@ -2,6 +2,7 @@
 pub mod argon2_test;
 pub mod auth;
 pub mod auth_validation_middleware;
+pub mod crypto;
 pub mod ed25519;
 pub mod email;
 pub mod endpoint_helpers;

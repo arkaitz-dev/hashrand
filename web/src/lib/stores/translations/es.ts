@@ -330,7 +330,9 @@ export const es: I18nTexts = {
 			'⚠️ Esto consumirá tu última lectura disponible. El secreto se autodestruirá después.\n\n¿Estás seguro de que deseas continuar?',
 		confirmReadConsumption: 'Leer este secreto consumirá 1 lectura.',
 		readsRemainingAfter: 'Te quedarán',
-		accessError: 'No se puede acceder al secreto compartido'
+		accessError: 'No se puede acceder al secreto compartido',
+		backendKeyNotAvailable: 'Clave de cifrado del servidor no disponible',
+		privateKeyNotAvailable: 'Clave privada no disponible - Por favor, inicia sesión nuevamente'
 	},
 	logout: {
 		title: 'Cerrar Sesión',

@@ -315,7 +315,9 @@ export const ja: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: '共有シークレットにアクセスできません'
+		accessError: '共有シークレットにアクセスできません',
+		backendKeyNotAvailable: 'サーバーの暗号化キーが利用できません',
+		privateKeyNotAvailable: '秘密鍵が利用できません - 再度ログインしてください'
 	},
 	logout: {
 		title: 'ログアウト',

@@ -239,7 +239,8 @@ export interface LoginResponse {
 	user_id: string; // Base58 user_id
 	next?: string; // Optional next parameter from magic link
 	expires_at?: number; // Optional refresh cookie expiration timestamp (when new refresh cookie is set)
-	server_pub_key?: string; // Optional server public key (only in 2/3 time window for key rotation)
+	server_pub_key?: string; // Optional server Ed25519 public key (only in 2/3 time window for key rotation)
+	server_x25519_pub_key?: string; // Optional server X25519 public key for ECDH (E2E encryption) - ALWAYS included
 }
 
 export interface MagicLinkResponse {
@@ -255,7 +256,9 @@ export interface AuthError {
 export interface CreateSharedSecretRequest {
 	sender_email: string;
 	receiver_email: string;
-	secret_text: string;
+	// secret_text: string; // REMOVED: Now using E2E encryption
+	encrypted_secret: string; // ChaCha20-Poly1305 encrypted secret (base64)
+	encrypted_key_material: string; // ECDH encrypted key_material[44] (base64)
 	expires_hours: number; // 1-72
 	max_reads: number; // 1-10
 	require_otp: boolean;
@@ -277,7 +280,9 @@ export interface CreateSharedSecretResponse {
 export interface SharedSecretPayload {
 	sender_email: string;
 	receiver_email: string;
-	secret_text: string;
+	// secret_text: string; // REMOVED: Now using E2E encryption
+	encrypted_secret: Uint8Array; // ChaCha20-Poly1305 encrypted secret
+	key_material: Uint8Array; // 44 bytes: nonce[12] + cipher_key[32]
 	otp?: string; // 9-digit OTP if required
 	created_at: number; // Unix timestamp
 }
@@ -287,7 +292,9 @@ export interface ViewSharedSecretRequest {
 }
 
 export interface ViewSharedSecretResponse {
-	secret_text: string;
+	// secret_text: string; // REMOVED: Now using E2E encryption
+	encrypted_secret: string; // ChaCha20-Poly1305 encrypted secret (base64)
+	encrypted_key_material: string; // ECDH encrypted key_material[44] (base64)
 	sender_email: string;
 	receiver_email: string;
 	pending_reads: number; // -1 for sender (unlimited), positive for receiver

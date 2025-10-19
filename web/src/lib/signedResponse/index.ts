@@ -48,3 +48,13 @@ export async function validateSignedResponse<T>(
 export function extractServerPubKey(responseData: unknown): string | null {
 	return SignedResponseValidator.extractServerPubKey(responseData);
 }
+
+/**
+ * Extract server X25519 public key from response (E2E encryption)
+ *
+ * @param responseData - Raw response data
+ * @returns Server X25519 public key hex string or null
+ */
+export function extractServerX25519PubKey(responseData: unknown): string | null {
+	return SignedResponseValidator.extractServerX25519PubKey(responseData);
+}

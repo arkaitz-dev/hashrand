@@ -323,7 +323,9 @@ export const fr: I18nTexts = {
 			'⚠️ This will consume your last available read. The secret will auto-delete after.\n\nAre you sure you want to continue?',
 		confirmReadConsumption: 'Reading this secret will consume 1 read.',
 		readsRemainingAfter: 'You will have',
-		accessError: "Impossible d'accéder au secret partagé"
+		accessError: "Impossible d'accéder au secret partagé",
+		backendKeyNotAvailable: 'Clé de chiffrement du serveur non disponible',
+		privateKeyNotAvailable: 'Clé privée non disponible - Veuillez vous reconnecter'
 	},
 	logout: {
 		title: 'Se Déconnecter',

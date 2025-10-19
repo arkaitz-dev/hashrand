@@ -20,6 +20,9 @@ import {
 	setServerPubKey,
 	getServerPubKey,
 	clearServerPubKey,
+	setServerX25519PubKey,
+	getServerX25519PubKey,
+	clearServerX25519PubKey,
 	getPrivKey,
 	setPrivKey,
 	clearPrivKey,
@@ -132,6 +135,7 @@ class SessionManager {
 		user: { user_id: string; email: string; isAuthenticated: boolean } | null;
 		access_token: string | null;
 		server_pub_key: string | null;
+		server_x25519_pub_key: string | null;
 	}> {
 		return await getAuthData();
 	}
@@ -172,6 +176,27 @@ class SessionManager {
 	 */
 	async clearServerPubKey(): Promise<void> {
 		return await clearServerPubKey();
+	}
+
+	/**
+	 * Set server X25519 public key for ECDH (E2E encryption)
+	 */
+	async setServerX25519PubKey(serverX25519PubKey: string): Promise<void> {
+		return await setServerX25519PubKey(serverX25519PubKey);
+	}
+
+	/**
+	 * Get server X25519 public key for ECDH (E2E encryption)
+	 */
+	async getServerX25519PubKey(): Promise<string | null> {
+		return await getServerX25519PubKey();
+	}
+
+	/**
+	 * Clear server X25519 public key (called during logout)
+	 */
+	async clearServerX25519PubKey(): Promise<void> {
+		return await clearServerX25519PubKey();
 	}
 
 	/**

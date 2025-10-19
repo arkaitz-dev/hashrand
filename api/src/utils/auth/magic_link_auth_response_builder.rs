@@ -9,6 +9,7 @@ use tracing::{debug, warn};
 use super::magic_link_jwt_generator::JwtTokens;
 use crate::types::responses::JwtAuthResponse;
 use crate::utils::{CryptoMaterial, create_error_response, create_signed_endpoint_response};
+use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
 /// Build successful authentication response with JWT tokens and secure cookies (SignedResponse format)
 ///
@@ -38,6 +39,13 @@ pub fn build_authentication_response(
         .as_secs() as i64
         + (refresh_duration_minutes as i64 * 60);
 
+    // Get backend's per-user X25519 public key for E2E encryption
+    // Use client's user_id and pub_key for per-user derivation
+    let pub_key_hex = hex::encode(pub_key_bytes);
+    let backend_x25519_public = get_backend_x25519_public_key(user_id_bytes, &pub_key_hex)
+        .map_err(|e| anyhow::anyhow!("Failed to derive backend X25519 public key (per-user): {}", e))?;
+    let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
+
     // Create JWT response payload with refresh cookie expiration timestamp
     debug!(
         "📍 DEBUG: Building auth response with next parameter: {:?}",
@@ -49,6 +57,7 @@ pub fn build_authentication_response(
         next_param.clone(),
         Some(expires_at),
         None, // server_pub_key will be added by create_signed_response_with_server_pubkey
+        Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
     );
 
     // Build crypto material for SignedResponse generation

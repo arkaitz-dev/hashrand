@@ -44,14 +44,25 @@ impl SecretRole {
 }
 
 /// Decrypted shared secret payload structure
+///
+/// E2E Encryption Architecture:
+/// - Frontend encrypts secret_text with ChaCha20-Poly1305 using random key_material[44]
+/// - Frontend encrypts key_material with ECDH (Ed25519→X25519)
+/// - Backend decrypts key_material (ECDH), stores both encrypted_secret + key_material in payload
+/// - On retrieval, backend encrypts key_material (ECDH) and sends to client
+/// - Frontend decrypts key_material (ECDH), then decrypts secret_text (ChaCha20)
 #[derive(Debug, Clone)]
 pub struct SharedSecretPayload {
     /// Sender email address
     pub sender_email: String,
     /// Receiver email address
     pub receiver_email: String,
-    /// Secret text content (max 512 UTF-8 characters)
-    pub secret_text: String,
+    /// ChaCha20-Poly1305 encrypted secret text from frontend (E2E encrypted)
+    /// Size: original_text_bytes + 16 (Poly1305 MAC tag)
+    pub encrypted_secret: Vec<u8>,
+    /// Key material for decrypting encrypted_secret (nonce[12] + cipher_key[32])
+    /// Stored in cleartext inside the encrypted payload (44 bytes)
+    pub key_material: Vec<u8>,
     /// Optional 9-digit OTP
     pub otp: Option<String>,
     /// Creation timestamp (Unix epoch seconds)

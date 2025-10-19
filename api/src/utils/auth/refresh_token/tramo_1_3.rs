@@ -9,6 +9,7 @@ use super::utilities::{
 use crate::types::responses::JwtAuthResponse;
 use crate::utils::JwtUtils;
 use crate::utils::signed_response::SignedResponseGenerator;
+use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
 /// Handle token refresh without key rotation (TRAMO 1/3)
 ///
@@ -40,6 +41,19 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
         }
     };
 
+    // Convert pub_key to hex for per-user X25519 derivation
+    let pub_key_hex = hex::encode(pub_key);
+
+    // Get backend's per-user X25519 public key for E2E encryption
+    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, &pub_key_hex) {
+        Ok(key) => key,
+        Err(e) => {
+            error!("❌ Refresh: Failed to derive backend X25519 public key (per-user): {}", e);
+            return create_error_response(500, "Failed to derive backend public key");
+        }
+    };
+    let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
+
     // Create payload WITHOUT expires_at (no new refresh cookie)
     let payload = JwtAuthResponse::new(
         access_token,
@@ -47,12 +61,11 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
         None,
         None, // No expires_at - no new refresh cookie
         None, // No server_pub_key - no key rotation
+        Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
     );
 
-    // Convert pub_key to hex for signed response
-    let pub_key_hex = hex::encode(pub_key);
-
     // Generate signed response WITHOUT server_pub_key (no key rotation)
+    // (pub_key_hex already converted above for X25519 derivation)
     let signed_response =
         match SignedResponseGenerator::create_signed_response(payload, &user_id, &pub_key_hex) {
             Ok(response) => response,
