@@ -3,15 +3,14 @@
  *
  * Provides clean imports for all Ed25519 modules
  * Part of ed25519.ts refactorization to apply SOLID principles
+ *
+ * UPDATED (v1.9.0): Removed generateEd25519KeyPair (now uses WebCrypto generation)
  */
 
 // Type definitions
 export type { Ed25519KeyPair } from './ed25519-types';
 
-// Key generation operations
-export { generateEd25519KeyPair } from './ed25519-keygen';
-
-// Database operations
+// Database operations (now bridges to WebCrypto storage)
 export { storeKeyPair, getKeyPair, clearAllKeyPairs } from './ed25519-database';
 
 // Signing operations

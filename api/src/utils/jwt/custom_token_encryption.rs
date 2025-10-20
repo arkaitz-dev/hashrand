@@ -14,7 +14,7 @@ type PrehashKeys = ([u8; 32], [u8; 32], [u8; 32]);
 
 /// Generate prehash seed encryption keys from encrypted payload (circular interdependence)
 pub fn generate_prehash_encryption_keys(
-    encrypted_payload: &[u8; 64],
+    encrypted_payload: &[u8; 96],
 ) -> Result<PrehashKeys, String> {
     // Get base keys from environment
     let base_cipher_key = get_prehash_cipher_key()?;
@@ -35,7 +35,7 @@ pub fn generate_prehash_encryption_keys(
 /// Encrypt prehash seed using circular interdependent encryption
 pub fn encrypt_prehash_seed(
     prehash_seed: &[u8; 32],
-    encrypted_payload: &[u8; 64],
+    encrypted_payload: &[u8; 96],
 ) -> Result<[u8; 32], String> {
     // Generate encryption keys from encrypted_payload (circular dependency)
     let (cipher_key, nonce_key, hmac_key) = generate_prehash_encryption_keys(encrypted_payload)?;
@@ -55,7 +55,7 @@ pub fn encrypt_prehash_seed(
 /// Decrypt prehash seed using circular interdependent decryption
 pub fn decrypt_prehash_seed(
     encrypted_prehash_seed: &[u8; 32],
-    encrypted_payload: &[u8; 64],
+    encrypted_payload: &[u8; 96],
 ) -> Result<[u8; 32], String> {
     // Generate decryption keys from encrypted_payload (same as encryption)
     let (cipher_key, nonce_key, hmac_key) = generate_prehash_encryption_keys(encrypted_payload)?;

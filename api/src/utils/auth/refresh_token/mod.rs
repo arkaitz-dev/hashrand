@@ -51,16 +51,17 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
     };
 
     let username = &claims.sub;
-    let pub_key = &claims.pub_key;
-    let pub_key_hex = hex::encode(pub_key);
+    let ed25519_pub_key = &claims.ed25519_pub_key;
+    let x25519_pub_key = &claims.x25519_pub_key;
+    let ed25519_pub_key_hex = hex::encode(ed25519_pub_key);
 
-    // Step 4: Validate SignedRequest from body
-    let signed_request = match validate_signed_request(&req, &pub_key_hex) {
+    // Step 4: Validate SignedRequest from body (using Ed25519 for signature validation)
+    let signed_request = match validate_signed_request(&req, &ed25519_pub_key_hex) {
         Ok(request) => request,
         Err(response) => return Ok(response),
     };
 
-    // Step 5: Parse refresh payload
+    // Step 5: Parse refresh payload (contains new_ed25519_pub_key and new_x25519_pub_key)
     let refresh_payload = match parse_refresh_payload(&signed_request) {
         Ok(payload) => payload,
         Err(response) => return Ok(response),
@@ -71,10 +72,17 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
     // Step 7: Route to appropriate handler
     if is_in_renewal_window {
-        // TRAMO 2/3: Complete key rotation
-        tramo_2_3::handle_key_rotation(username, &pub_key_hex, &refresh_payload.new_pub_key, domain)
+        // TRAMO 2/3: Complete key rotation with both Ed25519 and X25519
+        tramo_2_3::handle_key_rotation(
+            username,
+            &ed25519_pub_key_hex,
+            &hex::encode(x25519_pub_key),
+            &refresh_payload.new_ed25519_pub_key,
+            &refresh_payload.new_x25519_pub_key,
+            domain,
+        )
     } else {
         // TRAMO 1/3: Simple token refresh (no rotation)
-        tramo_1_3::handle_no_rotation(username, pub_key)
+        tramo_1_3::handle_no_rotation(username, ed25519_pub_key, x25519_pub_key)
     }
 }

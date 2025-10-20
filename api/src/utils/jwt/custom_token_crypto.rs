@@ -37,8 +37,8 @@ pub fn generate_prehash_from_derived(
     Ok(output)
 }
 
-/// Generate 32-byte hash from 64-byte encrypted payload for key derivation
-pub fn hash_encrypted_payload(encrypted_payload: &[u8; 64]) -> [u8; 32] {
+/// Generate 32-byte hash from 96-byte encrypted payload for key derivation
+pub fn hash_encrypted_payload(encrypted_payload: &[u8; 96]) -> [u8; 32] {
     *blake3::hash(encrypted_payload).as_bytes()
 }
 
@@ -108,24 +108,24 @@ pub fn decrypt_prehash_seed_data(
     Ok(plaintext)
 }
 
-/// Encrypt payload with ChaCha20 (64 bytes)
+/// Encrypt payload with ChaCha20 (96 bytes)
 pub fn encrypt_payload(
-    payload: &[u8; 64],
+    payload: &[u8; 96],
     key: &[u8; 32],
     nonce: &[u8; 12],
-) -> Result<[u8; 64], String> {
+) -> Result<[u8; 96], String> {
     let mut cipher = ChaCha20::new(key.into(), nonce.into());
     let mut ciphertext = *payload;
     cipher.apply_keystream(&mut ciphertext);
     Ok(ciphertext)
 }
 
-/// Decrypt payload with ChaCha20 (64 bytes)
+/// Decrypt payload with ChaCha20 (96 bytes)
 pub fn decrypt_payload(
-    ciphertext: &[u8; 64],
+    ciphertext: &[u8; 96],
     key: &[u8; 32],
     nonce: &[u8; 12],
-) -> Result<[u8; 64], String> {
+) -> Result<[u8; 96], String> {
     let mut cipher = ChaCha20::new(key.into(), nonce.into());
     let mut plaintext = *ciphertext;
     cipher.apply_keystream(&mut plaintext);

@@ -56,8 +56,8 @@ impl MagicLinkValidation {
             }
         };
 
-        // Step 4: Extract components from payload
-        let (encryption_blob, pub_key_array, ui_host, next_param) =
+        // Step 4: Extract components from payload (now includes both Ed25519 and X25519 keys)
+        let (encryption_blob, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param) =
             match extract_payload_components(&payload_plain) {
                 Ok(components) => components,
                 Err(error_tuple) => return Ok(error_tuple),
@@ -90,7 +90,8 @@ impl MagicLinkValidation {
                     true,
                     next_param,
                     Some(user_id),
-                    Some(pub_key_array),
+                    Some(ed25519_pub_key_array),
+                    Some(x25519_pub_key_array),
                     ui_host,
                 ))
             }

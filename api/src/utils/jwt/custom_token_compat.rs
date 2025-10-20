@@ -36,7 +36,8 @@ impl CustomTokenClaims {
                 TokenType::Refresh => "refresh".to_string(),
             },
             refresh_expires_at: self.refresh_expires_at.timestamp(),
-            pub_key: self.pub_key,
+            ed25519_pub_key: self.ed25519_pub_key,
+            x25519_pub_key: self.x25519_pub_key,
         }
     }
 }

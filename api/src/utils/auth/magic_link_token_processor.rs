@@ -13,7 +13,8 @@ use crate::database::operations::MagicLinkOperations;
 pub struct TokenValidationResult {
     pub next_param: Option<String>,
     pub user_id_bytes: [u8; 16],
-    pub pub_key_bytes: [u8; 32],
+    pub ed25519_pub_key_bytes: [u8; 32],
+    pub x25519_pub_key_bytes: [u8; 32],
     pub ui_host: Option<String>,
 }
 
@@ -27,11 +28,11 @@ pub struct TokenValidationResult {
 pub fn validate_and_extract_token_data(
     magic_token: &str,
 ) -> Result<TokenValidationResult, Response> {
-    // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 pub_key, and ui_host
-    let (is_valid, next_param, user_id_bytes, pub_key_bytes, ui_host) =
+    // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 and X25519 pub_keys, and ui_host
+    let (is_valid, next_param, user_id_bytes, ed25519_pub_key_bytes, x25519_pub_key_bytes, ui_host) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
-            Ok((valid, next, user_id, pub_key, ui_host)) => {
-                (valid, next, user_id, pub_key, ui_host)
+            Ok((valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host)) => {
+                (valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host)
             }
             Err(error) => {
                 return Err(categorize_token_validation_error(error.into()));
@@ -54,11 +55,20 @@ pub fn validate_and_extract_token_data(
     };
 
     // Extract and validate Ed25519 public key
-    let pub_key_array = match pub_key_bytes {
+    let ed25519_pub_key_array = match ed25519_pub_key_bytes {
         Some(key) => key,
         None => {
             error!("❌ No Ed25519 public key found in magic link payload");
-            return Err(create_missing_public_key_response());
+            return Err(create_missing_public_key_response("Ed25519"));
+        }
+    };
+
+    // Extract and validate X25519 public key
+    let x25519_pub_key_array = match x25519_pub_key_bytes {
+        Some(key) => key,
+        None => {
+            error!("❌ No X25519 public key found in magic link payload");
+            return Err(create_missing_public_key_response("X25519"));
         }
     };
 
@@ -82,7 +92,8 @@ pub fn validate_and_extract_token_data(
     Ok(TokenValidationResult {
         next_param,
         user_id_bytes: user_id_array,
-        pub_key_bytes: pub_key_array,
+        ed25519_pub_key_bytes: ed25519_pub_key_array,
+        x25519_pub_key_bytes: x25519_pub_key_array,
         ui_host,
     })
 }
@@ -126,8 +137,8 @@ fn create_missing_user_id_response() -> Response {
 }
 
 /// Create error response for missing public key
-fn create_missing_public_key_response() -> Response {
-    create_error_response(400, "Invalid magic link: missing Ed25519 public key")
+fn create_missing_public_key_response(key_type: &str) -> Response {
+    create_error_response(400, &format!("Invalid magic link: missing {} public key", key_type))
 }
 
 /// Create standardized error response

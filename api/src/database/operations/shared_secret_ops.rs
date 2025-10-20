@@ -6,7 +6,7 @@
 use super::shared_secret_crypto::SharedSecretCrypto;
 use super::shared_secret_storage::SharedSecretStorage;
 use super::shared_secret_types::{SecretRole, SharedSecretPayload, constants::*};
-use crate::utils::crypto::{decrypt_with_ecdh, ed25519_public_to_x25519, get_backend_x25519_private_key};
+use crate::utils::crypto::{decrypt_with_ecdh, get_backend_x25519_private_key};
 use chrono::Utc;
 use spin_sdk::sqlite::Error as SqliteError;
 use tracing::{debug, warn};
@@ -175,7 +175,8 @@ impl SharedSecretOps {
     /// * `receiver_email` - Receiver email address
     /// * `encrypted_secret` - ChaCha20-Poly1305 encrypted secret from frontend
     /// * `encrypted_key_material` - ECDH encrypted key material from frontend (60 bytes: 44 + 16 MAC)
-    /// * `sender_public_key_hex` - Sender's Ed25519 public key as hex string (64 chars)
+    /// * `sender_ed25519_public_key_hex` - Sender's Ed25519 public key as hex string (64 chars)
+    /// * `sender_x25519_public_key_hex` - Sender's X25519 public key as hex string (64 chars)
     /// * `otp` - Optional 9-digit OTP
     /// * `expires_hours` - Expiration in hours (1-72)
     /// * `max_reads` - Maximum reads for receiver (1-10)
@@ -198,7 +199,8 @@ impl SharedSecretOps {
         receiver_email: &str,
         encrypted_secret: &[u8],
         encrypted_key_material: &[u8],
-        sender_public_key_hex: &str,
+        sender_ed25519_public_key_hex: &str,
+        sender_x25519_public_key_hex: &str,
         otp: Option<String>,
         expires_hours: i64,
         max_reads: i64,
@@ -208,40 +210,40 @@ impl SharedSecretOps {
     ) -> Result<[u8; REFERENCE_HASH_LENGTH], SqliteError> {
         debug!("🔐 SharedSecret: Starting E2E encryption workflow");
 
-        // 1. Validate sender public key format
-        if sender_public_key_hex.len() != 64 {
+        // 1. Validate sender X25519 public key format
+        if sender_x25519_public_key_hex.len() != 64 {
             return Err(SqliteError::Io(format!(
-                "Invalid sender public key hex length: {} (expected 64)",
-                sender_public_key_hex.len()
+                "Invalid sender X25519 public key hex length: {} (expected 64)",
+                sender_x25519_public_key_hex.len()
             )));
         }
 
-        let sender_ed25519_public = hex::decode(sender_public_key_hex).map_err(|e| {
-            SqliteError::Io(format!("Failed to decode sender public key hex: {}", e))
+        let sender_x25519_public_bytes = hex::decode(sender_x25519_public_key_hex).map_err(|e| {
+            SqliteError::Io(format!("Failed to decode sender X25519 public key hex: {}", e))
         })?;
 
-        if sender_ed25519_public.len() != 32 {
+        if sender_x25519_public_bytes.len() != 32 {
             return Err(SqliteError::Io(format!(
-                "Invalid sender public key byte length: {} (expected 32)",
-                sender_ed25519_public.len()
+                "Invalid sender X25519 public key byte length: {} (expected 32)",
+                sender_x25519_public_bytes.len()
             )));
         }
 
-        let sender_ed25519_public_array: [u8; 32] = sender_ed25519_public
+        let sender_x25519_public_array: [u8; 32] = sender_x25519_public_bytes
             .try_into()
-            .map_err(|_| SqliteError::Io("Failed to convert sender public key to array".to_string()))?;
+            .map_err(|_| SqliteError::Io("Failed to convert sender X25519 public key to array".to_string()))?;
 
-        // 2. Convert sender's Ed25519 public key → X25519 public key
-        debug!("🔐 SharedSecret: Converting sender Ed25519 → X25519 public key");
-        let sender_x25519_public = ed25519_public_to_x25519(&sender_ed25519_public_array)?;
+        // Convert to X25519PublicKey type
+        let sender_x25519_public = x25519_dalek::PublicKey::from(sender_x25519_public_array);
 
-        // 3. Calculate sender's user_id for per-user X25519 key derivation
+        // 2. Calculate sender's user_id for per-user X25519 key derivation
         debug!("🔐 SharedSecret: Calculating sender user_id");
         let sender_user_id = SharedSecretCrypto::calculate_user_id(sender_email)?;
 
-        // 4. Get backend's per-user X25519 private key
+        // 3. Get backend's per-user X25519 private key
+        // CRITICAL: Use sender's X25519 pub_key (not Ed25519!) for per-user derivation
         debug!("🔐 SharedSecret: Deriving backend X25519 private key (per-user)");
-        let backend_x25519_private = get_backend_x25519_private_key(&sender_user_id, sender_public_key_hex)?;
+        let backend_x25519_private = get_backend_x25519_private_key(&sender_user_id, sender_x25519_public_key_hex)?;
 
         // 5. Decrypt key_material using ECDH
         debug!("🔐 SharedSecret: Decrypting key_material with ECDH");

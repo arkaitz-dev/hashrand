@@ -3,23 +3,23 @@ use super::super::magic_link_types::constants::*;
 use super::utilities::{copy_to_array, create_validation_error, extract_utf8_string};
 use tracing::{debug, error, warn};
 
-/// Type alias for extracted payload components (encryption_blob, pub_key, ui_host, next_param)
-type PayloadComponents = ([u8; 44], [u8; 32], Option<String>, Option<String>);
+/// Type alias for extracted payload components (encryption_blob, ed25519_pub_key, x25519_pub_key, ui_host, next_param)
+type PayloadComponents = ([u8; 44], [u8; 32], [u8; 32], Option<String>, Option<String>);
 
-/// Extract encryption blob, Ed25519 public key, ui_host, and next_param from decrypted payload
+/// Extract encryption blob, Ed25519 and X25519 public keys, ui_host, and next_param from decrypted payload
 ///
 /// # Arguments
 /// * `payload_plain` - Decrypted payload bytes
 ///
 /// # Returns
 /// * `Result<PayloadComponents, ValidationResult>`
-///   - (encryption_blob, pub_key, ui_host, next_param) or validation error
+///   - (encryption_blob, ed25519_pub_key, x25519_pub_key, ui_host, next_param) or validation error
 pub fn extract_payload_components(
     payload_plain: &[u8],
 ) -> Result<PayloadComponents, ValidationResult> {
     // Validate minimum payload length
     if payload_plain.len() < MIN_PAYLOAD_LENGTH {
-        error!("Database: Invalid decrypted payload length (minimum 76 bytes)");
+        error!("Database: Invalid decrypted payload length (minimum 108 bytes)");
         return Err(create_validation_error());
     }
 
@@ -30,15 +30,19 @@ pub fn extract_payload_components(
         &payload_plain[..ENCRYPTION_BLOB_LENGTH],
     );
 
-    // Extract stored pub_key (next 32 bytes)
-    let stored_pub_key_bytes = &payload_plain[ENCRYPTION_BLOB_LENGTH..MIN_PAYLOAD_LENGTH];
-    let mut pub_key_array = [0u8; ED25519_BYTES_LENGTH];
-    copy_to_array(&mut pub_key_array, stored_pub_key_bytes);
+    // Extract Ed25519 public key (bytes 44-76)
+    let ed25519_start = ENCRYPTION_BLOB_LENGTH;
+    let ed25519_end = ed25519_start + ED25519_BYTES_LENGTH;
+    let mut ed25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
+    copy_to_array(&mut ed25519_pub_key_array, &payload_plain[ed25519_start..ed25519_end]);
 
-    //     "🔍 DEBUG EXTRACT: payload_plain.len() = {}",
-    //     payload_plain.len()
-    // );
-    debug!("Database: Successfully extracted Ed25519 public key from stored payload");
+    // Extract X25519 public key (bytes 76-108)
+    let x25519_start = ed25519_end;
+    let x25519_end = x25519_start + ED25519_BYTES_LENGTH; // Same length as Ed25519 (32 bytes)
+    let mut x25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
+    copy_to_array(&mut x25519_pub_key_array, &payload_plain[x25519_start..x25519_end]);
+
+    debug!("Database: Successfully extracted Ed25519 and X25519 public keys from stored payload");
     debug!(
         "🔍 DEBUG EXTRACT: payload_plain.len() = {}",
         payload_plain.len()
@@ -47,15 +51,12 @@ pub fn extract_payload_components(
     // Extract ui_host and next_param
     let (ui_host, next_param) = extract_ui_host_and_next_param(payload_plain)?;
 
-    //     "🔍 DEBUG EXTRACT: Final ui_host: {:?}, next_param: {:?}",
-    //     ui_host, next_param
-    // );
     debug!(
         "🔍 DEBUG EXTRACT: Final ui_host: {:?}, next_param: {:?}",
         ui_host, next_param
     );
 
-    Ok((encryption_blob, pub_key_array, ui_host, next_param))
+    Ok((encryption_blob, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param))
 }
 
 /// Extract ui_host and next_param with backward compatibility

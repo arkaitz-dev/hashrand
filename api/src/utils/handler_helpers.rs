@@ -11,7 +11,8 @@ use spin_sdk::http::Request;
 // Crypto material extracted from JWT for SignedResponse generation
 pub struct CryptoMaterial {
     pub user_id: Vec<u8>,
-    pub pub_key_hex: String,
+    pub pub_key_hex: String,        // Ed25519 public key hex (for signatures)
+    pub x25519_pub_key_hex: String, // X25519 public key hex (for ECDH)
 }
 
 // Universal function to extract crypto material from JWT Authorization header
@@ -31,13 +32,28 @@ pub fn extract_crypto_material_from_request(req: &Request) -> Result<CryptoMater
         .and_then(|h| h.as_str())
         .ok_or_else(|| "Missing Authorization header".to_string())?;
 
-    // Use existing SignedResponseGenerator function (DRY)
-    let (user_id, pub_key_hex) =
-        SignedResponseGenerator::extract_crypto_material_from_jwt(auth_header)?;
+    // Extract Bearer token
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or_else(|| "Invalid Authorization header format".to_string())?;
+
+    // Validate and extract claims
+    let claims = crate::utils::JwtUtils::validate_access_token(token)
+        .map_err(|e| format!("JWT validation failed: {}", e))?;
+
+    // Convert username (Base58) back to user_id bytes
+    let user_id = bs58::decode(&claims.sub)
+        .into_vec()
+        .map_err(|e| format!("Failed to decode Base58 username: {}", e))?;
+
+    // Convert both pub_keys to hex strings
+    let pub_key_hex = hex::encode(claims.ed25519_pub_key);
+    let x25519_pub_key_hex = hex::encode(claims.x25519_pub_key);
 
     Ok(CryptoMaterial {
         user_id,
         pub_key_hex,
+        x25519_pub_key_hex,
     })
 }
 

@@ -19,14 +19,15 @@ use chrono::Utc;
 
 // Prehash encryption functions are now imported from custom_token_encryption module
 
-/// Generate custom token (access or refresh) with ultra-secure circular encryption and Ed25519 public key
+/// Generate custom token (access or refresh) with ultra-secure circular encryption, Ed25519 and X25519 public keys
 pub fn generate_custom_token(
     email: &str,
     token_type: TokenType,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<String, String> {
-    // 1. Create claims with user_id, expiration, and Ed25519 public key
-    let claims = CustomTokenClaims::new(email, token_type, pub_key)?;
+    // 1. Create claims with user_id, expiration, Ed25519 and X25519 public keys
+    let claims = CustomTokenClaims::new(email, token_type, ed25519_pub_key, x25519_pub_key)?;
 
     // 2. Get token configuration
     let config = match token_type {
@@ -53,10 +54,10 @@ pub fn generate_custom_token(
     // 8. ULTRA-SECURE: Encrypt prehash_seed using encrypted_payload as circular dependency
     let encrypted_prehash_seed = encrypt_prehash_seed(&prehash_seed, &encrypted_payload)?;
 
-    // 9. Combine encrypted_prehash_seed(32) + encrypted_payload(64) = 96 bytes
-    let mut combined = [0u8; 96];
+    // 9. Combine encrypted_prehash_seed(32) + encrypted_payload(96) = 128 bytes
+    let mut combined = [0u8; 128];
     combined[..32].copy_from_slice(&encrypted_prehash_seed);
-    combined[32..96].copy_from_slice(&encrypted_payload);
+    combined[32..128].copy_from_slice(&encrypted_payload);
 
     // 10. Encode as Base58
     Ok(bs58::encode(&combined).into_string())
@@ -72,18 +73,18 @@ pub fn validate_custom_token(
         .into_vec()
         .map_err(|_| "Invalid Base58 token encoding")?;
 
-    if combined.len() != 96 {
+    if combined.len() != 128 {
         return Err(format!(
-            "Invalid token length: expected 96 bytes, got {}",
+            "Invalid token length: expected 128 bytes, got {}",
             combined.len()
         ));
     }
 
-    // 2. Extract encrypted_prehash_seed(32) + encrypted_payload(64)
+    // 2. Extract encrypted_prehash_seed(32) + encrypted_payload(96)
     let mut encrypted_prehash_seed = [0u8; 32];
-    let mut encrypted_payload = [0u8; 64];
+    let mut encrypted_payload = [0u8; 96];
     encrypted_prehash_seed.copy_from_slice(&combined[..32]);
-    encrypted_payload.copy_from_slice(&combined[32..96]);
+    encrypted_payload.copy_from_slice(&combined[32..128]);
 
     // 3. ULTRA-SECURE: Decrypt prehash_seed using encrypted_payload as circular dependency
     let prehash_seed = decrypt_prehash_seed(&encrypted_prehash_seed, &encrypted_payload)?;

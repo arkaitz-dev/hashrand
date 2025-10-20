@@ -1,109 +1,162 @@
-//! Backend Ed25519/X25519 key management for E2E encryption (per-user)
+//! Backend Ed25519/X25519 key management - SEPARATED key derivation (v1.9.0+)
 //!
-//! Provides functions to derive per-user X25519 keys from the same Ed25519 private key
-//! used for signing responses. This ensures architectural consistency: both signature
-//! validation and ECDH encryption use the SAME per-user, rotating key derivation.
-//!
-//! **Architecture Change (v1.9.0):**
-//! - BEFORE: X25519 key derived from global `ed25519_derivation_key` (static, shared)
-//! - NOW: X25519 key derived from `derive_session_private_key(user_id, pub_key_hex)` (per-user, rotating)
+//! **CRITICAL ARCHITECTURE CHANGE:**
+//! Ed25519 and X25519 are now generated INDEPENDENTLY (not converted):
+//! - Ed25519: For signing (uses ED25519_DERIVATION_KEY)
+//! - X25519: For ECDH E2E encryption (uses X25519_DERIVATION_KEY)
 //!
 //! **Benefits:**
-//! - Consistency: Same derivation as Ed25519 signature keys
-//! - Per-user isolation: Each user has unique X25519 keypair
-//! - Automatic rotation: Keys rotate when client rotates keypair (TRAMO 2/3)
-//! - Enhanced security: No shared global key across all users
+//! - Cryptographic separation: No context mixing (signing vs encryption)
+//! - Independent key rotation: Each key type rotates separately
+//! - Per-user isolation: Each user has unique keypair per type
+//! - Standards compliance: Follows best practices (no key reuse across contexts)
+//!
+//! **Derivation:**
+//! - Ed25519: `blake3(ED25519_DERIVATION_KEY, user_id + client_ed25519_pub_key)`
+//! - X25519: `blake3(X25519_DERIVATION_KEY, user_id + client_x25519_pub_key)`
 
-use crate::utils::signed_response::key_derivation::derive_session_private_key;
+use crate::utils::pseudonimizer::blake3_keyed_variable;
 use spin_sdk::sqlite::Error as SqliteError;
 use tracing::debug;
 use x25519_dalek::{PublicKey as X25519PublicKey, StaticSecret as X25519PrivateKey};
 
-use super::ed25519_to_x25519::{ed25519_public_to_x25519, ed25519_secret_to_x25519};
+/// Get X25519 derivation key from environment
+fn get_x25519_derivation_key() -> Result<[u8; 64], SqliteError> {
+    let key_hex = spin_sdk::variables::get("x25519_derivation_key")
+        .map_err(|e| SqliteError::Io(format!("X25519_DERIVATION_KEY not found: {}", e)))?;
 
-/// Get backend's X25519 private key for ECDH decryption (per-user)
+    let key_bytes = hex::decode(&key_hex)
+        .map_err(|e| SqliteError::Io(format!("Invalid X25519_DERIVATION_KEY hex: {}", e)))?;
+
+    if key_bytes.len() != 64 {
+        return Err(SqliteError::Io(format!(
+            "X25519_DERIVATION_KEY must be 64 bytes, got {}",
+            key_bytes.len()
+        )));
+    }
+
+    let mut key_array = [0u8; 64];
+    key_array.copy_from_slice(&key_bytes);
+    Ok(key_array)
+}
+
+/// Derive per-user X25519 session keypair (INDEPENDENT from Ed25519)
 ///
-/// Derives the backend's Ed25519 private key using the SAME derivation as signature keys,
-/// then converts it to X25519 format for ECDH operations.
+/// Uses Blake3-keyed derivation with X25519_DERIVATION_KEY to generate a deterministic
+/// per-user X25519 private key. This key is COMPLETELY SEPARATE from Ed25519 keys.
 ///
-/// **Derivation**: `derive_session_private_key(user_id, pub_key_hex)` → Ed25519[32] → X25519[32]
+/// **Derivation**: `blake3(X25519_DERIVATION_KEY, user_id + client_x25519_pub_key_hex)` → X25519_priv[32]
 ///
 /// # Arguments
 /// * `user_id` - User ID bytes (typically 16 bytes)
-/// * `pub_key_hex` - Client's Ed25519 public key as hex string (64 hex chars)
+/// * `client_x25519_pub_key_hex` - Client's X25519 public key as hex string (64 hex chars)
+///
+/// # Returns
+/// * `Result<(X25519PrivateKey, X25519PublicKey), SqliteError>` - X25519 keypair or error
+fn derive_x25519_session_keypair(
+    user_id: &[u8],
+    client_x25519_pub_key_hex: &str,
+) -> Result<(X25519PrivateKey, X25519PublicKey), SqliteError> {
+    debug!(
+        "🔑 BackendKeys: Deriving per-user X25519 keypair (user_id: {} bytes, client_x25519_pub: {}...)",
+        user_id.len(),
+        &client_x25519_pub_key_hex[..8]
+    );
+
+    // Get X25519 derivation key from environment
+    let x25519_derivation_key = get_x25519_derivation_key()?;
+
+    // Combine user_id + client_x25519_pub_key_hex for unique per-user derivation
+    let mut combined = Vec::new();
+    combined.extend_from_slice(user_id);
+    combined.extend_from_slice(client_x25519_pub_key_hex.as_bytes());
+
+    // Derive 32-byte seed using Blake3-keyed hash
+    let seed = blake3_keyed_variable(&x25519_derivation_key, &combined, 32);
+
+    // Convert to X25519 private key
+    let mut private_key_bytes = [0u8; 32];
+    private_key_bytes.copy_from_slice(&seed[..32]);
+    let x25519_private = X25519PrivateKey::from(private_key_bytes);
+
+    // Derive public key from private key
+    let x25519_public = X25519PublicKey::from(&x25519_private);
+
+    debug!("✅ BackendKeys: X25519 keypair derived (INDEPENDENT, per-user)");
+    Ok((x25519_private, x25519_public))
+}
+
+/// Get backend's X25519 private key for ECDH decryption (per-user)
+///
+/// Derives the backend's X25519 private key using INDEPENDENT derivation
+/// (NOT converted from Ed25519). Uses X25519_DERIVATION_KEY.
+///
+/// **Derivation**: `blake3(X25519_DERIVATION_KEY, user_id + client_x25519_pub_key)` → X25519_priv[32]
+///
+/// # Arguments
+/// * `user_id` - User ID bytes (typically 16 bytes)
+/// * `client_x25519_pub_key_hex` - Client's X25519 public key as hex string (64 hex chars)
 ///
 /// # Returns
 /// * `Result<X25519PrivateKey, SqliteError>` - X25519 private key or error
 ///
 /// # Example
 /// ```ignore
-/// let backend_x25519_private = get_backend_x25519_private_key(user_id, &requester_pub_key_hex)?;
-/// let decrypted_key_material = decrypt_with_ecdh(&encrypted, &backend_x25519_private, &sender_public)?;
+/// let backend_x25519_private = get_backend_x25519_private_key(user_id, &requester_x25519_pub_key_hex)?;
+/// let decrypted_key_material = decrypt_with_ecdh(&encrypted, &backend_x25519_private, &sender_x25519_public)?;
 /// ```
 pub fn get_backend_x25519_private_key(
     user_id: &[u8],
-    pub_key_hex: &str,
+    client_x25519_pub_key_hex: &str,
 ) -> Result<X25519PrivateKey, SqliteError> {
-    debug!(
-        "🔑 BackendKeys: Deriving per-user Ed25519 private key (user_id: {} bytes, pub_key: {}...)",
-        user_id.len(),
-        &pub_key_hex[..8]
-    );
-
-    // Derive Ed25519 private key using SAME derivation as signature keys
-    let ed25519_private = derive_session_private_key(user_id, pub_key_hex)
-        .map_err(|e| SqliteError::Io(format!("Failed to derive session private key: {}", e)))?;
-
-    // Convert Ed25519 → X25519 for ECDH
-    let x25519_private = ed25519_secret_to_x25519(&ed25519_private);
-
-    debug!("✅ BackendKeys: Converted to X25519 private key for ECDH");
+    let (x25519_private, _) = derive_x25519_session_keypair(user_id, client_x25519_pub_key_hex)?;
     Ok(x25519_private)
 }
 
 /// Get backend's X25519 public key for frontend use (per-user)
 ///
-/// Derives the backend's X25519 public key from its per-user private key. This public key
-/// is returned in login/refresh responses so the frontend can encrypt key_material when
-/// creating shared secrets.
+/// Derives the backend's X25519 public key using INDEPENDENT derivation
+/// (NOT converted from Ed25519). This public key is returned in login/refresh
+/// responses so the frontend can encrypt key_material when creating shared secrets.
 ///
-/// **Derivation**: `derive_session_private_key(user_id, pub_key_hex)` → Ed25519_priv[32] → Ed25519_pub[32] → X25519_pub[32]
+/// **Derivation**: `blake3(X25519_DERIVATION_KEY, user_id + client_x25519_pub_key)` → X25519_pub[32]
 ///
 /// # Arguments
 /// * `user_id` - User ID bytes (typically 16 bytes)
-/// * `pub_key_hex` - Client's Ed25519 public key as hex string (64 hex chars)
+/// * `client_x25519_pub_key_hex` - Client's X25519 public key as hex string (64 hex chars)
 ///
 /// # Returns
 /// * `Result<X25519PublicKey, SqliteError>` - X25519 public key or error
 ///
 /// # Example
 /// ```ignore
-/// let backend_x25519_public = get_backend_x25519_public_key(user_id, &pub_key_hex)?;
+/// let backend_x25519_public = get_backend_x25519_public_key(user_id, &client_x25519_pub_key_hex)?;
 /// // Return to frontend in hex format: hex::encode(backend_x25519_public.as_bytes())
 /// ```
 pub fn get_backend_x25519_public_key(
     user_id: &[u8],
-    pub_key_hex: &str,
+    client_x25519_pub_key_hex: &str,
 ) -> Result<X25519PublicKey, SqliteError> {
+    let (_, x25519_public) = derive_x25519_session_keypair(user_id, client_x25519_pub_key_hex)?;
+
+    // DEBUG: Check for small-order points (WebCrypto validation issue diagnosis)
+    let pub_key_bytes = x25519_public.as_bytes();
+    let is_identity = pub_key_bytes == &[0u8; 32];
+    let is_all_ones = pub_key_bytes == &[1u8; 32];
+    let last_byte = pub_key_bytes[31];
+
     debug!(
-        "🔑 BackendKeys: Deriving per-user X25519 public key (user_id: {} bytes, pub_key: {}...)",
-        user_id.len(),
-        &pub_key_hex[..8]
+        "🔍 Backend X25519 validation: identity={}, all_ones={}, last_byte=0x{:02x}, full_hex={}",
+        is_identity,
+        is_all_ones,
+        last_byte,
+        hex::encode(pub_key_bytes)
     );
 
-    // Derive Ed25519 private key using SAME derivation as signature keys
-    let ed25519_private = derive_session_private_key(user_id, pub_key_hex)
-        .map_err(|e| SqliteError::Io(format!("Failed to derive session private key: {}", e)))?;
+    if is_identity {
+        debug!("⚠️ WARNING: Generated X25519 public key is the identity point (all zeros)");
+    }
 
-    // Derive Ed25519 public key from private key
-    use ed25519_dalek::SigningKey;
-    let signing_key = SigningKey::from_bytes(&ed25519_private);
-    let ed25519_public = signing_key.verifying_key().to_bytes();
-
-    // Convert Ed25519 public → X25519 public
-    let x25519_public = ed25519_public_to_x25519(&ed25519_public)?;
-
-    debug!("✅ BackendKeys: X25519 public key derived (per-user)");
     Ok(x25519_public)
 }
 
@@ -118,7 +171,7 @@ mod tests {
         let user_id_2 = b"user9876543210zy"; // 16 bytes
         let pub_key_hex = "a".repeat(64); // Valid hex string (64 chars)
 
-        // Note: This test requires ed25519_derivation_key environment variable
+        // Note: This test requires x25519_derivation_key environment variable
         // In unit tests, this will fail gracefully
         let result_1 = get_backend_x25519_public_key(user_id_1, &pub_key_hex);
         let result_2 = get_backend_x25519_public_key(user_id_2, &pub_key_hex);
@@ -224,31 +277,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_x25519_conversion_determinism() {
-        // Test that X25519 conversion is deterministic
-        let test_seed = [42u8; 32];
-
-        let x25519_private = ed25519_secret_to_x25519(&test_seed);
-        let x25519_public = X25519PublicKey::from(&x25519_private);
-
-        assert_eq!(
-            x25519_public.as_bytes().len(),
-            32,
-            "X25519 public key should be 32 bytes"
-        );
-        assert_eq!(
-            x25519_private.to_bytes().len(),
-            32,
-            "X25519 private key should be 32 bytes"
-        );
-
-        // Verify determinism
-        let x25519_private2 = ed25519_secret_to_x25519(&test_seed);
-        assert_eq!(
-            x25519_private.to_bytes(),
-            x25519_private2.to_bytes(),
-            "Same seed should produce same X25519 key"
-        );
-    }
 }

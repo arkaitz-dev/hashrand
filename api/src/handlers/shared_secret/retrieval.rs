@@ -4,6 +4,7 @@
 //! Requires JWT authentication and Ed25519 signature validation
 
 use tracing::info;
+use x25519_dalek;
 
 use crate::database::operations::{
     shared_secret_crypto::SharedSecretCrypto,
@@ -15,7 +16,7 @@ use crate::utils::{
     CryptoMaterial, ProtectedEndpointMiddleware, ProtectedEndpointResult, SignedRequestValidator,
     create_auth_error_response, create_client_error_response, create_forbidden_response,
     create_server_error_response, create_signed_endpoint_response,
-    crypto::{ed25519_public_to_x25519, encrypt_with_ecdh, get_backend_x25519_private_key},
+    crypto::{encrypt_with_ecdh, get_backend_x25519_private_key},
     endpoint_helpers::extract_query_params, extract_crypto_material_from_request,
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
@@ -106,12 +107,12 @@ async fn handle_retrieve_secret_get(req: Request, hash: &str) -> anyhow::Result<
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with 3-layer validation (checksum → ownership → database)
-    // Requester's public key comes from JWT for ECDH encryption of key_material
+    // Requester's X25519 public key comes from JWT for ECDH encryption of key_material
     match retrieve_and_respond(
         &encrypted_hash,
         &user_id_from_jwt,
         None,
-        &crypto_material.pub_key_hex,
+        &crypto_material.x25519_pub_key_hex,
         &crypto_material,
     ) {
         Ok(response) => Ok(response),
@@ -164,12 +165,12 @@ async fn handle_retrieve_secret_post(req: Request, hash: &str) -> anyhow::Result
     user_id_from_jwt.copy_from_slice(&crypto_material.user_id);
 
     // Retrieve secret with OTP validation and 3-layer validation
-    // Requester's public key comes from JWT for ECDH encryption of key_material
+    // Requester's X25519 public key comes from JWT for ECDH encryption of key_material
     match retrieve_and_respond(
         &encrypted_hash,
         &user_id_from_jwt,
         Some(&result.payload.otp),
-        &crypto_material.pub_key_hex,
+        &crypto_material.x25519_pub_key_hex,
         &crypto_material,
     ) {
         Ok(response) => Ok(response),
@@ -311,38 +312,37 @@ fn retrieve_and_respond(
     // E2E ENCRYPTION: Encrypt key_material with ECDH for requester
     // ============================================================================
 
-    // 1. Validate requester's public key format
+    // 1. Validate requester's X25519 public key format (from JWT)
     if requester_public_key_hex.len() != 64 {
         return Err(format!(
-            "Invalid requester public key hex length: {} (expected 64)",
+            "Invalid requester X25519 public key hex length: {} (expected 64)",
             requester_public_key_hex.len()
         ));
     }
 
-    let requester_ed25519_public = hex::decode(requester_public_key_hex)
-        .map_err(|e| format!("Failed to decode requester public key hex: {}", e))?;
+    let requester_x25519_public_bytes = hex::decode(requester_public_key_hex)
+        .map_err(|e| format!("Failed to decode requester X25519 public key hex: {}", e))?;
 
-    if requester_ed25519_public.len() != 32 {
+    if requester_x25519_public_bytes.len() != 32 {
         return Err(format!(
-            "Invalid requester public key byte length: {} (expected 32)",
-            requester_ed25519_public.len()
+            "Invalid requester X25519 public key byte length: {} (expected 32)",
+            requester_x25519_public_bytes.len()
         ));
     }
 
-    let requester_ed25519_public_array: [u8; 32] = requester_ed25519_public
+    let requester_x25519_public_array: [u8; 32] = requester_x25519_public_bytes
         .try_into()
-        .map_err(|_| "Failed to convert requester public key to array".to_string())?;
+        .map_err(|_| "Failed to convert requester X25519 public key to array".to_string())?;
 
-    // 2. Convert requester's Ed25519 public key → X25519 public key
-    let requester_x25519_public = ed25519_public_to_x25519(&requester_ed25519_public_array)
-        .map_err(|e| format!("Failed to convert requester Ed25519→X25519: {}", e))?;
+    // Convert array to X25519PublicKey type
+    let requester_x25519_public = x25519_dalek::PublicKey::from(requester_x25519_public_array);
 
-    // 3. Get backend's per-user X25519 private key
-    // Use requester's user_id (from JWT) and pub_key for per-user derivation
+    // 2. Get backend's per-user X25519 private key
+    // CRITICAL: Use requester's X25519 pub_key (not Ed25519!) for per-user derivation
     let backend_x25519_private = get_backend_x25519_private_key(user_id_from_jwt, requester_public_key_hex)
         .map_err(|e| format!("Failed to derive backend X25519 private key (per-user): {}", e))?;
 
-    // 4. Encrypt key_material with ECDH
+    // 3. Encrypt key_material with ECDH using X25519 keys
     let encrypted_key_material = encrypt_with_ecdh(
         &payload.key_material,
         &backend_x25519_private,

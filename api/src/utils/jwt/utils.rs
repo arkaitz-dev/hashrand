@@ -31,43 +31,49 @@ impl JwtUtils {
     // Custom token functions for backwards compatibility
     pub fn create_access_token(
         email: &str,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_token_api::create_custom_access_token(email, pub_key)
+        custom_token_api::create_custom_access_token(email, ed25519_pub_key, x25519_pub_key)
     }
 
     pub fn create_access_token_from_username(
         username: &str,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_token_api::create_custom_access_token_from_username(username, pub_key)
+        custom_token_api::create_custom_access_token_from_username(username, ed25519_pub_key, x25519_pub_key)
     }
 
     pub fn create_access_token_from_username_with_refresh_context(
         username: &str,
         refresh_expires_at: chrono::DateTime<chrono::Utc>,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
         custom_token_api::create_custom_access_token_from_username_with_refresh_context(
             username,
             refresh_expires_at,
-            pub_key,
+            ed25519_pub_key,
+            x25519_pub_key,
         )
     }
 
     pub fn create_refresh_token(
         email: &str,
         session_id: i64,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_refresh_token(email, session_id, pub_key)
+        tokens::create_refresh_token(email, session_id, ed25519_pub_key, x25519_pub_key)
     }
 
     pub fn create_refresh_token_from_username(
         username: &str,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        tokens::create_refresh_token_from_username(username, pub_key)
+        tokens::create_refresh_token_from_username(username, ed25519_pub_key, x25519_pub_key)
     }
 
     pub fn validate_access_token(token: &str) -> Result<AccessTokenClaims, String> {

@@ -26,19 +26,19 @@ pub fn extract_pub_key_from_bearer(request: &Request) -> Result<String, SignedRe
         SignedRequestError::InvalidSignature(format!("JWT validation failed: {}", e))
     })?;
 
-    Ok(hex::encode(claims.pub_key))
+    Ok(hex::encode(claims.ed25519_pub_key))
 }
 
-/// Extract pub_key directly from payload
+/// Extract Ed25519 pub_key directly from payload
 ///
-/// Method 2: Used when payload contains pub_key field (initial login requests)
+/// Method 2: Used when payload contains ed25519_pub_key field (initial login requests)
 pub fn extract_pub_key_from_payload(payload: &Value) -> Result<String, SignedRequestError> {
     payload
-        .get("pub_key")
+        .get("ed25519_pub_key")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .ok_or_else(|| {
-            SignedRequestError::MissingPublicKey("pub_key not found in payload".to_string())
+            SignedRequestError::MissingPublicKey("ed25519_pub_key not found in payload".to_string())
         })
 }
 
@@ -53,15 +53,15 @@ pub fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedR
             SignedRequestError::MissingPublicKey("magiclink not found in payload".to_string())
         })?;
 
-    // Validate magiclink and extract pub_key from database
-    let (_is_valid, _next_param, _user_id, pub_key_bytes, _ui_host) =
+    // Validate magiclink and extract Ed25519 pub_key from database
+    let (_is_valid, _next_param, _user_id, ed25519_pub_key_bytes, _x25519_pub_key_bytes, _ui_host) =
         MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
             SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
         })?;
 
-    let pub_key_array = pub_key_bytes.ok_or_else(|| {
-        SignedRequestError::MissingPublicKey("No pub_key found in magiclink data".to_string())
+    let ed25519_pub_key_array = ed25519_pub_key_bytes.ok_or_else(|| {
+        SignedRequestError::MissingPublicKey("No Ed25519 pub_key found in magiclink data".to_string())
     })?;
 
-    Ok(hex::encode(pub_key_array))
+    Ok(hex::encode(ed25519_pub_key_array))
 }

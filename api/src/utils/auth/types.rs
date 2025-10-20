@@ -31,7 +31,8 @@ pub struct MagicLinkPayload {
     pub next: String, // Always a path: "/" for login, or "/mnemonic/?params..." etc
     /// EXCEPTION: Uses ISO string instead of integer (see module doc for rationale)
     pub email_lang: String, // Language code for email template (e.g., "es", "en") - REQUIRED
-    pub pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes)
+    pub ed25519_pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes) for signatures
+    pub x25519_pub_key: String,  // X25519 public key (64 hex chars = 32 bytes) for ECDH
 }
 
 fn default_next_path() -> String {
@@ -78,7 +79,8 @@ pub type MagicLinkValidationRequest = SignedRequest;
 /// Payload for token refresh (wrapped in SignedRequest)
 #[derive(Deserialize, Serialize)]
 pub struct RefreshPayload {
-    pub new_pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes) - REQUIRED
+    pub new_ed25519_pub_key: String, // Ed25519 public key (64 hex chars = 32 bytes) - REQUIRED
+    pub new_x25519_pub_key: String,  // X25519 public key (64 hex chars = 32 bytes) - REQUIRED
 }
 
 /// Unified signed request structure for token refresh

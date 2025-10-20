@@ -13,21 +13,47 @@ export async function requestMagicLink(
 	ui_host: string,
 	next: string = '/'
 ): Promise<MagicLinkResponse> {
-	// Generate or retrieve Ed25519 keypair
-	const { getOrCreateKeyPair, publicKeyToHex } = await import('../../ed25519');
-	const keyPair = await getOrCreateKeyPair();
-	const pubKeyHex = publicKeyToHex(keyPair.publicKeyBytes);
+	// Generate or retrieve independent Ed25519 and X25519 keypairs
+	const { generateKeypairs } = await import('../../crypto/keypair-generation');
+	const { storeKeypairs, keypairsExist, getPublicKeyHexStrings } = await import(
+		'../../crypto/keypair-storage'
+	);
+
+	let ed25519PubKeyHex: string;
+	let x25519PubKeyHex: string;
+
+	// Check if keypairs already exist (regeneration case)
+	if (await keypairsExist()) {
+		const existingKeys = await getPublicKeyHexStrings();
+		if (existingKeys) {
+			ed25519PubKeyHex = existingKeys.ed25519;
+			x25519PubKeyHex = existingKeys.x25519;
+		} else {
+			// Generate new keypairs if retrieval failed
+			const keypairs = await generateKeypairs();
+			await storeKeypairs(keypairs);
+			ed25519PubKeyHex = keypairs.ed25519.publicKeyHex;
+			x25519PubKeyHex = keypairs.x25519.publicKeyHex;
+		}
+	} else {
+		// Generate new keypairs
+		const keypairs = await generateKeypairs();
+		await storeKeypairs(keypairs);
+		ed25519PubKeyHex = keypairs.ed25519.publicKeyHex;
+		x25519PubKeyHex = keypairs.x25519.publicKeyHex;
+	}
 
 	// Get current language for email template
 	const email_lang = await getCurrentLanguage();
 
-	// Create payload for SignedRequest
+	// Create payload for SignedRequest (now with BOTH pub_keys)
 	const payload = {
 		email,
 		ui_host,
 		next,
 		email_lang,
-		pub_key: pubKeyHex
+		ed25519_pub_key: ed25519PubKeyHex,
+		x25519_pub_key: x25519PubKeyHex
 	};
 
 	// Use universal signed POST request

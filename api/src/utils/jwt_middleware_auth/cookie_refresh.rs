@@ -135,12 +135,13 @@ fn handle_23_system_renewal(
     );
 
     // Create new access token - PRESERVE refresh context for 2/3 system
-    // Use pub_key from refresh token claims
+    // Use both pub_keys from refresh token claims
     let (new_access_token, access_expires) =
         JwtUtils::create_access_token_from_username_with_refresh_context(
             &refresh_claims.sub,
             refresh_expires_at,
-            &refresh_claims.pub_key,
+            &refresh_claims.ed25519_pub_key,
+            &refresh_claims.x25519_pub_key,
         )
         .map_err(|_| {
             debug!("🔍 DEBUG: Failed to create new access token");
@@ -159,7 +160,8 @@ fn handle_23_system_renewal(
         );
         let (new_refresh_token, _) = JwtUtils::create_refresh_token_from_username(
             &refresh_claims.sub,
-            &refresh_claims.pub_key,
+            &refresh_claims.ed25519_pub_key,
+            &refresh_claims.x25519_pub_key,
         )
         .map_err(|_| {
             debug!("🔍 DEBUG: Failed to create new refresh token");
@@ -168,7 +170,7 @@ fn handle_23_system_renewal(
 
         // Extract cryptographic information for signed responses
         let user_id = decode_username_to_user_id(&refresh_claims.sub)?;
-        let pub_key_hex = hex::encode(refresh_claims.pub_key);
+        let pub_key_hex = hex::encode(refresh_claims.ed25519_pub_key);
 
         Some(RenewedTokens {
             access_token: new_access_token,
@@ -185,7 +187,7 @@ fn handle_23_system_renewal(
         );
         // Extract cryptographic information for signed responses
         let user_id = decode_username_to_user_id(&refresh_claims.sub)?;
-        let pub_key_hex = hex::encode(refresh_claims.pub_key);
+        let pub_key_hex = hex::encode(refresh_claims.ed25519_pub_key);
 
         Some(RenewedTokens {
             access_token: new_access_token,

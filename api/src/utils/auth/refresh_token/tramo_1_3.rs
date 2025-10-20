@@ -18,13 +18,14 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 ///
 /// # Arguments
 /// * `username` - Base58 encoded username
-/// * `pub_key` - Current Ed25519 public key bytes
+/// * `ed25519_pub_key` - Current Ed25519 public key bytes
+/// * `x25519_pub_key` - Current X25519 public key bytes
 ///
 /// # Returns
 /// * `anyhow::Result<Response>` - HTTP response with new access token
-pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<Response> {
-    // Create access token with existing pub_key
-    let (access_token, _) = match JwtUtils::create_access_token_from_username(username, pub_key) {
+pub fn handle_no_rotation(username: &str, ed25519_pub_key: &[u8; 32], x25519_pub_key: &[u8; 32]) -> anyhow::Result<Response> {
+    // Create access token with existing Ed25519 and X25519 pub_keys
+    let (access_token, _) = match JwtUtils::create_access_token_from_username(username, ed25519_pub_key, x25519_pub_key) {
         Ok((token, exp)) => (token, exp),
         Err(e) => {
             error!("❌ Refresh: Failed to create access token: {}", e);
@@ -41,11 +42,12 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
         }
     };
 
-    // Convert pub_key to hex for per-user X25519 derivation
-    let pub_key_hex = hex::encode(pub_key);
+    // Convert X25519 pub_key to hex for per-user X25519 derivation
+    let x25519_pub_key_hex = hex::encode(x25519_pub_key);
 
     // Get backend's per-user X25519 public key for E2E encryption
-    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, &pub_key_hex) {
+    // CRITICAL: Use X25519 pub_key for X25519 derivation (not Ed25519!)
+    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, &x25519_pub_key_hex) {
         Ok(key) => key,
         Err(e) => {
             error!("❌ Refresh: Failed to derive backend X25519 public key (per-user): {}", e);
@@ -65,9 +67,10 @@ pub fn handle_no_rotation(username: &str, pub_key: &[u8; 32]) -> anyhow::Result<
     );
 
     // Generate signed response WITHOUT server_pub_key (no key rotation)
-    // (pub_key_hex already converted above for X25519 derivation)
+    // Use Ed25519 pub_key for signing (signature validation on frontend)
+    let ed25519_pub_key_hex = hex::encode(ed25519_pub_key);
     let signed_response =
-        match SignedResponseGenerator::create_signed_response(payload, &user_id, &pub_key_hex) {
+        match SignedResponseGenerator::create_signed_response(payload, &user_id, &ed25519_pub_key_hex) {
             Ok(response) => response,
             Err(e) => {
                 error!("❌ CRITICAL: Cannot create signed response: {}", e);

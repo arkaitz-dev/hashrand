@@ -54,12 +54,19 @@ pub struct CustomTokenClaims {
     pub expires_at: DateTime<Utc>,
     pub refresh_expires_at: DateTime<Utc>,
     pub token_type: TokenType,
-    /// Ed25519 public key (32 bytes) for cryptographic operations
-    pub pub_key: [u8; 32],
+    /// Ed25519 public key (32 bytes) for signature verification
+    pub ed25519_pub_key: [u8; 32],
+    /// X25519 public key (32 bytes) for ECDH E2E encryption
+    pub x25519_pub_key: [u8; 32],
 }
 impl CustomTokenClaims {
-    /// Create new claims from email, token type, and Ed25519 public key
-    pub fn new(email: &str, token_type: TokenType, pub_key: &[u8; 32]) -> Result<Self, String> {
+    /// Create new claims from email, token type, Ed25519 pub_key, and X25519 pub_key
+    pub fn new(
+        email: &str,
+        token_type: TokenType,
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
+    ) -> Result<Self, String> {
         let user_id = derive_user_id(email)?;
         let config = match token_type {
             TokenType::Access => CustomTokenConfig::access_token()?,
@@ -76,15 +83,17 @@ impl CustomTokenClaims {
             expires_at,
             refresh_expires_at,
             token_type,
-            pub_key: *pub_key, // Ed25519 public key integration
+            ed25519_pub_key: *ed25519_pub_key,
+            x25519_pub_key: *x25519_pub_key,
         })
     }
 
-    /// Create claims directly from user_id and Ed25519 public key (for username-based token creation)
+    /// Create claims directly from user_id, Ed25519 pub_key, and X25519 pub_key (for username-based token creation)
     pub fn new_from_user_id(
         user_id: &[u8; 16],
         token_type: TokenType,
-        pub_key: &[u8; 32],
+        ed25519_pub_key: &[u8; 32],
+        x25519_pub_key: &[u8; 32],
     ) -> Result<Self, String> {
         let config = match token_type {
             TokenType::Access => CustomTokenConfig::access_token()?,
@@ -104,17 +113,18 @@ impl CustomTokenClaims {
             expires_at,
             refresh_expires_at,
             token_type,
-            pub_key: *pub_key, // Ed25519 public key integration
+            ed25519_pub_key: *ed25519_pub_key,
+            x25519_pub_key: *x25519_pub_key,
         })
     }
 
     /// Serialize claims to bytes using dedicated serialization module
-    pub fn to_bytes(&self, hmac_key: &[u8; 64]) -> Result<[u8; 64], String> {
+    pub fn to_bytes(&self, hmac_key: &[u8; 64]) -> Result<[u8; 96], String> {
         claims_to_bytes(self, hmac_key)
     }
 
     /// Deserialize claims from bytes using dedicated serialization module
-    pub fn from_bytes(payload: &[u8; 64], hmac_key: &[u8; 64]) -> Result<Self, String> {
+    pub fn from_bytes(payload: &[u8; 96], hmac_key: &[u8; 64]) -> Result<Self, String> {
         claims_from_bytes(payload, hmac_key)
     }
 }

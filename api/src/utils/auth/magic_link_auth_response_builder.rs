@@ -17,7 +17,8 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 /// * `jwt_tokens` - Generated JWT access and refresh tokens
 /// * `next_param` - Optional next parameter for post-auth redirect
 /// * `user_id_bytes` - Raw user ID bytes for crypto material
-/// * `pub_key_bytes` - Raw public key bytes for crypto material
+/// * `ed25519_pub_key_bytes` - Raw Ed25519 public key bytes for crypto material
+/// * `x25519_pub_key_bytes` - Raw X25519 public key bytes for crypto material
 /// * `ui_host` - Optional UI host (domain) for cookie Domain attribute
 ///
 /// # Returns
@@ -26,7 +27,8 @@ pub fn build_authentication_response(
     jwt_tokens: JwtTokens,
     next_param: Option<String>,
     user_id_bytes: &[u8],
-    pub_key_bytes: &[u8],
+    ed25519_pub_key_bytes: &[u8],
+    x25519_pub_key_bytes: &[u8],
     ui_host: Option<String>,
 ) -> anyhow::Result<Response> {
     // Calculate refresh cookie expiration timestamp
@@ -40,9 +42,10 @@ pub fn build_authentication_response(
         + (refresh_duration_minutes as i64 * 60);
 
     // Get backend's per-user X25519 public key for E2E encryption
-    // Use client's user_id and pub_key for per-user derivation
-    let pub_key_hex = hex::encode(pub_key_bytes);
-    let backend_x25519_public = get_backend_x25519_public_key(user_id_bytes, &pub_key_hex)
+    // CRITICAL: Use client's X25519 pub_key (not Ed25519!) for per-user derivation
+    let ed25519_pub_key_hex = hex::encode(ed25519_pub_key_bytes);
+    let x25519_pub_key_hex = hex::encode(x25519_pub_key_bytes);
+    let backend_x25519_public = get_backend_x25519_public_key(user_id_bytes, &x25519_pub_key_hex)
         .map_err(|e| anyhow::anyhow!("Failed to derive backend X25519 public key (per-user): {}", e))?;
     let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
 
@@ -60,10 +63,11 @@ pub fn build_authentication_response(
         Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
     );
 
-    // Build crypto material for SignedResponse generation
+    // Build crypto material for SignedResponse generation (now with BOTH Ed25519 and X25519)
     let crypto_material = CryptoMaterial {
         user_id: user_id_bytes.to_vec(),
-        pub_key_hex: hex::encode(pub_key_bytes),
+        pub_key_hex: ed25519_pub_key_hex,
+        x25519_pub_key_hex,
     };
 
     // Create signed response using DRY helper (same pattern as all other endpoints)

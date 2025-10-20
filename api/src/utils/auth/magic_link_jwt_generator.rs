@@ -22,20 +22,19 @@ pub struct JwtTokens {
 ///
 /// # Arguments
 /// * `user_id_bytes` - User ID bytes from magic link token
-/// * `pub_key_bytes` - Ed25519 public key bytes for JWT claims
+/// * `ed25519_pub_key_bytes` - Ed25519 public key bytes for JWT claims and signatures
+/// * `x25519_pub_key_bytes` - X25519 public key bytes for JWT claims and ECDH E2E encryption
 ///
 /// # Returns
 /// * `Result<JwtTokens, Response>` - Generated tokens or error response
 pub fn generate_jwt_tokens(
     user_id_bytes: &[u8; 16],
-    pub_key_bytes: &[u8; 32],
+    ed25519_pub_key_bytes: &[u8; 32],
+    x25519_pub_key_bytes: &[u8; 32],
 ) -> Result<JwtTokens, Response> {
     // Convert user_id to Base58 username
     let username = JwtUtils::user_id_to_username(user_id_bytes);
 
-    //     "🔐 User {} authenticated successfully with Ed25519 verification",
-    //     username
-    // );
     debug!(
         "🔐 User {} authenticated successfully with Ed25519 verification",
         username
@@ -44,11 +43,11 @@ pub fn generate_jwt_tokens(
     // Ensure user exists in users table
     let _ = MagicLinkOperations::ensure_user_exists(user_id_bytes);
 
-    // Generate access token with Ed25519 public key
-    let (access_token, _access_expires) = create_access_token(&username, pub_key_bytes)?;
+    // Generate access token with both Ed25519 and X25519 public keys
+    let (access_token, _access_expires) = create_access_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
 
-    // Generate refresh token with Ed25519 public key for /api/refresh signature validation
-    let refresh_token = create_refresh_token(&username, pub_key_bytes)?;
+    // Generate refresh token with both public keys for /api/refresh signature validation
+    let refresh_token = create_refresh_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
 
     debug!("✅ JWT tokens generated successfully for user {}", username);
 
@@ -59,12 +58,13 @@ pub fn generate_jwt_tokens(
     })
 }
 
-/// Create access token with Ed25519 public key embedded
+/// Create access token with Ed25519 and X25519 public keys embedded
 fn create_access_token(
     username: &str,
-    pub_key_bytes: &[u8; 32],
+    ed25519_pub_key_bytes: &[u8; 32],
+    x25519_pub_key_bytes: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), Response> {
-    match JwtUtils::create_access_token_from_username(username, pub_key_bytes) {
+    match JwtUtils::create_access_token_from_username(username, ed25519_pub_key_bytes, x25519_pub_key_bytes) {
         Ok((token, expires)) => {
             debug!("✅ Access token created successfully");
             Ok((token, expires))
@@ -76,9 +76,9 @@ fn create_access_token(
     }
 }
 
-/// Create refresh token for session persistence with Ed25519 public key
-fn create_refresh_token(username: &str, pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
-    match JwtUtils::create_refresh_token_from_username(username, pub_key_bytes) {
+/// Create refresh token for session persistence with Ed25519 and X25519 public keys
+fn create_refresh_token(username: &str, ed25519_pub_key_bytes: &[u8; 32], x25519_pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
+    match JwtUtils::create_refresh_token_from_username(username, ed25519_pub_key_bytes, x25519_pub_key_bytes) {
         Ok((token, _expires)) => {
             debug!("✅ Refresh token created successfully");
             Ok(token)

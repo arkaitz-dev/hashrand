@@ -71,8 +71,8 @@ pub fn extract_crypto_material_from_jwt(
         .into_vec()
         .map_err(|e| format!("Failed to decode Base58 username: {}", e))?;
 
-    // Convert pub_key bytes to hex string
-    let pub_key_hex = hex::encode(claims.pub_key);
+    // Convert Ed25519 pub_key bytes to hex string
+    let pub_key_hex = hex::encode(claims.ed25519_pub_key);
 
     Ok((user_id, pub_key_hex))
 }

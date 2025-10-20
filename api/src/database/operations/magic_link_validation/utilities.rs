@@ -29,5 +29,5 @@ pub fn extract_utf8_string(bytes: &[u8], field_name: &str) -> Result<String, Val
 
 /// Create validation error tuple (DRY utility)
 pub fn create_validation_error() -> ValidationResult {
-    (false, None, None, None, None)
+    (false, None, None, None, None, None)
 }

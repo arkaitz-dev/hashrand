@@ -17,8 +17,10 @@ pub struct AccessTokenClaims {
     pub token_type: String,
     /// Refresh token expiration time (unix timestamp) for proactive renewal
     pub refresh_expires_at: i64,
-    /// Ed25519 public key (32 bytes) for cryptographic operations
-    pub pub_key: [u8; 32],
+    /// Ed25519 public key (32 bytes) for signature verification
+    pub ed25519_pub_key: [u8; 32],
+    /// X25519 public key (32 bytes) for ECDH E2E encryption
+    pub x25519_pub_key: [u8; 32],
 }
 
 /// JWT Claims structure for refresh tokens
@@ -34,8 +36,10 @@ pub struct RefreshTokenClaims {
     pub token_type: String,
     /// Random ID for cryptographic uniqueness (not persisted)
     pub session_id: i64,
-    /// Ed25519 public key (32 bytes) for cryptographic operations
-    pub pub_key: [u8; 32],
+    /// Ed25519 public key (32 bytes) for signature verification
+    pub ed25519_pub_key: [u8; 32],
+    /// X25519 public key (32 bytes) for ECDH E2E encryption
+    pub x25519_pub_key: [u8; 32],
     /// Domain for cookie (hostname only, e.g., "localhost" or "app.example.com")
     /// Used to maintain consistent Domain attribute during token refresh
     #[serde(skip_serializing_if = "Option::is_none")]

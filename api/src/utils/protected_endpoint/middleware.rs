@@ -109,8 +109,8 @@ impl ProtectedEndpointMiddleware {
             errors::unauthorized(format!("Invalid JWT token: {}", e))
         })?;
 
-        // Convert pub_key bytes to hex string
-        let pub_key_hex = hex::encode(claims.pub_key);
+        // Convert Ed25519 pub_key bytes to hex string
+        let pub_key_hex = hex::encode(claims.ed25519_pub_key);
 
         // Use username (sub field) as user identifier
         let user_id = claims.sub;

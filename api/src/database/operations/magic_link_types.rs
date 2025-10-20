@@ -7,16 +7,18 @@
 
 /// Magic link validation result tuple
 ///
-/// Returns (validation_success, next_param, user_id, pub_key, ui_host)
+/// Returns (validation_success, next_param, user_id, ed25519_pub_key, x25519_pub_key, ui_host)
 /// - validation_success: boolean indicating if validation succeeded
 /// - next_param: optional next destination parameter
 /// - user_id: optional 16-byte user identifier
-/// - pub_key: optional 32-byte Ed25519 public key
+/// - ed25519_pub_key: optional 32-byte Ed25519 public key
+/// - x25519_pub_key: optional 32-byte X25519 public key
 /// - ui_host: optional UI host (domain) extracted from encrypted blob
 pub type ValidationResult = (
     bool,
     Option<String>,
     Option<[u8; 16]>,
+    Option<[u8; 32]>,
     Option<[u8; 32]>,
     Option<String>,
 );
@@ -44,8 +46,8 @@ pub mod constants {
     /// Required length for user ID
     pub const USER_ID_LENGTH: usize = 16;
 
-    /// Minimum payload length (encryption_blob + pub_key)
-    pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH;
+    /// Minimum payload length (encryption_blob + ed25519_pub_key + x25519_pub_key)
+    pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + ED25519_BYTES_LENGTH; // 44 + 32 + 32 = 108 bytes
 
     /// Nonce length for ChaCha20-Poly1305
     pub const NONCE_LENGTH: usize = 12;

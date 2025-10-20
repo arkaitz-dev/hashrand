@@ -78,14 +78,16 @@ pub fn validate_bearer_token(req: &Request) -> Result<AuthContext, Response> {
             // Check if we need proactive renewal (2/3 threshold)
             // Extract cryptographic information for signed responses
             let user_id = decode_username_to_user_id(&claims.sub)?;
-            let pub_key_hex = hex::encode(claims.pub_key);
+            let ed25519_pub_key_hex = hex::encode(claims.ed25519_pub_key);
+            let x25519_pub_key_hex = hex::encode(claims.x25519_pub_key);
 
             let renewed_tokens = check_proactive_renewal(
                 &claims.sub,
                 refresh_expires_at,
                 now,
                 user_id,
-                pub_key_hex,
+                ed25519_pub_key_hex,
+                x25519_pub_key_hex,
             )?;
 
             Ok(AuthContext {

@@ -63,14 +63,17 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
     if let Err(error_response) = verify_magic_link_signature(
         &signed_request.payload, // Pass the Base64 payload directly!
         &signature_hex,
-        &token_data.pub_key_bytes,
+        &token_data.ed25519_pub_key_bytes,
     ) {
         return Ok(error_response);
     }
 
-    // Step 5: Generate JWT access and refresh tokens
-    let jwt_tokens = match generate_jwt_tokens(&token_data.user_id_bytes, &token_data.pub_key_bytes)
-    {
+    // Step 5: Generate JWT access and refresh tokens with both Ed25519 and X25519 pub_keys
+    let jwt_tokens = match generate_jwt_tokens(
+        &token_data.user_id_bytes,
+        &token_data.ed25519_pub_key_bytes,
+        &token_data.x25519_pub_key_bytes,
+    ) {
         Ok(tokens) => tokens,
         Err(error_response) => return Ok(error_response),
     };
@@ -80,7 +83,8 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
         jwt_tokens,
         token_data.next_param,
         &token_data.user_id_bytes,
-        &token_data.pub_key_bytes,
+        &token_data.ed25519_pub_key_bytes,
+        &token_data.x25519_pub_key_bytes,
         token_data.ui_host,
     )?;
 

@@ -10,35 +10,41 @@ import { logger } from '../../utils/logger';
  * Try to refresh the access token using the HttpOnly refresh token cookie
  *
  * 🔄 KEY ROTATION LOGIC:
- * - ALWAYS generates new Ed25519 keypair before refresh request
+ * - ALWAYS generates new Ed25519 AND X25519 keypairs before refresh request
  * - Backend determines rotation based on 2/3 time window:
  *   - Tramo 1/3 (0 to 1/3 duration): Returns access_token only, NO server_pub_key → No rotation
  *   - Tramo 2/3 (1/3 to full duration): Returns both tokens + server_pub_key → Full rotation
- * - Frontend rotates keys ONLY if server_pub_key is present in response
+ * - Frontend rotates BOTH keys ONLY if server_pub_key is present in response
  */
 export async function refreshToken(): Promise<boolean> {
 	// Import dependencies
 	const { flashMessagesStore } = await import('../../stores/flashMessages');
 	const { sessionManager } = await import('../../session-manager');
-	const { generateEd25519KeyPair, publicKeyToHex } = await import('../../ed25519');
-	const { privateKeyBytesToHex } = await import('../../ed25519/ed25519-core');
 	const { httpSignedPOSTRequest } = await import('../../httpSignedRequests');
 	const { authStore } = await import('../../stores/auth');
 	const { t } = await import('../../stores/i18n');
+	const { generateKeypairs } = await import('../../crypto/keypair-generation');
+	const { storeKeypairs } = await import('../../crypto/keypair-storage');
 
 	// Get current language for translated flash messages
 	const lang = await getCurrentLanguage();
 
 	try {
-		// Generate NEW Ed25519 keypair for potential rotation
-		const newKeyPair = await generateEd25519KeyPair();
-		const newPubKeyHex = publicKeyToHex(newKeyPair.publicKeyBytes);
-		const newPrivKeyHex = privateKeyBytesToHex(newKeyPair.privateKeyBytes!);
+		// Generate NEW Ed25519 AND X25519 keypairs for potential rotation
+		const newKeypairs = await generateKeypairs();
+		const newEd25519PubKeyHex = newKeypairs.ed25519.publicKeyHex;
+		const newX25519PubKeyHex = newKeypairs.x25519.publicKeyHex;
 
-		// Send refresh request with new_pub_key
-		const data = await httpSignedPOSTRequest<{ new_pub_key: string }, LoginResponse>(
+		// Send refresh request with BOTH new pub_keys
+		const data = await httpSignedPOSTRequest<
+			{ new_ed25519_pub_key: string; new_x25519_pub_key: string },
+			LoginResponse
+		>(
 			`${API_BASE}/refresh`,
-			{ new_pub_key: newPubKeyHex },
+			{
+				new_ed25519_pub_key: newEd25519PubKeyHex,
+				new_x25519_pub_key: newX25519PubKeyHex
+			},
 			false,
 			{ credentials: 'include' }
 		);
@@ -68,10 +74,8 @@ export async function refreshToken(): Promise<boolean> {
 
 		// CONDITIONAL KEY ROTATION
 		if (data.server_pub_key) {
-			// TRAMO 2/3: Backend sent server_pub_key → Full key rotation
-			const { storeKeyPair } = await import('../../ed25519/ed25519-database');
-			await storeKeyPair(newKeyPair);
-			await sessionManager.setPrivKey(newPrivKeyHex);
+			// TRAMO 2/3: Backend sent server_pub_key → Full key rotation for BOTH Ed25519 and X25519
+			await storeKeypairs(newKeypairs);
 		}
 
 		// Ensure crypto tokens exist

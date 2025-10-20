@@ -39,8 +39,8 @@ pub fn validate_universal(
     })?;
 
     // Check what auth methods are present in payload
-    let has_pub_key = payload_value
-        .get("pub_key")
+    let has_ed25519_pub_key = payload_value
+        .get("ed25519_pub_key")
         .and_then(|v| v.as_str())
         .is_some();
     let has_magiclink = payload_value
@@ -54,9 +54,9 @@ pub fn validate_universal(
     // STRICT VALIDATION RULES
     if has_bearer {
         // Rule 1: Bearer token present - NO other auth methods allowed in payload
-        if has_pub_key || has_magiclink {
+        if has_ed25519_pub_key || has_magiclink {
             return Err(SignedRequestError::ConflictingAuthMethods(
-                "Bearer token present but payload contains pub_key/magiclink - only Bearer allowed"
+                "Bearer token present but payload contains ed25519_pub_key/magiclink - only Bearer allowed"
                     .to_string(),
             ));
         }
@@ -71,12 +71,12 @@ pub fn validate_universal(
         Ok(pub_key_hex)
     } else {
         // Rule 2: No Bearer token - EXACTLY one payload auth method required
-        match (has_pub_key, has_magiclink) {
+        match (has_ed25519_pub_key, has_magiclink) {
             (true, true) => Err(SignedRequestError::AmbiguousPayloadAuth(
-                "Both pub_key and magiclink found in payload - only one allowed".to_string(),
+                "Both ed25519_pub_key and magiclink found in payload - only one allowed".to_string(),
             )),
             (true, false) => {
-                // Use pub_key from payload
+                // Use ed25519_pub_key from payload
                 let pub_key_hex = extract_pub_key_from_payload(&payload_value)?;
                 validate_base64_payload(
                     &signed_request.payload,
@@ -96,7 +96,7 @@ pub fn validate_universal(
                 Ok(pub_key_hex)
             }
             (false, false) => Err(SignedRequestError::MissingPublicKey(
-                "No Bearer token and no pub_key/magiclink in payload - exactly one auth method required"
+                "No Bearer token and no ed25519_pub_key/magiclink in payload - exactly one auth method required"
                     .to_string(),
             )),
         }

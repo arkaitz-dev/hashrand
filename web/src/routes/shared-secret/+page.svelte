@@ -17,9 +17,7 @@
 	import { setCachedOtp } from '$lib/utils/confirm-read-cache';
 	import { encryptSecretForCreation } from '$lib/crypto';
 	import { getServerX25519PubKey } from '$lib/session';
-	import { base64ToBytes, bytesToBase64 } from '$lib/crypto/crypto-encoding';
-	import { getKeyPair } from '$lib/ed25519';
-	import { privateKeyBytesToHex } from '$lib/ed25519/ed25519-core';
+	import { bytesToBase64 } from '$lib/crypto/crypto-encoding';
 
 	// Expires hours allowed values (for slider with discrete jumps)
 	const expiresHoursValues = [1, 3, 6, 12, 24, 36, 48, 60, 72];
@@ -203,6 +201,20 @@
 			flashMessagesStore.addMessage($_('sharedSecret.failedToFetchBackendKey'));
 			// Continue anyway - error will be shown on submit
 		}
+
+		// Step 4: DEBUG - Test RFC 7748 vector import (known-valid X25519 public key)
+		try {
+			const { testImportRFC7748Vector } = await import('$lib/crypto/keypair-generation');
+			const rfc7748Works = await testImportRFC7748Vector();
+			logger.info('[SharedSecret] 🧪 RFC 7748 test vector result:', {
+				works: rfc7748Works,
+				interpretation: rfc7748Works
+					? 'WebCrypto X25519 works - issue is with backend key'
+					: 'WebCrypto X25519 broken - browser/API issue'
+			});
+		} catch (error) {
+			logger.error('[SharedSecret] RFC 7748 test failed to run:', error);
+		}
 	});
 
 	// Validation
@@ -276,24 +288,19 @@
 			return;
 		}
 
-		// Get sender's Ed25519 private key from IndexedDB
-		const keyPair = await getKeyPair();
-		if (!keyPair || !keyPair.privateKeyBytes) {
-			flashMessagesStore.addMessage($_('sharedSecret.privateKeyNotAvailable'));
-			return;
-		}
-
-		// Convert private key bytes to hex for encryption
-		const senderPrivateKeyHex = privateKeyBytesToHex(keyPair.privateKeyBytes);
-
 		isCreating = true;
 
 		try {
 			// E2E Encryption: Encrypt secret_text before sending to backend
-			logger.debug('[SharedSecret] Encrypting secret with E2E encryption');
-			const { encryptedSecret, encryptedKeyMaterial } = encryptSecretForCreation(
+			// Uses sender's X25519 private key from IndexedDB automatically
+			logger.debug('[SharedSecret] Encrypting secret with E2E encryption (WebCrypto X25519)');
+			logger.debug('[SharedSecret] Backend X25519 public key for encryption:', {
+				key: backendPublicKey,
+				length: backendPublicKey?.length,
+				firstChars: backendPublicKey?.substring(0, 16)
+			});
+			const { encryptedSecret, encryptedKeyMaterial } = await encryptSecretForCreation(
 				secretText,
-				senderPrivateKeyHex,
 				backendPublicKey
 			);
 
@@ -301,6 +308,21 @@
 			const encryptedSecretBase64 = bytesToBase64(encryptedSecret);
 			const encryptedKeyMaterialBase64 = bytesToBase64(encryptedKeyMaterial);
 			logger.debug('[SharedSecret] Secret encrypted successfully');
+
+			// Log request details before sending
+			logger.debug('[SharedSecret] Creating shared secret request with payload:', {
+				sender_email: senderEmail,
+				receiver_email: receiverEmail,
+				encrypted_secret_length: encryptedSecretBase64.length,
+				encrypted_key_material_length: encryptedKeyMaterialBase64.length,
+				expires_hours: expiresHours,
+				max_reads: maxReads,
+				require_otp: requireOtp,
+				send_copy_to_sender: sendCopyToSender,
+				receiver_language: receiverLanguage,
+				sender_language: $currentLanguage,
+				ui_host
+			});
 
 			const response = await api.createSharedSecret({
 				sender_email: senderEmail,
@@ -315,6 +337,13 @@
 				receiver_language: receiverLanguage,
 				sender_language: $currentLanguage,
 				ui_host
+			});
+
+			logger.info('[SharedSecret] Secret created successfully', {
+				url_sender_length: response.url_sender.length,
+				url_receiver_length: response.url_receiver.length,
+				has_otp: !!response.otp,
+				reference_length: response.reference.length
 			});
 
 			// Extract sender hash from URL
@@ -342,7 +371,15 @@
 				createdSecret = response;
 				flashMessagesStore.addMessage($_('sharedSecret.secretCreated'));
 			}
-		} catch {
+		} catch (error) {
+			// ❌ CRITICAL: Log the complete error for debugging
+			logger.error('[SharedSecret] Failed to create shared secret:', {
+				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+				errorType: error?.constructor?.name,
+				errorDetails: error
+			});
+
 			flashMessagesStore.addMessage($_('sharedSecret.creationError'));
 		} finally {
 			isCreating = false;

@@ -120,7 +120,8 @@ pub async fn generate_magic_link_signed(
         &token_result.encryption_blob,
         token_result.expires_at_nanos,
         &payload.next,
-        &payload.pub_key,
+        &payload.ed25519_pub_key,
+        &payload.x25519_pub_key,
         ui_host,
     ) {
         Ok(_) => {

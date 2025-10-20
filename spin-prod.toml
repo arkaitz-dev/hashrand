@@ -33,6 +33,8 @@ access_token_duration_minutes = { default = "15" }
 refresh_token_duration_minutes = { default = "480" }
 # Ed25519 Derivation Key for signed responses (64 bytes)
 ed25519_derivation_key = { required = true, secret = true }
+# X25519 Derivation Key for ECDH E2E encryption (64 bytes)
+x25519_derivation_key = { required = true, secret = true }
 # Shared Secret Cryptographic Keys (64 bytes each)
 shared_secret_url_cipher_key = { required = true, secret = true }
 shared_secret_content_key = { required = true, secret = true }
@@ -80,6 +82,7 @@ prehash_nonce_key = "{{ prehash_nonce_key }}"
 prehash_hmac_key = "{{ prehash_hmac_key }}"
 access_token_duration_minutes = "{{ access_token_duration_minutes }}"
 ed25519_derivation_key = "{{ ed25519_derivation_key }}"
+x25519_derivation_key = "{{ x25519_derivation_key }}"
 shared_secret_url_cipher_key = "{{ shared_secret_url_cipher_key }}"
 shared_secret_content_key = "{{ shared_secret_content_key }}"
 shared_secret_checksum_key = "{{ shared_secret_checksum_key }}"

@@ -16,8 +16,6 @@
 	import { decryptSecretAfterRetrieval } from '$lib/crypto';
 	import { getServerX25519PubKey } from '$lib/session';
 	import { base64ToBytes } from '$lib/crypto/crypto-encoding';
-	import { getKeyPair } from '$lib/ed25519';
-	import { privateKeyBytesToHex } from '$lib/ed25519/ed25519-core';
 
 	// Route parameter
 	let hash = $derived($page.params.hash);
@@ -119,22 +117,15 @@
 					logger.debug('[SharedSecret] Backend X25519 public key loaded from session');
 				}
 
-				// Get requester's Ed25519 private key
-				const keyPair = await getKeyPair();
-				if (!keyPair || !keyPair.privateKeyBytes) {
-					throw new Error('Private key not available');
-				}
-				const requesterPrivateKeyHex = privateKeyBytesToHex(keyPair.privateKeyBytes);
-
 				// Convert base64 encrypted data to Uint8Array
 				const encryptedSecret = base64ToBytes(response.encrypted_secret);
 				const encryptedKeyMaterial = base64ToBytes(response.encrypted_key_material);
 
-				// Decrypt secret text
-				decryptedSecretText = decryptSecretAfterRetrieval(
+				// Decrypt secret text (uses requester's X25519 private key from IndexedDB automatically)
+				logger.debug('[SharedSecret] Decrypting secret with WebCrypto X25519');
+				decryptedSecretText = await decryptSecretAfterRetrieval(
 					encryptedSecret,
 					encryptedKeyMaterial,
-					requesterPrivateKeyHex,
 					backendPublicKey
 				);
 

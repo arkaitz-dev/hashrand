@@ -16,32 +16,39 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 /// Handle token refresh with key rotation (TRAMO 2/3)
 ///
 /// When token has consumed 2/3 of its lifetime, perform complete key rotation:
-/// - Create new access token with NEW pub_key
-/// - Create new refresh token with NEW pub_key
-/// - Sign response with OLD key (MITM protection)
+/// - Create new access token with NEW Ed25519 and X25519 pub_keys
+/// - Create new refresh token with NEW Ed25519 and X25519 pub_keys
+/// - Sign response with OLD Ed25519 key (MITM protection)
 /// - Include NEW server_pub_key in payload
 /// - Delete old refresh cookie and create new one
 ///
 /// # Arguments
 /// * `username` - Base58 encoded username
-/// * `old_pub_key_hex` - Current (OLD) Ed25519 public key hex string
-/// * `new_pub_key_hex` - New Ed25519 public key hex string from client
+/// * `old_ed25519_pub_key_hex` - Current (OLD) Ed25519 public key hex string
+/// * `old_x25519_pub_key_hex` - Current (OLD) X25519 public key hex string
+/// * `new_ed25519_pub_key_hex` - New Ed25519 public key hex string from client
+/// * `new_x25519_pub_key_hex` - New X25519 public key hex string from client
 /// * `domain` - Optional hostname for cookie Domain attribute
 ///
 /// # Returns
 /// * `anyhow::Result<Response>` - HTTP response with new tokens and cookies
 pub fn handle_key_rotation(
     username: &str,
-    old_pub_key_hex: &str,
-    new_pub_key_hex: &str,
+    old_ed25519_pub_key_hex: &str,
+    old_x25519_pub_key_hex: &str,
+    new_ed25519_pub_key_hex: &str,
+    new_x25519_pub_key_hex: &str,
     domain: Option<String>,
 ) -> anyhow::Result<Response> {
-    // Validate and convert new_pub_key
-    let new_pub_key_array = validate_new_pub_key(new_pub_key_hex)?;
+    // Validate and convert new Ed25519 pub_key
+    let new_ed25519_pub_key_array = validate_new_pub_key(new_ed25519_pub_key_hex)?;
 
-    // Create access_token with NEW pub_key
+    // Validate and convert new X25519 pub_key
+    let new_x25519_pub_key_array = validate_new_pub_key(new_x25519_pub_key_hex)?;
+
+    // Create access_token with NEW Ed25519 and X25519 pub_keys
     let (access_token, _) =
-        match JwtUtils::create_access_token_from_username(username, &new_pub_key_array) {
+        match JwtUtils::create_access_token_from_username(username, &new_ed25519_pub_key_array, &new_x25519_pub_key_array) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
                 error!("❌ Refresh: Failed to create access token: {}", e);
@@ -52,9 +59,9 @@ pub fn handle_key_rotation(
             }
         };
 
-    // Create refresh_token with NEW pub_key
+    // Create refresh_token with NEW Ed25519 and X25519 pub_keys
     let (new_refresh_token, _) =
-        match create_custom_refresh_token_from_username(username, &new_pub_key_array) {
+        match create_custom_refresh_token_from_username(username, &new_ed25519_pub_key_array, &new_x25519_pub_key_array) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
                 error!("❌ Refresh: Failed to create refresh token: {}", e);
@@ -82,8 +89,8 @@ pub fn handle_key_rotation(
     };
 
     // Get backend's per-user X25519 public key for E2E encryption
-    // CRITICAL: Use NEW pub_key for derivation (client is rotating to new keypair)
-    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, new_pub_key_hex) {
+    // CRITICAL: Use NEW X25519 pub_key for derivation (client is rotating to new X25519 keypair)
+    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, new_x25519_pub_key_hex) {
         Ok(key) => key,
         Err(e) => {
             error!("❌ Refresh: Failed to derive backend X25519 public key (per-user, NEW): {}", e);
@@ -103,12 +110,12 @@ pub fn handle_key_rotation(
     );
 
     // Generate signed response with key rotation
-    // SECURITY: Sign with OLD pub_key but include NEW server_pub_key in payload
+    // SECURITY: Sign with OLD Ed25519 pub_key but include NEW Ed25519 server_pub_key in payload
     let signed_response = match SignedResponseGenerator::create_signed_response_with_rotation(
         payload,
         &user_id,
-        old_pub_key_hex, // ✅ OLD: derive signing key (MITM protection)
-        new_pub_key_hex, // ✅ NEW: derive server_pub_key for payload (rotation)
+        old_ed25519_pub_key_hex, // ✅ OLD Ed25519: derive signing key (MITM protection)
+        new_ed25519_pub_key_hex, // ✅ NEW Ed25519: derive server_pub_key for payload (rotation)
     ) {
         Ok(response) => response,
         Err(e) => {

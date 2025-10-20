@@ -24,7 +24,8 @@ use super::jwt_middleware_types::RenewedTokens;
 /// * `refresh_expires_at` - Refresh token expiration timestamp
 /// * `now` - Current timestamp
 /// * `user_id` - User ID bytes for signed response generation
-/// * `pub_key_hex` - Public key hex for signed response generation
+/// * `ed25519_pub_key_hex` - Ed25519 public key hex for signature validation
+/// * `x25519_pub_key_hex` - X25519 public key hex for ECDH E2E encryption
 ///
 /// # Returns
 /// * `Result<Option<RenewedTokens>, Response>` - New tokens if renewal needed, None otherwise
@@ -33,7 +34,8 @@ pub fn check_proactive_renewal(
     refresh_expires_at: i64,
     now: i64,
     user_id: Vec<u8>,
-    pub_key_hex: String,
+    ed25519_pub_key_hex: String,
+    x25519_pub_key_hex: String,
 ) -> Result<Option<RenewedTokens>, Response> {
     // Check if we're in 2/3 renewal window
     let needs_renewal = match is_in_renewal_window(refresh_expires_at, now) {
@@ -48,9 +50,9 @@ pub fn check_proactive_renewal(
     };
 
     if needs_renewal {
-        // Generate renewed tokens
+        // Generate renewed tokens with both Ed25519 and X25519 pub_keys
         let renewed_tokens =
-            generate_renewed_tokens(username, refresh_expires_at, pub_key_hex, user_id)?;
+            generate_renewed_tokens(username, refresh_expires_at, ed25519_pub_key_hex, x25519_pub_key_hex, user_id)?;
         Ok(Some(renewed_tokens))
     } else {
         // No renewal needed

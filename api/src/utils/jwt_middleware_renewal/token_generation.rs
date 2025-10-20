@@ -13,7 +13,8 @@ use crate::utils::JwtUtils;
 /// # Arguments
 /// * `username` - User identifier
 /// * `refresh_expires_at` - Refresh token expiration timestamp
-/// * `pub_key_hex` - Public key hex string
+/// * `ed25519_pub_key_hex` - Ed25519 public key hex string
+/// * `x25519_pub_key_hex` - X25519 public key hex string
 /// * `user_id` - User ID bytes
 ///
 /// # Returns
@@ -21,7 +22,8 @@ use crate::utils::JwtUtils;
 pub fn generate_renewed_tokens(
     username: &str,
     refresh_expires_at: i64,
-    pub_key_hex: String,
+    ed25519_pub_key_hex: String,
+    x25519_pub_key_hex: String,
     user_id: Vec<u8>,
 ) -> Result<RenewedTokens, Response> {
     let now = std::time::SystemTime::now()
@@ -29,8 +31,9 @@ pub fn generate_renewed_tokens(
         .expect("System clock error")
         .as_secs() as i64;
 
-    // Decode pub_key from hex
-    let pub_key = decode_pub_key_from_hex(&pub_key_hex)?;
+    // Decode Ed25519 and X25519 pub_keys from hex
+    let ed25519_pub_key = decode_pub_key_from_hex(&ed25519_pub_key_hex)?;
+    let x25519_pub_key = decode_pub_key_from_hex(&x25519_pub_key_hex)?;
 
     // Generate refresh expires datetime
     let refresh_expires_datetime = DateTime::from_timestamp(refresh_expires_at, 0)
@@ -42,13 +45,11 @@ pub fn generate_renewed_tokens(
         match JwtUtils::create_access_token_from_username_with_refresh_context(
             username,
             refresh_expires_datetime,
-            &pub_key,
+            &ed25519_pub_key,
+            &x25519_pub_key,
         ) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                //     "Failed to create new access token during proactive renewal: {}",
-                //     e
-                // );
                 error!(
                     "Failed to create new access token during proactive renewal: {}",
                     e
@@ -60,14 +61,11 @@ pub fn generate_renewed_tokens(
             }
         };
 
-    // Generate new refresh token with pub_key from current token
+    // Generate new refresh token with both Ed25519 and X25519 pub_keys from current token
     let (new_refresh_token, _refresh_expires) =
-        match JwtUtils::create_refresh_token_from_username(username, &pub_key) {
+        match JwtUtils::create_refresh_token_from_username(username, &ed25519_pub_key, &x25519_pub_key) {
             Ok((token, exp)) => (token, exp),
             Err(e) => {
-                //     "Failed to create new refresh token during proactive renewal: {}",
-                //     e
-                // );
                 error!(
                     "Failed to create new refresh token during proactive renewal: {}",
                     e
@@ -86,7 +84,7 @@ pub fn generate_renewed_tokens(
         refresh_token: new_refresh_token,
         expires_in,
         user_id,
-        pub_key_hex,
+        pub_key_hex: ed25519_pub_key_hex, // Keep Ed25519 for backward compat (used for signing)
     })
 }
 

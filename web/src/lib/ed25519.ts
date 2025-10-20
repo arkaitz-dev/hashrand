@@ -6,9 +6,9 @@
  */
 
 // Re-export all functions from specialized modules for backward compatibility
+// UPDATED (v1.9.0): Removed generateEd25519KeyPair (now uses WebCrypto generation)
 export type { Ed25519KeyPair } from './ed25519/index';
 export {
-	generateEd25519KeyPair,
 	storeKeyPair,
 	getKeyPair,
 	clearAllKeyPairs,

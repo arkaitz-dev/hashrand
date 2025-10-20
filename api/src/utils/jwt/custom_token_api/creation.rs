@@ -8,23 +8,25 @@ use super::super::custom_tokens::generate_custom_token;
 use super::conversion::username_to_user_id;
 use chrono::{DateTime, Utc};
 
-/// Create access token using custom token system with Ed25519 public key
+/// Create access token using custom token system with Ed25519 and X25519 public keys
 pub fn create_custom_access_token(
     email: &str,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
-    let token = generate_custom_token(email, TokenType::Access, pub_key)?;
-    let claims = CustomTokenClaims::new(email, TokenType::Access, pub_key)?;
+    let token = generate_custom_token(email, TokenType::Access, ed25519_pub_key, x25519_pub_key)?;
+    let claims = CustomTokenClaims::new(email, TokenType::Access, ed25519_pub_key, x25519_pub_key)?;
     Ok((token, claims.expires_at))
 }
 
-/// Create refresh token using custom token system with Ed25519 public key
+/// Create refresh token using custom token system with Ed25519 and X25519 public keys
 pub fn create_custom_refresh_token(
     email: &str,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
-    let token = generate_custom_token(email, TokenType::Refresh, pub_key)?;
-    let claims = CustomTokenClaims::new(email, TokenType::Refresh, pub_key)?;
+    let token = generate_custom_token(email, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
+    let claims = CustomTokenClaims::new(email, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
     Ok((token, claims.expires_at))
 }
 
@@ -48,23 +50,24 @@ fn generate_token_from_claims(
     let encrypted_payload = encrypt_payload(&payload, &cipher_key, &cipher_nonce)?;
     let encrypted_prehash_seed = encrypt_prehash_seed(&prehash_seed, &encrypted_payload)?;
 
-    let mut combined = [0u8; 96];
+    let mut combined = [0u8; 128];
     combined[..32].copy_from_slice(&encrypted_prehash_seed);
-    combined[32..96].copy_from_slice(&encrypted_payload);
+    combined[32..128].copy_from_slice(&encrypted_payload);
     let token = bs58::encode(&combined).into_string();
 
     Ok(token)
 }
 
-/// Create refresh token from username using custom token system with optional Ed25519 public key
+/// Create refresh token from username using custom token system with Ed25519 and X25519 public keys
 pub fn create_custom_refresh_token_from_username(
     username: &str,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
     let user_id = username_to_user_id(username)?;
 
-    // Create claims with proper user_id and Ed25519 public key
-    let claims = CustomTokenClaims::new_from_user_id(&user_id, TokenType::Refresh, pub_key)?;
+    // Create claims with proper user_id, Ed25519 and X25519 public keys
+    let claims = CustomTokenClaims::new_from_user_id(&user_id, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
 
     // Generate token using DRY utility
     let config = CustomTokenConfig::refresh_token()?;
@@ -76,7 +79,8 @@ pub fn create_custom_refresh_token_from_username(
 /// Create access token from username using custom token system (compatible with existing API)
 pub fn create_custom_access_token_from_username(
     username: &str,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
     let user_id = username_to_user_id(username)?;
 
@@ -94,7 +98,8 @@ pub fn create_custom_access_token_from_username(
         expires_at,
         refresh_expires_at,
         token_type: TokenType::Access,
-        pub_key: *pub_key, // Ed25519 public key integration
+        ed25519_pub_key: *ed25519_pub_key,
+        x25519_pub_key: *x25519_pub_key,
     };
 
     // Generate token using DRY utility
@@ -112,14 +117,16 @@ pub fn create_custom_access_token_from_username(
 /// # Arguments
 /// * `username` - Base58 encoded user ID
 /// * `refresh_expires_at` - Original refresh token expiration to preserve
-/// * `pub_key` - Ed25519 public key for signature verification
+/// * `ed25519_pub_key` - Ed25519 public key for signature verification
+/// * `x25519_pub_key` - X25519 public key for ECDH E2E encryption
 ///
 /// # Returns
 /// * `Result<(String, DateTime<Utc>), String>` - New access token and its expiration
 pub fn create_custom_access_token_from_username_with_refresh_context(
     username: &str,
     refresh_expires_at: DateTime<Utc>,
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
     let user_id = username_to_user_id(username)?;
 
@@ -135,7 +142,8 @@ pub fn create_custom_access_token_from_username_with_refresh_context(
         expires_at,
         refresh_expires_at, // ← FIXED: Use original refresh_expires_at
         token_type: TokenType::Access,
-        pub_key: *pub_key, // Ed25519 public key integration
+        ed25519_pub_key: *ed25519_pub_key,
+        x25519_pub_key: *x25519_pub_key,
     };
 
     // Generate token using DRY utility

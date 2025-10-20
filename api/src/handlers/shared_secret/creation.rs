@@ -247,13 +247,14 @@ async fn create_shared_secret(
         .map_err(|e| format!("Failed to decode encrypted_key_material: {}", e))?;
 
     // Create secret pair using SharedSecretOps with E2E encryption
-    // Sender's public key comes from JWT (crypto_material.pub_key_hex)
+    // Sender's public keys come from JWT (Ed25519 for signatures, X25519 for ECDH)
     let _created_reference = SharedSecretOps::create_secret_pair_with_ecdh(
         &request.sender_email,
         &request.receiver_email,
         &encrypted_secret,
         &encrypted_key_material,
-        &crypto_material.pub_key_hex, // From JWT
+        &crypto_material.pub_key_hex,         // Ed25519 from JWT
+        &crypto_material.x25519_pub_key_hex,  // X25519 from JWT
         otp.clone(),
         request.expires_hours,
         request.max_reads,

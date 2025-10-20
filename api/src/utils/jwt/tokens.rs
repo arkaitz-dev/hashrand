@@ -10,21 +10,23 @@ use super::custom_token_api::{
 };
 use super::types::{AccessTokenClaims, RefreshTokenClaims};
 
-/// Create refresh token using custom token system with Ed25519 public key
+/// Create refresh token using custom token system with Ed25519 and X25519 public keys
 pub fn create_refresh_token(
     email: &str,
     _session_id: i64, // Ignored - our custom system doesn't need session_id
-    pub_key: &[u8; 32],
+    ed25519_pub_key: &[u8; 32],
+    x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
-    create_custom_refresh_token(email, pub_key)
+    create_custom_refresh_token(email, ed25519_pub_key, x25519_pub_key)
 }
 
 /// Create refresh token from username using custom token system (with proper 9-minute duration)
 pub fn create_refresh_token_from_username(
     username: &str,
-    pub_key: &[u8; 32], // Ed25519 public key for /api/refresh signature validation
+    ed25519_pub_key: &[u8; 32], // Ed25519 public key for /api/refresh signature validation
+    x25519_pub_key: &[u8; 32],  // X25519 public key for ECDH E2E encryption
 ) -> Result<(String, DateTime<Utc>), String> {
-    create_custom_refresh_token_from_username(username, pub_key)
+    create_custom_refresh_token_from_username(username, ed25519_pub_key, x25519_pub_key)
 }
 
 /// Validate access token using custom token system
@@ -44,7 +46,8 @@ pub fn validate_refresh_token(token: &str) -> Result<RefreshTokenClaims, String>
         iat: access_claims.iat,
         token_type: access_claims.token_type,
         session_id: 0, // Fake session_id for compatibility - not used anywhere
-        pub_key: access_claims.pub_key,
+        ed25519_pub_key: access_claims.ed25519_pub_key,
+        x25519_pub_key: access_claims.x25519_pub_key,
         domain: None, // TODO: Extract from original token if available
     })
 }

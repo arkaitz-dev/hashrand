@@ -137,12 +137,10 @@ pub fn parse_refresh_payload(
             }
         };
 
-    //     "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
-    //     &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
-    // );
     debug!(
-        "✅ Refresh: SignedRequest validated, new_pub_key received: {}",
-        &refresh_payload.new_pub_key[..16.min(refresh_payload.new_pub_key.len())]
+        "✅ Refresh: SignedRequest validated, new Ed25519 pub_key: {}, new X25519 pub_key: {}",
+        &refresh_payload.new_ed25519_pub_key[..16.min(refresh_payload.new_ed25519_pub_key.len())],
+        &refresh_payload.new_x25519_pub_key[..16.min(refresh_payload.new_x25519_pub_key.len())]
     );
 
     Ok(refresh_payload)
