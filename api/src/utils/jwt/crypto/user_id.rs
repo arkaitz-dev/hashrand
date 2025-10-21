@@ -3,21 +3,21 @@ use crate::utils::pseudonimizer::blake3_keyed_variable;
 use super::super::config::{get_argon2_salt, get_user_id_argon2_compression, get_user_id_hmac_key};
 use super::argon2::derive_with_argon2id;
 
-/// Derive secure user ID from email using Blake3 + Pseudonimizer + Argon2id
+/// Derive secure user ID with context (exposes argon2_output for db_index generation)
 ///
 /// Complete pipeline:
 /// 1. Blake3 XOF of email (64 bytes, no key)
 /// 2. blake3_keyed_variable with 64-byte HMAC key (32 bytes)
 /// 3. Generate dynamic salt (32 bytes)
-/// 4. Argon2id with fixed parameters (32 bytes)
+/// 4. Argon2id with fixed parameters (32 bytes) ← EXPOSED
 /// 5. Blake3 keyed variable compression to 16 bytes
 ///
 /// # Arguments
 /// * `email` - User email address
 ///
 /// # Returns
-/// * `Result<[u8; 16], String>` - 16-byte user ID or error
-pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
+/// * `Result<([u8; 16], [u8; 32]), String>` - (user_id[16], argon2_output[32]) or error
+pub fn derive_user_id_with_context(email: &str) -> Result<([u8; 16], [u8; 32]), String> {
     // Step 1: Blake3 XOF of email (64 bytes, no key)
     let mut blake3_hasher = blake3::Hasher::new();
     blake3_hasher.update(email.to_lowercase().trim().as_bytes());
@@ -45,7 +45,20 @@ pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
     let mut user_id = [0u8; 16];
     copy_bytes_to_array(&mut user_id, &user_id_output);
 
-    Ok(user_id)
+    Ok((user_id, argon2_output))
+}
+
+/// Derive secure user ID from email using Blake3 + Pseudonimizer + Argon2id
+///
+/// Wrapper for backwards compatibility - delegates to derive_user_id_with_context()
+///
+/// # Arguments
+/// * `email` - User email address
+///
+/// # Returns
+/// * `Result<[u8; 16], String>` - 16-byte user ID or error
+pub fn derive_user_id(email: &str) -> Result<[u8; 16], String> {
+    derive_user_id_with_context(email).map(|(user_id, _argon2_output)| user_id)
 }
 
 /// Generate dynamic salt using Blake3 pseudonimizer

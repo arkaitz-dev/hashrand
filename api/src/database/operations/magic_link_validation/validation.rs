@@ -56,8 +56,8 @@ impl MagicLinkValidation {
             }
         };
 
-        // Step 4: Extract components from payload (now includes both Ed25519 and X25519 keys)
-        let (encryption_blob, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param) =
+        // Step 4: Extract components from payload (now includes db_index, Ed25519 and X25519 keys)
+        let (encryption_blob, db_index, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param) =
             match extract_payload_components(&payload_plain) {
                 Ok(components) => components,
                 Err(error_tuple) => return Ok(error_tuple),
@@ -79,6 +79,21 @@ impl MagicLinkValidation {
             &secret_key,
         ) {
             Ok((user_id, _expires_at)) => {
+                // Ensure user_privkey_context entry exists (idempotent)
+                if let Err(e) = crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::ensure_user_privkey_context_exists(&db_index) {
+                    error!("Failed to ensure user_privkey_context: {}", e);
+                    return Ok(create_validation_error());
+                }
+
+                // Read and decrypt privkey_context from database
+                let privkey_context_decrypted = match read_and_decrypt_privkey_context(&connection, &db_index) {
+                    Ok(context) => context,
+                    Err(e) => {
+                        error!("Failed to read/decrypt privkey_context: {}", e);
+                        return Ok(create_validation_error());
+                    }
+                };
+
                 // Valid and not expired - consume (delete) the magic link
                 connection.execute(
                     "DELETE FROM magiclinks WHERE token_hash = ?",
@@ -93,6 +108,7 @@ impl MagicLinkValidation {
                     Some(ed25519_pub_key_array),
                     Some(x25519_pub_key_array),
                     ui_host,
+                    privkey_context_decrypted,
                 ))
             }
             Err(e) => {
@@ -147,4 +163,39 @@ fn retrieve_encrypted_payload(
     } else {
         Ok(None)
     }
+}
+
+/// Read and decrypt private key context from database
+fn read_and_decrypt_privkey_context(
+    connection: &spin_sdk::sqlite::Connection,
+    db_index: &[u8; 16],
+) -> Result<[u8; 64], SqliteError> {
+    // Read encrypted_privkey from database
+    let result = connection.execute(
+        "SELECT encrypted_privkey FROM user_privkey_context WHERE db_index = ?",
+        &[Value::Blob(db_index.to_vec())],
+    )?;
+
+    // Extract encrypted_privkey blob
+    let encrypted_privkey = match result.rows.first() {
+        Some(row) => match &row.values[0] {
+            Value::Blob(blob) => blob.clone(),
+            _ => {
+                return Err(SqliteError::Io(
+                    "Invalid encrypted_privkey type in database".to_string(),
+                ));
+            }
+        },
+        None => {
+            return Err(SqliteError::Io(
+                "No user_privkey_context entry found for db_index".to_string(),
+            ));
+        }
+    };
+
+    // Decrypt using UserPrivkeyCrypto
+    crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::decrypt_privkey_context(
+        db_index,
+        &encrypted_privkey,
+    )
 }

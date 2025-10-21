@@ -64,6 +64,9 @@ pub struct JwtAuthResponse {
     /// Server X25519 public key for ECDH (E2E encryption) - ALWAYS included
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_x25519_pub_key: Option<String>,
+    /// Encrypted private key context (base64, ECDH-encrypted for client, only in magic link validation)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub encrypted_privkey_context: Option<String>,
 }
 
 impl JwtAuthResponse {
@@ -76,6 +79,7 @@ impl JwtAuthResponse {
     /// * `expires_at` - Optional refresh cookie expiration timestamp (included when new refresh cookie is set)
     /// * `server_pub_key` - Optional server Ed25519 public key (included during key rotation)
     /// * `server_x25519_pub_key` - Optional server X25519 public key for ECDH (E2E encryption)
+    /// * `encrypted_privkey_context` - Optional encrypted private key context (only in magic link validation)
     pub fn new(
         access_token: String,
         user_id: String,
@@ -83,6 +87,7 @@ impl JwtAuthResponse {
         expires_at: Option<i64>,
         server_pub_key: Option<String>,
         server_x25519_pub_key: Option<String>,
+        encrypted_privkey_context: Option<String>,
     ) -> Self {
         Self {
             access_token,
@@ -92,6 +97,7 @@ impl JwtAuthResponse {
             expires_at,
             server_pub_key,
             server_x25519_pub_key,
+            encrypted_privkey_context,
         }
     }
 }

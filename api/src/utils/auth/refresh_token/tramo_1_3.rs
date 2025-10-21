@@ -64,6 +64,7 @@ pub fn handle_no_rotation(username: &str, ed25519_pub_key: &[u8; 32], x25519_pub
         None, // No expires_at - no new refresh cookie
         None, // No server_pub_key - no key rotation
         Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
+        None, // encrypted_privkey_context only in magic link validation
     );
 
     // Generate signed response WITHOUT server_pub_key (no key rotation)

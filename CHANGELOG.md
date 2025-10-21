@@ -4,6 +4,70 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [API v1.10.0] - 2025-10-21
+
+### Added
+
+**🔐 CRYPTO: User private key context infrastructure**
+
+**Architecture**:
+
+**1. Database Table `user_privkey_context`**:
+- `db_index` BLOB PRIMARY KEY (16 bytes) - Blake3 KDF derivation from argon2 output
+- `encrypted_privkey` BLOB NOT NULL (80 bytes) - ChaCha20-Poly1305 encrypted 64 random bytes
+
+**2. Cryptographic Keys** (`.env`, `.env-prod`, `spin-dev.toml`, `spin-prod.toml`):
+- `USER_PRIVKEY_INDEX_KEY` (64 bytes) - For db_index derivation
+- `USER_PRIVKEY_ENCRYPTION_KEY` (64 bytes) - For ChaCha20-Poly1305 encryption/decryption
+
+**3. Derivation Pipeline**:
+```
+email → argon2id(32) → blake3_keyed(INDEX_KEY, 16) → db_index
+db_index → blake3_keyed(ENCRYPTION_KEY, 44) → nonce[12] + cipher_key[32]
+random_64_bytes → ChaCha20-Poly1305.encrypt(nonce, cipher_key) → encrypted_privkey[80]
+```
+
+**4. Magic Link Integration**:
+
+**Creation** (`magic_link_gen.rs`, `magic_link_storage.rs`):
+- Derive db_index from argon2_output during user_id generation
+- Include db_index[16] in encrypted magic link payload (after X25519 pub key)
+- Payload structure: `encryption_blob[44] + db_index[16] + ed25519[32] + x25519[32] + ui_host + next_param`
+- NO database entry created during magic link creation
+
+**Validation** (`validation.rs`, `magic_link_token_processor.rs`):
+- Extract db_index from decrypted payload
+- Check if `user_privkey_context` entry exists with db_index
+- If NOT exists: Generate 64 random bytes (ChaCha8Rng), encrypt, insert (idempotent)
+- If exists: Continue (multiple validations safe)
+- Decrypt privkey_context from database
+- Encrypt with X25519 ECDH for client (backend private + client public from magic link)
+- Include `encrypted_privkey_context` (base64, 80 bytes) in `JwtAuthResponse`
+
+**5. Response Changes** (`types/responses.rs`):
+- Added `encrypted_privkey_context: Option<String>` to `JwtAuthResponse`
+- Serialized only in magic link validation responses (omitted in refresh token responses)
+- Encrypted with ECDH (X25519): backend per-user private key + client X25519 public key
+
+**Implementation Files**:
+- `api/src/database/operations/user_privkey_ops.rs` - Crypto operations module (NEW)
+- `api/src/database/connection.rs` - Table creation
+- `api/src/utils/jwt/config.rs` - Key getters
+- `api/src/utils/jwt/crypto/user_id.rs` - Expose argon2_output
+- `api/src/utils/jwt/magic_links.rs` - Generate and return db_index
+- `api/src/database/operations/magic_link_storage.rs` - Store db_index in payload
+- `api/src/database/operations/magic_link_validation/` - Extract, decrypt, encrypt for client
+- `api/src/utils/auth/magic_link_token_processor.rs` - ECDH encryption for client
+- `api/src/types/responses.rs` - Response structure update
+
+**Security Properties**:
+- Zero Knowledge: Server cannot correlate users without email or magic link
+- Per-user encryption: db_index deterministically derived from user credentials
+- Idempotent: Multiple magic link validations safe (check before insert)
+- E2E Encrypted: Client receives privkey_context encrypted with their X25519 key
+
+**Verification**: ✅ `cargo clippy --target wasm32-wasip1` - 0 errors
+
 ## [API v1.9.0 + Web v0.29.1] - 2025-10-20
 
 ### Fixed

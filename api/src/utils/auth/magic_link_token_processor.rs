@@ -16,6 +16,7 @@ pub struct TokenValidationResult {
     pub ed25519_pub_key_bytes: [u8; 32],
     pub x25519_pub_key_bytes: [u8; 32],
     pub ui_host: Option<String>,
+    pub encrypted_privkey_context: String,
 }
 
 /// Validate and decrypt magic link token, extracting embedded data
@@ -28,11 +29,11 @@ pub struct TokenValidationResult {
 pub fn validate_and_extract_token_data(
     magic_token: &str,
 ) -> Result<TokenValidationResult, Response> {
-    // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 and X25519 pub_keys, and ui_host
-    let (is_valid, next_param, user_id_bytes, ed25519_pub_key_bytes, x25519_pub_key_bytes, ui_host) =
+    // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 and X25519 pub_keys, ui_host, and privkey_context
+    let (is_valid, next_param, user_id_bytes, ed25519_pub_key_bytes, x25519_pub_key_bytes, ui_host, privkey_context_decrypted) =
         match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
-            Ok((valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host)) => {
-                (valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host)
+            Ok((valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)) => {
+                (valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)
             }
             Err(error) => {
                 return Err(categorize_token_validation_error(error.into()));
@@ -76,18 +77,24 @@ pub fn validate_and_extract_token_data(
 
     // Log ui_host extraction
     if let Some(ref host) = ui_host {
-        //     "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
-        //     host
-        // );
         debug!(
             "🔒 [SECURITY] ui_host extracted for cookie Domain: '{}'",
             host
         );
     } else {
-        //     "⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain"
-        // );
         warn!("⚠️ [COMPAT] No ui_host in magic link (old format) - will need fallback for Domain");
     }
+
+    // Encrypt privkey_context with X25519 for client
+    let encrypted_privkey_context = encrypt_privkey_context_for_client(
+        &privkey_context_decrypted,
+        &user_id_array,
+        &x25519_pub_key_array,
+    )
+    .map_err(|e| {
+        error!("Failed to encrypt privkey_context with X25519: {}", e);
+        create_error_response(500, "Failed to encrypt private key context")
+    })?;
 
     Ok(TokenValidationResult {
         next_param,
@@ -95,6 +102,7 @@ pub fn validate_and_extract_token_data(
         ed25519_pub_key_bytes: ed25519_pub_key_array,
         x25519_pub_key_bytes: x25519_pub_key_array,
         ui_host,
+        encrypted_privkey_context,
     })
 }
 
@@ -153,4 +161,44 @@ fn create_error_response(status: u16, error_message: &str) -> Response {
             .unwrap_or_default(),
         )
         .build()
+}
+
+/// Encrypt private key context for client using X25519 ECDH
+///
+/// # Arguments
+/// * `privkey_context` - 64-byte decrypted private key context
+/// * `user_id` - 16-byte user identifier
+/// * `client_x25519_pub_key` - Client's X25519 public key (32 bytes)
+///
+/// # Returns
+/// * `Result<String, String>` - Base64-encoded encrypted context or error
+fn encrypt_privkey_context_for_client(
+    privkey_context: &[u8; 64],
+    user_id: &[u8; 16],
+    client_x25519_pub_key: &[u8; 32],
+) -> Result<String, String> {
+    use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+    use crate::utils::crypto::{encrypt_with_ecdh, get_backend_x25519_private_key};
+    use x25519_dalek::PublicKey as X25519PublicKey;
+
+    // Convert client's X25519 public key to hex for backend key derivation
+    let client_x25519_hex = hex::encode(client_x25519_pub_key);
+
+    // Get backend's per-user X25519 private key
+    let backend_x25519_private = get_backend_x25519_private_key(user_id, &client_x25519_hex)
+        .map_err(|e| format!("Failed to derive backend X25519 private key: {}", e))?;
+
+    // Convert client's X25519 public key bytes to X25519PublicKey type
+    let client_x25519_public = X25519PublicKey::from(*client_x25519_pub_key);
+
+    // Encrypt privkey_context with ECDH
+    let encrypted = encrypt_with_ecdh(
+        privkey_context,
+        &backend_x25519_private,
+        &client_x25519_public,
+    )
+    .map_err(|e| format!("ECDH encryption failed: {}", e))?;
+
+    // Encode to base64
+    Ok(BASE64.encode(&encrypted))
 }

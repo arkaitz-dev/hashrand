@@ -54,7 +54,7 @@ pub fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedR
         })?;
 
     // Validate magiclink and extract Ed25519 pub_key from database
-    let (_is_valid, _next_param, _user_id, ed25519_pub_key_bytes, _x25519_pub_key_bytes, _ui_host) =
+    let (_is_valid, _next_param, _user_id, ed25519_pub_key_bytes, _x25519_pub_key_bytes, _ui_host, _privkey_context) =
         MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
             SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
         })?;

@@ -15,7 +15,7 @@ use tracing::{debug, error};
 pub struct MagicLinkStorage;
 
 impl MagicLinkStorage {
-    /// Store encrypted magic token with Ed25519 and X25519 public keys and UI host
+    /// Store encrypted magic token with Ed25519/X25519 public keys, UI host, and db_index
     ///
     /// # Arguments
     /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
@@ -25,6 +25,7 @@ impl MagicLinkStorage {
     /// * `ed25519_pub_key` - Ed25519 public key as hex string (64 chars)
     /// * `x25519_pub_key` - X25519 public key as hex string (64 chars)
     /// * `ui_host` - UI host (domain only, e.g., "localhost" or "app.example.com")
+    /// * `db_index` - Database index for user_privkey_context table (16 bytes)
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
@@ -36,6 +37,7 @@ impl MagicLinkStorage {
         ed25519_pub_key: &str,
         x25519_pub_key: &str,
         ui_host: &str,
+        db_index: &[u8; 16],
     ) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
@@ -89,7 +91,7 @@ impl MagicLinkStorage {
             )));
         }
 
-        // Create merged payload: encryption_blob[44] + ed25519_pub_key[32] + x25519_pub_key[32] + ui_host_len[2] + ui_host[variable] + next_param[variable]
+        // Create merged payload: encryption_blob[44] + db_index[16] + ed25519_pub_key[32] + x25519_pub_key[32] + ui_host_len[2] + ui_host[variable] + next_param[variable]
         let ui_host_bytes = ui_host.as_bytes();
         let ui_host_len = ui_host_bytes.len() as u16;
 
@@ -100,6 +102,7 @@ impl MagicLinkStorage {
 
         let mut payload_plain = Vec::with_capacity(
             ENCRYPTION_BLOB_LENGTH
+                + 16 // db_index length
                 + ED25519_BYTES_LENGTH
                 + ED25519_BYTES_LENGTH // X25519 has same length (32 bytes)
                 + 2
@@ -107,6 +110,7 @@ impl MagicLinkStorage {
                 + next_param.len(),
         );
         payload_plain.extend_from_slice(encryption_blob);
+        payload_plain.extend_from_slice(db_index);
         payload_plain.extend_from_slice(&ed25519_bytes);
         payload_plain.extend_from_slice(&x25519_bytes);
         payload_plain.extend_from_slice(&ui_host_len.to_be_bytes()); // Big-endian for consistency

@@ -76,5 +76,16 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         &[],
     )?;
 
+    // Create user_privkey_context table for user private key derivation context
+    connection.execute(
+        r#"
+        CREATE TABLE IF NOT EXISTS user_privkey_context (
+            db_index BLOB PRIMARY KEY,        -- 16 bytes: blake3_keyed_variable(INDEX_KEY, argon2_output[32], 16)
+            encrypted_privkey BLOB NOT NULL   -- ChaCha20-Poly1305 encrypted 64 random bytes
+        )
+        "#,
+        &[],
+    )?;
+
     Ok(())
 }

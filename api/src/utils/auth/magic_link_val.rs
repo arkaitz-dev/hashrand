@@ -86,6 +86,7 @@ pub fn validate_magic_link_secure(request_body: &[u8]) -> anyhow::Result<Respons
         &token_data.ed25519_pub_key_bytes,
         &token_data.x25519_pub_key_bytes,
         token_data.ui_host,
+        token_data.encrypted_privkey_context,
     )?;
 
     Ok(auth_response)

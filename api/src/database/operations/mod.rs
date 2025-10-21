@@ -19,5 +19,8 @@ pub mod shared_secret_ops;
 pub mod shared_secret_storage;
 pub mod shared_secret_types;
 
+// User private key context operations
+pub mod user_privkey_ops;
+
 // Re-export for backwards compatibility
 pub use magic_link_ops::MagicLinkOperations;

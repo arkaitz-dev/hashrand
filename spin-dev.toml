@@ -40,6 +40,9 @@ shared_secret_url_cipher_key = { required = true, secret = true }
 shared_secret_content_key = { required = true, secret = true }
 shared_secret_checksum_key = { required = true, secret = true }
 shared_secret_db_index_key = { required = true, secret = true }
+# User Private Key Context Security Keys (64 bytes each)
+user_privkey_index_key = { required = true, secret = true }
+user_privkey_encryption_key = { required = true, secret = true }
 # Email configuration for Mailtrap REST API with custom domain
 mailtrap_api_url = { default = "https://send.api.mailtrap.io/api/send" }
 mailtrap_api_token = { required = true, secret = true }
@@ -86,6 +89,8 @@ shared_secret_url_cipher_key = "{{ shared_secret_url_cipher_key }}"
 shared_secret_content_key = "{{ shared_secret_content_key }}"
 shared_secret_checksum_key = "{{ shared_secret_checksum_key }}"
 shared_secret_db_index_key = "{{ shared_secret_db_index_key }}"
+user_privkey_index_key = "{{ user_privkey_index_key }}"
+user_privkey_encryption_key = "{{ user_privkey_encryption_key }}"
 mailtrap_api_url = "{{ mailtrap_api_url }}"
 mailtrap_api_token = "{{ mailtrap_api_token }}"
 mailtrap_inbox_id = "{{ mailtrap_inbox_id }}"

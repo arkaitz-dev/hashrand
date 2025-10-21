@@ -107,6 +107,7 @@ pub fn handle_key_rotation(
         Some(expires_at),
         None, // server_pub_key will be added by create_signed_response_with_rotation
         Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
+        None, // encrypted_privkey_context only in magic link validation
     );
 
     // Generate signed response with key rotation

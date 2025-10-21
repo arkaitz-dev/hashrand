@@ -208,3 +208,15 @@ pub fn get_shared_secret_checksum_key() -> Result<[u8; 64], String> {
 pub fn get_shared_secret_db_index_key() -> Result<[u8; 64], String> {
     get_config_bytes("shared_secret_db_index_key", "SHARED_SECRET_DB_INDEX_KEY")
 }
+
+// User Private Key Context Security Keys
+
+/// Get user private key context index key from Spin variables as bytes (64 bytes required)
+pub fn get_user_privkey_index_key() -> Result<[u8; 64], String> {
+    get_config_bytes("user_privkey_index_key", "USER_PRIVKEY_INDEX_KEY")
+}
+
+/// Get user private key context encryption key from Spin variables as bytes (64 bytes required)
+pub fn get_user_privkey_encryption_key() -> Result<[u8; 64], String> {
+    get_config_bytes("user_privkey_encryption_key", "USER_PRIVKEY_ENCRYPTION_KEY")
+}

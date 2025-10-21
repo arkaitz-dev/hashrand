@@ -20,6 +20,7 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 /// * `ed25519_pub_key_bytes` - Raw Ed25519 public key bytes for crypto material
 /// * `x25519_pub_key_bytes` - Raw X25519 public key bytes for crypto material
 /// * `ui_host` - Optional UI host (domain) for cookie Domain attribute
+/// * `encrypted_privkey_context` - Encrypted private key context (base64, ECDH-encrypted)
 ///
 /// # Returns
 /// * `anyhow::Result<Response>` - Complete HTTP response with SignedResponse format and cookies
@@ -30,6 +31,7 @@ pub fn build_authentication_response(
     ed25519_pub_key_bytes: &[u8],
     x25519_pub_key_bytes: &[u8],
     ui_host: Option<String>,
+    encrypted_privkey_context: String,
 ) -> anyhow::Result<Response> {
     // Calculate refresh cookie expiration timestamp
     let refresh_duration_minutes = crate::utils::jwt::config::get_refresh_token_duration_minutes()
@@ -61,6 +63,7 @@ pub fn build_authentication_response(
         Some(expires_at),
         None, // server_pub_key will be added by create_signed_response_with_server_pubkey
         Some(backend_x25519_public_hex), // server_x25519_pub_key for E2E encryption
+        Some(encrypted_privkey_context),
     );
 
     // Build crypto material for SignedResponse generation (now with BOTH Ed25519 and X25519)

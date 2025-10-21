@@ -123,6 +123,7 @@ pub async fn generate_magic_link_signed(
         &payload.ed25519_pub_key,
         &payload.x25519_pub_key,
         ui_host,
+        &token_result.db_index,
     ) {
         Ok(_) => {
             // Send email with fallback to console logging

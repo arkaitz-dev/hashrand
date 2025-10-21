@@ -3,23 +3,23 @@ use super::super::magic_link_types::constants::*;
 use super::utilities::{copy_to_array, create_validation_error, extract_utf8_string};
 use tracing::{debug, error, warn};
 
-/// Type alias for extracted payload components (encryption_blob, ed25519_pub_key, x25519_pub_key, ui_host, next_param)
-type PayloadComponents = ([u8; 44], [u8; 32], [u8; 32], Option<String>, Option<String>);
+/// Type alias for extracted payload components (encryption_blob, db_index, ed25519_pub_key, x25519_pub_key, ui_host, next_param)
+type PayloadComponents = ([u8; 44], [u8; 16], [u8; 32], [u8; 32], Option<String>, Option<String>);
 
-/// Extract encryption blob, Ed25519 and X25519 public keys, ui_host, and next_param from decrypted payload
+/// Extract encryption blob, db_index, Ed25519/X25519 keys, ui_host, and next_param from payload
 ///
 /// # Arguments
 /// * `payload_plain` - Decrypted payload bytes
 ///
 /// # Returns
 /// * `Result<PayloadComponents, ValidationResult>`
-///   - (encryption_blob, ed25519_pub_key, x25519_pub_key, ui_host, next_param) or validation error
+///   - (encryption_blob, db_index, ed25519_pub_key, x25519_pub_key, ui_host, next_param) or validation error
 pub fn extract_payload_components(
     payload_plain: &[u8],
 ) -> Result<PayloadComponents, ValidationResult> {
     // Validate minimum payload length
     if payload_plain.len() < MIN_PAYLOAD_LENGTH {
-        error!("Database: Invalid decrypted payload length (minimum 108 bytes)");
+        error!("Database: Invalid decrypted payload length (minimum 124 bytes)");
         return Err(create_validation_error());
     }
 
@@ -30,13 +30,19 @@ pub fn extract_payload_components(
         &payload_plain[..ENCRYPTION_BLOB_LENGTH],
     );
 
-    // Extract Ed25519 public key (bytes 44-76)
-    let ed25519_start = ENCRYPTION_BLOB_LENGTH;
+    // Extract db_index (bytes 44-60)
+    let db_index_start = ENCRYPTION_BLOB_LENGTH;
+    let db_index_end = db_index_start + DB_INDEX_LENGTH;
+    let mut db_index = [0u8; DB_INDEX_LENGTH];
+    copy_to_array(&mut db_index, &payload_plain[db_index_start..db_index_end]);
+
+    // Extract Ed25519 public key (bytes 60-92)
+    let ed25519_start = db_index_end;
     let ed25519_end = ed25519_start + ED25519_BYTES_LENGTH;
     let mut ed25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
     copy_to_array(&mut ed25519_pub_key_array, &payload_plain[ed25519_start..ed25519_end]);
 
-    // Extract X25519 public key (bytes 76-108)
+    // Extract X25519 public key (bytes 92-124)
     let x25519_start = ed25519_end;
     let x25519_end = x25519_start + ED25519_BYTES_LENGTH; // Same length as Ed25519 (32 bytes)
     let mut x25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
@@ -56,7 +62,7 @@ pub fn extract_payload_components(
         ui_host, next_param
     );
 
-    Ok((encryption_blob, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param))
+    Ok((encryption_blob, db_index, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param))
 }
 
 /// Extract ui_host and next_param with backward compatibility

@@ -88,7 +88,7 @@ impl JwtUtils {
     pub fn generate_magic_token_encrypted(
         email: &str,
         expires_at: chrono::DateTime<chrono::Utc>,
-    ) -> Result<(String, [u8; 44], i64), String> {
+    ) -> Result<(String, [u8; 44], i64, [u8; 16]), String> {
         magic_links::generate_magic_token_encrypted(email, expires_at)
     }
 

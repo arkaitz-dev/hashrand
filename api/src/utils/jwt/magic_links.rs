@@ -6,30 +6,37 @@ use chrono::{DateTime, Utc};
 
 use super::config::get_magic_link_hmac_key;
 use super::crypto::{
-    decrypt_magic_link, derive_user_id, encrypt_magic_link, generate_chacha_nonce_and_key,
+    decrypt_magic_link, derive_user_id, derive_user_id_with_context, encrypt_magic_link,
+    generate_chacha_nonce_and_key,
 };
+use crate::database::operations::user_privkey_ops::UserPrivkeyCrypto;
 use crate::utils::pseudonimizer::blake3_keyed_variable;
 
-/// Generate secure magic token with ChaCha20 encryption
+/// Generate secure magic token with ChaCha20 encryption + db_index for user_privkey_context
 ///
 /// Enhanced Process:
 /// 1. Create raw_magic_link: user_id (16) + timestamp (8) + Blake3-keyed-variable[8] (hmac) = 32 bytes
 /// 2. Generate nonce[12] + secret_key[32] from Blake3-keyed-variable(chacha_key[64], raw_magic_link, 44)
 /// 3. Encrypt raw_magic_link with ChaCha20 → encrypted_raw_magic_link
-/// 4. Return Base58(encrypted_raw_magic_link) for transmission + encryption_blob + timestamp for database
+/// 4. Generate db_index from argon2_output for user_privkey_context table
+/// 5. Return Base58(encrypted_raw_magic_link) + encryption_blob + timestamp + db_index
 ///
 /// # Arguments
 /// * `email` - User email to derive user_id
 /// * `expires_at` - Magic link expiration timestamp
 ///
 /// # Returns
-/// * `Result<(String, [u8; 44], i64), String>` - (Base58 token, encryption_blob, timestamp) or error
+/// * `Result<(String, [u8; 44], i64, [u8; 16]), String>` - (Base58 token, encryption_blob, timestamp, db_index) or error
 pub fn generate_magic_token_encrypted(
     email: &str,
     expires_at: DateTime<Utc>,
-) -> Result<(String, [u8; 44], i64), String> {
-    // Derive deterministic user_id from email
-    let user_id = derive_user_id(email)?;
+) -> Result<(String, [u8; 44], i64, [u8; 16]), String> {
+    // Derive deterministic user_id + argon2_output from email
+    let (user_id, argon2_output) = derive_user_id_with_context(email)?;
+
+    // Generate db_index for user_privkey_context table
+    let db_index = UserPrivkeyCrypto::generate_db_index(&argon2_output)
+        .map_err(|e| format!("Failed to generate db_index: {}", e))?;
 
     // Timestamp as nanoseconds since Unix epoch (8 bytes, big-endian u64)
     let timestamp_nanos = expires_at
@@ -69,11 +76,12 @@ pub fn generate_magic_token_encrypted(
     encryption_blob[..12].copy_from_slice(&nonce);
     encryption_blob[12..44].copy_from_slice(&secret_key);
 
-    // Return encrypted data as Base58 token, encryption_blob, and original timestamp
+    // Return encrypted data as Base58 token, encryption_blob, original timestamp, and db_index
     Ok((
         bs58::encode(&encrypted_data).into_string(),
         encryption_blob,
         timestamp_nanos,
+        db_index,
     ))
 }
 

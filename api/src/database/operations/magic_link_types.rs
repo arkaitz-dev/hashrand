@@ -7,13 +7,14 @@
 
 /// Magic link validation result tuple
 ///
-/// Returns (validation_success, next_param, user_id, ed25519_pub_key, x25519_pub_key, ui_host)
+/// Returns (validation_success, next_param, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)
 /// - validation_success: boolean indicating if validation succeeded
 /// - next_param: optional next destination parameter
 /// - user_id: optional 16-byte user identifier
 /// - ed25519_pub_key: optional 32-byte Ed25519 public key
 /// - x25519_pub_key: optional 32-byte X25519 public key
 /// - ui_host: optional UI host (domain) extracted from encrypted blob
+/// - privkey_context: 64-byte decrypted private key context (ALWAYS present on successful validation)
 pub type ValidationResult = (
     bool,
     Option<String>,
@@ -21,6 +22,7 @@ pub type ValidationResult = (
     Option<[u8; 32]>,
     Option<[u8; 32]>,
     Option<String>,
+    [u8; 64],
 );
 
 /// Magic link database operations struct
@@ -46,8 +48,11 @@ pub mod constants {
     /// Required length for user ID
     pub const USER_ID_LENGTH: usize = 16;
 
-    /// Minimum payload length (encryption_blob + ed25519_pub_key + x25519_pub_key)
-    pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + ED25519_BYTES_LENGTH + ED25519_BYTES_LENGTH; // 44 + 32 + 32 = 108 bytes
+    /// Database index length for user_privkey_context
+    pub const DB_INDEX_LENGTH: usize = 16;
+
+    /// Minimum payload length (encryption_blob + db_index + ed25519_pub_key + x25519_pub_key)
+    pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + DB_INDEX_LENGTH + ED25519_BYTES_LENGTH + ED25519_BYTES_LENGTH; // 44 + 16 + 32 + 32 = 124 bytes
 
     /// Nonce length for ChaCha20-Poly1305
     pub const NONCE_LENGTH: usize = 12;

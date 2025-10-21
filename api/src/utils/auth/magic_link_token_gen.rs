@@ -17,28 +17,31 @@ pub struct TokenGenerationResult {
     pub expires_at_nanos: i64,
     pub magic_expires_at: DateTime<Utc>,
     pub magic_link: String,
+    pub db_index: [u8; 16],
 }
 
 /// Magic link token generation operations
 pub struct MagicLinkTokenGeneration;
 
 impl MagicLinkTokenGeneration {
-    /// Generate encrypted magic token with ChaCha20 protection
+    /// Generate encrypted magic token with ChaCha20 protection + db_index
     ///
     /// # Arguments
     /// * `email` - Email address for token generation
     /// * `duration_minutes` - Token expiration duration in minutes
     ///
     /// # Returns
-    /// * `Result<(String, [u8; 44], i64, DateTime<Utc>), Response>` - Token data or error response
+    /// * `Result<(String, [u8; 44], i64, DateTime<Utc>, [u8; 16]), Response>` - Token data + db_index or error response
     pub fn generate_encrypted_token(
         email: &str,
         duration_minutes: i64,
-    ) -> Result<(String, [u8; 44], i64, DateTime<Utc>), Response> {
+    ) -> Result<(String, [u8; 44], i64, DateTime<Utc>, [u8; 16]), Response> {
         let magic_expires_at = Utc::now() + Duration::minutes(duration_minutes);
 
         match JwtUtils::generate_magic_token_encrypted(email, magic_expires_at) {
-            Ok((token, blob, expires_at)) => Ok((token, blob, expires_at, magic_expires_at)),
+            Ok((token, blob, expires_at, db_index)) => {
+                Ok((token, blob, expires_at, magic_expires_at, db_index))
+            }
             Err(e) => Err(Response::builder()
                 .status(500)
                 .header("content-type", "application/json")
@@ -118,8 +121,8 @@ impl MagicLinkTokenGeneration {
         ui_host: Option<&str>,
         duration_minutes: i64,
     ) -> Result<TokenGenerationResult, Response> {
-        // Generate encrypted magic token
-        let (magic_token, encryption_blob, expires_at_nanos, magic_expires_at) =
+        // Generate encrypted magic token + db_index
+        let (magic_token, encryption_blob, expires_at_nanos, magic_expires_at, db_index) =
             Self::generate_encrypted_token(email, duration_minutes)?;
 
         // Determine host URL - REQUIRED, returns error if ui_host is None
@@ -134,6 +137,7 @@ impl MagicLinkTokenGeneration {
             expires_at_nanos,
             magic_expires_at,
             magic_link,
+            db_index,
         })
     }
 }
