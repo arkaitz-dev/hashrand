@@ -194,8 +194,18 @@ fn read_and_decrypt_privkey_context(
     };
 
     // Decrypt using UserPrivkeyCrypto
-    crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::decrypt_privkey_context(
+    let privkey_context = crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::decrypt_privkey_context(
         db_index,
         &encrypted_privkey,
-    )
+    )?;
+
+    // DEBUG: Log decrypted privkey_context before ECDH encryption for frontend
+    debug!(
+        "✅ Backend: Privkey context decrypted from DB (before ECDH): size={}, first_8_bytes={:?}, last_8_bytes={:?}",
+        privkey_context.len(),
+        &privkey_context[..8],
+        &privkey_context[56..]
+    );
+
+    Ok(privkey_context)
 }

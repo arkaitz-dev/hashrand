@@ -241,6 +241,7 @@ export interface LoginResponse {
 	expires_at?: number; // Optional refresh cookie expiration timestamp (when new refresh cookie is set)
 	server_pub_key?: string; // Optional server Ed25519 public key (only in 2/3 time window for key rotation)
 	server_x25519_pub_key?: string; // Optional server X25519 public key for ECDH (E2E encryption) - ALWAYS included
+	encrypted_privkey_context?: string; // Base64, ECDH-encrypted user private key context (80 bytes) - REQUIRED in magic link validation, absent in refresh token
 }
 
 export interface MagicLinkResponse {

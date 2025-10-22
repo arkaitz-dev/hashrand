@@ -297,3 +297,74 @@ export async function decryptSecretAfterRetrieval(
 	logger.debug('✅ Secret decryption after retrieval complete');
 	return secretText;
 }
+
+/**
+ * Decrypt user private key context from backend (magic link validation)
+ *
+ * Flow:
+ * 1. Decode base64 → Uint8Array[80] (64 bytes + 16 MAC)
+ * 2. Get client's X25519 private key from IndexedDB
+ * 3. Import server's X25519 public key from hex
+ * 4. Decrypt with ECDH (client X25519 private + server X25519 public)
+ *
+ * Uses same ECDH encryption as shared secrets (Blake3 KDF + ChaCha20-Poly1305)
+ * Context: "SharedSecretKeyMaterial_v1"
+ *
+ * @param encryptedBase64 - Base64-encoded encrypted privkey_context (80 bytes when decoded)
+ * @param serverPublicKeyHex - Server's X25519 public key (hex, 64 chars)
+ * @returns Promise with decrypted privkey_context (64 bytes)
+ * @throws Error if keys not found, invalid format, or decryption fails (MAC verification)
+ */
+export async function decryptPrivkeyContext(
+	encryptedBase64: string,
+	serverPublicKeyHex: string
+): Promise<Uint8Array> {
+	logger.debug('🔓 Starting privkey_context decryption from magic link response');
+
+	// 1. Decode base64 → Uint8Array[80]
+	const { base64ToBytes } = await import('./crypto-encoding');
+	const encryptedBytes = base64ToBytes(encryptedBase64);
+
+	logger.debug('🔓 Decoded base64 privkey_context', {
+		encryptedSize: encryptedBytes.length,
+		expectedSize: 80 // 64 + 16 MAC
+	});
+
+	if (encryptedBytes.length !== 80) {
+		throw new Error(
+			`Invalid encrypted_privkey_context size: ${encryptedBytes.length} (expected 80 bytes)`
+		);
+	}
+
+	// 2. Get client's X25519 private key from IndexedDB
+	const { getX25519PrivateKey } = await import('./keypair-storage');
+	const clientX25519PrivateKey = await getX25519PrivateKey();
+
+	if (!clientX25519PrivateKey) {
+		throw new Error('X25519 private key not found in IndexedDB');
+	}
+
+	// 3. Import server's X25519 public key from hex
+	const { importX25519PublicKey } = await import('./keypair-generation');
+	const serverX25519PublicKey = await importX25519PublicKey(serverPublicKeyHex);
+
+	// 4. Decrypt with ECDH (reuses existing decryptWithECDH function)
+	const privkeyContext = await decryptWithECDH(
+		encryptedBytes,
+		clientX25519PrivateKey,
+		serverX25519PublicKey
+	);
+
+	logger.debug('✅ Privkey context decrypted successfully', {
+		size: privkeyContext.length,
+		expectedSize: 64
+	});
+
+	if (privkeyContext.length !== 64) {
+		throw new Error(
+			`Invalid decrypted privkey_context size: ${privkeyContext.length} (expected 64 bytes)`
+		);
+	}
+
+	return privkeyContext;
+}

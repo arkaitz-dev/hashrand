@@ -59,6 +59,31 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	const loginResponse = await api.validateMagicLink(magicToken);
 	logger.debug('[auth-actions] Magic link validation successful, processing response');
 
+	// Decrypt user private key context (REQUIRED in magic link validation)
+	if (!loginResponse.encrypted_privkey_context) {
+		throw new Error('Missing encrypted_privkey_context in magic link response');
+	}
+	if (!loginResponse.server_x25519_pub_key) {
+		throw new Error('Missing server_x25519_pub_key in magic link response');
+	}
+
+	try {
+		const { decryptPrivkeyContext } = await import('../../crypto/shared-secret-crypto');
+		const privkeyContext = await decryptPrivkeyContext(
+			loginResponse.encrypted_privkey_context,
+			loginResponse.server_x25519_pub_key
+		);
+
+		logger.debug('[auth-actions] ✅ Privkey context decrypted successfully:', {
+			size: privkeyContext.length,
+			first_8_bytes: Array.from(privkeyContext.slice(0, 8)),
+			last_8_bytes: Array.from(privkeyContext.slice(-8))
+		});
+	} catch (error) {
+		logger.error('[auth-actions] ❌ Failed to decrypt privkey_context:', error);
+		throw new Error(`Privkey context decryption failed: ${error}`);
+	}
+
 	// Get pending email before clearing it (needed for Zero Knowledge UX)
 	const { sessionManager } = await import('../../session-manager');
 	const userEmail = (await sessionManager.getPendingAuthEmail()) ?? '';

@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.29.2] - 2025-10-22
+
+### Added
+
+**🔐 CRYPTO: Frontend reception and decryption of user private key context**
+
+**Implementation**:
+
+**1. Types Update** (`web/src/lib/types/index.ts`):
+- Added `encrypted_privkey_context?: string` to `LoginResponse` interface
+- Field is optional (generic type) but REQUIRED in magic link validation responses
+- Comment clarifies: "REQUIRED in magic link validation, absent in refresh token"
+
+**2. Decryption Function** (`web/src/lib/crypto/shared-secret-crypto.ts`):
+- New `decryptPrivkeyContext(encryptedBase64, serverX25519Hex)` export
+- Decodes base64 → Uint8Array[80] (64 bytes plaintext + 16 bytes MAC)
+- Retrieves client X25519 private key from IndexedDB
+- Imports server X25519 public key from hex
+- **Reuses existing `decryptWithECDH()`** function (ZERO duplication)
+- Returns decrypted privkey_context[64] bytes
+- Throws error if keys missing, invalid format, or MAC verification fails
+
+**3. Magic Link Integration** (`web/src/lib/stores/auth/auth-actions.ts`):
+- Added validation in `validateMagicLink()` after API response
+- Checks both `encrypted_privkey_context` and `server_x25519_pub_key` are present
+- Decrypts privkey_context using ECDH (X25519 + Blake3 KDF + ChaCha20-Poly1305)
+- Debug logs first 8 and last 8 bytes for verification
+- Throws descriptive error if decryption fails
+
+**4. Debug Logging** (`api/src/database/operations/magic_link_validation/validation.rs`):
+- Added backend debug log after DB decryption (before ECDH re-encryption)
+- Logs `size`, `first_8_bytes`, `last_8_bytes` for end-to-end verification
+- Frontend logs same format for easy comparison
+
+**Security**:
+- E2E encryption: Backend decrypts from DB → re-encrypts with ECDH → frontend decrypts
+- Zero Knowledge maintained: Server cannot correlate without credentials
+- ECDH uses Blake3 KDF with context `"SharedSecretKeyMaterial_v1"` (domain separation)
+- Private keys remain non-extractable in IndexedDB throughout process
+
+**Verification**:
+- Backend and frontend logs show IDENTICAL `first_8_bytes` and `last_8_bytes`
+- Confirms ECDH encryption/decryption working correctly end-to-end
+- Example: `[0, 47, 51, 67, 110, 57, 144, 240]` matches exactly in both logs
+
+**Files Modified**:
+- `web/src/lib/types/index.ts` (+1 field with documentation)
+- `web/src/lib/crypto/shared-secret-crypto.ts` (+71 lines: decryptPrivkeyContext)
+- `web/src/lib/stores/auth/auth-actions.ts` (+24 lines: validation + decryption)
+- `api/src/database/operations/magic_link_validation/validation.rs` (+8 lines: debug log)
+
+**Architecture Notes**:
+- Reuses existing ECDH infrastructure (shared-secret-crypto)
+- Consistent with shared secrets E2E encryption pattern
+- Minimal code footprint (~100 lines total across 4 files)
+
 ## [API v1.10.0] - 2025-10-21
 
 ### Added
