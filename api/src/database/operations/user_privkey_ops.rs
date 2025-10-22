@@ -174,8 +174,9 @@ impl UserPrivkeyCrypto {
             return Ok(());
         }
 
-        // Generate 64 random bytes using ChaCha8Rng
-        let seed_material = format!("{:?}_privkey", std::time::SystemTime::now());
+        // Generate 64 random bytes using ChaCha8Rng with triple entropy sources
+        let random_id = nanoid::nanoid!();
+        let seed_material = format!("{:?}_{}_privkey", std::time::SystemTime::now(), random_id);
         let seed_hash = blake3::hash(seed_material.as_bytes());
         let seed: [u8; 32] = *seed_hash.as_bytes();
 

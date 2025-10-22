@@ -4,6 +4,117 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [Web v0.29.3] - 2025-10-22
+
+### Added
+
+**🔐 CRYPTO: User permanent keypair derivation with WebCrypto non-extractable keys**
+
+**Architecture**:
+
+**1. New Module** (`web/src/lib/crypto/user-key-derivation.ts`):
+- Blake3 KDF derives deterministic Ed25519/X25519 keypairs from privkey_context + email
+- Converts Noble-generated keys to WebCrypto JWK format (RFC 8037)
+- Imports to WebCrypto CryptoKey objects (non-extractable for maximum security)
+- Memory cleanup: Overwrites raw private key bytes with zeros after import
+- Returns interface with CryptoKey objects + public key bytes/hex
+
+**2. JWK Conversion Functions**:
+- `ed25519ToJWK()`: Converts Ed25519 32-byte keys to JWK format
+- `x25519ToJWK()`: Converts X25519 32-byte keys to JWK format
+- Uses `base64urlnopad` from `@scure/base` (RFC 7515 compliant, no padding)
+- JWK structure: `{ kty: 'OKP', crv: 'Ed25519'/'X25519', d: '...', x: '...' }`
+
+**3. WebCrypto Import**:
+- `importEd25519PrivateKey()`: Imports to CryptoKey with `extractable: false`, usages: `['sign']`
+- `importEd25519PublicKey()`: Imports public key with `extractable: true`, usages: `['verify']`
+- `importX25519PrivateKey()`: Imports to CryptoKey with `extractable: false`, usages: `['deriveKey', 'deriveBits']`
+- `importX25519PublicKey()`: Imports public key with `extractable: true`, usages: []`
+- Algorithm as string: `'Ed25519'` or `'X25519'` (not object format)
+
+**4. Key Derivation Process**:
+```
+privkey_context[64] + email → Blake3 KDF → Ed25519 private key[32]
+privkey_context[64] + email → Blake3 KDF → X25519 private key[32]
+Noble curves → public keys[32]
+Raw bytes → JWK (base64urlnopad) → WebCrypto CryptoKey (non-extractable)
+Raw private key bytes → fill(0) memory cleanup
+```
+
+**5. Storage Updates** (`web/src/lib/crypto/keypair-storage.ts`):
+- Updated `storeDerivedUserKeys()` to accept CryptoKey objects instead of raw bytes
+- Stores non-extractable CryptoKeys in IndexedDB (maximum security)
+- Removed `getDerivedEd25519PrivateKeyBytes()` and `getDerivedX25519PrivateKeyBytes()`
+- Added `getDerivedEd25519PrivateKey()` and `getDerivedX25519PrivateKey()` returning CryptoKey
+- Private key bytes NOT stored (only CryptoKey objects)
+
+**6. Auth Integration** (`web/src/lib/stores/auth/auth-actions.ts`):
+- Integrated user key derivation in `validateMagicLink()`
+- Derives keys from decrypted privkey_context + email
+- Stores derived CryptoKeys in IndexedDB
+- Non-blocking: Authentication continues even if key derivation fails
+- Debug logs show derived public keys for verification
+
+### Fixed
+
+**🐛 BUG FIX: Magic link double validation race condition**
+
+**Problem**:
+- Magic link validated TWICE causing 400 error on second attempt
+- `forceMagicLinkValidation()` (module-level setTimeout) validates first ✅
+- `handleMagicLinkValidation()` (page.subscribe in onMount) validates second ❌
+- Race condition: `replaceState()` triggers `page.subscribe` after first validation completes
+- `magicLinkProcessing` flag resets before second validation starts
+
+**Root Cause**:
+```
+forceMagicLinkValidation() SUCCESS → replaceState() cleans URL
+→ finally block resets magicLinkProcessing = false
+→ replaceState() triggers page.subscribe
+→ handleMagicLinkValidation() sees magicLinkProcessing = false → validates SAME token
+→ 400 ERROR (token already consumed)
+```
+
+**Solution** (`web/src/routes/+layout.svelte`):
+- Added `Set<string> processedTokens` to track validated tokens
+- Both validation functions check `processedTokens.has(token)` before processing
+- Token marked as processed immediately with `processedTokens.add(token)`
+- Second validation attempt skips with log: "Token already processed, skipping"
+
+**Verification**:
+```javascript
+[forceMagicLinkValidation] { alreadyProcessed: false } → validates ✅
+[handleMagicLinkValidation] { alreadyProcessed: true } → skips ✅ NO 400 error
+```
+
+### Changed
+
+**🔧 CRYPTO: Enhanced privkey_context RNG seed entropy**
+
+**Backend** (`api/src/database/operations/user_privkey_ops.rs`):
+- Improved ChaCha8Rng seed generation for privkey_context creation
+- Old: `SystemTime::now()` only (single entropy source)
+- New: `SystemTime::now() + nanoid!()` (triple entropy: time + thread RNG + counter)
+- Format: `"{SystemTime:?}_{nanoid}_privkey"` → Blake3 → seed[32]
+- Increases randomness quality for user private key context generation
+
+**Files Modified**:
+- `web/src/lib/crypto/user-key-derivation.ts` (NEW: 532 lines)
+- `web/src/lib/crypto/keypair-storage.ts` (updated storage/retrieval functions)
+- `web/src/lib/stores/auth/auth-actions.ts` (integrated key derivation)
+- `web/src/routes/+layout.svelte` (added processedTokens Set)
+- `api/src/database/operations/user_privkey_ops.rs` (enhanced RNG seed)
+- `web/package.json` (version 0.29.2 → 0.29.3)
+
+**Security Properties**:
+- Non-extractable CryptoKeys: Private keys cannot be exported from WebCrypto
+- Memory cleanup: Raw bytes overwritten with zeros after import
+- Deterministic derivation: Same privkey_context + email → same keypairs
+- JWK RFC compliance: base64urlnopad encoding (no padding, URL-safe)
+- IndexedDB storage: Only CryptoKey objects stored, no raw bytes
+
+**Verification**: ✅ Login successful, Ed25519/X25519 import working, no 400 errors
+
 ## [Web v0.29.2] - 2025-10-22
 
 ### Added

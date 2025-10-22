@@ -67,9 +67,10 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		throw new Error('Missing server_x25519_pub_key in magic link response');
 	}
 
+	let privkeyContext: Uint8Array;
 	try {
 		const { decryptPrivkeyContext } = await import('../../crypto/shared-secret-crypto');
-		const privkeyContext = await decryptPrivkeyContext(
+		privkeyContext = await decryptPrivkeyContext(
 			loginResponse.encrypted_privkey_context,
 			loginResponse.server_x25519_pub_key
 		);
@@ -82,6 +83,47 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	} catch (error) {
 		logger.error('[auth-actions] ❌ Failed to decrypt privkey_context:', error);
 		throw new Error(`Privkey context decryption failed: ${error}`);
+	}
+
+	// Derive user's permanent Ed25519/X25519 keypairs from privkey_context
+	try {
+		const { deriveUserKeys, verifyDerivedPublicKeys } = await import(
+			'../../crypto/user-key-derivation'
+		);
+
+		// Get pending email for key derivation (Zero Knowledge UX)
+		const { sessionManager } = await import('../../session-manager');
+		const userEmail = (await sessionManager.getPendingAuthEmail()) ?? '';
+
+		if (!userEmail) {
+			throw new Error('User email not available for key derivation');
+		}
+
+		logger.debug('[auth-actions] 🔑 Deriving user keypairs from privkey_context:', {
+			email: userEmail,
+			privkeyContextLength: privkeyContext.length
+		});
+
+		// Derive deterministic keypairs
+		const derivedKeys = await deriveUserKeys(userEmail, privkeyContext);
+
+		logger.info('[auth-actions] 🔐 Derived user public keys:', {
+			ed25519: derivedKeys.ed25519.publicKeyHex,
+			x25519: derivedKeys.x25519.publicKeyHex
+		});
+
+		// NOTE: User's public keys are not returned in LoginResponse
+		// They are only sent during requestMagicLink and stored by backend
+		// These derived keys are deterministic from privkey_context + email
+		logger.debug('[auth-actions] ℹ️ User public keys are deterministically derived from privkey_context');
+
+		// Store derived keys in IndexedDB for future use
+		const { storeDerivedUserKeys } = await import('../../crypto/keypair-storage');
+		await storeDerivedUserKeys(derivedKeys);
+		logger.debug('[auth-actions] ✅ Derived user keys stored in IndexedDB');
+	} catch (error) {
+		logger.error('[auth-actions] ❌ Failed to derive user keys:', error);
+		// Non-blocking - authentication continues even if key derivation fails
 	}
 
 	// Get pending email before clearing it (needed for Zero Knowledge UX)

@@ -35,20 +35,34 @@
 	// Backend handles single-use validation (deletes magic link after use)
 	let magicLinkProcessing = false;
 
+	// CRITICAL: Track processed tokens to prevent double validation
+	// Fixes race condition where replaceState() triggers page.subscribe after forceMagicLinkValidation completes
+	let processedTokens = new Set<string>();
+
 	/**
 	 * Force magic link validation - bypasses SvelteKit hydration issues
 	 */
 	async function forceMagicLinkValidation(magicToken: string) {
 		logger.debug('[+layout] forceMagicLinkValidation called', {
 			magicLinkProcessing,
+			alreadyProcessed: processedTokens.has(magicToken),
 			currentToken: magicToken.substring(0, 10) + '...'
 		});
+
+		// CRITICAL: Prevent double validation of same token
+		if (processedTokens.has(magicToken)) {
+			logger.debug('[+layout] forceMagicLinkValidation: Token already processed, skipping');
+			return;
+		}
 
 		// CRITICAL: Prevent race conditions only
 		if (magicLinkProcessing) {
 			logger.debug('[+layout] forceMagicLinkValidation: Already processing, skipping');
 			return;
 		}
+
+		// Mark token as processed immediately
+		processedTokens.add(magicToken);
 
 		magicLinkProcessing = true;
 		logger.debug('[+layout] forceMagicLinkValidation: Starting validation');
@@ -227,14 +241,24 @@
 	async function handleMagicLinkValidation(magicToken: string) {
 		logger.debug('[+layout] handleMagicLinkValidation called', {
 			magicLinkProcessing,
+			alreadyProcessed: processedTokens.has(magicToken),
 			currentToken: magicToken.substring(0, 10) + '...'
 		});
+
+		// CRITICAL: Prevent double validation of same token
+		if (processedTokens.has(magicToken)) {
+			logger.debug('[+layout] handleMagicLinkValidation: Token already processed, skipping');
+			return;
+		}
 
 		// CRITICAL: Prevent race conditions only
 		if (magicLinkProcessing) {
 			logger.debug('[+layout] handleMagicLinkValidation: Already processing, skipping');
 			return;
 		}
+
+		// Mark token as processed immediately
+		processedTokens.add(magicToken);
 
 		magicLinkProcessing = true;
 		logger.debug('[+layout] handleMagicLinkValidation: Starting validation');

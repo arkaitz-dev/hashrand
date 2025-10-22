@@ -4,9 +4,9 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: API Backend (Rust+Spin, port 3000) + Web Interface (SvelteKit+TypeScript+TailwindCSS, port 5173)
 
-**Last Update**: 2025-10-22 - **API v1.10.0 + Web v0.29.2**
-- 🔐 **Latest**: CRYPTO - Frontend reception and ECDH decryption of user privkey_context (64 bytes)
-- 🔐 **Previous**: CRYPTO - Backend user privkey_context infrastructure (DB storage + ECDH encryption)
+**Last Update**: 2025-10-22 - **API v1.10.0 + Web v0.29.3**
+- 🔐 **Latest**: CRYPTO - User permanent keypair derivation (Blake3 KDF → WebCrypto non-extractable CryptoKeys)
+- 🐛 **Fix**: Magic link double validation race condition (Set<string> processedTokens)
 - ✅ **Quality**: ZERO errors (clippy + ESLint + svelte-check + TypeScript)
 
 ## Security Standards - CRITICAL RULE
