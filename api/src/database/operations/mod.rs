@@ -22,5 +22,9 @@ pub mod shared_secret_types;
 // User private key context operations
 pub mod user_privkey_ops;
 
+// User public keys operations (Sistema B - E2EE)
+pub mod user_keys_ops;
+
 // Re-export for backwards compatibility
 pub use magic_link_ops::MagicLinkOperations;
+pub use user_keys_ops::UserKeysOperations;

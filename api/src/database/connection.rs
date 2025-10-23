@@ -19,21 +19,29 @@ pub fn get_database_connection() -> Result<Connection, SqliteError> {
 
 /// Initialize database tables
 ///
-/// Creates the users, magiclinks, shared_secrets, and shared_secrets_tracking tables if they don't exist.
+/// Creates all application tables: users, magiclinks, shared_secrets, shared_secrets_tracking,
+/// user_privkey_context, user_ed25519_keys, user_x25519_keys
 ///
 /// # Returns
 /// * `Result<(), SqliteError>` - Success or database error
 pub fn initialize_database() -> Result<(), SqliteError> {
     let connection = get_database_connection()?;
 
-    // Create users table if it doesn't exist
+    // Create users table for user tracking
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS users (
             user_id BLOB PRIMARY KEY,
+            logged_in INTEGER,                  -- Unix timestamp (nullable)
             created_at INTEGER DEFAULT (unixepoch())
         )
         "#,
+        &[],
+    )?;
+
+    // Create index on logged_in for efficient queries
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_users_logged_in ON users(logged_in)",
         &[],
     )?;
 
@@ -81,9 +89,50 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         r#"
         CREATE TABLE IF NOT EXISTS user_privkey_context (
             db_index BLOB PRIMARY KEY,        -- 16 bytes: blake3_keyed_variable(INDEX_KEY, argon2_output[32], 16)
-            encrypted_privkey BLOB NOT NULL   -- ChaCha20-Poly1305 encrypted 64 random bytes
+            encrypted_privkey BLOB NOT NULL,  -- ChaCha20-Poly1305 encrypted 64 random bytes
+            created_year INTEGER NOT NULL     -- 4 digits (2025, 2026, etc.)
         )
         "#,
+        &[],
+    )?;
+
+    // Create user_ed25519_keys table for permanent Ed25519 public keys (Sistema B - E2EE)
+    connection.execute(
+        r#"
+        CREATE TABLE IF NOT EXISTS user_ed25519_keys (
+            user_id BLOB NOT NULL,
+            pub_key TEXT NOT NULL,            -- Hex string (64 chars)
+            created_at INTEGER NOT NULL,      -- Unix timestamp
+            UNIQUE(user_id, pub_key),
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
+        )
+        "#,
+        &[],
+    )?;
+
+    // Create index for efficient queries by user_id and created_at
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_ed25519_user_created ON user_ed25519_keys(user_id, created_at DESC)",
+        &[],
+    )?;
+
+    // Create user_x25519_keys table for permanent X25519 public keys (Sistema B - E2EE)
+    connection.execute(
+        r#"
+        CREATE TABLE IF NOT EXISTS user_x25519_keys (
+            user_id BLOB NOT NULL,
+            pub_key TEXT NOT NULL,            -- Hex string (64 chars)
+            created_at INTEGER NOT NULL,      -- Unix timestamp
+            UNIQUE(user_id, pub_key),
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
+        )
+        "#,
+        &[],
+    )?;
+
+    // Create index for efficient queries by user_id and created_at
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_x25519_user_created ON user_x25519_keys(user_id, created_at DESC)",
         &[],
     )?;
 

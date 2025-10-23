@@ -174,6 +174,18 @@ impl UserPrivkeyCrypto {
             return Ok(());
         }
 
+        // Get current year (4 digits: 2025, 2026, etc.)
+        let created_year = {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            let duration = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(|e| SqliteError::Io(format!("Time error: {}", e)))?;
+            let seconds_since_epoch = duration.as_secs();
+            // Calculate year: Unix epoch (1970) + years elapsed
+            let years_elapsed = seconds_since_epoch / (365 * 24 * 60 * 60);
+            1970 + years_elapsed as i64
+        };
+
         // Generate 64 random bytes using ChaCha8Rng with triple entropy sources
         let random_id = nanoid::nanoid!();
         let seed_material = format!("{:?}_{}_privkey", std::time::SystemTime::now(), random_id);
@@ -187,12 +199,13 @@ impl UserPrivkeyCrypto {
         // Encrypt random bytes
         let encrypted_privkey = UserPrivkeyCrypto::encrypt_privkey_context(db_index, &random_64_bytes)?;
 
-        // Insert into database
+        // Insert into database with created_year
         connection.execute(
-            "INSERT INTO user_privkey_context (db_index, encrypted_privkey) VALUES (?, ?)",
+            "INSERT INTO user_privkey_context (db_index, encrypted_privkey, created_year) VALUES (?, ?, ?)",
             &[
                 Value::Blob(db_index.to_vec()),
                 Value::Blob(encrypted_privkey),
+                Value::Integer(created_year),
             ],
         )?;
 

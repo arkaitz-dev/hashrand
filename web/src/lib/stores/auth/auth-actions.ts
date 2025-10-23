@@ -86,6 +86,9 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	}
 
 	// Derive user's permanent Ed25519/X25519 keypairs from privkey_context
+	// Store keys for later publication (after JWT + crypto tokens are available)
+	let derivedKeys: Awaited<ReturnType<typeof import('../../crypto/user-key-derivation').deriveUserKeys>> | null = null;
+
 	try {
 		const { deriveUserKeys, verifyDerivedPublicKeys } = await import(
 			'../../crypto/user-key-derivation'
@@ -105,7 +108,7 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		});
 
 		// Derive deterministic keypairs
-		const derivedKeys = await deriveUserKeys(userEmail, privkeyContext);
+		derivedKeys = await deriveUserKeys(userEmail, privkeyContext);
 
 		logger.info('[auth-actions] 🔐 Derived user public keys:', {
 			ed25519: derivedKeys.ed25519.publicKeyHex,
@@ -121,6 +124,9 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		const { storeDerivedUserKeys } = await import('../../crypto/keypair-storage');
 		await storeDerivedUserKeys(derivedKeys);
 		logger.debug('[auth-actions] ✅ Derived user keys stored in IndexedDB');
+
+		// NOTE: Store derivedKeys for later publication (after JWT + crypto tokens exist)
+		// Publication happens AFTER saveAuthToStorage + generateCryptoTokens
 	} catch (error) {
 		logger.error('[auth-actions] ❌ Failed to derive user keys:', error);
 		// Non-blocking - authentication continues even if key derivation fails
@@ -174,6 +180,44 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		await generateCryptoTokens();
 	} else {
 		// Magic link: Crypto tokens already exist
+	}
+
+	// Publish permanent public keys to backend (Sistema B - E2EE)
+	// NOW it's safe: JWT exists (saveAuthToStorage) + crypto tokens exist (generateCryptoTokens)
+	if (derivedKeys) {
+		try {
+			logger.debug('[auth-actions] 📤 Starting permanent keys publication to /api/keys/rotate');
+			logger.debug('[auth-actions] 🔑 Keys to publish:', {
+				ed25519_pub_prefix: derivedKeys.ed25519.publicKeyHex.substring(0, 16) + '...',
+				x25519_pub_prefix: derivedKeys.x25519.publicKeyHex.substring(0, 16) + '...',
+				ed25519_length: derivedKeys.ed25519.publicKeyHex.length,
+				x25519_length: derivedKeys.x25519.publicKeyHex.length
+			});
+
+			const { httpAuthenticatedSignedPOSTRequest } = await import(
+				'../../httpSignedRequests/authenticated-requests'
+			);
+
+			const payload = {
+				ed25519_pub: derivedKeys.ed25519.publicKeyHex,
+				x25519_pub: derivedKeys.x25519.publicKeyHex
+			};
+
+			logger.debug('[auth-actions] 📨 Sending POST request to /api/keys/rotate with payload');
+			const response = await httpAuthenticatedSignedPOSTRequest('/api/keys/rotate', payload);
+
+			logger.debug('[auth-actions] ✅ Permanent public keys published successfully, response:', response);
+		} catch (publishError) {
+			logger.error('[auth-actions] ❌ Failed to publish permanent keys:', publishError);
+			logger.error('[auth-actions] Error details:', {
+				message: publishError instanceof Error ? publishError.message : String(publishError),
+				stack: publishError instanceof Error ? publishError.stack : undefined
+			});
+			// Non-blocking - authentication continues even if publication fails
+			// Keys will be republished on next login attempt
+		}
+	} else {
+		logger.warn('[auth-actions] ⚠️ No derived keys available for publication (key derivation may have failed)');
 	}
 
 	// Initialize confirm-read cache database (ensures DB is ready before first use)

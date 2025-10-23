@@ -1,9 +1,9 @@
 use crate::handlers::custom::handle_custom_request;
 use crate::handlers::login::handle_refresh;
 use crate::handlers::{
-    handle_api_key_request, handle_confirm_read, handle_create_secret,
-    handle_delete_secret, handle_login, handle_mnemonic_request, handle_password_request,
-    handle_retrieve_secret, handle_version,
+    handle_api_key_request, handle_confirm_read, handle_create_secret, handle_delete_secret,
+    handle_keys_request, handle_login, handle_mnemonic_request, handle_password_request,
+    handle_retrieve_secret, handle_user_keys_request, handle_version,
 };
 
 // Test endpoint handler (DEV-MODE ONLY - eliminated in production builds)
@@ -133,6 +133,16 @@ pub async fn route_request_with_req(
                 _ => handle_method_not_allowed(),
             }
         }
+
+        // User keys endpoints (Sistema B - E2EE)
+        path if path.ends_with("/api/keys/rotate") => match *method {
+            Method::Post => handle_keys_request(req, query_params).await,
+            _ => handle_method_not_allowed(),
+        },
+        path if path.ends_with("/api/user/keys/") => match *method {
+            Method::Get => handle_user_keys_request(req, query_params).await,
+            _ => handle_method_not_allowed(),
+        },
 
         // Not found
         _ => handle_not_found(),
