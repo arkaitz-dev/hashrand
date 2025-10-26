@@ -86,9 +86,6 @@ pub mod constants {
     /// Length of reference hash (random identifier)
     pub const REFERENCE_HASH_LENGTH: usize = 16;
 
-    /// Maximum length for secret text in UTF-8 characters
-    pub const MAX_TEXT_LENGTH: usize = 512;
-
     /// OTP length in digits
     pub const OTP_LENGTH: usize = 9;
 

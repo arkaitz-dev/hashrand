@@ -25,7 +25,6 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 /// # Arguments
 /// * `username` - Base58 encoded username
 /// * `old_ed25519_pub_key_hex` - Current (OLD) Ed25519 public key hex string
-/// * `old_x25519_pub_key_hex` - Current (OLD) X25519 public key hex string
 /// * `new_ed25519_pub_key_hex` - New Ed25519 public key hex string from client
 /// * `new_x25519_pub_key_hex` - New X25519 public key hex string from client
 /// * `domain` - Optional hostname for cookie Domain attribute
@@ -35,7 +34,6 @@ use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 pub fn handle_key_rotation(
     username: &str,
     old_ed25519_pub_key_hex: &str,
-    old_x25519_pub_key_hex: &str,
     new_ed25519_pub_key_hex: &str,
     new_x25519_pub_key_hex: &str,
     domain: Option<String>,

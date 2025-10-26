@@ -81,15 +81,6 @@ impl SignedResponseGenerator {
         http_helpers::create_signed_http_response(payload, user_id, pub_key_hex)
     }
 
-    /// Extract user_id and pub_key from JWT access token
-    ///
-    /// Delegates to http_helpers module
-    pub fn extract_crypto_material_from_jwt(
-        authorization_header: &str,
-    ) -> Result<(Vec<u8>, String), String> {
-        http_helpers::extract_crypto_material_from_jwt(authorization_header)
-    }
-
     /// Derive per-session Ed25519 private key from user_id + pub_key
     ///
     /// Delegates to key_derivation module

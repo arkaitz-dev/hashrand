@@ -161,27 +161,6 @@ impl SharedSecretCrypto {
     // URL HASH OPERATIONS (delegated to url_hash module)
     // ============================================================================
 
-    /// Generate 8-byte checksum with embedded role indicator
-    ///
-    /// Checksum structure: blake3_keyed(ref + user_id)[0..7] + role_byte[1]
-    /// - role_byte = 0x01 for Sender
-    /// - role_byte = 0x02 for Receiver
-    ///
-    /// # Arguments
-    /// * `reference_hash` - 16-byte reference hash (shared between sender/receiver)
-    /// * `user_id` - 16-byte user ID (Zero Knowledge derivation from email)
-    /// * `role` - Sender or Receiver role
-    ///
-    /// # Returns
-    /// * `Result<[u8; 8], SqliteError>` - 8-byte checksum (7 bytes hash + 1 byte role)
-    pub fn generate_checksum_with_role(
-        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
-        user_id: &[u8; USER_ID_LENGTH],
-        role: SecretRole,
-    ) -> Result<[u8; 8], SqliteError> {
-        url_hash::generate_checksum_with_role(reference_hash, user_id, role)
-    }
-
     /// Generate 40-byte hash for shared secret URL
     ///
     /// Structure: reference_hash[16] + user_id[16] + checksum[8]

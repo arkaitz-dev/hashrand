@@ -28,7 +28,8 @@ import { fileURLToPath } from 'url';
 import {
 	generateDualKeypairs,
 	readEd25519PrivateKey,
-	createMagicLinkPayload
+	createMagicLinkPayload,
+	type DualKeypairs
 } from '../utils/dual-keypair-helper';
 
 // ES module equivalent of __dirname
@@ -146,6 +147,9 @@ async function authenticateTestUser(
 	// Set Ed25519 keypair in session (for signing SignedRequest)
 	await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 	const keyPair = await session.getKeyPair();
+	if (!keyPair) {
+		throw new Error('Failed to get Ed25519 keypair from session');
+	}
 
 	// Step 1: Request magic link (DUAL-KEY FORMAT - System A)
 	const loginPayload = createMagicLinkPayload(email, dualKeypairs);

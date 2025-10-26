@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 
 use super::config::get_magic_link_hmac_key;
 use super::crypto::{
-    decrypt_magic_link, derive_user_id, derive_user_id_with_context, encrypt_magic_link,
+    decrypt_magic_link, derive_user_id_with_context, encrypt_magic_link,
     generate_chacha_nonce_and_key,
 };
 use crate::database::operations::user_privkey_ops::UserPrivkeyCrypto;

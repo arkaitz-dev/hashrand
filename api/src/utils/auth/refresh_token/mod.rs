@@ -76,7 +76,6 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
         period_2_3::handle_key_rotation(
             username,
             &ed25519_pub_key_hex,
-            &hex::encode(x25519_pub_key),
             &refresh_payload.new_ed25519_pub_key,
             &refresh_payload.new_x25519_pub_key,
             domain,

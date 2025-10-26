@@ -19,49 +19,6 @@ impl SharedSecretOps {
     // SENDER OPERATIONS (delegated to sender module)
     // ============================================================================
 
-    /// Create a pair of shared secret entries with E2E encrypted data (sender + receiver)
-    ///
-    /// # Arguments
-    /// * `sender_email` - Sender email address
-    /// * `receiver_email` - Receiver email address
-    /// * `encrypted_secret` - ChaCha20-Poly1305 encrypted secret from frontend
-    /// * `key_material` - Decrypted key material (nonce[12] + cipher_key[32])
-    /// * `otp` - Optional 9-digit OTP
-    /// * `expires_hours` - Expiration in hours (1-72)
-    /// * `max_reads` - Maximum reads for receiver (1-10)
-    /// * `sender_db_index` - Pre-computed sender database index (32 bytes)
-    /// * `receiver_db_index` - Pre-computed receiver database index (32 bytes)
-    /// * `reference_hash` - Pre-generated reference hash (16 bytes)
-    ///
-    /// # Returns
-    /// * `Result<[u8; REFERENCE_HASH_LENGTH], SqliteError>` - Reference hash or error
-    #[allow(clippy::too_many_arguments)]
-    pub fn create_secret_pair(
-        sender_email: &str,
-        receiver_email: &str,
-        encrypted_secret: &[u8],
-        key_material: &[u8; KEY_MATERIAL_LENGTH],
-        otp: Option<String>,
-        expires_hours: i64,
-        max_reads: i64,
-        sender_db_index: &[u8; 32],
-        receiver_db_index: &[u8; 32],
-        reference_hash: &[u8; REFERENCE_HASH_LENGTH],
-    ) -> Result<[u8; REFERENCE_HASH_LENGTH], SqliteError> {
-        sender::create_secret_pair(
-            sender_email,
-            receiver_email,
-            encrypted_secret,
-            key_material,
-            otp,
-            expires_hours,
-            max_reads,
-            sender_db_index,
-            receiver_db_index,
-            reference_hash,
-        )
-    }
-
     /// Create a pair of shared secret entries with E2E encryption (high-level ECDH wrapper)
     ///
     /// This function handles the E2E encryption workflow:
@@ -181,18 +138,4 @@ impl SharedSecretOps {
         tracking::cleanup_expired()
     }
 
-    // ============================================================================
-    // PAYLOAD OPERATIONS (delegated to payload module)
-    // ============================================================================
-
-    /// Deserialize payload bytes into SharedSecretPayload
-    ///
-    /// # Arguments
-    /// * `payload` - Decrypted payload bytes
-    ///
-    /// # Returns
-    /// * `Result<SharedSecretPayload, SqliteError>` - Deserialized payload or error
-    pub fn deserialize_payload(payload: &[u8]) -> Result<SharedSecretPayload, SqliteError> {
-        payload::deserialize_payload(payload)
-    }
 }

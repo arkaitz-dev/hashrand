@@ -43,36 +43,3 @@ where
         .body(response_json)
         .build())
 }
-
-/// Extract user_id and pub_key from JWT access token for signed responses
-///
-/// Universal helper to extract cryptographic material from Authorization header
-/// for use with signed response generation.
-///
-/// # Arguments
-/// * `authorization_header` - Authorization header value (Bearer token)
-///
-/// # Returns
-/// * `Result<(Vec<u8>, String), String>` - (user_id_bytes, pub_key_hex) or error
-pub fn extract_crypto_material_from_jwt(
-    authorization_header: &str,
-) -> Result<(Vec<u8>, String), String> {
-    // Extract Bearer token
-    let token = authorization_header
-        .strip_prefix("Bearer ")
-        .ok_or_else(|| "Invalid Authorization header format".to_string())?;
-
-    // Validate and extract claims
-    let claims = crate::utils::JwtUtils::validate_access_token(token)
-        .map_err(|e| format!("JWT validation failed: {}", e))?;
-
-    // Convert username (Base58) back to user_id bytes
-    let user_id = bs58::decode(&claims.sub)
-        .into_vec()
-        .map_err(|e| format!("Failed to decode Base58 username: {}", e))?;
-
-    // Convert Ed25519 pub_key bytes to hex string
-    let pub_key_hex = hex::encode(claims.ed25519_pub_key);
-
-    Ok((user_id, pub_key_hex))
-}

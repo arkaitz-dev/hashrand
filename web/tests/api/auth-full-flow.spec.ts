@@ -91,6 +91,9 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		// Set Ed25519 keypair in session (for signing SignedRequest)
 		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 		const keyPair = await session.getKeyPair();
+		if (!keyPair) {
+			throw new Error('Failed to get Ed25519 keypair from session');
+		}
 
 		console.log(`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
 
@@ -169,6 +172,9 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 			// Set Ed25519 keypair in session
 			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 			const keyPair = await session.getKeyPair();
+			if (!keyPair) {
+				throw new Error('Failed to get Ed25519 keypair from session');
+			}
 
 			// Create payload (DUAL-KEY FORMAT - System A)
 			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
