@@ -412,7 +412,7 @@ Files modified:
 - `api/src/utils/auth/types.rs` - Added `x25519_pub_key: String` to RefreshPayload
 - `api/src/utils/auth_context/types.rs` - Added `x25519_pub_key_hex: String` to CryptoMaterial
 
-**Phase 4: TRAMO 2/3 Key Rotation**:
+**Phase 4: PERIOD 2/3 Key Rotation**:
 
 Updated refresh endpoint for dual-key rotation:
 ```rust
@@ -560,7 +560,7 @@ export async function requestMagicLink(...) {
 }
 ```
 
-**Refresh TRAMO 2/3** (`web/src/lib/api/api-auth-operations/refresh.ts`):
+**Refresh PERIOD 2/3** (`web/src/lib/api/api-auth-operations/refresh.ts`):
 ```typescript
 export async function refreshToken(): Promise<boolean> {
   const newKeypairs = await generateKeypairs();
@@ -576,7 +576,7 @@ export async function refreshToken(): Promise<boolean> {
   );
 
   if (data.server_pub_key) {
-    await storeKeypairs(newKeypairs); // TRAMO 2/3 rotation
+    await storeKeypairs(newKeypairs); // PERIOD 2/3 rotation
   }
 }
 ```
@@ -696,7 +696,7 @@ X25519 keypair      →     Receives X25519 pub_key
 ✅ Total: 43/43 (100%)
 ✅ TypeScript compilation: 0 errors, 0 warnings
 ✅ Rust compilation: 0 errors, 6 warnings (unused functions)
-✅ All auth flows: Login, refresh TRAMO 2/3, magic link validation
+✅ All auth flows: Login, refresh PERIOD 2/3, magic link validation
 ✅ All shared secret operations: Create, retrieve, delete, OTP, ECDH
 ```
 

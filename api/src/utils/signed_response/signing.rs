@@ -110,7 +110,7 @@ where
     create_signed_response(enhanced_payload, user_id, pub_key_hex)
 }
 
-/// Create signed response for key rotation (TRAMO 2/3)
+/// Create signed response for key rotation (PERIOD 2/3)
 ///
 /// SECURITY: Uses OLD pub_key to sign response (prevents MITM)
 /// but includes NEW server_pub_key in payload (for rotation)

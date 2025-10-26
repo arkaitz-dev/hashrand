@@ -3,8 +3,8 @@
 //! Handles token refresh with optional Ed25519 key rotation using 2/3 threshold system
 
 mod threshold;
-mod tramo_1_3;
-mod tramo_2_3;
+mod period_1_3;
+mod period_2_3;
 mod utilities;
 mod validation;
 
@@ -25,7 +25,7 @@ use validation::{
 /// 4. Validate SignedRequest body with Ed25519 signature
 /// 5. Parse refresh payload to get new_pub_key
 /// 6. Calculate if in 2/3 renewal window
-/// 7. Route to TRAMO 2/3 (key rotation) or TRAMO 1/3 (simple refresh)
+/// 7. Route to PERIOD 2/3 (key rotation) or PERIOD 1/3 (simple refresh)
 ///
 /// # Arguments
 /// * `req` - HTTP POST request with refresh token cookie and SignedRequest body
@@ -72,8 +72,8 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
 
     // Step 7: Route to appropriate handler
     if is_in_renewal_window {
-        // TRAMO 2/3: Complete key rotation with both Ed25519 and X25519
-        tramo_2_3::handle_key_rotation(
+        // PERIOD 2/3: Complete key rotation with both Ed25519 and X25519
+        period_2_3::handle_key_rotation(
             username,
             &ed25519_pub_key_hex,
             &hex::encode(x25519_pub_key),
@@ -82,7 +82,7 @@ pub async fn handle_refresh_token(req: Request) -> anyhow::Result<Response> {
             domain,
         )
     } else {
-        // TRAMO 1/3: Simple token refresh (no rotation)
-        tramo_1_3::handle_no_rotation(username, ed25519_pub_key, x25519_pub_key)
+        // PERIOD 1/3: Simple token refresh (no rotation)
+        period_1_3::handle_no_rotation(username, ed25519_pub_key, x25519_pub_key)
     }
 }

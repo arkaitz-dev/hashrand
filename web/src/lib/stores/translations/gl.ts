@@ -221,7 +221,7 @@ export const gl: I18nTexts = {
 		newKeypairGenerated: '🔑 Novo par de chaves xerado para rotación',
 		sendingRefreshRequest: '📤 Enviando solicitude a /api/refresh...',
 		refreshResponseReceived: '📥 Resposta recibida do servidor',
-		keyRotationStarting: '🔄 TRAMO 2/3: Iniciando rotación de chaves...',
+		keyRotationStarting: '🔄 PERIOD 2/3: Iniciando rotación de chaves...',
 		keyRotationCompleted: '✅ Rotación de chaves completada (2/3)',
 		tokenRenewedNoRotation: '⏭️ Token renovado sen rotación (1/3)',
 		tokenRefreshSuccess: '✅ Token renovado correctamente',

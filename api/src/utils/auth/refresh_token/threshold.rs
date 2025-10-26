@@ -4,8 +4,8 @@ use crate::utils::jwt::types::RefreshTokenClaims;
 
 /// Calculate if token is in 2/3 renewal window for key rotation
 ///
-/// TRAMO 2/3 logic: If token has consumed 2/3 of its lifetime, rotate keys
-/// TRAMO 1/3 logic: If token is still fresh (< 2/3 consumed), just refresh access token
+/// PERIOD 2/3 logic: If token has consumed 2/3 of its lifetime, rotate keys
+/// PERIOD 1/3 logic: If token is still fresh (< 2/3 consumed), just refresh access token
 ///
 /// # Arguments
 /// * `claims` - Validated refresh token claims

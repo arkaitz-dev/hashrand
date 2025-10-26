@@ -72,8 +72,8 @@ cd web && npx playwright test api/
 **Ed25519 Key Rotation Tests (4 tests)**
 
 - **Token validity**: Verify fresh tokens work correctly (t=0s)
-- **Partial refresh**: Access token renewal in TRAMO 1/3 (t=62s)
-- **Key rotation**: Complete Ed25519 keypair rotation in TRAMO 2/3 (t=110s)
+- **Partial refresh**: Access token renewal in PERIOD 1/3 (t=62s)
+- **Key rotation**: Complete Ed25519 keypair rotation in PERIOD 2/3 (t=110s)
 - **Double expiration**: Both tokens expired handling (t=431s)
 
 #### Playwright API Test Categories (16 tests)
@@ -372,12 +372,12 @@ timeout 480 ./scripts/test_2_3_system.sh
    - Confirms Ed25519 signature generation and validation
    - Expected: 200 OK with generated hash
 
-2. **Test 2 (t=62s)**: Partial refresh in TRAMO 1/3
+2. **Test 2 (t=62s)**: Partial refresh in PERIOD 1/3
    - Access token expired (>60s)
    - Refresh token still in first 1/3 of lifetime (<100s)
    - Expected: New access token only, existing refresh cookie maintained
 
-3. **Test 3 (t=110s)**: Full key rotation in TRAMO 2/3
+3. **Test 3 (t=110s)**: Full key rotation in PERIOD 2/3
    - Access token expired
    - Refresh token beyond 1/3 threshold (>100s, <200s remaining)
    - **KEY ROTATION ACTIVATED**: New Ed25519 keypair generated
@@ -413,10 +413,10 @@ The test script implements the correct Ed25519 key rotation sequence:
 **100% success rate after v1.6.23 bug fix**:
 
 ```bash
-🏆 RESUMEN: Sistema 2/3 funciona PERFECTAMENTE
-✅ Test 1: Token válido
-✅ Test 2: Refresh parcial (primer 1/3)
-✅ Test 3: KEY ROTATION (sistema 2/3)
+🏆 SUMMARY: 2/3 System works PERFECTLY
+✅ Test 1: Valid token
+✅ Test 2: Partial refresh (first 1/3)
+✅ Test 3: KEY ROTATION (2/3 system)
 ✅ Test 4: Doble expiración 401
 ```
 

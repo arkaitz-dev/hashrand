@@ -1,4 +1,4 @@
-//! TRAMO 2/3: Key rotation logic (complete token + keypair refresh)
+//! PERIOD 2/3: Key rotation logic (complete token + keypair refresh)
 
 use spin_sdk::http::Response;
 use tracing::error;
@@ -13,7 +13,7 @@ use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_userna
 use crate::utils::signed_response::SignedResponseGenerator;
 use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
-/// Handle token refresh with key rotation (TRAMO 2/3)
+/// Handle token refresh with key rotation (PERIOD 2/3)
 ///
 /// When token has consumed 2/3 of its lifetime, perform complete key rotation:
 /// - Create new access token with NEW Ed25519 and X25519 pub_keys

@@ -58,7 +58,7 @@ pub struct JwtAuthResponse {
     /// Refresh cookie expiration timestamp (only included when new refresh cookie is set)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<i64>,
-    /// Server Ed25519 public key (only included during key rotation in 2/3 tramo)
+    /// Server Ed25519 public key (only included during key rotation in 2/3 period)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_pub_key: Option<String>,
     /// Server X25519 public key for ECDH (E2E encryption) - ALWAYS included

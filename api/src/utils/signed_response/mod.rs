@@ -47,7 +47,7 @@ impl SignedResponseGenerator {
         signing::create_signed_response_with_server_pubkey(payload, user_id, pub_key_hex)
     }
 
-    /// Create signed response for key rotation (TRAMO 2/3)
+    /// Create signed response for key rotation (PERIOD 2/3)
     ///
     /// Delegates to signing module
     pub fn create_signed_response_with_rotation<T>(

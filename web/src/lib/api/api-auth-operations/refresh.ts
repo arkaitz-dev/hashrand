@@ -12,8 +12,8 @@ import { logger } from '../../utils/logger';
  * 🔄 KEY ROTATION LOGIC:
  * - ALWAYS generates new Ed25519 AND X25519 keypairs before refresh request
  * - Backend determines rotation based on 2/3 time window:
- *   - Tramo 1/3 (0 to 1/3 duration): Returns access_token only, NO server_pub_key → No rotation
- *   - Tramo 2/3 (1/3 to full duration): Returns both tokens + server_pub_key → Full rotation
+ *   - Period 1/3 (0 to 1/3 duration): Returns access_token only, NO server_pub_key → No rotation
+ *   - Period 2/3 (1/3 to full duration): Returns both tokens + server_pub_key → Full rotation
  * - Frontend rotates BOTH keys ONLY if server_pub_key is present in response
  */
 export async function refreshToken(): Promise<boolean> {
@@ -74,7 +74,7 @@ export async function refreshToken(): Promise<boolean> {
 
 		// CONDITIONAL KEY ROTATION
 		if (data.server_pub_key) {
-			// TRAMO 2/3: Backend sent server_pub_key → Full key rotation for BOTH Ed25519 and X25519
+			// PERIOD 2/3: Backend sent server_pub_key → Full key rotation for BOTH Ed25519 and X25519
 			await storeKeypairs(newKeypairs);
 		}
 

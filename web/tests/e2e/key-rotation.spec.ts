@@ -2,9 +2,9 @@
  * Ed25519 Key Rotation E2E Test
  *
  * Tests the complete 2/3 key rotation system:
- * - TRAMO 1/3 (0-40s): Token refresh only, no key rotation
- * - TRAMO 2/3 (40-120s): Full key rotation with new Ed25519 keypair
- * - TRAMO 3/3 (120s+): Both tokens expired, requires re-authentication
+ * - PERIOD 1/3 (0-40s): Token refresh only, no key rotation
+ * - PERIOD 2/3 (40-120s): Full key rotation with new Ed25519 keypair
+ * - PERIOD 3/3 (120s+): Both tokens expired, requires re-authentication
  *
  * CRITICAL TEST - Validates v1.6.23 bug fix:
  * - Refresh token now correctly contains client pub_key
@@ -12,7 +12,7 @@
  * - Client seamlessly switches to new keypair after rotation
  *
  * TIMING REQUIREMENTS:
- * - Wait ~110s to enter TRAMO 2/3 window (40s-120s)
+ * - Wait ~110s to enter PERIOD 2/3 window (40s-120s)
  * - Complete key rotation before 120s refresh token expiration
  * - This test takes approximately 3 minutes to complete
  *
@@ -29,12 +29,12 @@ import {
 import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
 
 test.describe('Ed25519 Key Rotation System', () => {
-	test('should rotate Ed25519 keys in TRAMO 2/3 window', async ({ page, request, session }) => {
-		console.log('🧪 TEST: Ed25519 Key Rotation (TRAMO 2/3 System)');
+	test('should rotate Ed25519 keys in PERIOD 2/3 window', async ({ page, request, session }) => {
+		console.log('🧪 TEST: Ed25519 Key Rotation (PERIOD 2/3 System)');
 		console.log('='.repeat(60));
-		console.log('⏰ TRAMO 1/3 (0-40s): Token refresh only');
-		console.log('⏰ TRAMO 2/3 (40-120s): KEY ROTATION window');
-		console.log('⏰ TRAMO 3/3 (120s+): Both tokens expired');
+		console.log('⏰ PERIOD 1/3 (0-40s): Token refresh only');
+		console.log('⏰ PERIOD 2/3 (40-120s): KEY ROTATION window');
+		console.log('⏰ PERIOD 3/3 (120s+): Both tokens expired');
 		console.log('='.repeat(60));
 		console.log('⚠️  WARNING: This test takes ~3 minutes to complete');
 		console.log('='.repeat(60));
@@ -70,19 +70,19 @@ test.describe('Ed25519 Key Rotation System', () => {
 
 		console.log(`✅ Hash generated with initial keypair: ${hash1.hash.substring(0, 20)}...`);
 
-		// PHASE 3: Wait for TRAMO 2/3 window (110s total)
-		console.log('\n📍 PHASE 3: Waiting for TRAMO 2/3 key rotation window...');
+		// PHASE 3: Wait for PERIOD 2/3 window (110s total)
+		console.log('\n📍 PHASE 3: Waiting for PERIOD 2/3 key rotation window...');
 		console.log('-'.repeat(60));
-		console.log('⏰ TRAMO 1/3 ends at 40s (2/3 of 60s = 40s)');
-		console.log('⏰ TRAMO 2/3 active from 40s to 120s');
-		console.log('⏰ Waiting 110s to be well within TRAMO 2/3 window');
+		console.log('⏰ PERIOD 1/3 ends at 40s (2/3 of 60s = 40s)');
+		console.log('⏰ PERIOD 2/3 active from 40s to 120s');
+		console.log('⏰ Waiting 110s to be well within PERIOD 2/3 window');
 		console.log('');
 		console.log('⏳ This will take approximately 2 minutes...');
 		console.log('☕ Good time for coffee! ☕');
 
-		await waitForSeconds(110, 'TRAMO 2/3 key rotation window');
+		await waitForSeconds(110, 'PERIOD 2/3 key rotation window');
 
-		console.log('✅ Wait complete - now in TRAMO 2/3 window (t=110s)');
+		console.log('✅ Wait complete - now in PERIOD 2/3 window (t=110s)');
 
 		// PHASE 4: Trigger key rotation by using authenticated feature
 		console.log('\n📍 PHASE 4: Trigger key rotation');
@@ -189,7 +189,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 		console.log(`   - New token:       ${newAccessToken.substring(0, 20)}...`);
 		console.log(`   - User ID:         ${initialUserId.substring(0, 20)}... (unchanged)`);
 		console.log('');
-		console.log('✅ Key rotation occurred at t=110s (TRAMO 2/3)');
+		console.log('✅ Key rotation occurred at t=110s (PERIOD 2/3)');
 		console.log('✅ Old pub_key → New pub_key');
 		console.log('✅ Old access token → New access token');
 		console.log('✅ User ID preserved (no re-authentication)');
@@ -219,7 +219,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 		const hash1 = await generateCustomHash(request, session, {});
 		console.log(`✅ Hash 1 (t=0s): ${hash1.hash.substring(0, 20)}...`);
 
-		// Wait 25s (first token refresh - TRAMO 1/3)
+		// Wait 25s (first token refresh - PERIOD 1/3)
 		await waitForSeconds(25, 'First token refresh window');
 
 		// Navigate to trigger refresh
@@ -238,7 +238,7 @@ test.describe('Ed25519 Key Rotation System', () => {
 		const hash2 = await generateCustomHash(request, session, {});
 		console.log(`✅ Hash 2 (t=25s, after 1st refresh): ${hash2.hash.substring(0, 20)}...`);
 
-		// Wait another 25s (second token refresh - still TRAMO 1/3)
+		// Wait another 25s (second token refresh - still PERIOD 1/3)
 		await waitForSeconds(25, 'Second token refresh window');
 
 		// Navigate again to trigger second refresh
@@ -282,7 +282,7 @@ test.describe('Key Rotation Edge Cases', () => {
 		const magicLink = await requestMagicLink(request, session, 'me@arkaitz.dev');
 		await loginWithMagicLink(page, session, magicLink);
 
-		// Wait for TRAMO 2/3 window
+		// Wait for PERIOD 2/3 window
 		console.log('⏳ Waiting for key rotation window (110s)...');
 		await waitForSeconds(110, 'Key rotation window');
 

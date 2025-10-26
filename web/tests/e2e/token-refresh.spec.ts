@@ -6,7 +6,7 @@
  * Token durations: Read from .env (SPIN_VARIABLE_*_TOKEN_DURATION_MINUTES)
  * Backend config: api/src/utils/jwt/config.rs::get_*_token_duration_minutes()
  *
- * Tests TRAMO 1/3 system (token refresh without key rotation)
+ * Tests PERIOD 1/3 system (token refresh without key rotation)
  *
  * IMPORTANT: This test uses real .env values - NO hardcoded timings
  * - Waits calculated dynamically from .env
@@ -36,7 +36,7 @@ test.describe('Token Refresh System', () => {
 		request,
 		session
 	}) => {
-		console.log('🧪 TEST: Automatic token refresh (TRAMO 1/3 system)');
+		console.log('🧪 TEST: Automatic token refresh (PERIOD 1/3 system)');
 		console.log('='.repeat(60));
 		logTestConfiguration(); // Display dynamic values from .env
 		console.log('='.repeat(60));
@@ -125,12 +125,12 @@ test.describe('Token Refresh System', () => {
 
 		console.log(`✅ Hash generated with refreshed token: ${hash2.hash.substring(0, 20)}...`);
 
-		// PHASE 6: Verify no key rotation occurred (still in TRAMO 1/3)
-		console.log('\n📍 PHASE 6: Verify no key rotation (TRAMO 1/3)');
+		// PHASE 6: Verify no key rotation occurred (still in PERIOD 1/3)
+		console.log('\n📍 PHASE 6: Verify no key rotation (PERIOD 1/3)');
 		console.log('-'.repeat(60));
 		console.log(`⏰ Time elapsed: ~${waitSeconds}s`);
 		console.log(
-			`⏰ Key rotation window starts at ${getKeyRotationThresholdSeconds()}s (TRAMO 2/3)`
+			`⏰ Key rotation window starts at ${getKeyRotationThresholdSeconds()}s (PERIOD 2/3)`
 		);
 		console.log('✅ Should have only refreshed access token, NOT rotated keys');
 
@@ -144,7 +144,7 @@ test.describe('Token Refresh System', () => {
 		expect(hash3.hash).toBeTruthy();
 
 		console.log('✅ Keypair still valid (no rotation occurred)');
-		console.log('✅ TRAMO 1/3 refresh completed successfully');
+		console.log('✅ PERIOD 1/3 refresh completed successfully');
 
 		console.log('\n🎉 TEST PASSED: Automatic token refresh works correctly');
 		console.log('='.repeat(60));

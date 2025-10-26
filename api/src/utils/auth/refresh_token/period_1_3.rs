@@ -1,4 +1,4 @@
-//! TRAMO 1/3: No key rotation logic (simple token refresh)
+//! PERIOD 1/3: No key rotation logic (simple token refresh)
 
 use spin_sdk::http::Response;
 use tracing::error;
@@ -11,7 +11,7 @@ use crate::utils::JwtUtils;
 use crate::utils::signed_response::SignedResponseGenerator;
 use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
-/// Handle token refresh without key rotation (TRAMO 1/3)
+/// Handle token refresh without key rotation (PERIOD 1/3)
 ///
 /// When token is still fresh (< 2/3 consumed), just refresh access token
 /// No new refresh token, no key rotation, no cookies

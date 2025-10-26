@@ -59,7 +59,7 @@ export async function handleSignedResponseStrict<T>(
 		const validatedPayload = await validateSignedResponse<T>(responseData, serverPubKey);
 
 		// SECURITY: After validation succeeds, check if response contains NEW server_pub_key
-		// This means backend is initiating key rotation (TRAMO 2/3)
+		// This means backend is initiating key rotation (PERIOD 2/3)
 		if (!isFirstSignedResponse) {
 			const newServerPubKey = extractServerPubKey(responseData);
 			if (newServerPubKey && newServerPubKey !== serverPubKey) {
