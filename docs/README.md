@@ -1,48 +1,27 @@
-# Documentation Structure
+# HashRand Documentation
 
-This documentation is organized thematically for easy navigation and maintenance.
+**HashRand** is a secure random hash generator built with WebAssembly and cryptographic best practices. Generate and share passwords, API keys, custom hashes, and BIP39 mnemonic phrases with military-grade security.
 
-## 📁 Documentation Sections
+## What You Can Do
 
-### 🔌 [API Documentation](./api/)
+- **Generate**: Custom hashes, passwords, API keys, cryptographically secure BIP39 mnemonic phrases
+- **Share Securely**: End-to-end encrypted secrets with read limits, expiration, and one-time passwords (OTP)
+- **Track**: Monitor when and how many times your shared secrets have been accessed
+- **Multilingual**: Available in 13 languages (Arabic, Basque, Catalan, Chinese, English, French, Galician, German, Hindi, Japanese, Portuguese, Russian, Spanish)
 
-- **[Endpoints](./api/endpoints.md)** - All API endpoints with examples
-- **[Authentication](./api/authentication.md)** - Zero Knowledge auth system
-- **[Cryptography](./api/cryptography.md)** - Blake3 cryptographic architecture
-- **[Database](./api/database.md)** - SQLite schemas and operations
+## Security Advantages
 
-### 🌐 [Web Interface](./web/)
+- **Zero Knowledge Authentication**: Server never stores or sees your passwords, you only need an email with no password at all, and your email is not stored for session handling. When sending a shared secret, in order to inform the receiver who sent the shared secret, the email is stored encrypted at most for three days. Only the receiver and sender can access this information, nobody else (even system's administrators).
+- **End-to-End Encryption**: Secrets encrypted client-side before transmission (ChaCha20-Poly1305) to the backend. On secret sharing, when you receive a shared secret from the backend, it will also be encrypted during transmission to your browser.
+- **Request Signing**: All API requests cryptographically signed (Ed25519) to prevent tampering. Only you can authenticate from the browser you are currently using. The backend also signs all responses.
+- **WebAssembly Backend**: Fast, secure, sandboxed execution environment
 
-- **[Interface](./web/interface.md)** - UI/UX features and components
-- **[Internationalization](./web/internationalization.md)** - 13 language support
-- **[Components](./web/components.md)** - SvelteKit architecture
+## Documentation Structure
 
-### 🚀 [Deployment](./deployment/)
-
-- **[Quick Start](./deployment/quick-start.md)** - Get started in minutes
-- **[Configuration](./deployment/configuration.md)** - Environment variables
-- **[Production](./deployment/production.md)** - Production deployment
-- **[Development](./deployment/development.md)** - Development with just
-
-### 🏗️ [Architecture](./architecture/)
-
-- **[Zero Knowledge](./architecture/zero-knowledge.md)** - Privacy-first design
-- **[Security](./architecture/security.md)** - Cryptographic security
-- **[Project Structure](./architecture/project-structure.md)** - Code organization
-
-### 📖 [Guides](./guides/)
-
-- **[Testing](./guides/testing.md)** - Automated testing suite
-- **[Contributing](./guides/contributing.md)** - How to contribute
-- **[Dependencies](./guides/dependencies.md)** - Tools and libraries
-
-## 🔗 Quick Links
-
-- **[Main README](../README.md)** - Project overview
-- **[CHANGELOG](../CHANGELOG.md)** - Version history
-- **[API Quick Reference](./api/endpoints.md#quick-reference)** - Essential endpoints
-- **[Setup Guide](./deployment/quick-start.md)** - Installation instructions
+- **[API](./api/)** - Available endpoints and functionality
+- **[Web Interface](./web/)** - User interface features and capabilities
+- **[Architecture](./architecture/)** - Technical stack and cryptographic design
 
 ---
 
-_This modular documentation structure makes it easy to find specific information and maintain individual sections independently._
+**Quick Start**: Visit the web interface, select your language (if needed), and start generating secure randomness. Authentication (magic link sent to your email) required for creating secrets, sharing secrets and viewing received shared secrets.
