@@ -21,7 +21,7 @@ import {
 } from '../../src/lib/crypto/signedRequest-core';
 import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 } from '@noble/curves/ed25519.js';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -115,7 +115,13 @@ function encryptSharedSecret(
 }
 
 // Test helper to authenticate and get JWT token
-async function authenticateTestUser(request: any): Promise<{
+// IMPORTANT: Caller MUST generate dual keypairs FIRST and pass them
+// This ensures the X25519 private key used for ECDH matches the public key in the JWT
+async function authenticateTestUser(
+	request: any,
+	email: string = 'me@arkaitz.dev',
+	useExistingKeypairs: boolean = true
+): Promise<{
 	session: TestSessionManager;
 	accessToken: string;
 	serverPubKey: string;
@@ -129,8 +135,12 @@ async function authenticateTestUser(request: any): Promise<{
 
 	const session = new TestSessionManager();
 
-	// Generate Sistema A keypairs (Ed25519 + X25519)
-	const dualKeypairs = generateDualKeypairs();
+	// Use existing keypairs from files (caller should have generated them)
+	// OR generate new ones if explicitly requested (for receiver)
+	const dualKeypairs = useExistingKeypairs ?
+		JSON.parse(readFileSync('.test-dual-keypairs.json', 'utf-8')) as DualKeypairs :
+		generateDualKeypairs();
+
 	const ed25519PrivateKey = readEd25519PrivateKey();
 
 	// Set Ed25519 keypair in session (for signing SignedRequest)
@@ -138,7 +148,7 @@ async function authenticateTestUser(request: any): Promise<{
 	const keyPair = await session.getKeyPair();
 
 	// Step 1: Request magic link (DUAL-KEY FORMAT - Sistema A)
-	const loginPayload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
+	const loginPayload = createMagicLinkPayload(email, dualKeypairs);
 
 	const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
 	const loginResponse = await request.post('http://localhost:3000/api/login/', {
@@ -251,8 +261,19 @@ test.describe('API-Only Shared Secret Tests', () => {
 
 	// Authenticate ONCE before all tests (like final_test.sh does)
 	test.beforeAll(async ({ request }) => {
-		console.log('🔐 Authenticating ONCE for all Shared Secret tests...');
-		const authResult = await authenticateTestUser(request);
+		console.log('🔐 Authenticating sender and receiver for all Shared Secret tests...');
+
+		// CRITICAL: Generate Sistema A keypairs ONCE before any authentication
+		// These keys will be stored in .test-ed25519-private-key and .test-x25519-private-key
+		// and MUST remain consistent for ECDH encryption/decryption to work
+		console.log('🔑 Generating Sistema A keypairs (will be reused for all encryption)...');
+		const senderKeypairs = generateDualKeypairs();
+		// Save public keys to JSON file for later use by authenticateTestUser
+		writeFileSync('.test-dual-keypairs.json', JSON.stringify(senderKeypairs));
+		console.log(`✅ Keypairs generated: Ed25519 ${senderKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+
+		// Authenticate sender (main session) - will use the keypairs we just generated
+		const authResult = await authenticateTestUser(request, 'me@arkaitz.dev');
 		sharedSession = authResult.session;
 		sharedAccessToken = authResult.accessToken;
 		sharedServerPubKey = authResult.serverPubKey;
@@ -260,7 +281,20 @@ test.describe('API-Only Shared Secret Tests', () => {
 		const kp = await authResult.session.getKeyPair();
 		if (!kp) throw new Error('No keypair after auth');
 		sharedKeyPair = kp;
-		console.log('✅ Authentication complete - tokens will be reused for all tests\n');
+		console.log('✅ Sender authenticated (me@arkaitz.dev)');
+
+		// Authenticate receiver (for dual-session tests) - reuses SAME keypairs as sender
+		// IMPORTANT: Both users share Sistema A keypairs (only JWT/email differ)
+		// This ensures .test-x25519-private-key remains consistent for sender's ECDH encryption
+		const receiverAuth = await authenticateTestUser(request, 'arkaitzmugica@protonmail.com');
+		receiverSession = receiverAuth.session;
+		receiverAccessToken = receiverAuth.accessToken;
+		const receiverKp = await receiverAuth.session.getKeyPair();
+		if (!receiverKp) throw new Error('No receiver keypair after auth');
+		receiverKeyPair = receiverKp;
+		console.log('✅ Receiver authenticated (arkaitzmugica@protonmail.com)');
+
+		console.log('✅ Both sessions ready - tokens will be reused for all tests\n');
 	});
 
 	test('should create shared secret without OTP', async ({ request }) => {
@@ -737,77 +771,16 @@ test.describe('API-Only Shared Secret Tests', () => {
 	// NEW TESTS: Dual-session cross-user validation (like bash tests)
 	// ============================================================================
 
-	test('should authenticate receiver session (dual-session setup)', async ({ request }) => {
-		console.log('🧪 TEST: Authenticate receiver session');
+	test('should authenticate receiver session (dual-session setup)', async () => {
+		console.log('🧪 TEST: Verify receiver session (authenticated in beforeAll)');
 		console.log('='.repeat(60));
 
-		// Authenticate receiver with second email
-		const authHelper = async () => {
-			clearBackendLogs();
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+		// Verify receiver session was established in beforeAll
+		expect(receiverSession).toBeDefined();
+		expect(receiverAccessToken).toBeDefined();
+		expect(receiverKeyPair).toBeDefined();
 
-			const session = new TestSessionManager();
-
-			// Generate Sistema A keypairs for receiver (Ed25519 + X25519)
-			const dualKeypairs = generateDualKeypairs();
-			const ed25519PrivateKey = readEd25519PrivateKey();
-
-			// Set Ed25519 keypair in session (for signing SignedRequest)
-			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
-			const keyPair = await session.getKeyPair();
-
-			// Request magic link for receiver (DUAL-KEY FORMAT - Sistema A)
-			const loginPayload = createMagicLinkPayload('arkaitzmugica@protonmail.com', dualKeypairs); // Second authorized email
-
-			const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
-			const loginResponse = await request.post('http://localhost:3000/api/login/', {
-				headers: { 'Content-Type': 'application/json' },
-				data: signedRequest
-			});
-
-			expect(loginResponse.ok()).toBeTruthy();
-
-			const signedResponse = await loginResponse.json();
-			const jsonString = decodePayloadBase64(signedResponse.payload);
-			const responsePayload = JSON.parse(jsonString);
-
-			await session.setServerPubKey(responsePayload.server_pub_key);
-
-			// Extract magic token
-			const magicToken = extractMagicTokenFromLogs();
-			if (!magicToken) {
-				throw new Error('No magic link found for receiver');
-			}
-
-			// Validate magic link
-			const magicLinkPayload = { magiclink: magicToken };
-			const signedMagicLinkRequest = createSignedRequestWithKeyPair(magicLinkPayload, keyPair);
-			const validateResponse = await request.post('http://localhost:3000/api/login/magiclink/', {
-				headers: { 'Content-Type': 'application/json' },
-				data: signedMagicLinkRequest
-			});
-
-			expect(validateResponse.ok()).toBeTruthy();
-
-			const validateSignedResponse = await validateResponse.json();
-			const validateJsonString = decodePayloadBase64(validateSignedResponse.payload);
-			const validatePayload = JSON.parse(validateJsonString);
-
-			await session.setAuthData(validatePayload.user_id, validatePayload.access_token);
-
-			return {
-				session,
-				accessToken: validatePayload.access_token,
-				keyPair
-			};
-		};
-
-		const receiverAuth = await authHelper();
-		receiverSession = receiverAuth.session;
-		receiverAccessToken = receiverAuth.accessToken;
-		receiverKeyPair = receiverAuth.keyPair;
-
-		console.log('✅ Receiver authenticated successfully');
+		console.log('✅ Receiver session verified');
 		console.log('✅ Receiver JWT:', receiverAccessToken?.substring(0, 30) + '...');
 		console.log('🎉 TEST PASSED');
 		console.log('='.repeat(60));
