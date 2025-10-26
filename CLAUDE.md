@@ -9,6 +9,10 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 ## Issue Tracking Standards - CRITICAL RULE - NEVER DELETE
 **📋 MANDATORY: Use bd (beads) for ALL task and issue tracking - INTENSIVE USE PREVENTS FORGETTING TASKS**
 
+**🚨 CRITICAL: Session Start Checklist (ALWAYS execute):**
+1. **Read AGENTS.md** - Complete workflow documentation (mandatory after memory compaction)
+2. **Check ready work**: `bd ready --json` - Shows unblocked issues with parseable output
+
 **Why this is CRITICAL:**
 - **Memory-safe workflow**: After context summarization or new sessions, bd ensures ZERO task loss
 - **Prevents forgotten work**: Without bd tracking, tasks discovered during implementation are easily forgotten
@@ -16,20 +20,28 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 - **Git-friendly audit trail**: Auto-syncs to `.beads/issues.jsonl` for version control
 
 **MANDATORY Rules (see AGENTS.md for complete workflow):**
-- ✅ **ALWAYS create bd issues** when discovering bugs, improvements, or tasks during implementation
-- ✅ **Check `bd ready`** at session start to see unblocked work
-- ✅ **Use `bd create`** immediately when you identify new work (don't rely on memory)
-- ✅ **Link discovered work** with `--deps discovered-from:hashrand-XX` to track origin
-- ✅ **Close with `bd close`** when work is complete (include issue ID in commit message)
+- ✅ **ALWAYS use `--json` flag** - Agents MUST use JSON output (not human-formatted)
+- ✅ **Session start**: `bd ready --json` to check pending work
+- ✅ **Read AGENTS.md** after memory compaction - Never skip workflow documentation
+- ✅ **Create issues**: `bd create "title" -t task -p 1 --json` immediately when discovering work
+- ✅ **Claim work**: `bd update <id> --status in_progress --json`
+- ✅ **Link discovered work**: `--deps discovered-from:hashrand-XX` to track origin
+- ✅ **Complete**: `bd close <id> --json` (include issue ID in commit message)
+- ❌ **NEVER use bd without `--json` flag** - Human output has emojis/colors (📋 ✓), unusable for parsing
 - ❌ **NEVER use markdown TODOs** or mental notes - always use bd
 - ❌ **NEVER skip bd tracking** "because it's a small task" - small tasks are easiest to forget
 
+**Why `--json` is mandatory for agents:**
+- Human output: `📋 Ready work (4 issues)...` with emojis, colors, formatting
+- Agent output: `[{"id":"hashrand-1","status":"open",...}]` structured JSON
+- **Agents cannot parse emojis/ANSI codes** - Must use `--json` for reliability
+
 **Quick Reference:**
 ```bash
-bd create "Task description" -t task -p 1 --labels refactoring  # Create
-bd ready                                                         # Check ready work
-bd update hashrand-XX --status in_progress                       # Claim task
-bd close hashrand-XX                                             # Complete
+bd ready --json                                                  # Check ready work (JSON)
+bd create "Task description" -t task -p 1 --labels refactoring --json  # Create
+bd update hashrand-XX --status in_progress --json               # Claim task
+bd close hashrand-XX --json                                      # Complete
 ```
 
 **Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
