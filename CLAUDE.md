@@ -6,6 +6,34 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Note**: This project uses [bd (beads)](https://github.com/steveyegge/beads) for issue tracking. Use `bd` commands instead of markdown TODOs. See AGENTS.md for workflow details.
 
+## Issue Tracking Standards - CRITICAL RULE - NEVER DELETE
+**📋 MANDATORY: Use bd (beads) for ALL task and issue tracking - INTENSIVE USE PREVENTS FORGETTING TASKS**
+
+**Why this is CRITICAL:**
+- **Memory-safe workflow**: After context summarization or new sessions, bd ensures ZERO task loss
+- **Prevents forgotten work**: Without bd tracking, tasks discovered during implementation are easily forgotten
+- **Dependency awareness**: Track blockers, relationships, and discovered issues systematically
+- **Git-friendly audit trail**: Auto-syncs to `.beads/issues.jsonl` for version control
+
+**MANDATORY Rules (see AGENTS.md for complete workflow):**
+- ✅ **ALWAYS create bd issues** when discovering bugs, improvements, or tasks during implementation
+- ✅ **Check `bd ready`** at session start to see unblocked work
+- ✅ **Use `bd create`** immediately when you identify new work (don't rely on memory)
+- ✅ **Link discovered work** with `--deps discovered-from:hashrand-XX` to track origin
+- ✅ **Close with `bd close`** when work is complete (include issue ID in commit message)
+- ❌ **NEVER use markdown TODOs** or mental notes - always use bd
+- ❌ **NEVER skip bd tracking** "because it's a small task" - small tasks are easiest to forget
+
+**Quick Reference:**
+```bash
+bd create "Task description" -t task -p 1 --labels refactoring  # Create
+bd ready                                                         # Check ready work
+bd update hashrand-XX --status in_progress                       # Claim task
+bd close hashrand-XX                                             # Complete
+```
+
+**Copy this rule to EVERY project CLAUDE.md** - Never delete when compacting/simplifying
+
 **Last Update**: 2025-10-23 - **API v1.11.0 + Web v0.30.0**
 - 🔐 **Latest**: E2EE - Complete PFS (Perfect Forward Secrecy) dual-key system implementation
 - ✅ **System B**: User permanent keypairs (Ed25519/X25519) for user-to-user E2EE
