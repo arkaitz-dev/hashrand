@@ -240,7 +240,7 @@ test-api:
     echo "Running Playwright API tests (16 tests)..."
     echo "Note: Email dry-run mode managed automatically via globalSetup/Teardown"
     echo ""
-    cd web && npm run test:api
+    cd web && TEST_API_ONLY=true npm run test:api
 
 # Run comprehensive test suite with INFO logging (default)
 # Restarts server with RUST_LOG=info before running tests

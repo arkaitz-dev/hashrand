@@ -18,6 +18,7 @@ import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 as _ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { generateDualKeypairs, createMagicLinkPayload } from '../utils/dual-keypair-helper';
 
 /**
  * Extract magic token from backend logs (like bash test does)
@@ -85,14 +86,11 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 		console.log(`🔑 Generated keypair: ${pubKeyHex.substring(0, 20)}...`);
 
-		// Step 2: Create signed request
-		const payload = {
-			email: 'me@arkaitz.dev',
-			email_lang: 'en',
-			next: '/',
-			pub_key: pubKeyHex,
-			ui_host: 'localhost'
-		};
+		// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+		const dualKeypairs = generateDualKeypairs();
+
+		// Step 2: Create signed request (DUAL-KEY FORMAT)
+		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 		const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
 		console.log('📤 Sending signed request to /api/login/');
@@ -161,13 +159,11 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 			const keyPair = await session.generateKeyPair();
 			const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-			const payload = {
-				email: 'me@arkaitz.dev',
-				email_lang: 'en',
-				next: '/',
-				pub_key: pubKeyHex,
-				ui_host: 'localhost'
-			};
+			// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+			const dualKeypairs = generateDualKeypairs();
+
+			// Create payload (DUAL-KEY FORMAT)
+			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 			const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
 

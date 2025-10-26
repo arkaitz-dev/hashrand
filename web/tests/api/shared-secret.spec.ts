@@ -23,6 +23,7 @@ import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed255
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { generateDualKeypairs, createMagicLinkPayload } from '../utils/dual-keypair-helper';
 
 /**
  * Extract magic token from backend logs (like bash test does)
@@ -90,14 +91,11 @@ async function authenticateTestUser(request: any): Promise<{
 	const keyPair = await session.generateKeyPair();
 	const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-	// Step 1: Request magic link
-	const loginPayload = {
-		email: 'me@arkaitz.dev',
-		email_lang: 'en',
-		next: '/',
-		pub_key: pubKeyHex,
-		ui_host: 'localhost'
-	};
+	// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+	const dualKeypairs = generateDualKeypairs();
+
+	// Step 1: Request magic link (DUAL-KEY FORMAT)
+	const loginPayload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 	const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
 	const loginResponse = await request.post('http://localhost:3000/api/login/', {
@@ -638,14 +636,11 @@ test.describe('API-Only Shared Secret Tests', () => {
 			const keyPair = await session.generateKeyPair();
 			const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-			// Request magic link for receiver
-			const loginPayload = {
-				email: 'arkaitzmugica@protonmail.com', // Second authorized email
-				email_lang: 'en',
-				next: '/',
-				pub_key: pubKeyHex,
-				ui_host: 'localhost'
-			};
+			// Generate dual keypairs for receiver (Ed25519 + X25519 for dual-key system)
+			const dualKeypairs = generateDualKeypairs();
+
+			// Request magic link for receiver (DUAL-KEY FORMAT)
+			const loginPayload = createMagicLinkPayload('arkaitzmugica@protonmail.com', dualKeypairs); // Second authorized email
 
 			const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
 			const loginResponse = await request.post('http://localhost:3000/api/login/', {
