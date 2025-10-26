@@ -2,7 +2,7 @@
  * IndexedDB Infrastructure Module
  *
  * Provides core IndexedDB connection and configuration for keypair storage.
- * Shared by Sistema A (temporary session keys) and Sistema B (permanent user keys).
+ * Shared by System A (temporary session keys) and System B (permanent user keys).
  *
  * ARCHITECTURE:
  * - Database: 'hashrand-crypto'
@@ -23,7 +23,7 @@ export const STORE_NAME = 'keypairs';
  * Open IndexedDB connection with proper error handling
  *
  * Creates object store on first run (onupgradeneeded).
- * Shared by both Sistema A and Sistema B operations.
+ * Shared by both System A and System B operations.
  *
  * @returns {Promise<IDBDatabase>} Database connection
  */

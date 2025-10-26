@@ -7,14 +7,14 @@
  * PURPOSE:
  * - Request magic link for email authentication
  * - Validate magic link and complete authentication
- * - Derive and store permanent user keys (Sistema B)
- * - Generate temporary crypto tokens (Sistema A)
+ * - Derive and store permanent user keys (System B)
+ * - Generate temporary crypto tokens (System A)
  * - Publish permanent keys to backend
  *
  * FLOW:
  * 1. User requests magic link → requestMagicLink()
  * 2. User clicks link → validateMagicLink()
- * 3. Keys derived → Sistema A + Sistema B
+ * 3. Keys derived → System A + System B
  * 4. Keys published → /api/keys/rotate
  *
  * @see logout.ts for session termination
@@ -72,13 +72,13 @@ export async function requestMagicLink(
  *
  * OPERATIONS:
  * 1. Validate magic link token with backend
- * 2. Decrypt user private key context (Sistema B seed)
- * 3. Derive permanent user keys (Sistema B - Ed25519/X25519)
+ * 2. Decrypt user private key context (System B seed)
+ * 3. Derive permanent user keys (System B - Ed25519/X25519)
  * 4. Store derived keys in IndexedDB
  * 5. Save user and access token
  * 6. Store session expiration timestamp
  * 7. Show success flash message
- * 8. Generate temporary crypto tokens (Sistema A)
+ * 8. Generate temporary crypto tokens (System A)
  * 9. Publish permanent keys to backend
  * 10. Initialize confirm-read cache
  * 11. Clear pending auth email
@@ -129,7 +129,7 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	}
 
 	// =========================================================================
-	// STEP 2: Derive user's permanent Ed25519/X25519 keypairs from privkey_context (Sistema B)
+	// STEP 2: Derive user's permanent Ed25519/X25519 keypairs from privkey_context (System B)
 	// =========================================================================
 	let derivedKeys: Awaited<ReturnType<typeof import('../../../crypto/user-key-derivation').deriveUserKeys>> | null = null;
 
@@ -149,10 +149,10 @@ export async function validateMagicLink(magicToken: string): Promise<{
 			privkeyContextLength: privkeyContext.length
 		});
 
-		// Derive deterministic keypairs (Sistema B - permanent keys)
+		// Derive deterministic keypairs (System B - permanent keys)
 		derivedKeys = await deriveUserKeys(userEmail, privkeyContext);
 
-		logger.info('[login] 🔐 Derived user public keys (Sistema B):', {
+		logger.info('[login] 🔐 Derived user public keys (System B):', {
 			ed25519: derivedKeys.ed25519.publicKeyHex,
 			x25519: derivedKeys.x25519.publicKeyHex
 		});
@@ -164,7 +164,7 @@ export async function validateMagicLink(magicToken: string): Promise<{
 		// Store derived keys in IndexedDB for future use
 		const { storeDerivedUserKeys } = await import('../../../crypto/keypair-storage');
 		await storeDerivedUserKeys(derivedKeys);
-		logger.debug('[login] ✅ Derived user keys (Sistema B) stored in IndexedDB');
+		logger.debug('[login] ✅ Derived user keys (System B) stored in IndexedDB');
 
 		// NOTE: Store derivedKeys for later publication (after JWT + crypto tokens exist)
 		// Publication happens AFTER saveAuthToStorage + generateCryptoTokens
@@ -221,18 +221,18 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	}
 
 	// =========================================================================
-	// STEP 6: Generate crypto tokens ONLY if they don't exist yet (Sistema A)
+	// STEP 6: Generate crypto tokens ONLY if they don't exist yet (System A)
 	// =========================================================================
 	const tokensExist = await hasCryptoTokens();
 	if (!tokensExist) {
-		// Magic link: No crypto tokens found, generating (Sistema A - temporary session keys)
+		// Magic link: No crypto tokens found, generating (System A - temporary session keys)
 		await generateCryptoTokens();
 	} else {
-		// Magic link: Crypto tokens already exist (Sistema A)
+		// Magic link: Crypto tokens already exist (System A)
 	}
 
 	// =========================================================================
-	// STEP 7: Publish permanent public keys to backend (Sistema B - E2EE)
+	// STEP 7: Publish permanent public keys to backend (System B - E2EE)
 	// =========================================================================
 	// NOW it's safe: JWT exists (saveAuthToStorage) + crypto tokens exist (generateCryptoTokens)
 	if (derivedKeys) {

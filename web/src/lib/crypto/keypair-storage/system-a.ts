@@ -1,5 +1,5 @@
 /**
- * Sistema A - Temporary Session Keys Storage Module
+ * System A - Temporary Session Keys Storage Module
  *
  * Manages temporary keypairs used for frontend ↔ backend API communication.
  * These keys are ephemeral, rotate frequently, and are NOT stored in backend database.
@@ -25,14 +25,14 @@
  * - Backend derives its own keys on-demand (not persistent)
  * - Keys never sent in plaintext (only used for cryptographic operations)
  *
- * @see Sistema B (sistema-b.ts) for permanent user-to-user E2EE keys
+ * @see System B (system-b.ts) for permanent user-to-user E2EE keys
  */
 
 import type { KeypairResult } from '../keypair-generation';
 import { openDB, STORE_NAME } from './indexeddb';
 
 /**
- * Store Sistema A keypairs in IndexedDB
+ * Store System A keypairs in IndexedDB
  *
  * Stores temporary session keys used for API communication.
  * Called after login/key generation to persist keys across page reloads.
@@ -282,7 +282,7 @@ export async function getPublicKeyHexStrings(): Promise<{
 }
 
 /**
- * Check if Sistema A keypairs exist in IndexedDB
+ * Check if System A keypairs exist in IndexedDB
  *
  * Used to determine if user needs to generate new keys or can use existing ones.
  * Checks all 4 required CryptoKey objects.

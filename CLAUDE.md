@@ -8,7 +8,7 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Last Update**: 2025-10-23 - **API v1.11.0 + Web v0.30.0**
 - 🔐 **Latest**: E2EE - Complete PFS (Perfect Forward Secrecy) dual-key system implementation
-- ✅ **Sistema B**: User permanent keypairs (Ed25519/X25519) for user-to-user E2EE
+- ✅ **System B**: User permanent keypairs (Ed25519/X25519) for user-to-user E2EE
 - 📊 **Database**: 3 new tables (users, user_ed25519_keys, user_x25519_keys)
 - ✅ **Quality**: ZERO errors (clippy + ESLint + svelte-check + TypeScript)
 
@@ -185,11 +185,11 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 **Copy this rule to EVERY Spin project with SQLite** - Never delete
 
 ## Dual-Key Cryptographic System - CRITICAL RULE - NEVER DELETE
-**🔐 MANDATORY: Understand the dual-key architecture (Sistema A + Sistema B)**
+**🔐 MANDATORY: Understand the dual-key architecture (System A + System B)**
 
 **⚠️ CRITICAL: Do NOT confuse these two independent key systems:**
 
-### **Sistema A - Temporary Session Keys (API Security)**
+### **System A - Temporary Session Keys (API Security)**
 **Purpose**: Secure frontend ↔ backend communication (request/response signing)
 **Lifecycle**: Short-lived, rotate frequently (every request can use new keys)
 **Storage**:
@@ -202,7 +202,7 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 **Keys**: Ephemeral, regenerated frequently, NOT persistent
 **Location**: `web/src/lib/ed25519/`, `web/src/lib/crypto/x25519/`
 
-### **Sistema B - Permanent User Keys (User-to-User E2EE)**
+### **System B - Permanent User Keys (User-to-User E2EE)**
 **Purpose**: End-to-end encryption between users (Perfect Forward Secrecy)
 **Lifecycle**: Long-lived, deterministic, permanent (derived from privkey_context)
 **Storage**:
@@ -219,7 +219,7 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 ### **Key Differences (CRITICAL - NEVER CONFUSE):**
 
-| Aspect | Sistema A (Temporary) | Sistema B (Permanent) |
+| Aspect | System A (Temporary) | System B (Permanent) |
 |--------|----------------------|----------------------|
 | **Purpose** | API request/response security | User-to-user E2EE |
 | **Rotation** | Frequent (every request) | Never (deterministic) |
@@ -228,7 +228,7 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 | **Visibility** | Frontend + Backend (ephemeral) | Frontend private, Backend public only |
 | **Tables** | None | `users`, `user_ed25519_keys`, `user_x25519_keys` |
 
-### **Database Schema (Sistema B):**
+### **Database Schema (System B):**
 
 **Table `users`:**
 ```sql
@@ -273,23 +273,23 @@ CREATE TABLE user_privkey_context (
 );
 ```
 
-### **Key Publication Flow (Sistema B):**
+### **Key Publication Flow (System B):**
 
 1. **Magic link validation** → Decrypt `privkey_context` (backend sends via ECDH)
-2. **Frontend derivation** → `deriveUserKeys(email, privkey_context)` → Sistema B keypairs
+2. **Frontend derivation** → `deriveUserKeys(email, privkey_context)` → System B keypairs
 3. **IndexedDB storage** → Store private keys (WebCrypto non-extractable)
 4. **JWT + Crypto tokens** → Ensure session exists
-5. **Publication** → POST `/api/keys/rotate` with public keys (Sistema A authentication)
+5. **Publication** → POST `/api/keys/rotate` with public keys (System A authentication)
 6. **Database storage** → Backend stores public keys ONLY
 
-### **Why Backend CANNOT Derive Sistema B Keys:**
+### **Why Backend CANNOT Derive System B Keys:**
 
 - **Zero Knowledge architecture**: Backend has `user_id` (Blake3 hash), NOT reversible to email
 - **Derivation requires email**: `blake3_kdf(email, ...)` needs plaintext email
 - **Frontend exclusive**: Only frontend knows email during magic link validation
-- **Security**: Backend never sees or stores Sistema B private keys
+- **Security**: Backend never sees or stores System B private keys
 
-### **Operations (Sistema B):**
+### **Operations (System B):**
 
 **Backend module**: `api/src/database/operations/user_keys_ops.rs`
 - `insert_or_update_user()` - Update `logged_in` timestamp, preserve `created_at`
@@ -324,8 +324,8 @@ just check / just build      # Quality/Build
 ## Architecture
 - **Backend**: Rust+Spin+WASM+SQLite (Zero Knowledge auth, ChaCha20, Ed25519)
 - **Frontend**: SvelteKit+TypeScript+TailwindCSS (13 languages, AuthGuard)
-- **Auth**: Magic links + JWT + Ed25519 + Dual-key system (Sistema A/B)
-- **Cryptography**: Sistema A (temporary session keys) + Sistema B (permanent E2EE keys)
+- **Auth**: Magic links + JWT + Ed25519 + Dual-key system (System A/B)
+- **Cryptography**: System A (temporary session keys) + System B (permanent E2EE keys)
 - **Shared Secrets**: URL hash role encoding (sender/receiver), OTP tracking, metadata leak prevention
 - **Tests**: 43 tests (35 bash + 8 Playwright), 100% pass rate
 
@@ -333,8 +333,8 @@ just check / just build      # Quality/Build
 - `/api/{custom,password,api-key,mnemonic}` - Generation (JWT)
 - `/api/shared-secret` - Encrypted secrets (JWT)
 - `/api/login/` - Auth flow (Zero Knowledge)
-- `/api/keys/rotate` - Publish permanent public keys (Sistema B, JWT)
-- `/api/user/keys/` - Retrieve user public keys (Sistema B, JWT)
+- `/api/keys/rotate` - Publish permanent public keys (System B, JWT)
+- `/api/user/keys/` - Retrieve user public keys (System B, JWT)
 - `/api/version` - Public
 
 ## Development Rules

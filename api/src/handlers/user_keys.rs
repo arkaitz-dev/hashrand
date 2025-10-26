@@ -1,4 +1,4 @@
-//! User public keys endpoints (Sistema B - E2EE)
+//! User public keys endpoints (System B - E2EE)
 //!
 //! Handles publication and retrieval of permanent Ed25519/X25519 public keys
 //! for user-to-user end-to-end encryption.
@@ -52,14 +52,14 @@ pub async fn handle_user_keys_request(
 
 /// Handle POST /api/keys/rotate - Publish/update permanent public keys
 ///
-/// JWT + Sistema A (temporary keys) authentication required
-/// Payload contains Sistema B (permanent keys) to publish
+/// JWT + System A (temporary keys) authentication required
+/// Payload contains System B (permanent keys) to publish
 async fn handle_keys_rotate(req: Request) -> anyhow::Result<Response> {
     info!("🔑 Request to POST /api/keys/rotate");
 
     let body_bytes = req.body();
 
-    // Validate signed request using protected middleware (JWT + Sistema A)
+    // Validate signed request using protected middleware (JWT + System A)
     let result: ProtectedEndpointResult<KeysRotatePayload> =
         match ProtectedEndpointMiddleware::validate_request(&req, body_bytes).await {
             Ok(result) => result,
@@ -145,7 +145,7 @@ async fn handle_keys_rotate(req: Request) -> anyhow::Result<Response> {
         message: "Keys published successfully".to_string(),
     };
 
-    // Sign response with Sistema A (temporary keys)
+    // Sign response with System A (temporary keys)
     match SignedResponseGenerator::create_signed_response(
         response_payload,
         &user_id_array,
@@ -172,9 +172,9 @@ async fn handle_keys_rotate(req: Request) -> anyhow::Result<Response> {
 /// Payload for POST /api/keys/rotate
 #[derive(Debug, Deserialize, Serialize)]
 struct KeysRotatePayload {
-    /// Ed25519 public key (Sistema B - permanent) as hex string (64 chars)
+    /// Ed25519 public key (System B - permanent) as hex string (64 chars)
     ed25519_pub: String,
-    /// X25519 public key (Sistema B - permanent) as hex string (64 chars)
+    /// X25519 public key (System B - permanent) as hex string (64 chars)
     x25519_pub: String,
 }
 
@@ -187,7 +187,7 @@ struct KeysRotateResponse {
 
 /// Handle GET /api/user/keys/ - Retrieve public keys for a target user
 ///
-/// JWT + Sistema A (temporary keys) authentication required
+/// JWT + System A (temporary keys) authentication required
 /// Query params: target_user (hex), signature (base58)
 async fn handle_user_keys_get(
     req: Request,
@@ -206,7 +206,7 @@ async fn handle_user_keys_get(
         }
     };
 
-    // Validate signed query params (Sistema A)
+    // Validate signed query params (System A)
     if let Err(e) =
         SignedRequestValidator::validate_query_params(&mut query_params, &crypto_material.pub_key_hex)
     {
@@ -301,7 +301,7 @@ async fn handle_user_keys_get(
             )
         })?;
 
-    // Sign response with Sistema A (requester's temporary keys)
+    // Sign response with System A (requester's temporary keys)
     match SignedResponseGenerator::create_signed_response(
         response_payload,
         &requester_user_id_array,

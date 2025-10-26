@@ -1,5 +1,5 @@
 /**
- * Key Rotation Module - Sistema B Permanent Keys Publication
+ * Key Rotation Module - System B Permanent Keys Publication
  *
  * Single Responsibility: Manage publication of permanent user public keys to backend.
  * Part of auth-actions refactorization to apply SOLID principles.
@@ -13,7 +13,7 @@
  * - After successful magic link validation (validateMagicLink)
  * - Only when JWT + crypto tokens already exist
  *
- * @see sistema-b.ts for key derivation
+ * @see system-b.ts for key derivation
  * @see user-key-derivation.ts for deterministic key generation
  */
 
@@ -21,14 +21,14 @@ import type { deriveUserKeys } from '../../../crypto/user-key-derivation';
 import { logger } from '../../../utils/logger';
 
 /**
- * Publish permanent public keys to backend (Sistema B - E2EE)
+ * Publish permanent public keys to backend (System B - E2EE)
  *
  * Sends Ed25519 + X25519 public keys to /api/keys/rotate endpoint.
  * Backend stores these in database tables for user-to-user E2EE.
  *
  * REQUIREMENTS:
  * - JWT token must exist (already logged in)
- * - Crypto tokens must exist (Sistema A keys generated)
+ * - Crypto tokens must exist (System A keys generated)
  * - Derived keys must be available (from validateMagicLink)
  *
  * ERROR HANDLING:

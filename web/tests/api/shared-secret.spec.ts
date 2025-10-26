@@ -147,7 +147,7 @@ async function authenticateTestUser(
 	await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 	const keyPair = await session.getKeyPair();
 
-	// Step 1: Request magic link (DUAL-KEY FORMAT - Sistema A)
+	// Step 1: Request magic link (DUAL-KEY FORMAT - System A)
 	const loginPayload = createMagicLinkPayload(email, dualKeypairs);
 
 	const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
@@ -263,10 +263,10 @@ test.describe('API-Only Shared Secret Tests', () => {
 	test.beforeAll(async ({ request }) => {
 		console.log('🔐 Authenticating sender and receiver for all Shared Secret tests...');
 
-		// CRITICAL: Generate Sistema A keypairs ONCE before any authentication
+		// CRITICAL: Generate System A keypairs ONCE before any authentication
 		// These keys will be stored in .test-ed25519-private-key and .test-x25519-private-key
 		// and MUST remain consistent for ECDH encryption/decryption to work
-		console.log('🔑 Generating Sistema A keypairs (will be reused for all encryption)...');
+		console.log('🔑 Generating System A keypairs (will be reused for all encryption)...');
 		const senderKeypairs = generateDualKeypairs();
 		// Save public keys to JSON file for later use by authenticateTestUser
 		writeFileSync('.test-dual-keypairs.json', JSON.stringify(senderKeypairs));
@@ -284,7 +284,7 @@ test.describe('API-Only Shared Secret Tests', () => {
 		console.log('✅ Sender authenticated (me@arkaitz.dev)');
 
 		// Authenticate receiver (for dual-session tests) - reuses SAME keypairs as sender
-		// IMPORTANT: Both users share Sistema A keypairs (only JWT/email differ)
+		// IMPORTANT: Both users share System A keypairs (only JWT/email differ)
 		// This ensures .test-x25519-private-key remains consistent for sender's ECDH encryption
 		const receiverAuth = await authenticateTestUser(request, 'arkaitzmugica@protonmail.com');
 		receiverSession = receiverAuth.session;

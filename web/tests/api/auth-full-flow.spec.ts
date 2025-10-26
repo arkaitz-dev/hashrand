@@ -84,7 +84,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 
 		const session = new TestSessionManager();
 
-		// Step 1: Generate Sistema A keypairs (Ed25519 + X25519)
+		// Step 1: Generate System A keypairs (Ed25519 + X25519)
 		const dualKeypairs = generateDualKeypairs();
 		const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -92,9 +92,9 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 		const keyPair = await session.getKeyPair();
 
-		console.log(`🔑 Generated Sistema A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+		console.log(`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
 
-		// Step 2: Create signed request (DUAL-KEY FORMAT - Sistema A)
+		// Step 2: Create signed request (DUAL-KEY FORMAT - System A)
 		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 		const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
@@ -162,7 +162,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		for (let i = 1; i <= 3; i++) {
 			const session = new TestSessionManager();
 
-			// Generate Sistema A keypairs (Ed25519 + X25519)
+			// Generate System A keypairs (Ed25519 + X25519)
 			const dualKeypairs = generateDualKeypairs();
 			const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -170,7 +170,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 			const keyPair = await session.getKeyPair();
 
-			// Create payload (DUAL-KEY FORMAT - Sistema A)
+			// Create payload (DUAL-KEY FORMAT - System A)
 			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 			const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);

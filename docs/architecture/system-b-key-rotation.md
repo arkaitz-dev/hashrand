@@ -1,4 +1,4 @@
-# Sistema B - Arquitectura de Rotación de Llaves Criptográficas
+# System B - Arquitectura de Rotación de Llaves Criptográficas
 
 **Versión**: 1.0
 **Fecha**: 2025-10-25
@@ -10,7 +10,7 @@
 ## Tabla de Contenidos
 
 1. [Introducción y Motivación](#1-introducción-y-motivación)
-2. [Contexto: Sistema A vs Sistema B](#2-contexto-sistema-a-vs-sistema-b)
+2. [Contexto: System A vs System B](#2-contexto-system-a-vs-system-b)
 3. [Estándares de Industria](#3-estándares-de-industria)
 4. [Análisis de 5 Opciones de Diseño](#4-análisis-de-5-opciones-de-diseño)
 5. [Análisis Adversarial: 10 Defectos Potenciales](#5-análisis-adversarial-10-defectos-potenciales)
@@ -25,12 +25,12 @@
 
 ### 1.1 Problema a Resolver
 
-HashRand implementa un **sistema dual de llaves criptográficas**:
+HashRand implementa un **system dual de llaves criptográficas**:
 
-- **Sistema A (Temporal)**: Llaves efímeras Ed25519/X25519 para firma de requests/responses (API security)
-- **Sistema B (Permanente)**: Llaves Ed25519/X25519 deterministas para E2EE usuario-a-usuario
+- **System A (Temporal)**: Llaves efímeras Ed25519/X25519 para firma de requests/responses (API security)
+- **System B (Permanente)**: Llaves Ed25519/X25519 deterministas para E2EE usuario-a-usuario
 
-**El Sistema B tiene una vulnerabilidad crítica**: Las llaves se derivan de forma determinista del `privkey_context` (64 bytes cifrados en BBDD), lo que significa que:
+**El System B tiene una vulnerabilidad crítica**: Las llaves se derivan de forma determinista del `privkey_context` (64 bytes cifrados en BBDD), lo que significa que:
 
 1. **Sin rotación**: Las llaves son permanentes (riesgo de compromiso acumulativo)
 2. **Con rotación naive**: Cambiar `privkey_context` implica perder acceso a mensajes históricos
@@ -47,9 +47,9 @@ HashRand implementa un **sistema dual de llaves criptográficas**:
 
 ---
 
-## 2. Contexto: Sistema A vs Sistema B
+## 2. Contexto: System A vs System B
 
-### 2.1 Sistema A - Llaves Temporales (Implementado)
+### 2.1 System A - Llaves Temporales (Implementado)
 
 **Propósito**: Seguridad API (firma de requests/responses)
 
@@ -61,7 +61,7 @@ HashRand implementa un **sistema dual de llaves criptográficas**:
 | **Derivación** | Aleatorias (nuevas cada vez) |
 | **Propósito** | Validar SignedRequest/SignedResponse, intercambio ECDH |
 
-### 2.2 Sistema B - Llaves Permanentes (Parcialmente Implementado)
+### 2.2 System B - Llaves Permanentes (Parcialmente Implementado)
 
 **Propósito**: E2EE usuario-a-usuario (futuro)
 
@@ -1137,7 +1137,7 @@ t=400: 🔴 Atacante compromete navegador (XSS, malware)
 
 ##### Comparación con Signal Protocol
 
-| Aspecto | Signal Protocol | HashRand Sistema B Actual |
+| Aspecto | Signal Protocol | HashRand System B Actual |
 |---------|----------------|---------------------------|
 | **Llave efímera por** | Mensaje | Rotación (180 días) |
 | **Compromiso en t=400** | Solo afecta mensajes futuros | Afecta TODO (pasado + futuro) |
@@ -1184,7 +1184,7 @@ let encrypted_ephemeral = chacha20poly1305_encrypt(
 **Arquitectura resultante**:
 
 ```
-Sistema B = Identity Keys (deterministas) + Ephemeral Keys (aleatorias con PFS)
+System B = Identity Keys (deterministas) + Ephemeral Keys (aleatorias con PFS)
 
 Identity Ed25519:
   - Propósito: Firmar operaciones, autenticación
@@ -1768,7 +1768,7 @@ async function verifyRotationLog(userId: Uint8Array): Promise<boolean> {
 
 - `docs/architecture/zero-knowledge.md` - Arquitectura Zero Knowledge de HashRand
 - `docs/api/cryptography.md` - Especificaciones criptográficas
-- `CLAUDE.md` - Sistema A vs Sistema B (líneas 155-298)
+- `CLAUDE.md` - System A vs System B (líneas 155-298)
 
 ### 9.3 Bibliotecas Criptográficas
 
@@ -1788,9 +1788,9 @@ async function verifyRotationLog(userId: Uint8Array): Promise<boolean> {
 
 | Término | Definición |
 |---------|-----------|
-| **Sistema A** | Llaves temporales efímeras para seguridad API (request/response signing) |
-| **Sistema B** | Llaves permanentes deterministas para E2EE usuario-a-usuario |
-| **privkey_context** | 64 bytes aleatorios cifrados en BBDD, semilla para derivar llaves Sistema B |
+| **System A** | Llaves temporales efímeras para seguridad API (request/response signing) |
+| **System B** | Llaves permanentes deterministas para E2EE usuario-a-usuario |
+| **privkey_context** | 64 bytes aleatorios cifrados en BBDD, semilla para derivar llaves System B |
 | **rotation_counter** | Entero 0-indexed que indica número de rotaciones (0=primera llave, 1=segunda, etc.) |
 | **epoch_seed** | Semilla derivada de `blake3(privkey_context \|\| rotation_counter)` usada para KDF |
 | **Identity key** | Llave Ed25519 permanente derivada de privkey_context, usada para firmas/autenticación |

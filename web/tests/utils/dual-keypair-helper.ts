@@ -1,10 +1,10 @@
 /**
  * Dual Keypair Helper for Playwright Tests
  *
- * Generates Ed25519 + X25519 keypairs for dual-key system tests (Sistema A)
+ * Generates Ed25519 + X25519 keypairs for dual-key system tests (System A)
  * Uses existing generate_dual_keypairs.js script for consistency with bash tests
  *
- * IMPORTANT: Sistema A (temporary session keys for frontend-backend communication)
+ * IMPORTANT: System A (temporary session keys for frontend-backend communication)
  * Both Ed25519 and X25519 keys are generated together and must be used together.
  * The Ed25519 private key is used to sign SignedRequest, and the public key
  * is included in the payload for backend verification.

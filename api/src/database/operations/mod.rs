@@ -22,7 +22,7 @@ pub mod shared_secret_types;
 // User private key context operations
 pub mod user_privkey_ops;
 
-// User public keys operations (Sistema B - E2EE)
+// User public keys operations (System B - E2EE)
 pub mod user_keys_ops;
 
 // Re-export for backwards compatibility

@@ -96,7 +96,7 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         &[],
     )?;
 
-    // Create user_ed25519_keys table for permanent Ed25519 public keys (Sistema B - E2EE)
+    // Create user_ed25519_keys table for permanent Ed25519 public keys (System B - E2EE)
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS user_ed25519_keys (
@@ -116,7 +116,7 @@ pub fn initialize_database() -> Result<(), SqliteError> {
         &[],
     )?;
 
-    // Create user_x25519_keys table for permanent X25519 public keys (Sistema B - E2EE)
+    // Create user_x25519_keys table for permanent X25519 public keys (System B - E2EE)
     connection.execute(
         r#"
         CREATE TABLE IF NOT EXISTS user_x25519_keys (

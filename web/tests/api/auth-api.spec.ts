@@ -34,7 +34,7 @@ test.describe('API-Only Authentication Tests', () => {
 		// Create session manager
 		const session = new TestSessionManager();
 
-		// Generate Sistema A keypairs (Ed25519 + X25519 for frontend-backend communication)
+		// Generate System A keypairs (Ed25519 + X25519 for frontend-backend communication)
 		const dualKeypairs = generateDualKeypairs();
 		const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -42,16 +42,16 @@ test.describe('API-Only Authentication Tests', () => {
 		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 		const keyPair = await session.getKeyPair();
 
-		console.log(`🔑 Generated Sistema A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+		console.log(`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
 
-		// Create signed request payload (DUAL-KEY FORMAT - Sistema A)
-		// IMPORTANT: Both keys come from the same generation (Sistema A)
+		// Create signed request payload (DUAL-KEY FORMAT - System A)
+		// IMPORTANT: Both keys come from the same generation (System A)
 		const payload = {
 			email: 'me@arkaitz.dev',
 			email_lang: 'en',
 			next: '/',
-			ed25519_pub_key: dualKeypairs.ed25519_pub_key, // Sistema A
-			x25519_pub_key: dualKeypairs.x25519_pub_key, // Sistema A
+			ed25519_pub_key: dualKeypairs.ed25519_pub_key, // System A
+			x25519_pub_key: dualKeypairs.x25519_pub_key, // System A
 			ui_host: 'localhost'
 		};
 
@@ -152,7 +152,7 @@ test.describe('API-Only Authentication Tests', () => {
 
 		const session = new TestSessionManager();
 
-		// Generate Sistema A keypairs (Ed25519 + X25519)
+		// Generate System A keypairs (Ed25519 + X25519)
 		const dualKeypairs = generateDualKeypairs();
 		const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -160,7 +160,7 @@ test.describe('API-Only Authentication Tests', () => {
 		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 		const keyPair = await session.getKeyPair();
 
-		// Create valid payload (DUAL-KEY FORMAT - Sistema A)
+		// Create valid payload (DUAL-KEY FORMAT - System A)
 		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 		// Create SignedRequest with INVALID signature
@@ -194,7 +194,7 @@ test.describe('API-Only Authentication Tests', () => {
 		for (let i = 1; i <= 3; i++) {
 			const session = new TestSessionManager();
 
-			// Generate Sistema A keypairs (Ed25519 + X25519)
+			// Generate System A keypairs (Ed25519 + X25519)
 			const dualKeypairs = generateDualKeypairs();
 			const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -202,7 +202,7 @@ test.describe('API-Only Authentication Tests', () => {
 			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
 			const keyPair = await session.getKeyPair();
 
-			// Create payload (DUAL-KEY FORMAT - Sistema A)
+			// Create payload (DUAL-KEY FORMAT - System A)
 			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 			const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);

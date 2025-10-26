@@ -10,7 +10,7 @@
  * - Unified cleanup operations
  *
  * OPERATIONS:
- * - Clear Ed25519 keypairs (Sistema A)
+ * - Clear Ed25519 keypairs (System A)
  * - Clear IndexedDB session data
  * - Clear session expiration timestamp
  * - Clear confirm-read cache database
@@ -28,7 +28,7 @@ import { logger } from '../../../utils/logger';
  * - Automatic logout (session expiration monitor)
  *
  * OPERATIONS:
- * 1. Clear Ed25519 keypairs (security - Sistema A)
+ * 1. Clear Ed25519 keypairs (security - System A)
  * 2. Clear ALL IndexedDB session data
  * 3. Clear session expiration timestamp
  * 4. Clear confirm-read cache database
@@ -36,7 +36,7 @@ import { logger } from '../../../utils/logger';
  * @returns Promise<void>
  */
 export async function clearLocalAuthData(): Promise<void> {
-	// Clear Ed25519 keypairs for security (Sistema A - temporary session keys)
+	// Clear Ed25519 keypairs for security (System A - temporary session keys)
 	try {
 		const { clearAllKeyPairs } = await import('../../../ed25519');
 		await clearAllKeyPairs();

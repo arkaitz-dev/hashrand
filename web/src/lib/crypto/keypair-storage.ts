@@ -1,7 +1,7 @@
 /**
  * Keypair Storage Module - IndexedDB (Main Orchestrator)
  *
- * Central module for managing both Sistema A and Sistema B cryptographic keys.
+ * Central module for managing both System A and System B cryptographic keys.
  * Provides unified interface for cleanup operations and re-exports specific modules.
  *
  * ARCHITECTURE:
@@ -10,20 +10,20 @@
  * - Version: 1
  *
  * DUAL-KEY SYSTEM:
- * - Sistema A: Temporary session keys (API communication)
- * - Sistema B: Permanent user keys (user-to-user E2EE)
+ * - System A: Temporary session keys (API communication)
+ * - System B: Permanent user keys (user-to-user E2EE)
  *
  * SECURITY:
  * - Private keys are non-extractable CryptoKey objects
  * - Only accessible via WebCrypto API operations
  * - Automatic cleanup on logout
  *
- * @see keypair-storage/sistema-a.ts for temporary session keys
- * @see keypair-storage/sistema-b.ts for permanent user keys
+ * @see keypair-storage/system-a.ts for temporary session keys
+ * @see keypair-storage/system-b.ts for permanent user keys
  * @see keypair-storage/indexeddb.ts for core infrastructure
  */
 
-// Re-export Sistema A functions (temporary session keys)
+// Re-export System A functions (temporary session keys)
 export {
 	storeKeypairs,
 	getEd25519PrivateKey,
@@ -34,15 +34,15 @@ export {
 	getX25519PublicKeyHex,
 	getPublicKeyHexStrings,
 	keypairsExist
-} from './keypair-storage/sistema-a';
+} from './keypair-storage/system-a';
 
-// Re-export Sistema B functions (permanent user keys)
+// Re-export System B functions (permanent user keys)
 export {
 	storeDerivedUserKeys,
 	getDerivedEd25519PrivateKey,
 	getDerivedX25519PrivateKey,
 	getDerivedPublicKeyHexStrings
-} from './keypair-storage/sistema-b';
+} from './keypair-storage/system-b';
 
 // Re-export infrastructure
 export { DB_NAME, DB_VERSION, STORE_NAME, openDB } from './keypair-storage/indexeddb';
@@ -53,7 +53,7 @@ import { openDB, STORE_NAME, DB_NAME } from './keypair-storage/indexeddb';
 /**
  * Clear all keypairs from IndexedDB (logout cleanup)
  *
- * Removes ALL keys from both Sistema A and Sistema B.
+ * Removes ALL keys from both System A and System B.
  * Called during logout to ensure no cryptographic material persists.
  *
  * @returns {Promise<void>}
@@ -82,7 +82,7 @@ export async function clearKeypairs(): Promise<void> {
 /**
  * Delete entire IndexedDB database (for complete cleanup)
  *
- * Completely removes the database including all Sistema A and Sistema B keys.
+ * Completely removes the database including all System A and System B keys.
  * Use this for complete application reset or uninstallation cleanup.
  *
  * WARNING: This action cannot be undone. All cryptographic keys will be lost.

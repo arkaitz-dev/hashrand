@@ -1,5 +1,5 @@
 /**
- * Sistema B - Permanent User Keys Storage Module
+ * System B - Permanent User Keys Storage Module
  *
  * Manages permanent keypairs used for user-to-user end-to-end encryption (E2EE).
  * These keys are deterministic, derived from privkey_context, and enable Perfect Forward Secrecy.
@@ -28,7 +28,7 @@
  * - Backend CANNOT derive these keys (requires plaintext email, has only user_id hash)
  * - Zero Knowledge architecture (server never sees private keys)
  *
- * @see Sistema A (sistema-a.ts) for temporary session keys
+ * @see System A (system-a.ts) for temporary session keys
  * @see user-key-derivation.ts for key derivation logic
  */
 

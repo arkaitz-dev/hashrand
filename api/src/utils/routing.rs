@@ -134,7 +134,7 @@ pub async fn route_request_with_req(
             }
         }
 
-        // User keys endpoints (Sistema B - E2EE)
+        // User keys endpoints (System B - E2EE)
         path if path.ends_with("/api/keys/rotate") => match *method {
             Method::Post => handle_keys_request(req, query_params).await,
             _ => handle_method_not_allowed(),

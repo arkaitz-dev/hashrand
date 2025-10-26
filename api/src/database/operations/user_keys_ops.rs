@@ -1,14 +1,14 @@
-//! User public keys database operations (Sistema B - E2EE)
+//! User public keys database operations (System B - E2EE)
 //!
 //! Manages permanent Ed25519/X25519 public keys for user-to-user E2EE
-//! Separate from temporary session keys (Sistema A)
+//! Separate from temporary session keys (System A)
 
 use crate::database::get_database_connection;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
 
-/// User public keys operations for E2EE (Sistema B)
+/// User public keys operations for E2EE (System B)
 pub struct UserKeysOperations;
 
 impl UserKeysOperations {

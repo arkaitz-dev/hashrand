@@ -254,7 +254,7 @@ generate_ed25519_payload() {
         return 1
     fi
 
-    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    # Create payload object with DUAL public keys (System A + System B)
     local payload_json="{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
 
     # Create complete SignedRequest structure with Base64-encoded payload
@@ -291,7 +291,7 @@ request_magic_link() {
     echo "Generated Ed25519 public key: ${ed25519_pub_key:0:20}..."
     echo "Generated X25519 public key: ${x25519_pub_key:0:20}..."
 
-    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    # Create payload object with DUAL public keys (System A + System B)
     local payload_json="{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
     echo "JSON payload: ${payload_json:0:120}..."
 
@@ -389,7 +389,7 @@ authenticate() {
     echo "Generated Ed25519 public key: ${ed25519_pub_key:0:20}..."
     echo "Generated X25519 public key: ${x25519_pub_key:0:20}..."
 
-    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    # Create payload object with DUAL public keys (System A + System B)
     local payload_json="{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
     echo "JSON payload: ${payload_json:0:120}..."
 

@@ -5,13 +5,13 @@
  * Provides unified interface and re-exports specialized modules.
  *
  * ARCHITECTURE:
- * - Login: Magic link authentication flow (Sistema A + Sistema B key generation)
+ * - Login: Magic link authentication flow (System A + System B key generation)
  * - Logout: Session termination and cleanup
- * - Key Rotation: Permanent public keys publication (Sistema B)
+ * - Key Rotation: Permanent public keys publication (System B)
  *
  * DUAL-KEY SYSTEM:
- * - Sistema A: Temporary session keys (API communication)
- * - Sistema B: Permanent user keys (user-to-user E2EE)
+ * - System A: Temporary session keys (API communication)
+ * - System B: Permanent user keys (user-to-user E2EE)
  *
  * SOLID PRINCIPLES:
  * - Single Responsibility: Each module has one clear purpose
@@ -29,5 +29,5 @@ export { requestMagicLink, validateMagicLink } from './auth-actions/login';
 // Re-export Logout functions (session termination and cleanup)
 export { clearLocalAuthData, logout } from './auth-actions/logout';
 
-// Re-export Key Rotation functions (Sistema B public key publication)
+// Re-export Key Rotation functions (System B public key publication)
 export { publishPermanentKeys } from './auth-actions/key-rotation';
