@@ -23,7 +23,11 @@ import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed255
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
-import { generateDualKeypairs, createMagicLinkPayload } from '../utils/dual-keypair-helper';
+import {
+	generateDualKeypairs,
+	readEd25519PrivateKey,
+	createMagicLinkPayload
+} from '../utils/dual-keypair-helper';
 
 /**
  * Extract magic token from backend logs (like bash test does)
@@ -88,13 +92,16 @@ async function authenticateTestUser(request: any): Promise<{
 	await new Promise((resolve) => setTimeout(resolve, 1000));
 
 	const session = new TestSessionManager();
-	const keyPair = await session.generateKeyPair();
-	const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-	// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+	// Generate Sistema A keypairs (Ed25519 + X25519)
 	const dualKeypairs = generateDualKeypairs();
+	const ed25519PrivateKey = readEd25519PrivateKey();
 
-	// Step 1: Request magic link (DUAL-KEY FORMAT)
+	// Set Ed25519 keypair in session (for signing SignedRequest)
+	await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+	const keyPair = await session.getKeyPair();
+
+	// Step 1: Request magic link (DUAL-KEY FORMAT - Sistema A)
 	const loginPayload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 	const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);
@@ -633,13 +640,16 @@ test.describe('API-Only Shared Secret Tests', () => {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
 			const session = new TestSessionManager();
-			const keyPair = await session.generateKeyPair();
-			const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-			// Generate dual keypairs for receiver (Ed25519 + X25519 for dual-key system)
+			// Generate Sistema A keypairs for receiver (Ed25519 + X25519)
 			const dualKeypairs = generateDualKeypairs();
+			const ed25519PrivateKey = readEd25519PrivateKey();
 
-			// Request magic link for receiver (DUAL-KEY FORMAT)
+			// Set Ed25519 keypair in session (for signing SignedRequest)
+			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+			const keyPair = await session.getKeyPair();
+
+			// Request magic link for receiver (DUAL-KEY FORMAT - Sistema A)
 			const loginPayload = createMagicLinkPayload('arkaitzmugica@protonmail.com', dualKeypairs); // Second authorized email
 
 			const signedRequest = createSignedRequestWithKeyPair(loginPayload, keyPair);

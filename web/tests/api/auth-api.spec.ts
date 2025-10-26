@@ -18,9 +18,13 @@ import {
 	signQueryParamsWithKeyPair as _signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
-import { publicKeyBytesToHex, signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
+import { signatureBase58ToBytes } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 } from '@noble/curves/ed25519.js';
-import { generateDualKeypairs, createMagicLinkPayload } from '../utils/dual-keypair-helper';
+import {
+	generateDualKeypairs,
+	readEd25519PrivateKey,
+	createMagicLinkPayload
+} from '../utils/dual-keypair-helper';
 
 test.describe('API-Only Authentication Tests', () => {
 	test('should request magic link with Ed25519 signature', async ({ request }) => {
@@ -30,17 +34,26 @@ test.describe('API-Only Authentication Tests', () => {
 		// Create session manager
 		const session = new TestSessionManager();
 
-		// Generate Ed25519 keypair (for signing)
-		const keyPair = await session.generateKeyPair();
-		const ed25519PubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
-
-		// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+		// Generate Sistema A keypairs (Ed25519 + X25519 for frontend-backend communication)
 		const dualKeypairs = generateDualKeypairs();
+		const ed25519PrivateKey = readEd25519PrivateKey();
 
-		console.log(`🔑 Generated keypair: ${ed25519PubKeyHex.substring(0, 20)}...`);
+		// Set Ed25519 keypair in session (for signing SignedRequest)
+		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+		const keyPair = await session.getKeyPair();
 
-		// Create signed request payload (DUAL-KEY FORMAT)
-		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
+		console.log(`🔑 Generated Sistema A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+
+		// Create signed request payload (DUAL-KEY FORMAT - Sistema A)
+		// IMPORTANT: Both keys come from the same generation (Sistema A)
+		const payload = {
+			email: 'me@arkaitz.dev',
+			email_lang: 'en',
+			next: '/',
+			ed25519_pub_key: dualKeypairs.ed25519_pub_key, // Sistema A
+			x25519_pub_key: dualKeypairs.x25519_pub_key, // Sistema A
+			ui_host: 'localhost'
+		};
 
 		const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
 
@@ -138,12 +151,16 @@ test.describe('API-Only Authentication Tests', () => {
 		console.log('='.repeat(60));
 
 		const session = new TestSessionManager();
-		const keyPair = await session.generateKeyPair();
 
-		// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+		// Generate Sistema A keypairs (Ed25519 + X25519)
 		const dualKeypairs = generateDualKeypairs();
+		const ed25519PrivateKey = readEd25519PrivateKey();
 
-		// Create valid payload (DUAL-KEY FORMAT)
+		// Set Ed25519 keypair in session
+		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+		const keyPair = await session.getKeyPair();
+
+		// Create valid payload (DUAL-KEY FORMAT - Sistema A)
 		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 		// Create SignedRequest with INVALID signature
@@ -176,12 +193,16 @@ test.describe('API-Only Authentication Tests', () => {
 		// Request 3 magic links
 		for (let i = 1; i <= 3; i++) {
 			const session = new TestSessionManager();
-			const keyPair = await session.generateKeyPair();
 
-			// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+			// Generate Sistema A keypairs (Ed25519 + X25519)
 			const dualKeypairs = generateDualKeypairs();
+			const ed25519PrivateKey = readEd25519PrivateKey();
 
-			// Create payload (DUAL-KEY FORMAT)
+			// Set Ed25519 keypair in session
+			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+			const keyPair = await session.getKeyPair();
+
+			// Create payload (DUAL-KEY FORMAT - Sistema A)
 			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 			const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);

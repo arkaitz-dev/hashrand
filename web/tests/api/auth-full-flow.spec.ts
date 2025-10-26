@@ -14,11 +14,14 @@ import {
 	signQueryParamsWithKeyPair as _signQueryParamsWithKeyPair,
 	decodePayloadBase64
 } from '../../src/lib/crypto/signedRequest-core';
-import { publicKeyBytesToHex } from '../../src/lib/ed25519/ed25519-core';
 import { ed25519 as _ed25519 } from '@noble/curves/ed25519.js';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
-import { generateDualKeypairs, createMagicLinkPayload } from '../utils/dual-keypair-helper';
+import {
+	generateDualKeypairs,
+	readEd25519PrivateKey,
+	createMagicLinkPayload
+} from '../utils/dual-keypair-helper';
 
 /**
  * Extract magic token from backend logs (like bash test does)
@@ -81,15 +84,17 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 
 		const session = new TestSessionManager();
 
-		// Step 1: Generate keypair
-		const keyPair = await session.generateKeyPair();
-		const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
-		console.log(`🔑 Generated keypair: ${pubKeyHex.substring(0, 20)}...`);
-
-		// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+		// Step 1: Generate Sistema A keypairs (Ed25519 + X25519)
 		const dualKeypairs = generateDualKeypairs();
+		const ed25519PrivateKey = readEd25519PrivateKey();
 
-		// Step 2: Create signed request (DUAL-KEY FORMAT)
+		// Set Ed25519 keypair in session (for signing SignedRequest)
+		await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+		const keyPair = await session.getKeyPair();
+
+		console.log(`🔑 Generated Sistema A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+
+		// Step 2: Create signed request (DUAL-KEY FORMAT - Sistema A)
 		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 		const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
@@ -135,7 +140,7 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		console.log('\n🎉 TEST PASSED: Full authentication flow complete');
 		console.log('='.repeat(60));
 		console.log('📊 SUMMARY:');
-		console.log(`   - Client pub_key: ${pubKeyHex.substring(0, 20)}...`);
+		console.log(`   - Client pub_key: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
 		console.log(`   - Server pub_key: ${responsePayload.server_pub_key.substring(0, 20)}...`);
 		console.log(`   - Magic token: ${magicToken!.substring(0, 20)}...`);
 		console.log(`   - Status: ${responsePayload.status}`);
@@ -156,13 +161,16 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 		// Request 3 magic links
 		for (let i = 1; i <= 3; i++) {
 			const session = new TestSessionManager();
-			const keyPair = await session.generateKeyPair();
-			const pubKeyHex = publicKeyBytesToHex(keyPair.publicKeyBytes);
 
-			// Generate dual keypairs (Ed25519 + X25519 for dual-key system)
+			// Generate Sistema A keypairs (Ed25519 + X25519)
 			const dualKeypairs = generateDualKeypairs();
+			const ed25519PrivateKey = readEd25519PrivateKey();
 
-			// Create payload (DUAL-KEY FORMAT)
+			// Set Ed25519 keypair in session
+			await session.setKeyPairFromHex(ed25519PrivateKey, dualKeypairs.ed25519_pub_key);
+			const keyPair = await session.getKeyPair();
+
+			// Create payload (DUAL-KEY FORMAT - Sistema A)
 			const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);
 
 			const signedRequest = createSignedRequestWithKeyPair(payload, keyPair);
