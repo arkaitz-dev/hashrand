@@ -5,7 +5,7 @@
 //! - Backend per-user X25519 key derivation for E2E encryption
 
 pub mod backend_keys;
-pub mod ecdh_encryption;
+pub mod ecdh;
 
 pub use backend_keys::*;
-pub use ecdh_encryption::*;
+pub use ecdh::*;

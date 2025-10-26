@@ -4,6 +4,8 @@ HashRand: Random hash generator with Fermyon Spin + WebAssembly. Complete REST A
 
 **Architecture**: API Backend (Rust+Spin, port 3000) + Web Interface (SvelteKit+TypeScript+TailwindCSS, port 5173)
 
+**Note**: This project uses [bd (beads)](https://github.com/steveyegge/beads) for issue tracking. Use `bd` commands instead of markdown TODOs. See AGENTS.md for workflow details.
+
 **Last Update**: 2025-10-23 - **API v1.11.0 + Web v0.30.0**
 - 🔐 **Latest**: E2EE - Complete PFS (Perfect Forward Secrecy) dual-key system implementation
 - ✅ **Sistema B**: User permanent keypairs (Ed25519/X25519) for user-to-user E2EE

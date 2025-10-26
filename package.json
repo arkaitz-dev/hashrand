@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
     "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@noble/hashes": "^2.0.1"
   }
 }

@@ -88,13 +88,19 @@ test_api() {
     echo "Status: $status"
     echo "Response: $body"
 
-    # Validate signed response if we have server public key and response is signed
-    if [[ "$status" == "200" && -n "$SERVER_PUB_KEY" ]] && is_signed_response "$body"; then
-        echo -e "${BLUE}🔐 Validating signed response...${NC}"
-        if process_regular_response "$body"; then
-            echo -e "${GREEN}✓ Response signature validated${NC}"
+    # Validate signed response for protected endpoints (after authentication)
+    if [[ "$status" == "200" && -n "$SERVER_PUB_KEY" ]]; then
+        if is_signed_response "$body"; then
+            echo -e "${BLUE}🔐 Validating signed response...${NC}"
+            if process_regular_response "$body"; then
+                echo -e "${GREEN}✓ Response signature validated${NC}"
+            else
+                echo -e "${RED}✗ FAIL - Response signature validation failed${NC}"
+                ((FAILED++))
+                return
+            fi
         else
-            echo -e "${RED}✗ FAIL - Response signature validation failed${NC}"
+            echo -e "${RED}✗ FAIL - Protected endpoint MUST return signed response (Ed25519)${NC}"
             ((FAILED++))
             return
         fi
@@ -109,11 +115,12 @@ test_api() {
     
     # Optional length check
     if [[ -n "$length_check" && "$status" == "200" ]]; then
-        # Extract hash from JSON response (handle both signed and regular responses)
+        # Extract hash from JSON response
         local hash
         if is_signed_response "$body"; then
             hash=$(extract_field_from_payload "$body" "hash")
         else
+            # For public endpoints (no SERVER_PUB_KEY), allow non-signed responses
             hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
         fi
 
@@ -122,12 +129,6 @@ test_api() {
             if [[ $actual_length -ne $length_check ]]; then
                 echo -e "${YELLOW}⚠ WARNING - Hash length: expected $length_check, got $actual_length${NC}"
             fi
-        else
-            # Fallback to body length for non-JSON responses
-            local actual_length=${#body}
-            if [[ $actual_length -ne $length_check ]]; then
-                echo -e "${YELLOW}⚠ WARNING - Response length: expected $length_check, got $actual_length${NC}"
-            fi
         fi
     fi
     
@@ -135,11 +136,12 @@ test_api() {
     case "$url" in
         *"/api/api-key"*)
             if [[ "$status" == "200" ]]; then
-                # Extract hash from response (handle both signed and regular responses)
+                # Extract hash from response
                 local hash
                 if is_signed_response "$body"; then
                     hash=$(extract_field_from_payload "$body" "hash")
                 else
+                    # For public endpoints (no SERVER_PUB_KEY), allow non-signed responses
                     hash=$(echo "$body" | jq -r '.hash' 2>/dev/null)
                 fi
 
@@ -236,15 +238,24 @@ generate_signed_url() {
 generate_ed25519_payload() {
     local email="$1"
 
-    # Generate Ed25519 keypair
-    local pub_key=$(node ./scripts/generate_hash.js)
-    if [[ -z "$pub_key" ]]; then
-        echo '{"error":"Failed to generate keypair"}'
+    # Generate DUAL keypairs (Ed25519 + X25519) for dual-key system
+    local keypairs_json=$(node ./scripts/generate_dual_keypairs.js)
+    if [[ -z "$keypairs_json" ]]; then
+        echo '{"error":"Failed to generate dual keypairs"}'
         return 1
     fi
 
-    # Create payload object
-    local payload_json="{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\",\"ui_host\":\"localhost\"}"
+    # Extract both public keys from JSON
+    local ed25519_pub_key=$(echo "$keypairs_json" | jq -r '.ed25519_pub_key')
+    local x25519_pub_key=$(echo "$keypairs_json" | jq -r '.x25519_pub_key')
+
+    if [[ -z "$ed25519_pub_key" || -z "$x25519_pub_key" ]]; then
+        echo '{"error":"Failed to extract public keys from JSON"}'
+        return 1
+    fi
+
+    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    local payload_json="{\"email\":\"$email\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
 
     # Create complete SignedRequest structure with Base64-encoded payload
     local signed_request=$(node ./scripts/create_signed_request.js "$payload_json")
@@ -261,18 +272,28 @@ generate_ed25519_payload() {
 request_magic_link() {
     echo -e "\n${PURPLE}=== Requesting Magic Link ===${NC}"
 
-    # Generate Ed25519 keypair using Node.js helper
-    local pub_key=$(node ./scripts/generate_hash.js)
-    if [[ -z "$pub_key" ]]; then
-        echo -e "${RED}✗ Failed to generate Ed25519 keypair${NC}"
+    # Generate DUAL keypairs (Ed25519 + X25519) for dual-key system
+    local keypairs_json=$(node ./scripts/generate_dual_keypairs.js)
+    if [[ -z "$keypairs_json" ]]; then
+        echo -e "${RED}✗ Failed to generate dual keypairs${NC}"
         return 1
     fi
 
-    echo "Generated Ed25519 public key: ${pub_key:0:20}..."
+    # Extract both public keys from JSON
+    local ed25519_pub_key=$(echo "$keypairs_json" | jq -r '.ed25519_pub_key')
+    local x25519_pub_key=$(echo "$keypairs_json" | jq -r '.x25519_pub_key')
 
-    # Create payload object with ui_host (required for cookie Domain)
-    local payload_json="{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\",\"ui_host\":\"localhost\"}"
-    echo "JSON payload: ${payload_json:0:80}..."
+    if [[ -z "$ed25519_pub_key" || -z "$x25519_pub_key" ]]; then
+        echo -e "${RED}✗ Failed to extract public keys from JSON${NC}"
+        return 1
+    fi
+
+    echo "Generated Ed25519 public key: ${ed25519_pub_key:0:20}..."
+    echo "Generated X25519 public key: ${x25519_pub_key:0:20}..."
+
+    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    local payload_json="{\"email\":\"$TEST_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
+    echo "JSON payload: ${payload_json:0:120}..."
 
     # Create complete SignedRequest with Base64-encoded payload
     local signed_request=$(node ./scripts/create_signed_request.js "$payload_json")
@@ -283,8 +304,8 @@ request_magic_link() {
 
     echo "SignedRequest created: ${signed_request:0:100}..."
 
-    # Store pub_key for later validation (simulate localStorage behavior)
-    echo "$pub_key" > .test-magiclink-pubkey
+    # Store Ed25519 pub_key for later validation (simulate localStorage behavior)
+    echo "$ed25519_pub_key" > .test-magiclink-pubkey
 
     # Send SignedRequest to backend
     local response=$(curl -s -X POST -H "Content-Type: application/json" -d "$signed_request" "$BASE_URL/api/login/")
@@ -298,9 +319,9 @@ request_magic_link() {
         if [[ "$status_field" == "OK" ]]; then
             status_ok=true
         fi
-    elif [[ "$response" == *'"status":"OK"'* ]]; then
-        # Fallback for non-signed response
-        status_ok=true
+    else
+        echo -e "${RED}✗ FAIL - Magic link response MUST be signed (Ed25519)${NC}"
+        return 1
     fi
 
     if [[ "$status_ok" == "true" ]]; then
@@ -349,18 +370,28 @@ authenticate() {
     # Step 1: Request magic link with fresh start
     echo -e "\n${PURPLE}=== Requesting Fresh Magic Link ===${NC}"
 
-    # Generate Ed25519 keypair using Node.js helper
-    local pub_key=$(node ./scripts/generate_hash.js)
-    if [[ -z "$pub_key" ]]; then
-        echo -e "${RED}✗ Authentication failed: Could not generate Ed25519 keypair${NC}"
+    # Generate DUAL keypairs (Ed25519 + X25519) for dual-key system
+    local keypairs_json=$(node ./scripts/generate_dual_keypairs.js)
+    if [[ -z "$keypairs_json" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not generate dual keypairs${NC}"
         return 1
     fi
 
-    echo "Generated Ed25519 public key: ${pub_key:0:20}..."
+    # Extract both public keys from JSON
+    local ed25519_pub_key=$(echo "$keypairs_json" | jq -r '.ed25519_pub_key')
+    local x25519_pub_key=$(echo "$keypairs_json" | jq -r '.x25519_pub_key')
 
-    # Create payload object with ui_host (required for cookie Domain)
-    local payload_json="{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$pub_key\",\"ui_host\":\"localhost\"}"
-    echo "JSON payload: ${payload_json:0:80}..."
+    if [[ -z "$ed25519_pub_key" || -z "$x25519_pub_key" ]]; then
+        echo -e "${RED}✗ Authentication failed: Could not extract public keys${NC}"
+        return 1
+    fi
+
+    echo "Generated Ed25519 public key: ${ed25519_pub_key:0:20}..."
+    echo "Generated X25519 public key: ${x25519_pub_key:0:20}..."
+
+    # Create payload object with DUAL public keys (Sistema A + Sistema B)
+    local payload_json="{\"email\":\"me@arkaitz.dev\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$ed25519_pub_key\",\"x25519_pub_key\":\"$x25519_pub_key\",\"ui_host\":\"localhost\"}"
+    echo "JSON payload: ${payload_json:0:120}..."
 
     # Create complete SignedRequest with Base64-encoded payload
     local signed_request=$(node ./scripts/create_signed_request.js "$payload_json")
@@ -371,8 +402,8 @@ authenticate() {
 
     echo "SignedRequest created: ${signed_request:0:100}..."
 
-    # Store pub_key for later validation (simulate localStorage behavior)
-    echo "$pub_key" > .test-magiclink-pubkey
+    # Store Ed25519 pub_key for later validation (simulate localStorage behavior)
+    echo "$ed25519_pub_key" > .test-magiclink-pubkey
 
     # Send SignedRequest to backend
     local magic_response=$(curl -s -X POST -H "Content-Type: application/json" -d "$signed_request" "$BASE_URL/api/login/")
@@ -386,9 +417,9 @@ authenticate() {
         if [[ "$status_field" == "OK" ]]; then
             status_ok=true
         fi
-    elif [[ "$magic_response" == *'"status":"OK"'* ]]; then
-        # Fallback for non-signed response
-        status_ok=true
+    else
+        echo -e "${RED}✗ FAIL - Magic link response MUST be signed (Ed25519)${NC}"
+        return 1
     fi
 
     if [[ "$status_ok" != "true" ]]; then
@@ -467,10 +498,18 @@ authenticate() {
 
         # Extract access token from signed JWT response (no server_pub_key needed)
         JWT_TOKEN=$(extract_access_token "$jwt_response")
+
+        # Extract server X25519 public key for ECDH encryption (needed for shared secrets)
+        SERVER_X25519_PUB_KEY=$(extract_field_from_payload "$jwt_response" "server_x25519_pub_key")
+        if [[ -n "$SERVER_X25519_PUB_KEY" ]]; then
+            echo "$SERVER_X25519_PUB_KEY" > .test-server-x25519-pubkey
+            echo -e "${GREEN}✓ Server X25519 public key extracted: ${SERVER_X25519_PUB_KEY:0:20}...${NC}"
+        else
+            echo -e "${YELLOW}⚠ No server_x25519_pub_key found in response${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠ Received non-signed response, extracting token directly${NC}"
-        # Fallback for backward compatibility
-        JWT_TOKEN=$(extract_access_token "$jwt_response")
+        echo -e "${RED}✗ FAIL - Authentication response MUST be signed (Ed25519)${NC}"
+        return 1
     fi
 
     if [[ -n "$JWT_TOKEN" ]]; then
@@ -479,10 +518,11 @@ authenticate() {
 
         # CRITICAL: Backup authentication keypair for later use in shared secret tests
         # These files will be overwritten by other tests but we need them for JWT-signed requests
-        if [[ -f ".test-magiclink-pubkey" ]] && [[ -f ".test-ed25519-private-key" ]]; then
+        if [[ -f ".test-magiclink-pubkey" ]] && [[ -f ".test-ed25519-private-key" ]] && [[ -f ".test-x25519-private-key" ]]; then
             cp .test-magiclink-pubkey .test-magiclink-pubkey-auth-backup
             cp .test-ed25519-private-key .test-ed25519-private-key-auth-backup
-            echo -e "${GREEN}✓ Authentication keypair backed up${NC}"
+            cp .test-x25519-private-key .test-x25519-private-key-auth-backup
+            echo -e "${GREEN}✓ Authentication keypair backed up (Ed25519 + X25519)${NC}"
         fi
 
         # Save authentication timestamp for token expiration tracking
@@ -820,10 +860,11 @@ if [[ -n "$JWT_TOKEN" ]]; then
     # CRITICAL: Save authentication keypair files before running tests
     # The authentication flow tests above may have overwritten these files with new keypairs
     # We need to restore the ORIGINAL keypair from the initial authentication for JWT compatibility
-    if [[ -f ".test-magiclink-pubkey-auth-backup" ]] && [[ -f ".test-ed25519-private-key-auth-backup" ]]; then
-        echo "🔑 Restoring original authentication keypair..."
+    if [[ -f ".test-magiclink-pubkey-auth-backup" ]] && [[ -f ".test-ed25519-private-key-auth-backup" ]] && [[ -f ".test-x25519-private-key-auth-backup" ]]; then
+        echo "🔑 Restoring original authentication keypair (Ed25519 + X25519)..."
         cp .test-magiclink-pubkey-auth-backup .test-magiclink-pubkey
         cp .test-ed25519-private-key-auth-backup .test-ed25519-private-key
+        cp .test-x25519-private-key-auth-backup .test-x25519-private-key
         echo "✅ Authentication keypair restored"
     else
         echo "⚠️  WARNING: No backup keypair found - JWT signature may fail"
@@ -842,40 +883,69 @@ if [[ -n "$JWT_TOKEN" ]]; then
     ((TOTAL++))
     test_start=$(date +%s)
 
-    # Prepare JSON payload with all required fields
-    create_payload_json="{\"sender_email\":\"$SENDER_EMAIL\",\"receiver_email\":\"$RECEIVER_EMAIL\",\"secret_text\":\"This is a test secret message for Zero Knowledge validation\",\"expires_hours\":24,\"max_reads\":3,\"ui_host\":\"localhost\"}"
+    # Secret message to encrypt
+    SECRET_TEXT="This is a test secret message for Zero Knowledge validation"
 
     echo "Creating shared secret with sender=$SENDER_EMAIL, receiver=$RECEIVER_EMAIL"
-    echo "Payload JSON: ${create_payload_json:0:100}..."
+    echo "Secret text: ${SECRET_TEXT:0:50}..."
 
-    # Debug: Check if private key file exists and verify public key matches
-    if [[ -f ".test-ed25519-private-key" ]] && [[ -f ".test-magiclink-pubkey" ]]; then
-        echo "✓ Private key file exists"
-        echo "✓ Public key from auth: $(cat .test-magiclink-pubkey | head -c 20)..."
-
-        # Extract public key from JWT to verify it matches
-        # jwt_pub_key=$(echo "$JWT_TOKEN" | cut -d'.' -f2 | base64 -d 2>/dev/null | jq -r '.pub_key' 2>/dev/null || echo "N/A")
-        # echo "✓ Public key in JWT: ${jwt_pub_key:0:20}..."
-    else
-        echo "✗ WARNING: Key files NOT found!"
-    fi
-
-    # Create SignedRequest structure with Base64-encoded payload and Ed25519 signature
-    create_signed_request=$(node ./scripts/create_signed_request.js "$create_payload_json" 2>&1)
-    if [[ -z "$create_signed_request" ]]; then
-        echo -e "${RED}✗ FAIL - Could not create SignedRequest for shared secret${NC}"
+    # Debug: Check if required files exist
+    if [[ ! -f ".test-x25519-private-key" ]]; then
+        echo -e "${RED}✗ FAIL - Missing .test-x25519-private-key file${NC}"
+        ((FAILED++))
+        SENDER_URL=""
+        RECEIVER_URL=""
+    elif [[ ! -f ".test-server-x25519-pubkey" ]]; then
+        echo -e "${RED}✗ FAIL - Missing .test-server-x25519-pubkey file${NC}"
         ((FAILED++))
         SENDER_URL=""
         RECEIVER_URL=""
     else
-        echo "SignedRequest created: ${create_signed_request:0:100}..."
+        # Read backend X25519 public key
+        BACKEND_X25519_PUB_KEY=$(cat .test-server-x25519-pubkey)
+        echo "✓ Backend X25519 public key: ${BACKEND_X25519_PUB_KEY:0:20}..."
 
-        # Make POST request with JWT authentication
-        create_response=$(curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $JWT_TOKEN" \
-            -d "$create_signed_request" \
-            "$BASE_URL/api/shared-secret/create")
+        # Encrypt secret with E2EE (ChaCha20-Poly1305 + ECDH)
+        encryption_result=$(node ./scripts/encrypt_shared_secret.js "$SECRET_TEXT" "$BACKEND_X25519_PUB_KEY" 2>&1)
+
+        if [[ $? -ne 0 || -z "$encryption_result" ]]; then
+            echo -e "${RED}✗ FAIL - E2EE encryption failed: $encryption_result${NC}"
+            ((FAILED++))
+            SENDER_URL=""
+            RECEIVER_URL=""
+        else
+            echo "✓ E2EE encryption successful"
+
+            # Extract encrypted fields from JSON result
+            ENCRYPTED_SECRET=$(echo "$encryption_result" | jq -r '.encrypted_secret')
+            ENCRYPTED_KEY_MATERIAL=$(echo "$encryption_result" | jq -r '.encrypted_key_material')
+
+            echo "✓ Encrypted secret length: $(echo -n "$ENCRYPTED_SECRET" | wc -c) chars"
+            echo "✓ Encrypted key_material length: $(echo -n "$ENCRYPTED_KEY_MATERIAL" | wc -c) chars"
+
+            # Prepare JSON payload with encrypted fields
+            create_payload_json="{\"sender_email\":\"$SENDER_EMAIL\",\"receiver_email\":\"$RECEIVER_EMAIL\",\"encrypted_secret\":\"$ENCRYPTED_SECRET\",\"encrypted_key_material\":\"$ENCRYPTED_KEY_MATERIAL\",\"expires_hours\":24,\"max_reads\":3,\"ui_host\":\"localhost\"}"
+
+            echo "Payload JSON: ${create_payload_json:0:100}..."
+
+            # Create SignedRequest structure
+            create_signed_request=$(node ./scripts/create_signed_request.js "$create_payload_json" 2>&1)
+            if [[ -z "$create_signed_request" ]]; then
+                echo -e "${RED}✗ FAIL - Could not create SignedRequest for shared secret${NC}"
+                ((FAILED++))
+                SENDER_URL=""
+                RECEIVER_URL=""
+            else
+                echo "SignedRequest created: ${create_signed_request:0:100}..."
+
+                # Make POST request with JWT authentication
+                create_response=$(curl -s -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $JWT_TOKEN" \
+                    -d "$create_signed_request" \
+                    "$BASE_URL/api/shared-secret/create")
+            fi
+        fi
     fi
 
     echo "Create response: ${create_response:0:200}..."
@@ -939,84 +1009,97 @@ if [[ -n "$JWT_TOKEN" ]]; then
         > .spin-dev.log
         sleep 1
 
-        # Backup sender's private key before generating receiver keypair
+        # Backup sender's private keys before generating receiver keypair
         cp .test-ed25519-private-key .test-ed25519-private-key-sender-backup
+        cp .test-x25519-private-key .test-x25519-private-key-sender-backup
 
-        # Generate Ed25519 keypair for receiver
-        receiver_pub_key=$(node ./scripts/generate_hash.js)
-        if [[ -z "$receiver_pub_key" ]]; then
-            echo -e "${RED}✗ FAIL - Could not generate receiver Ed25519 keypair${NC}"
+        # Generate DUAL keypairs for receiver (Ed25519 + X25519)
+        receiver_keypairs_json=$(node ./scripts/generate_dual_keypairs.js)
+        if [[ -z "$receiver_keypairs_json" ]]; then
+            echo -e "${RED}✗ FAIL - Could not generate receiver dual keypairs${NC}"
             ((FAILED++))
         else
-            echo "Generated receiver Ed25519 public key: ${receiver_pub_key:0:20}..."
+            # Extract both public keys from JSON
+            receiver_ed25519_pub_key=$(echo "$receiver_keypairs_json" | jq -r '.ed25519_pub_key')
+            receiver_x25519_pub_key=$(echo "$receiver_keypairs_json" | jq -r '.x25519_pub_key')
 
-            # Create payload for receiver
-            receiver_payload_json="{\"email\":\"$RECEIVER_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"pub_key\":\"$receiver_pub_key\",\"ui_host\":\"localhost\"}"
-
-            # Create signed request for receiver
-            receiver_signed_request=$(node ./scripts/create_signed_request.js "$receiver_payload_json")
-            if [[ -z "$receiver_signed_request" ]]; then
-                echo -e "${RED}✗ FAIL - Could not create receiver SignedRequest${NC}"
+            if [[ -z "$receiver_ed25519_pub_key" || -z "$receiver_x25519_pub_key" ]]; then
+                echo -e "${RED}✗ FAIL - Could not extract receiver public keys${NC}"
                 ((FAILED++))
             else
-                # Store receiver keypair (pubkey + private key)
-                echo "$receiver_pub_key" > .test-receiver-pubkey
-                cp .test-ed25519-private-key .test-receiver-private-key
+                echo "Generated receiver Ed25519 public key: ${receiver_ed25519_pub_key:0:20}..."
+                echo "Generated receiver X25519 public key: ${receiver_x25519_pub_key:0:20}..."
 
-                # Request magic link for receiver (keep receiver keypair active for authentication)
-                receiver_magic_response=$(curl -s -X POST \
-                    -H "Content-Type: application/json" \
-                    -d "$receiver_signed_request" \
-                    "$BASE_URL/api/login/")
+                # Create payload for receiver with DUAL public keys
+                receiver_payload_json="{\"email\":\"$RECEIVER_EMAIL\",\"email_lang\":\"en\",\"next\":\"/\",\"ed25519_pub_key\":\"$receiver_ed25519_pub_key\",\"x25519_pub_key\":\"$receiver_x25519_pub_key\",\"ui_host\":\"localhost\"}"
 
-                echo "Receiver magic link response: ${receiver_magic_response:0:100}..."
-
-                # Wait for magic link
-                sleep 3
-
-                # Extract receiver magic token
-                receiver_magic_token=$(grep -a "Generated magic_link" .spin-dev.log | tail -1 | grep -o "magiclink=[A-Za-z0-9]*" | cut -d= -f2)
-
-                if [[ -z "$receiver_magic_token" ]]; then
-                    echo -e "${RED}✗ FAIL - Could not extract receiver magic token${NC}"
+                # Create signed request for receiver
+                receiver_signed_request=$(node ./scripts/create_signed_request.js "$receiver_payload_json")
+                if [[ -z "$receiver_signed_request" ]]; then
+                    echo -e "${RED}✗ FAIL - Could not create receiver SignedRequest${NC}"
                     ((FAILED++))
                 else
-                    echo "Receiver magic token: ${receiver_magic_token:0:20}..."
+                    # Store receiver keypairs (public + private keys)
+                    echo "$receiver_ed25519_pub_key" > .test-receiver-pubkey
+                    cp .test-ed25519-private-key .test-receiver-ed25519-private-key
+                    cp .test-x25519-private-key .test-receiver-x25519-private-key
 
-                    # Create magiclink signed request for receiver
-                    receiver_magiclink_payload="{\"magiclink\":\"$receiver_magic_token\"}"
-                    receiver_magiclink_signed=$(node ./scripts/create_signed_request.js "$receiver_magiclink_payload")
+                    # Request magic link for receiver (keep receiver keypair active for authentication)
+                    receiver_magic_response=$(curl -s -X POST \
+                        -H "Content-Type: application/json" \
+                        -d "$receiver_signed_request" \
+                        "$BASE_URL/api/login/")
 
-                    if [[ -z "$receiver_magiclink_signed" ]]; then
-                        echo -e "${RED}✗ FAIL - Could not create receiver magiclink SignedRequest${NC}"
+                    echo "Receiver magic link response: ${receiver_magic_response:0:100}..."
+
+                    # Wait for magic link
+                    sleep 3
+
+                    # Extract receiver magic token
+                    receiver_magic_token=$(grep -a "Generated magic_link" .spin-dev.log | tail -1 | grep -o "magiclink=[A-Za-z0-9]*" | cut -d= -f2)
+
+                    if [[ -z "$receiver_magic_token" ]]; then
+                        echo -e "${RED}✗ FAIL - Could not extract receiver magic token${NC}"
                         ((FAILED++))
                     else
-                        # Exchange magic token for JWT
-                        receiver_jwt_response=$(curl -s -X POST \
-                            -H "Content-Type: application/json" \
-                            -d "$receiver_magiclink_signed" \
-                            "$BASE_URL/api/login/magiclink/")
+                        echo "Receiver magic token: ${receiver_magic_token:0:20}..."
 
-                        echo "Receiver JWT response: ${receiver_jwt_response:0:100}..."
+                        # Create magiclink signed request for receiver
+                        receiver_magiclink_payload="{\"magiclink\":\"$receiver_magic_token\"}"
+                        receiver_magiclink_signed=$(node ./scripts/create_signed_request.js "$receiver_magiclink_payload")
 
-                        # Extract JWT token for receiver
-                        if is_signed_response "$receiver_jwt_response"; then
-                            JWT_TOKEN_RECEIVER=$(extract_access_token "$receiver_jwt_response")
-                        else
-                            JWT_TOKEN_RECEIVER=$(extract_access_token "$receiver_jwt_response")
-                        fi
-
-                        if [[ -n "$JWT_TOKEN_RECEIVER" ]]; then
-                            echo -e "${GREEN}✓ PASS - Receiver authenticated successfully${NC}"
-                            echo "Receiver JWT: ${JWT_TOKEN_RECEIVER:0:30}..."
-                            ((PASSED++))
-                        else
-                            echo -e "${RED}✗ FAIL - Could not obtain receiver JWT token${NC}"
+                        if [[ -z "$receiver_magiclink_signed" ]]; then
+                            echo -e "${RED}✗ FAIL - Could not create receiver magiclink SignedRequest${NC}"
                             ((FAILED++))
-                        fi
+                        else
+                            # Exchange magic token for JWT
+                            receiver_jwt_response=$(curl -s -X POST \
+                                -H "Content-Type: application/json" \
+                                -d "$receiver_magiclink_signed" \
+                                "$BASE_URL/api/login/magiclink/")
 
-                        # Restore sender's private key for subsequent sender tests
-                        cp .test-ed25519-private-key-sender-backup .test-ed25519-private-key
+                            echo "Receiver JWT response: ${receiver_jwt_response:0:100}..."
+
+                            # Extract JWT token for receiver
+                            if is_signed_response "$receiver_jwt_response"; then
+                                JWT_TOKEN_RECEIVER=$(extract_access_token "$receiver_jwt_response")
+                            else
+                                JWT_TOKEN_RECEIVER=$(extract_access_token "$receiver_jwt_response")
+                            fi
+
+                            if [[ -n "$JWT_TOKEN_RECEIVER" ]]; then
+                                echo -e "${GREEN}✓ PASS - Receiver authenticated successfully${NC}"
+                                echo "Receiver JWT: ${JWT_TOKEN_RECEIVER:0:30}..."
+                                ((PASSED++))
+                            else
+                                echo -e "${RED}✗ FAIL - Could not obtain receiver JWT token${NC}"
+                                ((FAILED++))
+                            fi
+
+                            # Restore sender's private keys for subsequent sender tests
+                            cp .test-ed25519-private-key-sender-backup .test-ed25519-private-key
+                            cp .test-x25519-private-key-sender-backup .test-x25519-private-key
+                        fi
                     fi
                 fi
             fi
@@ -1035,11 +1118,13 @@ if [[ -n "$JWT_TOKEN" ]]; then
         # Add OTP parameter
         retrieve_url="$BASE_URL/api/shared-secret/${receiver_hash}?otp=123456789"
 
-        # Temporarily store sender keypair and activate receiver keypair
+        # Temporarily store sender keypairs and activate receiver keypairs
         mv .test-magiclink-pubkey .test-magiclink-pubkey-sender
         mv .test-ed25519-private-key .test-ed25519-private-key-sender
+        mv .test-x25519-private-key .test-x25519-private-key-sender
         mv .test-receiver-pubkey .test-magiclink-pubkey
-        mv .test-receiver-private-key .test-ed25519-private-key
+        mv .test-receiver-ed25519-private-key .test-ed25519-private-key
+        mv .test-receiver-x25519-private-key .test-x25519-private-key
 
         # Generate signed URL for receiver (now using receiver's keypair)
         signed_retrieve_url=$(generate_signed_url "$retrieve_url")
@@ -1049,25 +1134,31 @@ if [[ -n "$JWT_TOKEN" ]]; then
             -H "Authorization: Bearer $JWT_TOKEN_RECEIVER" \
             "$signed_retrieve_url")
 
-        # Restore sender keypair
+        # Restore sender keypairs
         mv .test-magiclink-pubkey .test-receiver-pubkey
-        mv .test-ed25519-private-key .test-receiver-private-key
+        mv .test-ed25519-private-key .test-receiver-ed25519-private-key
+        mv .test-x25519-private-key .test-receiver-x25519-private-key
         mv .test-magiclink-pubkey-sender .test-magiclink-pubkey
         mv .test-ed25519-private-key-sender .test-ed25519-private-key
+        mv .test-x25519-private-key-sender .test-x25519-private-key
 
         echo "Retrieve response: ${retrieve_response:0:200}..."
 
-        # Check if retrieval was successful
-        secret_text=""
+        # Check if retrieval was successful (E2EE - backend returns encrypted data)
+        encrypted_secret=""
+        encrypted_key_material=""
         if is_signed_response "$retrieve_response"; then
-            secret_text=$(extract_field_from_payload "$retrieve_response" "secret_text")
+            encrypted_secret=$(extract_field_from_payload "$retrieve_response" "encrypted_secret")
+            encrypted_key_material=$(extract_field_from_payload "$retrieve_response" "encrypted_key_material")
         else
-            secret_text=$(echo "$retrieve_response" | jq -r '.secret_text' 2>/dev/null)
+            encrypted_secret=$(echo "$retrieve_response" | jq -r '.encrypted_secret' 2>/dev/null)
+            encrypted_key_material=$(echo "$retrieve_response" | jq -r '.encrypted_key_material' 2>/dev/null)
         fi
 
-        if [[ -n "$secret_text" && "$secret_text" != "null" ]]; then
-            echo -e "${GREEN}✓ PASS - Receiver retrieved secret successfully${NC}"
-            echo "Secret text: ${secret_text:0:50}..."
+        if [[ -n "$encrypted_secret" && "$encrypted_secret" != "null" && -n "$encrypted_key_material" && "$encrypted_key_material" != "null" ]]; then
+            echo -e "${GREEN}✓ PASS - Receiver retrieved encrypted secret successfully (E2EE)${NC}"
+            echo "Encrypted secret length: $(echo -n "$encrypted_secret" | wc -c) chars"
+            echo "Encrypted key_material length: $(echo -n "$encrypted_key_material" | wc -c) chars"
             ((PASSED++))
         else
             echo -e "${RED}✗ FAIL - Receiver could not retrieve secret${NC}"
@@ -1100,17 +1191,21 @@ if [[ -n "$JWT_TOKEN" ]]; then
 
         echo "Sender retrieve response: ${sender_retrieve_response:0:200}..."
 
-        # Check if retrieval was successful
-        sender_secret_text=""
+        # Check if retrieval was successful (E2EE - backend returns encrypted data)
+        sender_encrypted_secret=""
+        sender_encrypted_key_material=""
         if is_signed_response "$sender_retrieve_response"; then
-            sender_secret_text=$(extract_field_from_payload "$sender_retrieve_response" "secret_text")
+            sender_encrypted_secret=$(extract_field_from_payload "$sender_retrieve_response" "encrypted_secret")
+            sender_encrypted_key_material=$(extract_field_from_payload "$sender_retrieve_response" "encrypted_key_material")
         else
-            sender_secret_text=$(echo "$sender_retrieve_response" | jq -r '.secret_text' 2>/dev/null)
+            sender_encrypted_secret=$(echo "$sender_retrieve_response" | jq -r '.encrypted_secret' 2>/dev/null)
+            sender_encrypted_key_material=$(echo "$sender_retrieve_response" | jq -r '.encrypted_key_material' 2>/dev/null)
         fi
 
-        if [[ -n "$sender_secret_text" && "$sender_secret_text" != "null" ]]; then
-            echo -e "${GREEN}✓ PASS - Sender retrieved secret successfully (unlimited reads)${NC}"
-            echo "Secret text: ${sender_secret_text:0:50}..."
+        if [[ -n "$sender_encrypted_secret" && "$sender_encrypted_secret" != "null" && -n "$sender_encrypted_key_material" && "$sender_encrypted_key_material" != "null" ]]; then
+            echo -e "${GREEN}✓ PASS - Sender retrieved encrypted secret successfully (E2EE, unlimited reads)${NC}"
+            echo "Encrypted secret length: $(echo -n "$sender_encrypted_secret" | wc -c) chars"
+            echo "Encrypted key_material length: $(echo -n "$sender_encrypted_key_material" | wc -c) chars"
             ((PASSED++))
         else
             echo -e "${RED}✗ FAIL - Sender could not retrieve secret${NC}"
@@ -1168,8 +1263,10 @@ if [[ -n "$JWT_TOKEN" ]]; then
         # Temporarily swap keypair for receiver signing
         mv .test-magiclink-pubkey .test-magiclink-pubkey-sender
         mv .test-ed25519-private-key .test-ed25519-private-key-sender
+        mv .test-x25519-private-key .test-x25519-private-key-sender
         mv .test-receiver-pubkey .test-magiclink-pubkey
-        mv .test-receiver-private-key .test-ed25519-private-key
+        mv .test-receiver-ed25519-private-key .test-ed25519-private-key
+        mv .test-receiver-x25519-private-key .test-x25519-private-key
 
         # Try to access sender URL with receiver JWT
         cross_url=$(generate_signed_url "$BASE_URL/api/shared-secret/${sender_hash}")
@@ -1184,9 +1281,11 @@ if [[ -n "$JWT_TOKEN" ]]; then
 
         # Restore sender keypair
         mv .test-magiclink-pubkey .test-receiver-pubkey
-        mv .test-ed25519-private-key .test-receiver-private-key
+        mv .test-ed25519-private-key .test-receiver-ed25519-private-key
+        mv .test-x25519-private-key .test-receiver-x25519-private-key
         mv .test-magiclink-pubkey-sender .test-magiclink-pubkey
         mv .test-ed25519-private-key-sender .test-ed25519-private-key
+        mv .test-x25519-private-key-sender .test-x25519-private-key
 
         echo "Cross-access HTTP status: $cross_status"
         echo "Cross-access error body: $cross_body"
@@ -1221,8 +1320,10 @@ if [[ -n "$JWT_TOKEN" ]]; then
         # Temporarily swap keypair for receiver signing
         mv .test-magiclink-pubkey .test-magiclink-pubkey-sender
         mv .test-ed25519-private-key .test-ed25519-private-key-sender
+        mv .test-x25519-private-key .test-x25519-private-key-sender
         mv .test-receiver-pubkey .test-magiclink-pubkey
-        mv .test-receiver-private-key .test-ed25519-private-key
+        mv .test-receiver-ed25519-private-key .test-ed25519-private-key
+        mv .test-receiver-x25519-private-key .test-x25519-private-key
 
         # Generate signed URL for confirm-read
         confirm_url=$(generate_signed_url "$BASE_URL/api/shared-secret/confirm-read?hash=${receiver_hash}")
@@ -1234,9 +1335,11 @@ if [[ -n "$JWT_TOKEN" ]]; then
 
         # Restore sender keypair
         mv .test-magiclink-pubkey .test-receiver-pubkey
-        mv .test-ed25519-private-key .test-receiver-private-key
+        mv .test-ed25519-private-key .test-receiver-ed25519-private-key
+        mv .test-x25519-private-key .test-receiver-x25519-private-key
         mv .test-magiclink-pubkey-sender .test-magiclink-pubkey
         mv .test-ed25519-private-key-sender .test-ed25519-private-key
+        mv .test-x25519-private-key-sender .test-x25519-private-key
 
         echo "Confirm read response: ${confirm_response:0:200}..."
 
@@ -1304,8 +1407,9 @@ if [[ -n "$JWT_TOKEN" ]]; then
 
     # Cleanup receiver session files
     rm -f .test-receiver-pubkey .test-magiclink-pubkey-sender
-    rm -f .test-receiver-private-key .test-ed25519-private-key-sender
-    rm -f .test-ed25519-private-key-sender-backup
+    rm -f .test-receiver-ed25519-private-key .test-receiver-x25519-private-key
+    rm -f .test-ed25519-private-key-sender .test-x25519-private-key-sender
+    rm -f .test-ed25519-private-key-sender-backup .test-x25519-private-key-sender-backup
 
     echo -e "\n${PURPLE}=============================================${NC}"
     echo -e "${PURPLE}  ZERO KNOWLEDGE SHARED SECRETS: COMPLETE${NC}"
@@ -1342,11 +1446,13 @@ fi
 
 # Cleanup temporary files
 echo -e "\n${PURPLE}Cleaning up temporary files...${NC}"
-rm -f .test-magiclink-pubkey .test-ed25519-private-key
-rm -f .test-magiclink-pubkey-auth-backup .test-ed25519-private-key-auth-backup
+rm -f .test-magiclink-pubkey .test-ed25519-private-key .test-x25519-private-key
+rm -f .test-magiclink-pubkey-auth-backup .test-ed25519-private-key-auth-backup .test-x25519-private-key-auth-backup
 rm -f .test-receiver-pubkey .test-magiclink-pubkey-sender
-rm -f .test-receiver-private-key .test-ed25519-private-key-sender
-rm -f .test-ed25519-private-key-sender-backup
+rm -f .test-receiver-ed25519-private-key .test-receiver-x25519-private-key
+rm -f .test-ed25519-private-key-sender .test-x25519-private-key-sender
+rm -f .test-ed25519-private-key-sender-backup .test-x25519-private-key-sender-backup
+rm -f .test-server-x25519-pubkey
 echo "✓ Temporary files cleaned"
 
 # ========== EMAIL DRY-RUN DEACTIVATION ==========
