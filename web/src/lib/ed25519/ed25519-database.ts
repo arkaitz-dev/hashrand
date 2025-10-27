@@ -45,7 +45,7 @@ export async function openKeyDatabase(): Promise<IDBDatabase> {
  */
 export async function storeKeyPair(
 	keyPair: Ed25519KeyPair,
-	keyId: string = 'default'
+	_keyId: string = 'default'
 ): Promise<void> {
 	// No-op: Keypairs are now stored via keypair-storage.ts during login
 	// This function is kept for backward compatibility with existing code
@@ -59,7 +59,7 @@ export async function storeKeyPair(
  *
  * UPDATED (v1.9.0): Now retrieves from new WebCrypto storage system
  */
-export async function getKeyPair(keyId: string = 'default'): Promise<Ed25519KeyPair | null> {
+export async function getKeyPair(_keyId: string = 'default'): Promise<Ed25519KeyPair | null> {
 	// Import new storage functions
 	const { getEd25519PrivateKey, getEd25519PublicKey, getEd25519PublicKeyHex } = await import(
 		'../crypto/keypair-storage'

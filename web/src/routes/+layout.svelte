@@ -305,7 +305,8 @@
 					next: loginResponse.next
 				});
 				try {
-					// Wait for BOTH crypto tokens AND access token to be available before navigating
+					// Wait for crypto tokens, access token, AND server X25519 public key before navigating
+					// CRITICAL: server_x25519_pub_key must be available for shared-secret E2E encryption
 					let tokensReady = false;
 					let attempts = 0;
 					const maxAttempts = 50; // 5 seconds max wait
@@ -316,22 +317,43 @@
 						const hmacKey = authStore.getHmacKey();
 						const accessToken = authStore.getAccessToken();
 
-						if (cipherToken && nonceToken && hmacKey && accessToken) {
+						// Check server X25519 public key availability (E2E encryption)
+						const { getServerX25519PubKey } = await import('$lib/session');
+						const serverX25519Key = await getServerX25519PubKey();
+
+						if (cipherToken && nonceToken && hmacKey && accessToken && serverX25519Key) {
 							tokensReady = true;
+							logger.debug('[+layout] All tokens ready (including server_x25519_pub_key)', {
+								serverX25519KeyLength: serverX25519Key.length
+							});
 						} else {
+							if (attempts === 0 || attempts % 10 === 0) {
+								// Log every 10 attempts (1 second) to avoid spam
+								logger.debug('[+layout] Waiting for tokens/keys...', {
+									hasCipher: !!cipherToken,
+									hasNonce: !!nonceToken,
+									hasHmac: !!hmacKey,
+									hasAccessToken: !!accessToken,
+									hasServerX25519Key: !!serverX25519Key,
+									attempt: attempts
+								});
+							}
 							await new Promise((resolve) => setTimeout(resolve, 100));
 							attempts++;
 						}
 					}
 
 					if (!tokensReady) {
-						logger.warn('[+layout] Tokens not ready after waiting', {
+						const { getServerX25519PubKey } = await import('$lib/session');
+						const serverX25519Key = await getServerX25519PubKey();
+						logger.warn('[+layout] Tokens/keys not ready after waiting', {
 							hasCipher: !!authStore.getCipherToken(),
 							hasNonce: !!authStore.getNonceToken(),
 							hasHmac: !!authStore.getHmacKey(),
-							hasAccessToken: !!authStore.getAccessToken()
+							hasAccessToken: !!authStore.getAccessToken(),
+							hasServerX25519Key: !!serverX25519Key
 						});
-						// Proceed anyway - components should handle missing tokens
+						// Proceed anyway - components should handle missing tokens/keys
 					}
 
 					// Parse next parameter JSON and create navigation URL

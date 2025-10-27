@@ -188,16 +188,31 @@
 		isLoadingEmail = false;
 
 		// Step 3: Get backend X25519 public key from session (stored during login/refresh)
+		logger.info('[SharedSecret] 🔑 Attempting to load backend X25519 public key from IndexedDB...');
 		try {
 			backendPublicKey = await getServerX25519PubKey();
+			logger.info('[SharedSecret] 🔑 Backend X25519 public key retrieval result:', {
+				exists: !!backendPublicKey,
+				length: backendPublicKey?.length,
+				firstChars: backendPublicKey?.substring(0, 16),
+				isValidHex: backendPublicKey ? /^[0-9a-f]{64}$/i.test(backendPublicKey) : false
+			});
 			if (backendPublicKey) {
-				logger.debug('[SharedSecret] Backend X25519 public key loaded from session');
+				logger.info('[SharedSecret] ✅ Backend X25519 public key loaded from session successfully');
 			} else {
-				logger.warn('[SharedSecret] Backend X25519 public key not found in session');
+				logger.error(
+					'[SharedSecret] ❌ Backend X25519 public key NOT found in session - E2E encryption will fail'
+				);
+				logger.error(
+					'[SharedSecret] 💡 This means either: (1) key was never stored during login, (2) IndexedDB was cleared, (3) storage permissions issue'
+				);
 				flashMessagesStore.addMessage($_('sharedSecret.failedToFetchBackendKey'));
 			}
 		} catch (error) {
-			logger.error('[SharedSecret] Failed to get backend public key from session:', error);
+			logger.error(
+				'[SharedSecret] ❌ Exception while getting backend public key from session:',
+				error
+			);
 			flashMessagesStore.addMessage($_('sharedSecret.failedToFetchBackendKey'));
 			// Continue anyway - error will be shown on submit
 		}
@@ -259,35 +274,67 @@
 		event.preventDefault();
 		logger.info('[Form] Submitting shared secret creation form');
 
+		// 🐛 DEBUG: Log validation state for mobile debugging
+		logger.info('[Form] Validation state:', {
+			formValid,
+			senderEmail: !!senderEmail,
+			receiverEmail: !!receiverEmail,
+			secretText_length: secretText.length,
+			expiresHours,
+			maxReads,
+			receiverEmailError,
+			secretTextError,
+			expiresError,
+			readsError
+		});
+
 		if (!formValid) {
+			logger.warn('[Form] Form validation failed - showing error message');
 			flashMessagesStore.addMessage($_('common.formInvalid'));
 			return;
 		}
+
+		logger.info('[Form] Form validation passed, checking session...');
 
 		// Check session expiration before creation
 		// If expired, performs automatic logout (redirect + cleanup + flash)
 		const sessionValid = await checkSessionOrAutoLogout();
 
 		if (!sessionValid) {
+			logger.warn('[Form] Session validation failed - auto-logout performed');
 			// Session expired, auto-logout already performed
 			return;
 		}
+
+		logger.info('[Form] Session valid, extracting ui_host...');
 
 		// Extract ui_host (same logic as magic link)
 		const { extractDomain } = await import('$lib/utils/domain-extractor');
 		const ui_host = extractDomain();
 
+		logger.info('[Form] ui_host extracted:', { ui_host });
+
 		if (!ui_host) {
+			logger.warn('[Form] ui_host extraction failed - showing error message');
 			flashMessagesStore.addMessage('UI host is required for URL generation');
 			return;
 		}
 
+		logger.info('[Form] Checking backend public key availability...');
+		logger.info('[Form] backendPublicKey state:', {
+			exists: !!backendPublicKey,
+			length: backendPublicKey?.length,
+			firstChars: backendPublicKey?.substring(0, 16)
+		});
+
 		// Check if backend public key is available
 		if (!backendPublicKey) {
+			logger.warn('[Form] Backend public key not available - showing error message');
 			flashMessagesStore.addMessage($_('sharedSecret.backendKeyNotAvailable'));
 			return;
 		}
 
+		logger.info('[Form] All validations passed, starting encryption...');
 		isCreating = true;
 
 		try {

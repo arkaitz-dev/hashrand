@@ -209,15 +209,18 @@ export async function importX25519PublicKey(publicKeyHex: string): Promise<Crypt
 		// FIX: X25519 requires just the algorithm name string, NOT {name:'ECDH', namedCurve}
 		// namedCurve is only for traditional ECDH curves (P-256, P-384, P-521)
 		// X25519 is a specific algorithm identifier in WebCrypto
-		return await crypto.subtle.importKey(
+		const importedKey = await crypto.subtle.importKey(
 			'raw',
 			cleanBuffer, // ✅ Clean ArrayBuffer (exact 32 bytes, no offset)
 			'X25519', // ✅ Correct: just the algorithm name (NOT {name:'ECDH', namedCurve:'X25519'})
 			true, // extractable
 			[]
 		);
+
+		logger.info('[importX25519PublicKey] ✅ X25519 public key imported successfully');
+		return importedKey;
 	} catch (error) {
-		logger.error('[importX25519PublicKey] WebCrypto import failed:', {
+		logger.error('[importX25519PublicKey] ❌ WebCrypto import failed:', {
 			error: error instanceof Error ? error.message : String(error),
 			errorName: error instanceof Error ? error.name : typeof error,
 			publicKeyHex,

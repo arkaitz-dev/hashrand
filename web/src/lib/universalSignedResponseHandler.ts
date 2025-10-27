@@ -71,9 +71,18 @@ export async function handleSignedResponseStrict<T>(
 		// Extract and store server X25519 public key for E2E encryption (if present)
 		// This key is ALWAYS included in login/refresh responses (unlike server_pub_key which is only in rotation)
 		const serverX25519PubKey = extractServerX25519PubKey(responseData);
+		logger.info('🔑 Extracted server_x25519_pub_key from response:', {
+			exists: !!serverX25519PubKey,
+			length: serverX25519PubKey?.length,
+			firstChars: serverX25519PubKey?.substring(0, 16),
+			isValidHex: serverX25519PubKey ? /^[0-9a-f]{64}$/i.test(serverX25519PubKey) : false
+		});
 		if (serverX25519PubKey) {
-			logger.debug('📦 Storing server X25519 public key for E2E encryption');
+			logger.info('📦 Storing server X25519 public key in IndexedDB for E2E encryption');
 			await sessionManager.setServerX25519PubKey(serverX25519PubKey);
+			logger.info('✅ Server X25519 public key stored successfully');
+		} else {
+			logger.warn('⚠️ No server_x25519_pub_key found in response - E2E encryption will fail');
 		}
 
 		return validatedPayload;
