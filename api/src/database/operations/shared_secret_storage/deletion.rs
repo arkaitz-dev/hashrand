@@ -1,6 +1,6 @@
-///! Deletion operations for shared secrets
-///!
-///! Handles deleting shared secret entries from the database.
+//! Deletion operations for shared secrets
+//!
+//! Handles deleting shared secret entries from the database.
 
 use super::super::shared_secret_types::constants::*;
 use super::retrieval::{retrieve_secret, retrieve_secret_old};

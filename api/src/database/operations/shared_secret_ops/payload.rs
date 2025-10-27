@@ -1,6 +1,6 @@
-///! Payload serialization/deserialization for shared secrets
-///!
-///! Handles binary payload format parsing.
+//! Payload serialization/deserialization for shared secrets
+//!
+//! Handles binary payload format parsing.
 
 use super::super::shared_secret_types::{SharedSecretPayload, constants::*};
 use spin_sdk::sqlite::Error as SqliteError;
@@ -29,9 +29,8 @@ pub fn deserialize_payload(payload: &[u8]) -> Result<SharedSecretPayload, Sqlite
             "Payload too short for sender_email".to_string(),
         ));
     }
-    let sender_email =
-        String::from_utf8(payload[offset..offset + sender_email_len].to_vec())
-            .map_err(|_| SqliteError::Io("Invalid UTF-8 in sender_email".to_string()))?;
+    let sender_email = String::from_utf8(payload[offset..offset + sender_email_len].to_vec())
+        .map_err(|_| SqliteError::Io("Invalid UTF-8 in sender_email".to_string()))?;
     offset += sender_email_len;
 
     // Read receiver_email
@@ -40,8 +39,7 @@ pub fn deserialize_payload(payload: &[u8]) -> Result<SharedSecretPayload, Sqlite
             "Payload too short for receiver_email_len".to_string(),
         ));
     }
-    let receiver_email_len =
-        u16::from_be_bytes([payload[offset], payload[offset + 1]]) as usize;
+    let receiver_email_len = u16::from_be_bytes([payload[offset], payload[offset + 1]]) as usize;
     offset += 2;
 
     if payload.len() < offset + receiver_email_len {

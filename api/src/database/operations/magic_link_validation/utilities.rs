@@ -13,8 +13,11 @@ pub fn copy_to_array<const N: usize>(dest: &mut [u8; N], src: &[u8]) {
 /// * `field_name` - Name of the field for debugging
 ///
 /// # Returns
-/// * `Result<String, ValidationResult>` - Extracted string or validation error
-pub fn extract_utf8_string(bytes: &[u8], field_name: &str) -> Result<String, ValidationResult> {
+/// * `Result<String, Box<ValidationResult>>` - Extracted string or validation error
+pub fn extract_utf8_string(
+    bytes: &[u8],
+    field_name: &str,
+) -> Result<String, Box<ValidationResult>> {
     match std::str::from_utf8(bytes) {
         Ok(s) => {
             debug!("🔍 DEBUG EXTRACT: Extracted {}: '{}'", field_name, s);
@@ -22,7 +25,7 @@ pub fn extract_utf8_string(bytes: &[u8], field_name: &str) -> Result<String, Val
         }
         Err(_) => {
             error!("❌ Database: Invalid UTF-8 in {} bytes", field_name);
-            Err(create_validation_error())
+            Err(Box::new(create_validation_error()))
         }
     }
 }

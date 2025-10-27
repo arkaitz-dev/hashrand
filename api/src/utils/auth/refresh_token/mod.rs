@@ -2,9 +2,9 @@
 //!
 //! Handles token refresh with optional Ed25519 key rotation using 2/3 threshold system
 
-mod threshold;
 mod period_1_3;
 mod period_2_3;
+mod threshold;
 mod utilities;
 mod validation;
 

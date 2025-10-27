@@ -26,7 +26,8 @@ pub fn create_custom_refresh_token(
     x25519_pub_key: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), String> {
     let token = generate_custom_token(email, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
-    let claims = CustomTokenClaims::new(email, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
+    let claims =
+        CustomTokenClaims::new(email, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
     Ok((token, claims.expires_at))
 }
 
@@ -67,7 +68,12 @@ pub fn create_custom_refresh_token_from_username(
     let user_id = username_to_user_id(username)?;
 
     // Create claims with proper user_id, Ed25519 and X25519 public keys
-    let claims = CustomTokenClaims::new_from_user_id(&user_id, TokenType::Refresh, ed25519_pub_key, x25519_pub_key)?;
+    let claims = CustomTokenClaims::new_from_user_id(
+        &user_id,
+        TokenType::Refresh,
+        ed25519_pub_key,
+        x25519_pub_key,
+    )?;
 
     // Generate token using DRY utility
     let config = CustomTokenConfig::refresh_token()?;

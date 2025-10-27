@@ -44,10 +44,12 @@ pub fn generate_jwt_tokens(
     let _ = MagicLinkOperations::ensure_user_exists(user_id_bytes);
 
     // Generate access token with both Ed25519 and X25519 public keys
-    let (access_token, _access_expires) = create_access_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
+    let (access_token, _access_expires) =
+        create_access_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
 
     // Generate refresh token with both public keys for /api/refresh signature validation
-    let refresh_token = create_refresh_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
+    let refresh_token =
+        create_refresh_token(&username, ed25519_pub_key_bytes, x25519_pub_key_bytes)?;
 
     debug!("✅ JWT tokens generated successfully for user {}", username);
 
@@ -64,7 +66,11 @@ fn create_access_token(
     ed25519_pub_key_bytes: &[u8; 32],
     x25519_pub_key_bytes: &[u8; 32],
 ) -> Result<(String, DateTime<Utc>), Response> {
-    match JwtUtils::create_access_token_from_username(username, ed25519_pub_key_bytes, x25519_pub_key_bytes) {
+    match JwtUtils::create_access_token_from_username(
+        username,
+        ed25519_pub_key_bytes,
+        x25519_pub_key_bytes,
+    ) {
         Ok((token, expires)) => {
             debug!("✅ Access token created successfully");
             Ok((token, expires))
@@ -77,8 +83,16 @@ fn create_access_token(
 }
 
 /// Create refresh token for session persistence with Ed25519 and X25519 public keys
-fn create_refresh_token(username: &str, ed25519_pub_key_bytes: &[u8; 32], x25519_pub_key_bytes: &[u8; 32]) -> Result<String, Response> {
-    match JwtUtils::create_refresh_token_from_username(username, ed25519_pub_key_bytes, x25519_pub_key_bytes) {
+fn create_refresh_token(
+    username: &str,
+    ed25519_pub_key_bytes: &[u8; 32],
+    x25519_pub_key_bytes: &[u8; 32],
+) -> Result<String, Response> {
+    match JwtUtils::create_refresh_token_from_username(
+        username,
+        ed25519_pub_key_bytes,
+        x25519_pub_key_bytes,
+    ) {
         Ok((token, _expires)) => {
             debug!("✅ Refresh token created successfully");
             Ok(token)

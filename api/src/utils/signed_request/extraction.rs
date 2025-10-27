@@ -54,13 +54,22 @@ pub fn extract_pub_key_from_magiclink(payload: &Value) -> Result<String, SignedR
         })?;
 
     // Validate magiclink and extract Ed25519 pub_key from database
-    let (_is_valid, _next_param, _user_id, ed25519_pub_key_bytes, _x25519_pub_key_bytes, _ui_host, _privkey_context) =
-        MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
-            SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
-        })?;
+    let (
+        _is_valid,
+        _next_param,
+        _user_id,
+        ed25519_pub_key_bytes,
+        _x25519_pub_key_bytes,
+        _ui_host,
+        _privkey_context,
+    ) = MagicLinkOperations::validate_and_consume_magic_link_encrypted(magiclink).map_err(|e| {
+        SignedRequestError::InvalidSignature(format!("Magiclink validation failed: {}", e))
+    })?;
 
     let ed25519_pub_key_array = ed25519_pub_key_bytes.ok_or_else(|| {
-        SignedRequestError::MissingPublicKey("No Ed25519 pub_key found in magiclink data".to_string())
+        SignedRequestError::MissingPublicKey(
+            "No Ed25519 pub_key found in magiclink data".to_string(),
+        )
     })?;
 
     Ok(hex::encode(ed25519_pub_key_array))

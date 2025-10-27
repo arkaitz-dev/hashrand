@@ -9,7 +9,7 @@ mod retrieval;
 mod storage;
 mod tracking;
 
-use super::shared_secret_types::{constants::*, SecretRole};
+use super::shared_secret_types::{SecretRole, constants::*};
 use spin_sdk::sqlite::Error as SqliteError;
 
 // Re-export type aliases
@@ -201,7 +201,12 @@ impl SharedSecretStorage {
         expires_at: i64,
         encrypted_payload: &[u8],
     ) -> Result<(), SqliteError> {
-        tracking::store_tracking_with_payload(reference_hash, pending_reads, expires_at, encrypted_payload)
+        tracking::store_tracking_with_payload(
+            reference_hash,
+            pending_reads,
+            expires_at,
+            encrypted_payload,
+        )
     }
 
     /// Retrieve encrypted payload from tracking table (v3 - NEW)

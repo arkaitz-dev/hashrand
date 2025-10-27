@@ -62,11 +62,13 @@ export async function generateKeypairs(): Promise<KeypairResult> {
 		// Generate X25519 keypair (for ECDH)
 		// FIX: X25519 requires algorithm name string 'X25519', NOT {name:'ECDH', namedCurve}
 		// Must match format used in importKey() and deriveBits() for compatibility
+		/* eslint-disable no-undef */
 		const x25519Keypair = (await crypto.subtle.generateKey(
 			'X25519', // ✅ String format (matches importKey and deriveBits)
 			false, // privateKey non-extractable
 			['deriveKey', 'deriveBits']
 		)) as CryptoKeyPair;
+		/* eslint-enable no-undef */
 
 		// Extract public keys as raw bytes
 		const ed25519PublicBytes = await crypto.subtle.exportKey('raw', ed25519Keypair.publicKey);
@@ -102,6 +104,7 @@ export async function generateKeypairs(): Promise<KeypairResult> {
 		};
 	} catch (error) {
 		// Check for specific browser support errors
+		// eslint-disable-next-line no-undef
 		if (error instanceof DOMException && error.name === 'NotSupportedError') {
 			throw new Error(
 				'Ed25519/X25519 not supported in this browser. Please update to Chrome 111+, Firefox 119+, or Safari 16.4+'
@@ -148,9 +151,7 @@ export function hexToBytes(hex: string): Uint8Array {
  */
 export async function importEd25519PublicKey(publicKeyHex: string): Promise<CryptoKey> {
 	if (publicKeyHex.length !== 64) {
-		throw new Error(
-			`Invalid Ed25519 public key hex length: ${publicKeyHex.length} (expected 64)`
-		);
+		throw new Error(`Invalid Ed25519 public key hex length: ${publicKeyHex.length} (expected 64)`);
 	}
 
 	const publicKeyBytes = hexToBytes(publicKeyHex);

@@ -17,7 +17,8 @@ use crate::utils::{
     create_auth_error_response, create_client_error_response, create_forbidden_response,
     create_server_error_response, create_signed_endpoint_response,
     crypto::{encrypt_with_ecdh, get_backend_x25519_private_key},
-    endpoint_helpers::extract_query_params, extract_crypto_material_from_request,
+    endpoint_helpers::extract_query_params,
+    extract_crypto_material_from_request,
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde::{Deserialize, Serialize};
@@ -339,8 +340,15 @@ fn retrieve_and_respond(
 
     // 2. Get backend's per-user X25519 private key
     // CRITICAL: Use requester's X25519 pub_key (not Ed25519!) for per-user derivation
-    let backend_x25519_private = get_backend_x25519_private_key(user_id_from_jwt, requester_public_key_hex)
-        .map_err(|e| format!("Failed to derive backend X25519 private key (per-user): {}", e))?;
+    let backend_x25519_private =
+        get_backend_x25519_private_key(user_id_from_jwt, requester_public_key_hex).map_err(
+            |e| {
+                format!(
+                    "Failed to derive backend X25519 private key (per-user): {}",
+                    e
+                )
+            },
+        )?;
 
     // 3. Encrypt key_material with ECDH using X25519 keys
     let encrypted_key_material = encrypt_with_ecdh(

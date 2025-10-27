@@ -62,7 +62,10 @@ export async function publishPermanentKeys(
 		logger.debug('[key-rotation] 📨 Sending POST request to /api/keys/rotate with payload');
 		const response = await httpAuthenticatedSignedPOSTRequest('/api/keys/rotate', payload);
 
-		logger.debug('[key-rotation] ✅ Permanent public keys published successfully, response:', response);
+		logger.debug(
+			'[key-rotation] ✅ Permanent public keys published successfully, response:',
+			response
+		);
 	} catch (publishError) {
 		logger.error('[key-rotation] ❌ Failed to publish permanent keys:', publishError);
 		logger.error('[key-rotation] Error details:', {

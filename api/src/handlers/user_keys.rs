@@ -12,8 +12,8 @@ use crate::utils::protected_endpoint::ProtectedEndpointMiddleware;
 use crate::utils::signed_request::SignedRequestValidator;
 use crate::utils::signed_response::SignedResponseGenerator;
 use crate::utils::{
-    create_auth_error_response, create_client_error_response, extract_crypto_material_from_request,
-    ProtectedEndpointResult,
+    ProtectedEndpointResult, create_auth_error_response, create_client_error_response,
+    extract_crypto_material_from_request,
 };
 use serde::{Deserialize, Serialize};
 use spin_sdk::http::{Method, Request, Response};
@@ -85,19 +85,28 @@ async fn handle_keys_rotate(req: Request) -> anyhow::Result<Response> {
         )
     })?;
 
-    debug!("🔐 Payload validated, ed25519_pub={}..., x25519_pub={}...",
-           &result.payload.ed25519_pub[..16], &result.payload.x25519_pub[..16]);
+    debug!(
+        "🔐 Payload validated, ed25519_pub={}..., x25519_pub={}...",
+        &result.payload.ed25519_pub[..16],
+        &result.payload.x25519_pub[..16]
+    );
 
     // Validate hex lengths
     if result.payload.ed25519_pub.len() != 64 {
-        error!("❌ Invalid ed25519_pub length: {}", result.payload.ed25519_pub.len());
+        error!(
+            "❌ Invalid ed25519_pub length: {}",
+            result.payload.ed25519_pub.len()
+        );
         return Ok(create_client_error_response(&format!(
             "Invalid ed25519_pub length: expected 64 hex chars, got {}",
             result.payload.ed25519_pub.len()
         )));
     }
     if result.payload.x25519_pub.len() != 64 {
-        error!("❌ Invalid x25519_pub length: {}", result.payload.x25519_pub.len());
+        error!(
+            "❌ Invalid x25519_pub length: {}",
+            result.payload.x25519_pub.len()
+        );
         return Ok(create_client_error_response(&format!(
             "Invalid x25519_pub length: expected 64 hex chars, got {}",
             result.payload.x25519_pub.len()
@@ -207,9 +216,10 @@ async fn handle_user_keys_get(
     };
 
     // Validate signed query params (System A)
-    if let Err(e) =
-        SignedRequestValidator::validate_query_params(&mut query_params, &crypto_material.pub_key_hex)
-    {
+    if let Err(e) = SignedRequestValidator::validate_query_params(
+        &mut query_params,
+        &crypto_material.pub_key_hex,
+    ) {
         error!("Query param signature validation failed: {}", e);
         return Ok(create_auth_error_response(&format!(
             "Signature validation failed: {}",

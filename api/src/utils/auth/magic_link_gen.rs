@@ -11,7 +11,7 @@ use super::magic_link_request_validation::MagicLinkRequestValidation;
 use super::magic_link_response_builder::MagicLinkResponseBuilder;
 use super::magic_link_token_gen::MagicLinkTokenGeneration;
 use super::types::{ErrorResponse, MagicLinkPayload, MagicLinkSignedRequest};
-use crate::database::operations::MagicLinkOperations;
+use crate::database::operations::{MagicLinkOperations, MagicLinkStorageParams};
 use crate::utils::SignedRequestValidator;
 use crate::utils::jwt::crypto::derive_user_id;
 use crate::utils::signed_response::SignedResponseGenerator;
@@ -115,16 +115,18 @@ pub async fn generate_magic_link_signed(
         ui_host
     );
 
-    match MagicLinkOperations::store_magic_link_encrypted(
-        &token_result.magic_token,
-        &token_result.encryption_blob,
-        token_result.expires_at_nanos,
-        &payload.next,
-        &payload.ed25519_pub_key,
-        &payload.x25519_pub_key,
+    let storage_params = MagicLinkStorageParams {
+        encrypted_token: &token_result.magic_token,
+        encryption_blob: &token_result.encryption_blob,
+        expires_at_nanos: token_result.expires_at_nanos,
+        next_param: &payload.next,
+        ed25519_pub_key: &payload.ed25519_pub_key,
+        x25519_pub_key: &payload.x25519_pub_key,
         ui_host,
-        &token_result.db_index,
-    ) {
+        db_index: &token_result.db_index,
+    };
+
+    match MagicLinkOperations::store_magic_link_encrypted(&storage_params) {
         Ok(_) => {
             // Send email with fallback to console logging
             let _ = MagicLinkEmailDelivery::send_with_fallback(

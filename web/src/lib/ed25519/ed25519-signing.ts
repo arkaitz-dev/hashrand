@@ -5,8 +5,8 @@
  * Part of ed25519.ts refactorization to apply SOLID principles
  */
 
-import { ed25519 } from '@noble/curves/ed25519';
-import { hexToBytes } from '@noble/hashes/utils';
+import { ed25519 } from '@noble/curves/ed25519.js';
+import { hexToBytes } from '@noble/hashes/utils.js';
 import { signatureBytesToBase58 } from './ed25519-core';
 import type { Ed25519KeyPair } from './ed25519-types';
 

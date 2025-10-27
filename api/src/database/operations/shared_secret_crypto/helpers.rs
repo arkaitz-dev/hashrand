@@ -1,6 +1,6 @@
-///! Helper functions for shared secret cryptographic operations
-///!
-///! Provides utility functions for ID hashing, user ID calculation, and DB indexing.
+//! Helper functions for shared secret cryptographic operations
+//!
+//! Provides utility functions for ID hashing, user ID calculation, and DB indexing.
 
 use super::super::shared_secret_types::constants::*;
 use spin_sdk::sqlite::Error as SqliteError;

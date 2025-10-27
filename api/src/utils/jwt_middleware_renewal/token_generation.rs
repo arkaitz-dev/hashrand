@@ -62,20 +62,23 @@ pub fn generate_renewed_tokens(
         };
 
     // Generate new refresh token with both Ed25519 and X25519 pub_keys from current token
-    let (new_refresh_token, _refresh_expires) =
-        match JwtUtils::create_refresh_token_from_username(username, &ed25519_pub_key, &x25519_pub_key) {
-            Ok((token, exp)) => (token, exp),
-            Err(e) => {
-                error!(
-                    "Failed to create new refresh token during proactive renewal: {}",
-                    e
-                );
-                return Err(create_auth_error_response(
-                    "Failed to renew refresh token",
-                    None,
-                ));
-            }
-        };
+    let (new_refresh_token, _refresh_expires) = match JwtUtils::create_refresh_token_from_username(
+        username,
+        &ed25519_pub_key,
+        &x25519_pub_key,
+    ) {
+        Ok((token, exp)) => (token, exp),
+        Err(e) => {
+            error!(
+                "Failed to create new refresh token during proactive renewal: {}",
+                e
+            );
+            return Err(create_auth_error_response(
+                "Failed to renew refresh token",
+                None,
+            ));
+        }
+    };
 
     let expires_in = access_expires.timestamp() - now;
 

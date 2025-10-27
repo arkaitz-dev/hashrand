@@ -10,7 +10,16 @@ use tracing::{debug, error};
 use super::types::ErrorResponse;
 use crate::utils::JwtUtils;
 
-/// Magic link token generation result
+/// Token generation components (before magic link creation)
+pub struct TokenGenerationComponents {
+    pub magic_token: String,
+    pub encryption_blob: [u8; 44],
+    pub expires_at_nanos: i64,
+    pub magic_expires_at: DateTime<Utc>,
+    pub db_index: [u8; 16],
+}
+
+/// Magic link token generation result (complete with magic link)
 pub struct TokenGenerationResult {
     pub magic_token: String,
     pub encryption_blob: [u8; 44],
@@ -31,17 +40,21 @@ impl MagicLinkTokenGeneration {
     /// * `duration_minutes` - Token expiration duration in minutes
     ///
     /// # Returns
-    /// * `Result<(String, [u8; 44], i64, DateTime<Utc>, [u8; 16]), Response>` - Token data + db_index or error response
+    /// * `Result<TokenGenerationComponents, Response>` - Token data + db_index or error response
     pub fn generate_encrypted_token(
         email: &str,
         duration_minutes: i64,
-    ) -> Result<(String, [u8; 44], i64, DateTime<Utc>, [u8; 16]), Response> {
+    ) -> Result<TokenGenerationComponents, Response> {
         let magic_expires_at = Utc::now() + Duration::minutes(duration_minutes);
 
         match JwtUtils::generate_magic_token_encrypted(email, magic_expires_at) {
-            Ok((token, blob, expires_at, db_index)) => {
-                Ok((token, blob, expires_at, magic_expires_at, db_index))
-            }
+            Ok((token, blob, expires_at, db_index)) => Ok(TokenGenerationComponents {
+                magic_token: token,
+                encryption_blob: blob,
+                expires_at_nanos: expires_at,
+                magic_expires_at,
+                db_index,
+            }),
             Err(e) => Err(Response::builder()
                 .status(500)
                 .header("content-type", "application/json")
@@ -122,22 +135,21 @@ impl MagicLinkTokenGeneration {
         duration_minutes: i64,
     ) -> Result<TokenGenerationResult, Response> {
         // Generate encrypted magic token + db_index
-        let (magic_token, encryption_blob, expires_at_nanos, magic_expires_at, db_index) =
-            Self::generate_encrypted_token(email, duration_minutes)?;
+        let components = Self::generate_encrypted_token(email, duration_minutes)?;
 
         // Determine host URL - REQUIRED, returns error if ui_host is None
         let host_url = Self::determine_host_url(ui_host)?;
 
         // Create magic link URL
-        let magic_link = Self::create_magic_link_url(&host_url, &magic_token);
+        let magic_link = Self::create_magic_link_url(&host_url, &components.magic_token);
 
         Ok(TokenGenerationResult {
-            magic_token,
-            encryption_blob,
-            expires_at_nanos,
-            magic_expires_at,
+            magic_token: components.magic_token,
+            encryption_blob: components.encryption_blob,
+            expires_at_nanos: components.expires_at_nanos,
+            magic_expires_at: components.magic_expires_at,
             magic_link,
-            db_index,
+            db_index: components.db_index,
         })
     }
 }

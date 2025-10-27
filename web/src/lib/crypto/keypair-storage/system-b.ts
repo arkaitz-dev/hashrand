@@ -103,7 +103,10 @@ export async function storeDerivedUserKeys(derivedKeys: {
 
 		transaction.onerror = () => {
 			db.close();
-			logger.error('[storeDerivedUserKeys] ❌ Failed to store derived user keys:', transaction.error);
+			logger.error(
+				'[storeDerivedUserKeys] ❌ Failed to store derived user keys:',
+				transaction.error
+			);
 			reject(new Error(`Failed to store derived user keys: ${transaction.error?.message}`));
 		};
 	});
@@ -239,7 +242,9 @@ export async function getDerivedPublicKeyHexStrings(): Promise<{
 		transaction.onerror = () => {
 			db.close();
 			reject(
-				new Error(`Failed to retrieve derived public key hex strings: ${transaction.error?.message}`)
+				new Error(
+					`Failed to retrieve derived public key hex strings: ${transaction.error?.message}`
+				)
 			);
 		};
 	});

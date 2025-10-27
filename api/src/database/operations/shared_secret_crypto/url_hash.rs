@@ -1,9 +1,9 @@
-///! URL hash operations for Zero Knowledge shared secret system
-///!
-///! Handles checksum generation, hash encryption/decryption, and validation.
+//! URL hash operations for Zero Knowledge shared secret system
+//!
+//! Handles checksum generation, hash encryption/decryption, and validation.
 
-use super::super::shared_secret_types::constants::*;
 use super::super::shared_secret_types::SecretRole;
+use super::super::shared_secret_types::constants::*;
 use spin_sdk::sqlite::Error as SqliteError;
 use tracing::debug;
 
@@ -21,11 +21,8 @@ fn derive_url_cipher_and_nonce() -> Result<([u8; 32], [u8; 12]), SqliteError> {
         .map_err(|e| SqliteError::Io(format!("Failed to get URL cipher key: {}", e)))?;
 
     // Derive cipher key (32 bytes) + nonce (12 bytes) using Blake3 KDF
-    let derived = crate::utils::pseudonimizer::blake3_keyed_variable(
-        &url_cipher_key,
-        b"URL_CIPHER_V1",
-        44,
-    );
+    let derived =
+        crate::utils::pseudonimizer::blake3_keyed_variable(&url_cipher_key, b"URL_CIPHER_V1", 44);
 
     let cipher_key: [u8; 32] = derived[0..32]
         .try_into()
@@ -182,7 +179,14 @@ pub fn decrypt_url_hash(encrypted_hash: &[u8; 40]) -> Result<[u8; 40], SqliteErr
 /// * `Result<([u8; 16], [u8; 16], SecretRole), SqliteError>` - (reference_hash, user_id, role) or error
 pub fn validate_and_extract_hash(
     hash_40: &[u8; 40],
-) -> Result<([u8; REFERENCE_HASH_LENGTH], [u8; USER_ID_LENGTH], SecretRole), SqliteError> {
+) -> Result<
+    (
+        [u8; REFERENCE_HASH_LENGTH],
+        [u8; USER_ID_LENGTH],
+        SecretRole,
+    ),
+    SqliteError,
+> {
     use crate::utils::jwt::config::get_shared_secret_checksum_key;
 
     // Extract components

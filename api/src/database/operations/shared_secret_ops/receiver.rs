@@ -1,6 +1,6 @@
-///! Receiver operations for shared secrets
-///!
-///! Handles shared secret retrieval and validation (receiver operations).
+//! Receiver operations for shared secrets
+//!
+//! Handles shared secret retrieval and validation (receiver operations).
 
 use super::super::shared_secret_crypto::SharedSecretCrypto;
 use super::super::shared_secret_storage::SharedSecretStorage;
@@ -59,9 +59,8 @@ pub fn read_secret(
     // 4. RETRIEVE ENCRYPTED_PAYLOAD from tracking
     // ============================================================================
     let encrypted_payload_tracking =
-        SharedSecretStorage::retrieve_tracking_payload(reference_hash)?.ok_or_else(|| {
-            SqliteError::Io("Payload not found in tracking table".to_string())
-        })?;
+        SharedSecretStorage::retrieve_tracking_payload(reference_hash)?
+            .ok_or_else(|| SqliteError::Io("Payload not found in tracking table".to_string()))?;
 
     // ============================================================================
     // 5. DECRYPT PAYLOAD (Layer 2: ChaCha20-Poly1305)
@@ -79,10 +78,11 @@ pub fn read_secret(
     // ============================================================================
     // 7. VALIDATION: reference_hash must match payload
     // ============================================================================
-    let reference_hash_from_payload: [u8; REFERENCE_HASH_LENGTH] =
-        payload.reference_hash.as_slice().try_into().map_err(|_| {
-            SqliteError::Io("Invalid reference_hash length in payload".to_string())
-        })?;
+    let reference_hash_from_payload: [u8; REFERENCE_HASH_LENGTH] = payload
+        .reference_hash
+        .as_slice()
+        .try_into()
+        .map_err(|_| SqliteError::Io("Invalid reference_hash length in payload".to_string()))?;
 
     // Debug assertion - detects bugs in derivation logic
     debug_assert_eq!(

@@ -1,9 +1,9 @@
-///! Payload encryption/decryption using random key material
-///!
-///! Uses ChaCha20-Poly1305 AEAD with nonce and cipher_key extracted from key_material.
+//! Payload encryption/decryption using random key material
+//!
+//! Uses ChaCha20-Poly1305 AEAD with nonce and cipher_key extracted from key_material.
 
 use super::super::shared_secret_types::constants::*;
-use chacha20poly1305::{aead::Aead, ChaCha20Poly1305, Key, KeyInit, Nonce};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
 use tracing::debug;
 
@@ -19,10 +19,9 @@ use tracing::debug;
 fn extract_key_material(
     key_material: &[u8; KEY_MATERIAL_LENGTH],
 ) -> Result<([u8; NONCE_LENGTH], [u8; SECRET_KEY_LENGTH]), SqliteError> {
-    let nonce_bytes: [u8; NONCE_LENGTH] =
-        key_material[0..NONCE_LENGTH].try_into().map_err(|_| {
-            SqliteError::Io("Failed to extract nonce from key_material".to_string())
-        })?;
+    let nonce_bytes: [u8; NONCE_LENGTH] = key_material[0..NONCE_LENGTH]
+        .try_into()
+        .map_err(|_| SqliteError::Io("Failed to extract nonce from key_material".to_string()))?;
 
     let cipher_key: [u8; SECRET_KEY_LENGTH] = key_material[NONCE_LENGTH..KEY_MATERIAL_LENGTH]
         .try_into()
@@ -51,8 +50,8 @@ pub fn encrypt_payload_with_material(
 ) -> Result<Vec<u8>, SqliteError> {
     let (nonce_bytes, cipher_key) = extract_key_material(key_material)?;
 
-    let nonce = Nonce::from_slice(&nonce_bytes);
-    let key = Key::from_slice(&cipher_key);
+    let nonce = &nonce_bytes.into();
+    let key = &cipher_key.into();
 
     // Encrypt with ChaCha20-Poly1305 AEAD
     let cipher = ChaCha20Poly1305::new(key);
@@ -78,8 +77,8 @@ pub fn decrypt_payload_with_material(
 ) -> Result<Vec<u8>, SqliteError> {
     let (nonce_bytes, cipher_key) = extract_key_material(key_material)?;
 
-    let nonce = Nonce::from_slice(&nonce_bytes);
-    let key = Key::from_slice(&cipher_key);
+    let nonce = &nonce_bytes.into();
+    let key = &cipher_key.into();
 
     // Decrypt with ChaCha20-Poly1305 AEAD
     let cipher = ChaCha20Poly1305::new(key);

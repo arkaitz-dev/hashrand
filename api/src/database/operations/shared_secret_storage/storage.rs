@@ -1,6 +1,6 @@
-///! Storage operations for shared secrets
-///!
-///! Handles storing shared secret entries in the database.
+//! Storage operations for shared secrets
+//!
+//! Handles storing shared secret entries in the database.
 
 use super::super::shared_secret_types::{SecretRole, constants::*};
 use crate::database::get_database_connection;

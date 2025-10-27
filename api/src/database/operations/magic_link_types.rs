@@ -52,7 +52,8 @@ pub mod constants {
     pub const DB_INDEX_LENGTH: usize = 16;
 
     /// Minimum payload length (encryption_blob + db_index + ed25519_pub_key + x25519_pub_key)
-    pub const MIN_PAYLOAD_LENGTH: usize = ENCRYPTION_BLOB_LENGTH + DB_INDEX_LENGTH + ED25519_BYTES_LENGTH + ED25519_BYTES_LENGTH; // 44 + 16 + 32 + 32 = 124 bytes
+    pub const MIN_PAYLOAD_LENGTH: usize =
+        ENCRYPTION_BLOB_LENGTH + DB_INDEX_LENGTH + ED25519_BYTES_LENGTH + ED25519_BYTES_LENGTH; // 44 + 16 + 32 + 32 = 124 bytes
 
     /// Nonce length for ChaCha20-Poly1305
     pub const NONCE_LENGTH: usize = 12;

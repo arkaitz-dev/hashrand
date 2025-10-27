@@ -25,7 +25,7 @@
  */
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { blake3 } from '@noble/hashes/blake3';
+import { blake3 } from '@noble/hashes/blake3.js';
 import { logger } from '$lib/utils/logger';
 
 // Constants matching backend
@@ -154,7 +154,9 @@ function encryptSecretText(secretText: string, keyMaterial: Uint8Array): Uint8Ar
 	logger.debug(`🔐 Encrypting secret text (length=${secretText.length})`);
 
 	if (keyMaterial.length !== KEY_MATERIAL_LENGTH) {
-		throw new Error(`Invalid key_material length: ${keyMaterial.length}, expected ${KEY_MATERIAL_LENGTH}`);
+		throw new Error(
+			`Invalid key_material length: ${keyMaterial.length}, expected ${KEY_MATERIAL_LENGTH}`
+		);
 	}
 
 	// Extract nonce and cipher_key from key_material
@@ -182,7 +184,9 @@ function decryptSecretText(encryptedSecret: Uint8Array, keyMaterial: Uint8Array)
 	logger.debug(`🔓 Decrypting secret text (ciphertext_size=${encryptedSecret.length})`);
 
 	if (keyMaterial.length !== KEY_MATERIAL_LENGTH) {
-		throw new Error(`Invalid key_material length: ${keyMaterial.length}, expected ${KEY_MATERIAL_LENGTH}`);
+		throw new Error(
+			`Invalid key_material length: ${keyMaterial.length}, expected ${KEY_MATERIAL_LENGTH}`
+		);
 	}
 
 	// Extract nonce and cipher_key from key_material

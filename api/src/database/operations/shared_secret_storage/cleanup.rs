@@ -1,6 +1,6 @@
-///! Cleanup operations for shared secrets
-///!
-///! Handles cleanup of expired records from both tables.
+//! Cleanup operations for shared secrets
+//!
+//! Handles cleanup of expired records from both tables.
 
 use crate::database::get_database_connection;
 use chrono::Utc;

@@ -137,5 +137,4 @@ impl SharedSecretOps {
     pub fn cleanup_expired() -> Result<(u32, u32), SqliteError> {
         tracking::cleanup_expired()
     }
-
 }

@@ -22,14 +22,20 @@ impl UserKeysOperations {
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
     pub fn insert_or_update_user(user_id: &[u8; 16]) -> Result<(), SqliteError> {
-        debug!("Database: insert_or_update_user called for user_id={}", hex::encode(user_id));
+        debug!(
+            "Database: insert_or_update_user called for user_id={}",
+            hex::encode(user_id)
+        );
         let connection = get_database_connection()?;
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|e| SqliteError::Io(format!("Time error: {}", e)))?
             .as_secs() as i64;
 
-        debug!("Database: Executing INSERT OR REPLACE for users table (timestamp={})", now);
+        debug!(
+            "Database: Executing INSERT OR REPLACE for users table (timestamp={})",
+            now
+        );
         // INSERT OR REPLACE updates logged_in if user exists, creates if not
         connection.execute(
             "INSERT OR REPLACE INTO users (user_id, logged_in, created_at) VALUES (?, ?, COALESCE((SELECT created_at FROM users WHERE user_id = ?), ?))",
@@ -41,7 +47,10 @@ impl UserKeysOperations {
             ],
         )?;
 
-        debug!("Database: ✅ User entry updated successfully (logged_in={})", now);
+        debug!(
+            "Database: ✅ User entry updated successfully (logged_in={})",
+            now
+        );
         Ok(())
     }
 
@@ -54,8 +63,11 @@ impl UserKeysOperations {
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
     pub fn insert_ed25519_key(user_id: &[u8; 16], pub_key_hex: &str) -> Result<(), SqliteError> {
-        debug!("Database: insert_ed25519_key called (user_id={}, pub_key={}...)",
-               hex::encode(user_id), &pub_key_hex[..16]);
+        debug!(
+            "Database: insert_ed25519_key called (user_id={}, pub_key={}...)",
+            hex::encode(user_id),
+            &pub_key_hex[..16]
+        );
 
         if pub_key_hex.len() != 64 {
             return Err(SqliteError::Io(format!(
@@ -94,8 +106,11 @@ impl UserKeysOperations {
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
     pub fn insert_x25519_key(user_id: &[u8; 16], pub_key_hex: &str) -> Result<(), SqliteError> {
-        debug!("Database: insert_x25519_key called (user_id={}, pub_key={}...)",
-               hex::encode(user_id), &pub_key_hex[..16]);
+        debug!(
+            "Database: insert_x25519_key called (user_id={}, pub_key={}...)",
+            hex::encode(user_id),
+            &pub_key_hex[..16]
+        );
 
         if pub_key_hex.len() != 64 {
             return Err(SqliteError::Io(format!(
@@ -139,8 +154,11 @@ impl UserKeysOperations {
         user_id: &[u8; 16],
         limit: usize,
     ) -> Result<(Vec<UserPublicKey>, Vec<UserPublicKey>), SqliteError> {
-        debug!("Database: get_user_keys called (user_id={}, limit={})",
-               hex::encode(user_id), limit);
+        debug!(
+            "Database: get_user_keys called (user_id={}, limit={})",
+            hex::encode(user_id),
+            limit
+        );
 
         let connection = get_database_connection()?;
 
@@ -158,15 +176,14 @@ impl UserKeysOperations {
             .rows
             .iter()
             .filter_map(|row| {
-                if row.values.len() >= 2 {
-                    if let (Value::Text(pub_key), Value::Integer(created_at)) =
+                if row.values.len() >= 2
+                    && let (Value::Text(pub_key), Value::Integer(created_at)) =
                         (&row.values[0], &row.values[1])
-                    {
-                        return Some(UserPublicKey {
-                            pub_key: pub_key.clone(),
-                            created_at: *created_at,
-                        });
-                    }
+                {
+                    return Some(UserPublicKey {
+                        pub_key: pub_key.clone(),
+                        created_at: *created_at,
+                    });
                 }
                 None
             })
@@ -188,15 +205,14 @@ impl UserKeysOperations {
             .rows
             .iter()
             .filter_map(|row| {
-                if row.values.len() >= 2 {
-                    if let (Value::Text(pub_key), Value::Integer(created_at)) =
+                if row.values.len() >= 2
+                    && let (Value::Text(pub_key), Value::Integer(created_at)) =
                         (&row.values[0], &row.values[1])
-                    {
-                        return Some(UserPublicKey {
-                            pub_key: pub_key.clone(),
-                            created_at: *created_at,
-                        });
-                    }
+                {
+                    return Some(UserPublicKey {
+                        pub_key: pub_key.clone(),
+                        created_at: *created_at,
+                    });
                 }
                 None
             })

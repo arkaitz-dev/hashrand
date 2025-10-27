@@ -1,8 +1,8 @@
-///! ECDH decryption using X25519 + ChaCha20-Poly1305
-///!
-///! Uses shared KDF logic from kdf module to derive cipher keys.
+//! ECDH decryption using X25519 + ChaCha20-Poly1305
+//!
+//! Uses shared KDF logic from kdf module to derive cipher keys.
 
-use chacha20poly1305::{aead::Aead, ChaCha20Poly1305, Key, KeyInit, Nonce};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
 use tracing::debug;
 use x25519_dalek::{PublicKey as X25519PublicKey, StaticSecret as X25519PrivateKey};
@@ -53,8 +53,8 @@ pub fn decrypt_with_ecdh(
     debug!("🔓 ECDH: Derived cipher_key[32] + nonce[12] with Blake3");
 
     // 3. Decrypt with ChaCha20-Poly1305
-    let key = Key::from_slice(&cipher_key);
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let key = &cipher_key.into();
+    let nonce = &nonce_bytes.into();
     let cipher = ChaCha20Poly1305::new(key);
 
     let plaintext = cipher

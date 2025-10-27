@@ -8,8 +8,8 @@ use tracing::{debug, warn};
 
 use super::magic_link_jwt_generator::JwtTokens;
 use crate::types::responses::JwtAuthResponse;
-use crate::utils::{CryptoMaterial, create_error_response, create_signed_endpoint_response};
 use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
+use crate::utils::{CryptoMaterial, create_error_response, create_signed_endpoint_response};
 
 /// Build successful authentication response with JWT tokens and secure cookies (SignedResponse format)
 ///
@@ -48,7 +48,12 @@ pub fn build_authentication_response(
     let ed25519_pub_key_hex = hex::encode(ed25519_pub_key_bytes);
     let x25519_pub_key_hex = hex::encode(x25519_pub_key_bytes);
     let backend_x25519_public = get_backend_x25519_public_key(user_id_bytes, &x25519_pub_key_hex)
-        .map_err(|e| anyhow::anyhow!("Failed to derive backend X25519 public key (per-user): {}", e))?;
+        .map_err(|e| {
+        anyhow::anyhow!(
+            "Failed to derive backend X25519 public key (per-user): {}",
+            e
+        )
+    })?;
     let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
 
     // Create JWT response payload with refresh cookie expiration timestamp

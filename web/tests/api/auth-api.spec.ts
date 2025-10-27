@@ -45,7 +45,9 @@ test.describe('API-Only Authentication Tests', () => {
 			throw new Error('Failed to get Ed25519 keypair from session');
 		}
 
-		console.log(`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+		console.log(
+			`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`
+		);
 
 		// Create signed request payload (DUAL-KEY FORMAT - System A)
 		// IMPORTANT: Both keys come from the same generation (System A)

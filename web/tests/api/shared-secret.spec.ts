@@ -138,9 +138,9 @@ async function authenticateTestUser(
 
 	// Use existing keypairs from files (caller should have generated them)
 	// OR generate new ones if explicitly requested (for receiver)
-	const dualKeypairs = useExistingKeypairs ?
-		JSON.parse(readFileSync('.test-dual-keypairs.json', 'utf-8')) as DualKeypairs :
-		generateDualKeypairs();
+	const dualKeypairs = useExistingKeypairs
+		? (JSON.parse(readFileSync('.test-dual-keypairs.json', 'utf-8')) as DualKeypairs)
+		: generateDualKeypairs();
 
 	const ed25519PrivateKey = readEd25519PrivateKey();
 
@@ -230,10 +230,14 @@ function verifySignedResponse(
 		throw new Error(`Invalid signedResponse: expected object, got ${typeof signedResponse}`);
 	}
 	if (!signedResponse.payload || typeof signedResponse.payload !== 'string') {
-		throw new Error(`Invalid signedResponse.payload: expected string, got ${typeof signedResponse.payload}`);
+		throw new Error(
+			`Invalid signedResponse.payload: expected string, got ${typeof signedResponse.payload}`
+		);
 	}
 	if (!signedResponse.signature || typeof signedResponse.signature !== 'string') {
-		throw new Error(`Invalid signedResponse.signature: expected string, got ${typeof signedResponse.signature}`);
+		throw new Error(
+			`Invalid signedResponse.signature: expected string, got ${typeof signedResponse.signature}`
+		);
 	}
 
 	const messageBytes = new TextEncoder().encode(signedResponse.payload);
@@ -274,7 +278,9 @@ test.describe('API-Only Shared Secret Tests', () => {
 		const senderKeypairs = generateDualKeypairs();
 		// Save public keys to JSON file for later use by authenticateTestUser
 		writeFileSync('.test-dual-keypairs.json', JSON.stringify(senderKeypairs));
-		console.log(`✅ Keypairs generated: Ed25519 ${senderKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+		console.log(
+			`✅ Keypairs generated: Ed25519 ${senderKeypairs.ed25519_pub_key.substring(0, 20)}...`
+		);
 
 		// Authenticate sender (main session) - will use the keypairs we just generated
 		const authResult = await authenticateTestUser(request, 'me@arkaitz.dev');

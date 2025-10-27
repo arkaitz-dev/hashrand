@@ -9,9 +9,9 @@ use super::utilities::{
 };
 use crate::types::responses::JwtAuthResponse;
 use crate::utils::JwtUtils;
+use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 use crate::utils::jwt::custom_token_api::create_custom_refresh_token_from_username;
 use crate::utils::signed_response::SignedResponseGenerator;
-use crate::utils::crypto::backend_keys::get_backend_x25519_public_key;
 
 /// Handle token refresh with key rotation (PERIOD 2/3)
 ///
@@ -45,30 +45,30 @@ pub fn handle_key_rotation(
     let new_x25519_pub_key_array = validate_new_pub_key(new_x25519_pub_key_hex)?;
 
     // Create access_token with NEW Ed25519 and X25519 pub_keys
-    let (access_token, _) =
-        match JwtUtils::create_access_token_from_username(username, &new_ed25519_pub_key_array, &new_x25519_pub_key_array) {
-            Ok((token, exp)) => (token, exp),
-            Err(e) => {
-                error!("❌ Refresh: Failed to create access token: {}", e);
-                return create_error_response(
-                    500,
-                    &format!("Failed to create access token: {}", e),
-                );
-            }
-        };
+    let (access_token, _) = match JwtUtils::create_access_token_from_username(
+        username,
+        &new_ed25519_pub_key_array,
+        &new_x25519_pub_key_array,
+    ) {
+        Ok((token, exp)) => (token, exp),
+        Err(e) => {
+            error!("❌ Refresh: Failed to create access token: {}", e);
+            return create_error_response(500, &format!("Failed to create access token: {}", e));
+        }
+    };
 
     // Create refresh_token with NEW Ed25519 and X25519 pub_keys
-    let (new_refresh_token, _) =
-        match create_custom_refresh_token_from_username(username, &new_ed25519_pub_key_array, &new_x25519_pub_key_array) {
-            Ok((token, exp)) => (token, exp),
-            Err(e) => {
-                error!("❌ Refresh: Failed to create refresh token: {}", e);
-                return create_error_response(
-                    500,
-                    &format!("Failed to create refresh token: {}", e),
-                );
-            }
-        };
+    let (new_refresh_token, _) = match create_custom_refresh_token_from_username(
+        username,
+        &new_ed25519_pub_key_array,
+        &new_x25519_pub_key_array,
+    ) {
+        Ok((token, exp)) => (token, exp),
+        Err(e) => {
+            error!("❌ Refresh: Failed to create refresh token: {}", e);
+            return create_error_response(500, &format!("Failed to create refresh token: {}", e));
+        }
+    };
 
     // Calculate expires_at for new refresh cookie
     let now = std::time::SystemTime::now()
@@ -88,13 +88,17 @@ pub fn handle_key_rotation(
 
     // Get backend's per-user X25519 public key for E2E encryption
     // CRITICAL: Use NEW X25519 pub_key for derivation (client is rotating to new X25519 keypair)
-    let backend_x25519_public = match get_backend_x25519_public_key(&user_id, new_x25519_pub_key_hex) {
-        Ok(key) => key,
-        Err(e) => {
-            error!("❌ Refresh: Failed to derive backend X25519 public key (per-user, NEW): {}", e);
-            return create_error_response(500, "Failed to derive backend public key");
-        }
-    };
+    let backend_x25519_public =
+        match get_backend_x25519_public_key(&user_id, new_x25519_pub_key_hex) {
+            Ok(key) => key,
+            Err(e) => {
+                error!(
+                    "❌ Refresh: Failed to derive backend X25519 public key (per-user, NEW): {}",
+                    e
+                );
+                return create_error_response(500, "Failed to derive backend public key");
+            }
+        };
     let backend_x25519_public_hex = hex::encode(backend_x25519_public.as_bytes());
 
     // Create payload with expires_at

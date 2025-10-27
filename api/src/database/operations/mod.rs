@@ -26,5 +26,5 @@ pub mod user_privkey_ops;
 pub mod user_keys_ops;
 
 // Re-export for backwards compatibility
-pub use magic_link_ops::MagicLinkOperations;
+pub use magic_link_ops::{MagicLinkOperations, MagicLinkStorageParams};
 pub use user_keys_ops::UserKeysOperations;

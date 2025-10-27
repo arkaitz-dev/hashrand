@@ -1,6 +1,6 @@
-///! Retrieval operations for shared secrets
-///!
-///! Handles retrieving shared secret entries from the database.
+//! Retrieval operations for shared secrets
+//!
+//! Handles retrieving shared secret entries from the database.
 
 use super::super::shared_secret_types::{SecretRole, constants::*};
 use crate::database::get_database_connection;

@@ -4,7 +4,7 @@
 //! Blake3 KDF and ChaCha20-Poly1305 AEAD encryption.
 
 use crate::utils::pseudonimizer::blake3_keyed_variable;
-use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
 
 /// User private key context cryptographic operations
@@ -78,8 +78,8 @@ impl UserPrivkeyCrypto {
             .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
+        let nonce = &nonce_bytes.into();
+        let key = &cipher_key.into();
 
         // Step 2: Encrypt with ChaCha20-Poly1305
         let cipher = ChaCha20Poly1305::new(key);
@@ -114,8 +114,8 @@ impl UserPrivkeyCrypto {
             .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
+        let nonce = &nonce_bytes.into();
+        let key = &cipher_key.into();
 
         // Step 2: Decrypt with ChaCha20-Poly1305
         let cipher = ChaCha20Poly1305::new(key);
@@ -152,9 +152,7 @@ impl UserPrivkeyCrypto {
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or error
-    pub fn ensure_user_privkey_context_exists(
-        db_index: &[u8; 16],
-    ) -> Result<(), SqliteError> {
+    pub fn ensure_user_privkey_context_exists(db_index: &[u8; 16]) -> Result<(), SqliteError> {
         use crate::database::get_database_connection;
         use rand::RngCore;
         use rand::SeedableRng;
@@ -197,7 +195,8 @@ impl UserPrivkeyCrypto {
         rng.fill_bytes(&mut random_64_bytes);
 
         // Encrypt random bytes
-        let encrypted_privkey = UserPrivkeyCrypto::encrypt_privkey_context(db_index, &random_64_bytes)?;
+        let encrypted_privkey =
+            UserPrivkeyCrypto::encrypt_privkey_context(db_index, &random_64_bytes)?;
 
         // Insert into database with created_year
         connection.execute(

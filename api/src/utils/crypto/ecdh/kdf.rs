@@ -1,6 +1,6 @@
-///! Key Derivation Function for ECDH encryption
-///!
-///! Derives cipher key and nonce from X25519 shared secret using Blake3 KDF.
+//! Key Derivation Function for ECDH encryption
+//!
+//! Derives cipher key and nonce from X25519 shared secret using Blake3 KDF.
 
 use blake3;
 use spin_sdk::sqlite::Error as SqliteError;
@@ -40,10 +40,10 @@ pub(super) fn derive_cipher_and_nonce(
         .try_into()
         .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
-    let nonce_bytes: [u8; NONCE_LENGTH] =
-        derived[CIPHER_KEY_LENGTH..CIPHER_KEY_LENGTH + NONCE_LENGTH]
-            .try_into()
-            .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
+    let nonce_bytes: [u8; NONCE_LENGTH] = derived
+        [CIPHER_KEY_LENGTH..CIPHER_KEY_LENGTH + NONCE_LENGTH]
+        .try_into()
+        .map_err(|_| SqliteError::Io("Failed to extract nonce".to_string()))?;
 
     debug!("🔐 ECDH KDF: Derived cipher_key[32] + nonce[12] with Blake3");
 

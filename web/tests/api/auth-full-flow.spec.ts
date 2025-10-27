@@ -95,7 +95,9 @@ test.describe('Full Authentication Flow with Magic Link', () => {
 			throw new Error('Failed to get Ed25519 keypair from session');
 		}
 
-		console.log(`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`);
+		console.log(
+			`🔑 Generated System A keypairs: ${dualKeypairs.ed25519_pub_key.substring(0, 20)}...`
+		);
 
 		// Step 2: Create signed request (DUAL-KEY FORMAT - System A)
 		const payload = createMagicLinkPayload('me@arkaitz.dev', dualKeypairs);

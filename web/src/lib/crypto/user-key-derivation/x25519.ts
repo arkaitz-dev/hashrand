@@ -2,8 +2,8 @@
  * X25519 key derivation and import utilities
  */
 
-import { blake3 } from '@noble/hashes/blake3';
-import { x25519 } from '@noble/curves/ed25519';
+import { blake3 } from '@noble/hashes/blake3.js';
+import { x25519 } from '@noble/curves/ed25519.js';
 import { base58, base64urlnopad } from '@scure/base';
 import { logger } from '$lib/utils/logger';
 import { bytesToHex } from './helpers';
@@ -22,9 +22,7 @@ import { bytesToHex } from './helpers';
  */
 export function deriveX25519PrivateKey(email: string, privkeyContext: Uint8Array): Uint8Array {
 	if (privkeyContext.length !== 64) {
-		throw new Error(
-			`privkeyContext must be exactly 64 bytes, got ${privkeyContext.length} bytes`
-		);
+		throw new Error(`privkeyContext must be exactly 64 bytes, got ${privkeyContext.length} bytes`);
 	}
 
 	const emailBytes = new TextEncoder().encode(email);
@@ -73,6 +71,7 @@ export function generateX25519PublicKey(privateKeyBytes: Uint8Array): {
  * @param publicKeyBytes - 32-byte X25519 public key
  * @returns JWK object ready for crypto.subtle.importKey()
  */
+/* eslint-disable no-undef */
 export function x25519ToJWK(privateKeyBytes: Uint8Array, publicKeyBytes: Uint8Array): JsonWebKey {
 	logger.debug('[x25519ToJWK] Converting X25519 keys to JWK format:', {
 		privateKeyLength: privateKeyBytes.length,
@@ -90,6 +89,7 @@ export function x25519ToJWK(privateKeyBytes: Uint8Array, publicKeyBytes: Uint8Ar
 		x: x_base64url
 		// Note: key_ops and ext omitted - let importKey parameters control these
 	};
+	/* eslint-enable no-undef */
 
 	logger.debug('[x25519ToJWK] ✅ JWK created:', {
 		kty: jwk.kty,
@@ -157,7 +157,9 @@ export async function importX25519PrivateKey(
 			error_message: error instanceof Error ? error.message : String(error),
 			error_stack: error instanceof Error ? error.stack : undefined
 		});
-		throw new Error(`X25519 private key import failed: ${error instanceof Error ? error.message : String(error)}`);
+		throw new Error(
+			`X25519 private key import failed: ${error instanceof Error ? error.message : String(error)}`
+		);
 	}
 }
 

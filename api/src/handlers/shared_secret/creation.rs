@@ -253,8 +253,8 @@ async fn create_shared_secret(
         &request.receiver_email,
         &encrypted_secret,
         &encrypted_key_material,
-        &crypto_material.pub_key_hex,         // Ed25519 from JWT
-        &crypto_material.x25519_pub_key_hex,  // X25519 from JWT
+        &crypto_material.pub_key_hex,        // Ed25519 from JWT
+        &crypto_material.x25519_pub_key_hex, // X25519 from JWT
         otp.clone(),
         request.expires_hours,
         request.max_reads,

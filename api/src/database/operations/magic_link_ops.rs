@@ -13,7 +13,7 @@
 pub use super::magic_link_types::{MagicLinkOperations, ValidationResult};
 
 // Re-export storage functions
-pub use super::magic_link_storage::MagicLinkStorage;
+pub use super::magic_link_storage::{MagicLinkStorage, MagicLinkStorageParams};
 
 // Re-export validation functions
 pub use super::magic_link_validation::MagicLinkValidation;
@@ -23,25 +23,9 @@ impl MagicLinkOperations {
     ///
     /// Delegates to MagicLinkStorage for backwards compatibility
     pub fn store_magic_link_encrypted(
-        encrypted_token: &str,
-        encryption_blob: &[u8; 44],
-        expires_at_nanos: i64,
-        next_param: &str,
-        ed25519_pub_key: &str,
-        x25519_pub_key: &str,
-        ui_host: &str,
-        db_index: &[u8; 16],
+        params: &MagicLinkStorageParams,
     ) -> Result<(), spin_sdk::sqlite::Error> {
-        MagicLinkStorage::store_magic_link_encrypted(
-            encrypted_token,
-            encryption_blob,
-            expires_at_nanos,
-            next_param,
-            ed25519_pub_key,
-            x25519_pub_key,
-            ui_host,
-            db_index,
-        )
+        MagicLinkStorage::store_magic_link_encrypted(params)
     }
 
     /// Validate and consume encrypted magic token and extract stored Ed25519 public key

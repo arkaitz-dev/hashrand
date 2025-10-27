@@ -9,8 +9,8 @@ mod payload;
 mod random;
 mod url_hash;
 
-use super::shared_secret_types::constants::*;
 use super::shared_secret_types::SecretRole;
+use super::shared_secret_types::constants::*;
 use spin_sdk::sqlite::Error as SqliteError;
 
 /// Shared secret cryptographic operations

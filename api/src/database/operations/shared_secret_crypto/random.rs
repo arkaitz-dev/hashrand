@@ -1,6 +1,6 @@
-///! Random generation functions for shared secrets
-///!
-///! Uses ChaCha8Rng with Blake3-seeded entropy for cryptographically secure randomness.
+//! Random generation functions for shared secrets
+//!
+//! Uses ChaCha8Rng with Blake3-seeded entropy for cryptographically secure randomness.
 
 use super::super::shared_secret_types::constants::*;
 use tracing::debug;

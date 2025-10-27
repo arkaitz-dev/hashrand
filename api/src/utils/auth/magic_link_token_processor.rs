@@ -30,15 +30,28 @@ pub fn validate_and_extract_token_data(
     magic_token: &str,
 ) -> Result<TokenValidationResult, Response> {
     // Validate and consume encrypted magic token, extract next parameter, user_id, Ed25519 and X25519 pub_keys, ui_host, and privkey_context
-    let (is_valid, next_param, user_id_bytes, ed25519_pub_key_bytes, x25519_pub_key_bytes, ui_host, privkey_context_decrypted) =
-        match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
-            Ok((valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)) => {
-                (valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)
-            }
-            Err(error) => {
-                return Err(categorize_token_validation_error(error.into()));
-            }
-        };
+    let (
+        is_valid,
+        next_param,
+        user_id_bytes,
+        ed25519_pub_key_bytes,
+        x25519_pub_key_bytes,
+        ui_host,
+        privkey_context_decrypted,
+    ) = match MagicLinkOperations::validate_and_consume_magic_link_encrypted(magic_token) {
+        Ok((valid, next, user_id, ed25519_pub_key, x25519_pub_key, ui_host, privkey_context)) => (
+            valid,
+            next,
+            user_id,
+            ed25519_pub_key,
+            x25519_pub_key,
+            ui_host,
+            privkey_context,
+        ),
+        Err(error) => {
+            return Err(categorize_token_validation_error(error.into()));
+        }
+    };
 
     // Check if token validation passed
     if !is_valid {
@@ -146,7 +159,10 @@ fn create_missing_user_id_response() -> Response {
 
 /// Create error response for missing public key
 fn create_missing_public_key_response(key_type: &str) -> Response {
-    create_error_response(400, &format!("Invalid magic link: missing {} public key", key_type))
+    create_error_response(
+        400,
+        &format!("Invalid magic link: missing {} public key", key_type),
+    )
 }
 
 /// Create standardized error response
@@ -177,8 +193,8 @@ fn encrypt_privkey_context_for_client(
     user_id: &[u8; 16],
     client_x25519_pub_key: &[u8; 32],
 ) -> Result<String, String> {
-    use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
     use crate::utils::crypto::{encrypt_with_ecdh, get_backend_x25519_private_key};
+    use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
     use x25519_dalek::PublicKey as X25519PublicKey;
 
     // Convert client's X25519 public key to hex for backend key derivation

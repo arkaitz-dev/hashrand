@@ -51,8 +51,13 @@ pub fn check_proactive_renewal(
 
     if needs_renewal {
         // Generate renewed tokens with both Ed25519 and X25519 pub_keys
-        let renewed_tokens =
-            generate_renewed_tokens(username, refresh_expires_at, ed25519_pub_key_hex, x25519_pub_key_hex, user_id)?;
+        let renewed_tokens = generate_renewed_tokens(
+            username,
+            refresh_expires_at,
+            ed25519_pub_key_hex,
+            x25519_pub_key_hex,
+            user_id,
+        )?;
         Ok(Some(renewed_tokens))
     } else {
         // No renewal needed

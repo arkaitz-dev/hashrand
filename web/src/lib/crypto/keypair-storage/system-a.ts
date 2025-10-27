@@ -296,12 +296,7 @@ export async function keypairsExist(): Promise<boolean> {
 		const transaction = db.transaction([STORE_NAME], 'readonly');
 		const store = transaction.objectStore(STORE_NAME);
 
-		const keys = [
-			'ed25519-private',
-			'ed25519-public',
-			'x25519-private',
-			'x25519-public'
-		] as const;
+		const keys = ['ed25519-private', 'ed25519-public', 'x25519-private', 'x25519-public'] as const;
 
 		let allExist = true;
 		let completedChecks = 0;

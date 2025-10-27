@@ -11,6 +11,18 @@ use chrono::Utc;
 use spin_sdk::sqlite::{Error as SqliteError, Value};
 use tracing::{debug, error};
 
+/// Parameters for storing magic link data
+pub struct MagicLinkStorageParams<'a> {
+    pub encrypted_token: &'a str,
+    pub encryption_blob: &'a [u8; ENCRYPTION_BLOB_LENGTH],
+    pub expires_at_nanos: i64,
+    pub next_param: &'a str,
+    pub ed25519_pub_key: &'a str,
+    pub x25519_pub_key: &'a str,
+    pub ui_host: &'a str,
+    pub db_index: &'a [u8; 16],
+}
+
 /// Magic link storage operations
 pub struct MagicLinkStorage;
 
@@ -18,31 +30,15 @@ impl MagicLinkStorage {
     /// Store encrypted magic token with Ed25519/X25519 public keys, UI host, and db_index
     ///
     /// # Arguments
-    /// * `encrypted_token` - The Base58 encoded encrypted magic token (32 bytes encrypted data)
-    /// * `encryption_blob` - 44 bytes: nonce[12] + secret_key[32] from ChaCha8RNG
-    /// * `expires_at_nanos` - Expiration timestamp in nanoseconds (will be converted to hours for storage)
-    /// * `next_param` - Next destination parameter (always provided, "/" for login)
-    /// * `ed25519_pub_key` - Ed25519 public key as hex string (64 chars)
-    /// * `x25519_pub_key` - X25519 public key as hex string (64 chars)
-    /// * `ui_host` - UI host (domain only, e.g., "localhost" or "app.example.com")
-    /// * `db_index` - Database index for user_privkey_context table (16 bytes)
+    /// * `params` - Magic link storage parameters
     ///
     /// # Returns
     /// * `Result<(), SqliteError>` - Success or database error
-    pub fn store_magic_link_encrypted(
-        encrypted_token: &str,
-        encryption_blob: &[u8; ENCRYPTION_BLOB_LENGTH],
-        expires_at_nanos: i64,
-        next_param: &str,
-        ed25519_pub_key: &str,
-        x25519_pub_key: &str,
-        ui_host: &str,
-        db_index: &[u8; 16],
-    ) -> Result<(), SqliteError> {
+    pub fn store_magic_link_encrypted(params: &MagicLinkStorageParams) -> Result<(), SqliteError> {
         let connection = get_database_connection()?;
 
         // Decode Base58 encrypted token
-        let encrypted_data = bs58::decode(encrypted_token)
+        let encrypted_data = bs58::decode(params.encrypted_token)
             .into_vec()
             .map_err(|_| SqliteError::Io("Invalid Base58 encrypted token".to_string()))?;
 
@@ -56,14 +52,14 @@ impl MagicLinkStorage {
         let token_hash = MagicLinkCrypto::create_encrypted_token_hash(&encrypted_data);
 
         // Decode Ed25519 public key from hex (64 chars = 32 bytes)
-        if ed25519_pub_key.len() != ED25519_HEX_LENGTH {
+        if params.ed25519_pub_key.len() != ED25519_HEX_LENGTH {
             return Err(SqliteError::Io(format!(
                 "Ed25519 public key must be 64 hex chars, got {}",
-                ed25519_pub_key.len()
+                params.ed25519_pub_key.len()
             )));
         }
 
-        let ed25519_bytes = hex::decode(ed25519_pub_key)
+        let ed25519_bytes = hex::decode(params.ed25519_pub_key)
             .map_err(|_| SqliteError::Io("Invalid hex Ed25519 public key".to_string()))?;
 
         if ed25519_bytes.len() != ED25519_BYTES_LENGTH {
@@ -74,17 +70,19 @@ impl MagicLinkStorage {
         }
 
         // Decode X25519 public key from hex (64 chars = 32 bytes)
-        if x25519_pub_key.len() != ED25519_HEX_LENGTH { // Same length as Ed25519 (64 hex chars)
+        if params.x25519_pub_key.len() != ED25519_HEX_LENGTH {
+            // Same length as Ed25519 (64 hex chars)
             return Err(SqliteError::Io(format!(
                 "X25519 public key must be 64 hex chars, got {}",
-                x25519_pub_key.len()
+                params.x25519_pub_key.len()
             )));
         }
 
-        let x25519_bytes = hex::decode(x25519_pub_key)
+        let x25519_bytes = hex::decode(params.x25519_pub_key)
             .map_err(|_| SqliteError::Io("Invalid hex X25519 public key".to_string()))?;
 
-        if x25519_bytes.len() != ED25519_BYTES_LENGTH { // Same length as Ed25519 (32 bytes)
+        if x25519_bytes.len() != ED25519_BYTES_LENGTH {
+            // Same length as Ed25519 (32 bytes)
             return Err(SqliteError::Io(format!(
                 "X25519 public key must be 32 bytes, got {}",
                 x25519_bytes.len()
@@ -92,12 +90,12 @@ impl MagicLinkStorage {
         }
 
         // Create merged payload: encryption_blob[44] + db_index[16] + ed25519_pub_key[32] + x25519_pub_key[32] + ui_host_len[2] + ui_host[variable] + next_param[variable]
-        let ui_host_bytes = ui_host.as_bytes();
+        let ui_host_bytes = params.ui_host.as_bytes();
         let ui_host_len = ui_host_bytes.len() as u16;
 
         debug!(
             "🔒 [SECURITY] Storing ui_host in encrypted blob: '{}' (len: {})",
-            ui_host, ui_host_len
+            params.ui_host, ui_host_len
         );
 
         let mut payload_plain = Vec::with_capacity(
@@ -107,15 +105,15 @@ impl MagicLinkStorage {
                 + ED25519_BYTES_LENGTH // X25519 has same length (32 bytes)
                 + 2
                 + ui_host_bytes.len()
-                + next_param.len(),
+                + params.next_param.len(),
         );
-        payload_plain.extend_from_slice(encryption_blob);
-        payload_plain.extend_from_slice(db_index);
+        payload_plain.extend_from_slice(params.encryption_blob);
+        payload_plain.extend_from_slice(params.db_index);
         payload_plain.extend_from_slice(&ed25519_bytes);
         payload_plain.extend_from_slice(&x25519_bytes);
         payload_plain.extend_from_slice(&ui_host_len.to_be_bytes()); // Big-endian for consistency
         payload_plain.extend_from_slice(ui_host_bytes);
-        payload_plain.extend_from_slice(next_param.as_bytes());
+        payload_plain.extend_from_slice(params.next_param.as_bytes());
 
         // Convert encrypted_data to [u8; 32] for encryption function
         let mut encrypted_data_array = [0u8; ENCRYPTED_TOKEN_LENGTH];
@@ -126,7 +124,7 @@ impl MagicLinkStorage {
             MagicLinkCrypto::encrypt_payload_content(&encrypted_data_array, &payload_plain)?;
 
         // Convert nanoseconds to hours for storage (cleanup purposes)
-        let expires_at_hours = (expires_at_nanos / 1_000_000_000) / 3600;
+        let expires_at_hours = (params.expires_at_nanos / 1_000_000_000) / 3600;
 
         connection.execute(
             "INSERT INTO magiclinks (token_hash, expires_at, encrypted_payload) VALUES (?, ?, ?)",

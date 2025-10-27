@@ -131,7 +131,9 @@ export async function validateMagicLink(magicToken: string): Promise<{
 	// =========================================================================
 	// STEP 2: Derive user's permanent Ed25519/X25519 keypairs from privkey_context (System B)
 	// =========================================================================
-	let derivedKeys: Awaited<ReturnType<typeof import('../../../crypto/user-key-derivation').deriveUserKeys>> | null = null;
+	let derivedKeys: Awaited<
+		ReturnType<typeof import('../../../crypto/user-key-derivation').deriveUserKeys>
+	> | null = null;
 
 	try {
 		const { deriveUserKeys } = await import('../../../crypto/user-key-derivation');
@@ -244,7 +246,9 @@ export async function validateMagicLink(magicToken: string): Promise<{
 			// Keys will be republished on next login attempt
 		}
 	} else {
-		logger.warn('[login] ⚠️ No derived keys available for publication (key derivation may have failed)');
+		logger.warn(
+			'[login] ⚠️ No derived keys available for publication (key derivation may have failed)'
+		);
 	}
 
 	// =========================================================================

@@ -4,7 +4,7 @@
 //! Blake3 KDF and ChaCha20-Poly1305 AEAD encryption.
 
 use crate::utils::pseudonimizer::blake3_keyed_variable;
-use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce, aead::Aead};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, aead::Aead};
 use spin_sdk::sqlite::Error as SqliteError;
 
 /// Magic link cryptographic operations
@@ -48,8 +48,8 @@ impl MagicLinkCrypto {
             .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
+        let nonce = &nonce_bytes.into();
+        let key = &cipher_key.into();
 
         // Step 2: Encrypt with ChaCha20-Poly1305
         let cipher = ChaCha20Poly1305::new(key);
@@ -84,8 +84,8 @@ impl MagicLinkCrypto {
             .try_into()
             .map_err(|_| SqliteError::Io("Failed to extract cipher key".to_string()))?;
 
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        let key = Key::from_slice(&cipher_key);
+        let nonce = &nonce_bytes.into();
+        let key = &cipher_key.into();
 
         // Step 2: Decrypt with ChaCha20-Poly1305
         let cipher = ChaCha20Poly1305::new(key);

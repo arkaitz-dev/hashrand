@@ -1,7 +1,7 @@
-///! Key material encryption/decryption using ChaCha20 stream cipher
-///!
-///! Encrypts random key material for storage in database without Poly1305 MAC
-///! (integrity guaranteed by layer 2 encryption).
+//! Key material encryption/decryption using ChaCha20 stream cipher
+//!
+//! Encrypts random key material for storage in database without Poly1305 MAC
+//! (integrity guaranteed by layer 2 encryption).
 
 use super::super::shared_secret_types::constants::*;
 use crate::utils::pseudonimizer::blake3_keyed_variable;

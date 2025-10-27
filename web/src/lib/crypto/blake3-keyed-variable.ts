@@ -20,7 +20,7 @@
  * - Superior to HMAC: Internal key changes with each derivation
  */
 
-import { blake3 } from '@noble/hashes/blake3';
+import { blake3 } from '@noble/hashes/blake3.js';
 import { base58 } from '@scure/base';
 import { logger } from '$lib/utils/logger';
 

@@ -5,7 +5,7 @@
  * Part of ed25519.ts refactorization to apply SOLID principles
  */
 
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
 /**
  * Export public key as hex string for transmission

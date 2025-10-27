@@ -57,11 +57,17 @@ impl MagicLinkValidation {
         };
 
         // Step 4: Extract components from payload (now includes db_index, Ed25519 and X25519 keys)
-        let (encryption_blob, db_index, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param) =
-            match extract_payload_components(&payload_plain) {
-                Ok(components) => components,
-                Err(error_tuple) => return Ok(error_tuple),
-            };
+        let (
+            encryption_blob,
+            db_index,
+            ed25519_pub_key_array,
+            x25519_pub_key_array,
+            ui_host,
+            next_param,
+        ) = match extract_payload_components(&payload_plain) {
+            Ok(components) => components,
+            Err(error_tuple) => return Ok(*error_tuple),
+        };
 
         // Step 5: Extract nonce and secret_key from encryption_blob
         let mut nonce = [0u8; NONCE_LENGTH];
@@ -86,13 +92,14 @@ impl MagicLinkValidation {
                 }
 
                 // Read and decrypt privkey_context from database
-                let privkey_context_decrypted = match read_and_decrypt_privkey_context(&connection, &db_index) {
-                    Ok(context) => context,
-                    Err(e) => {
-                        error!("Failed to read/decrypt privkey_context: {}", e);
-                        return Ok(create_validation_error());
-                    }
-                };
+                let privkey_context_decrypted =
+                    match read_and_decrypt_privkey_context(&connection, &db_index) {
+                        Ok(context) => context,
+                        Err(e) => {
+                            error!("Failed to read/decrypt privkey_context: {}", e);
+                            return Ok(create_validation_error());
+                        }
+                    };
 
                 // Valid and not expired - consume (delete) the magic link
                 connection.execute(
@@ -194,10 +201,11 @@ fn read_and_decrypt_privkey_context(
     };
 
     // Decrypt using UserPrivkeyCrypto
-    let privkey_context = crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::decrypt_privkey_context(
-        db_index,
-        &encrypted_privkey,
-    )?;
+    let privkey_context =
+        crate::database::operations::user_privkey_ops::UserPrivkeyCrypto::decrypt_privkey_context(
+            db_index,
+            &encrypted_privkey,
+        )?;
 
     // DEBUG: Log decrypted privkey_context before ECDH encryption for frontend
     debug!(

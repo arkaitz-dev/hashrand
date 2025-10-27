@@ -1,6 +1,6 @@
-///! Tracking operations for shared secrets
-///!
-///! Handles tracking-related operations (read confirmation, cleanup).
+//! Tracking operations for shared secrets
+//!
+//! Handles tracking-related operations (read confirmation, cleanup).
 
 use super::super::shared_secret_storage::SharedSecretStorage;
 use super::super::shared_secret_types::constants::*;

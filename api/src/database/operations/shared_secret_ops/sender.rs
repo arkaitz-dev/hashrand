@@ -1,6 +1,6 @@
-///! Sender operations for shared secrets
-///!
-///! Handles shared secret creation workflow (sender operations).
+//! Sender operations for shared secrets
+//!
+//! Handles shared secret creation workflow (sender operations).
 
 use super::super::shared_secret_crypto::SharedSecretCrypto;
 use super::super::shared_secret_storage::SharedSecretStorage;
@@ -41,7 +41,9 @@ pub fn create_secret_pair(
 ) -> Result<[u8; REFERENCE_HASH_LENGTH], SqliteError> {
     // Validate inputs
     if encrypted_secret.is_empty() {
-        return Err(SqliteError::Io("Encrypted secret cannot be empty".to_string()));
+        return Err(SqliteError::Io(
+            "Encrypted secret cannot be empty".to_string(),
+        ));
     }
 
     if !(MIN_EXPIRES_HOURS..=MAX_EXPIRES_HOURS).contains(&expires_hours) {
@@ -214,7 +216,10 @@ pub fn create_secret_pair_with_ecdh(
     }
 
     let sender_x25519_public_bytes = hex::decode(sender_x25519_public_key_hex).map_err(|e| {
-        SqliteError::Io(format!("Failed to decode sender X25519 public key hex: {}", e))
+        SqliteError::Io(format!(
+            "Failed to decode sender X25519 public key hex: {}",
+            e
+        ))
     })?;
 
     if sender_x25519_public_bytes.len() != 32 {
@@ -224,9 +229,10 @@ pub fn create_secret_pair_with_ecdh(
         )));
     }
 
-    let sender_x25519_public_array: [u8; 32] = sender_x25519_public_bytes
-        .try_into()
-        .map_err(|_| SqliteError::Io("Failed to convert sender X25519 public key to array".to_string()))?;
+    let sender_x25519_public_array: [u8; 32] =
+        sender_x25519_public_bytes.try_into().map_err(|_| {
+            SqliteError::Io("Failed to convert sender X25519 public key to array".to_string())
+        })?;
 
     // Convert to X25519PublicKey type
     let sender_x25519_public = x25519_dalek::PublicKey::from(sender_x25519_public_array);
@@ -238,7 +244,8 @@ pub fn create_secret_pair_with_ecdh(
     // 3. Get backend's per-user X25519 private key
     // CRITICAL: Use sender's X25519 pub_key (not Ed25519!) for per-user derivation
     debug!("🔐 SharedSecret: Deriving backend X25519 private key (per-user)");
-    let backend_x25519_private = get_backend_x25519_private_key(&sender_user_id, sender_x25519_public_key_hex)?;
+    let backend_x25519_private =
+        get_backend_x25519_private_key(&sender_user_id, sender_x25519_public_key_hex)?;
 
     // 5. Decrypt key_material using ECDH
     debug!("🔐 SharedSecret: Decrypting key_material with ECDH");

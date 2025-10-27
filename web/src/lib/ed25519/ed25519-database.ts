@@ -61,11 +61,9 @@ export async function storeKeyPair(
  */
 export async function getKeyPair(keyId: string = 'default'): Promise<Ed25519KeyPair | null> {
 	// Import new storage functions
-	const {
-		getEd25519PrivateKey,
-		getEd25519PublicKey,
-		getEd25519PublicKeyHex
-	} = await import('../crypto/keypair-storage');
+	const { getEd25519PrivateKey, getEd25519PublicKey, getEd25519PublicKeyHex } = await import(
+		'../crypto/keypair-storage'
+	);
 
 	try {
 		// Get keys from new WebCrypto storage

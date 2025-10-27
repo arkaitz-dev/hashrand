@@ -1,6 +1,6 @@
-///! Tracking operations for shared secrets
-///!
-///! Handles tracking table operations: pending_reads, read_at, payload storage, etc.
+//! Tracking operations for shared secrets
+//!
+//! Handles tracking table operations: pending_reads, read_at, payload storage, etc.
 
 use super::super::shared_secret_types::constants::*;
 use crate::database::get_database_connection;
@@ -43,9 +43,7 @@ pub fn get_pending_reads_from_tracking(
 ///
 /// # Returns
 /// * `Result<bool, SqliteError>` - true if exists, false if not
-pub fn tracking_exists(
-    reference_hash: &[u8; REFERENCE_HASH_LENGTH],
-) -> Result<bool, SqliteError> {
+pub fn tracking_exists(reference_hash: &[u8; REFERENCE_HASH_LENGTH]) -> Result<bool, SqliteError> {
     Ok(get_pending_reads_from_tracking(reference_hash)?.is_some())
 }
 

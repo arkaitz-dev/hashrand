@@ -2,8 +2,8 @@
  * Ed25519 key derivation and import utilities
  */
 
-import { blake3 } from '@noble/hashes/blake3';
-import { ed25519 } from '@noble/curves/ed25519';
+import { blake3 } from '@noble/hashes/blake3.js';
+import { ed25519 } from '@noble/curves/ed25519.js';
 import { base58, base64urlnopad } from '@scure/base';
 import { logger } from '$lib/utils/logger';
 import { bytesToHex } from './helpers';
@@ -22,9 +22,7 @@ import { bytesToHex } from './helpers';
  */
 export function deriveEd25519PrivateKey(email: string, privkeyContext: Uint8Array): Uint8Array {
 	if (privkeyContext.length !== 64) {
-		throw new Error(
-			`privkeyContext must be exactly 64 bytes, got ${privkeyContext.length} bytes`
-		);
+		throw new Error(`privkeyContext must be exactly 64 bytes, got ${privkeyContext.length} bytes`);
 	}
 
 	const emailBytes = new TextEncoder().encode(email);
@@ -73,6 +71,7 @@ export function generateEd25519PublicKey(privateKeyBytes: Uint8Array): {
  * @param publicKeyBytes - 32-byte Ed25519 public key
  * @returns JWK object ready for crypto.subtle.importKey()
  */
+/* eslint-disable no-undef */
 export function ed25519ToJWK(privateKeyBytes: Uint8Array, publicKeyBytes: Uint8Array): JsonWebKey {
 	logger.debug('[ed25519ToJWK] Converting Ed25519 keys to JWK format:', {
 		privateKeyLength: privateKeyBytes.length,
@@ -90,6 +89,7 @@ export function ed25519ToJWK(privateKeyBytes: Uint8Array, publicKeyBytes: Uint8A
 		x: x_base64url
 		// Note: key_ops and ext omitted - let importKey parameters control these
 	};
+	/* eslint-enable no-undef */
 
 	logger.debug('[ed25519ToJWK] ✅ JWK created:', {
 		kty: jwk.kty,
@@ -165,7 +165,9 @@ export async function importEd25519PrivateKey(
 			error_message: error instanceof Error ? error.message : String(error),
 			error_stack: error instanceof Error ? error.stack : undefined
 		});
-		throw new Error(`Ed25519 private key import failed: ${error instanceof Error ? error.message : String(error)}`);
+		throw new Error(
+			`Ed25519 private key import failed: ${error instanceof Error ? error.message : String(error)}`
+		);
 	}
 }
 

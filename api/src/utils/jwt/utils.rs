@@ -42,7 +42,11 @@ impl JwtUtils {
         ed25519_pub_key: &[u8; 32],
         x25519_pub_key: &[u8; 32],
     ) -> Result<(String, chrono::DateTime<chrono::Utc>), String> {
-        custom_token_api::create_custom_access_token_from_username(username, ed25519_pub_key, x25519_pub_key)
+        custom_token_api::create_custom_access_token_from_username(
+            username,
+            ed25519_pub_key,
+            x25519_pub_key,
+        )
     }
 
     pub fn create_access_token_from_username_with_refresh_context(

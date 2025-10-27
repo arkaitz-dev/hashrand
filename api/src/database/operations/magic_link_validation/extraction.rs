@@ -4,7 +4,14 @@ use super::utilities::{copy_to_array, create_validation_error, extract_utf8_stri
 use tracing::{debug, error, warn};
 
 /// Type alias for extracted payload components (encryption_blob, db_index, ed25519_pub_key, x25519_pub_key, ui_host, next_param)
-type PayloadComponents = ([u8; 44], [u8; 16], [u8; 32], [u8; 32], Option<String>, Option<String>);
+type PayloadComponents = (
+    [u8; 44],
+    [u8; 16],
+    [u8; 32],
+    [u8; 32],
+    Option<String>,
+    Option<String>,
+);
 
 /// Extract encryption blob, db_index, Ed25519/X25519 keys, ui_host, and next_param from payload
 ///
@@ -12,15 +19,15 @@ type PayloadComponents = ([u8; 44], [u8; 16], [u8; 32], [u8; 32], Option<String>
 /// * `payload_plain` - Decrypted payload bytes
 ///
 /// # Returns
-/// * `Result<PayloadComponents, ValidationResult>`
+/// * `Result<PayloadComponents, Box<ValidationResult>>`
 ///   - (encryption_blob, db_index, ed25519_pub_key, x25519_pub_key, ui_host, next_param) or validation error
 pub fn extract_payload_components(
     payload_plain: &[u8],
-) -> Result<PayloadComponents, ValidationResult> {
+) -> Result<PayloadComponents, Box<ValidationResult>> {
     // Validate minimum payload length
     if payload_plain.len() < MIN_PAYLOAD_LENGTH {
         error!("Database: Invalid decrypted payload length (minimum 124 bytes)");
-        return Err(create_validation_error());
+        return Err(Box::new(create_validation_error()));
     }
 
     // Extract encryption_blob (first 44 bytes)
@@ -40,13 +47,19 @@ pub fn extract_payload_components(
     let ed25519_start = db_index_end;
     let ed25519_end = ed25519_start + ED25519_BYTES_LENGTH;
     let mut ed25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
-    copy_to_array(&mut ed25519_pub_key_array, &payload_plain[ed25519_start..ed25519_end]);
+    copy_to_array(
+        &mut ed25519_pub_key_array,
+        &payload_plain[ed25519_start..ed25519_end],
+    );
 
     // Extract X25519 public key (bytes 92-124)
     let x25519_start = ed25519_end;
     let x25519_end = x25519_start + ED25519_BYTES_LENGTH; // Same length as Ed25519 (32 bytes)
     let mut x25519_pub_key_array = [0u8; ED25519_BYTES_LENGTH];
-    copy_to_array(&mut x25519_pub_key_array, &payload_plain[x25519_start..x25519_end]);
+    copy_to_array(
+        &mut x25519_pub_key_array,
+        &payload_plain[x25519_start..x25519_end],
+    );
 
     debug!("Database: Successfully extracted Ed25519 and X25519 public keys from stored payload");
     debug!(
@@ -62,7 +75,14 @@ pub fn extract_payload_components(
         ui_host, next_param
     );
 
-    Ok((encryption_blob, db_index, ed25519_pub_key_array, x25519_pub_key_array, ui_host, next_param))
+    Ok((
+        encryption_blob,
+        db_index,
+        ed25519_pub_key_array,
+        x25519_pub_key_array,
+        ui_host,
+        next_param,
+    ))
 }
 
 /// Extract ui_host and next_param with backward compatibility
@@ -70,7 +90,7 @@ pub fn extract_payload_components(
 /// Handles both old format (no ui_host) and new format (with ui_host length prefix)
 fn extract_ui_host_and_next_param(
     payload_plain: &[u8],
-) -> Result<(Option<String>, Option<String>), ValidationResult> {
+) -> Result<(Option<String>, Option<String>), Box<ValidationResult>> {
     // Check if we have the new format with ui_host
     if payload_plain.len() >= MIN_PAYLOAD_LENGTH + 2 {
         extract_new_format(payload_plain)
@@ -82,7 +102,7 @@ fn extract_ui_host_and_next_param(
 /// Extract ui_host and next_param from new format (with ui_host length prefix)
 fn extract_new_format(
     payload_plain: &[u8],
-) -> Result<(Option<String>, Option<String>), ValidationResult> {
+) -> Result<(Option<String>, Option<String>), Box<ValidationResult>> {
     // Extract ui_host_len
     let ui_host_len_bytes = &payload_plain[MIN_PAYLOAD_LENGTH..MIN_PAYLOAD_LENGTH + 2];
     let ui_host_len = u16::from_be_bytes([ui_host_len_bytes[0], ui_host_len_bytes[1]]) as usize;
@@ -98,7 +118,7 @@ fn extract_new_format(
     // Verify we have enough bytes for ui_host
     if payload_plain.len() < MIN_PAYLOAD_LENGTH + 2 + ui_host_len {
         error!("❌ Database: Insufficient bytes for ui_host extraction");
-        return Err(create_validation_error());
+        return Err(Box::new(create_validation_error()));
     }
 
     let ui_host_start = MIN_PAYLOAD_LENGTH + 2;
@@ -132,7 +152,7 @@ fn extract_new_format(
 /// Extract next_param from old format (backward compatibility, no ui_host)
 fn extract_old_format(
     payload_plain: &[u8],
-) -> Result<(Option<String>, Option<String>), ValidationResult> {
+) -> Result<(Option<String>, Option<String>), Box<ValidationResult>> {
     warn!("⚠️ DEBUG EXTRACT: Old format detected (no ui_host) - backward compatibility mode");
 
     let next_param_opt = if payload_plain.len() > MIN_PAYLOAD_LENGTH {
