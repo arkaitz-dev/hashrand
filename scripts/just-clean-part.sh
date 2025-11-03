@@ -16,7 +16,10 @@ rm -rf .vite .vite-cache vite.config.js.timestamp-*
 rm -rf .svelte-kit/output .svelte-kit/generated .svelte-kit/types
 cd ..
 # Remove development log files and PID files
-rm -f .spin-dev.log .npm-dev.log .spin-dev.pid .npm-dev.pid
+rm -f .spin-dev.log .npm-dev.log .spin-dev.pid .npm-dev.pid .spin-predeploy.log .spin-predeploy.pid
+# Remove SQLite databases (will be recreated with correct schema on next startup)
+echo "Removing SQLite databases..."
+rm -f data/*.db .spin/sqlite*.db
 # Remove any temporary files at project root
 rm -rf .tmp .temp *.tmp *.temp
-echo "✓ All build artifacts and caches cleaned"
+echo "✓ All build artifacts, caches, and databases cleaned"
