@@ -123,11 +123,11 @@ status:
     echo "Tailscale Status:"
     echo "================"
     # Check if tailscale is available
-    if ! command -v tailscale &> /dev/null; then
+    if ! command -v distrobox-host-exec &> /dev/null || ! distrobox-host-exec tailscale version &> /dev/null 2>&1; then
         echo "✗ Tailscale CLI not installed"
     else
         # Check tailscale serve status
-        TAILSCALE_STATUS=$(tailscale serve status 2>/dev/null)
+        TAILSCALE_STATUS=$(distrobox-host-exec tailscale serve status 2>/dev/null)
         if [ -n "$TAILSCALE_STATUS" ]; then
             echo "✓ Tailscale serve is active:"
             echo "$TAILSCALE_STATUS" | sed 's/^/  /'
@@ -436,14 +436,14 @@ examples:
 
 # Check if tailscale is available
 check-tailscale:
-    @which tailscale > /dev/null || (echo "Error: tailscale not found. Please install Tailscale CLI." && exit 1)
+    @which distrobox-host-exec > /dev/null && distrobox-host-exec tailscale version > /dev/null || (echo "Error: tailscale not found on host. Please install Tailscale CLI on host system." && exit 1)
     @echo "✓ tailscale is available"
 
 # Start Tailscale serve for frontend (port 5173)
 tailscale-front-start: check-tailscale
     #!/usr/bin/env bash
     echo "Starting Tailscale serve for frontend (port 5173)..."
-    tailscale serve --bg 5173
+    distrobox-host-exec tailscale serve --bg 5173
     echo "✓ Tailscale serve started for frontend"
     echo "  Frontend now accessible via Tailscale network"
     echo "  Check status: just status"
@@ -452,18 +452,18 @@ tailscale-front-start: check-tailscale
 tailscale-front-stop:
     #!/usr/bin/env bash
     echo "Stopping Tailscale serve..."
-    tailscale serve --https=443 off
+    distrobox-host-exec tailscale serve --https=443 off
     echo "✓ Tailscale serve stopped"
 
 # Stop all Tailscale serve instances
 tailscale-stop:
     #!/usr/bin/env bash
-    if command -v tailscale &> /dev/null; then
+    if command -v distrobox-host-exec &> /dev/null && distrobox-host-exec tailscale version &> /dev/null 2>&1; then
         echo "Stopping all Tailscale serve instances..."
-        tailscale serve --https=443 off 2>/dev/null || echo "• No Tailscale serve instances to stop"
+        distrobox-host-exec tailscale serve --https=443 off 2>/dev/null || echo "• No Tailscale serve instances to stop"
         # Also try stopping specific port configurations
-        tailscale serve --bg 3000 off 2>/dev/null || true
-        tailscale serve --bg 5173 off 2>/dev/null || true
+        distrobox-host-exec tailscale serve --bg 3000 off 2>/dev/null || true
+        distrobox-host-exec tailscale serve --bg 5173 off 2>/dev/null || true
         echo "✓ All Tailscale serve instances stopped"
     else
         echo "• Tailscale CLI not available, skipping"
@@ -473,7 +473,7 @@ tailscale-stop:
 tailscale-back-start: check-tailscale
     #!/usr/bin/env bash
     echo "Starting Tailscale serve for backend API (port 3000)..."
-    tailscale serve --bg 3000
+    distrobox-host-exec tailscale serve --bg 3000
     echo "✓ Tailscale serve started for backend API"
     echo "  API now accessible via Tailscale network"
     echo "  Check status: just status"

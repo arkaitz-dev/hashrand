@@ -15,18 +15,39 @@ use crate::utils::auth::{MagicLinkSignedRequest, generate_magic_link_signed};
 /// Parses the request body as a SignedRequest structure, validates the
 /// Base64-encoded JSON payload, and delegates to the magic link generator
 pub async fn handle_magic_link_generation(req: Request) -> anyhow::Result<Response> {
+    use tracing::{debug, error};
+
     info!("🔗 Request to /api/login/ (magic link generation) endpoint");
+    debug!("🔍 DEBUG: Handler started");
+
     // Parse request body
+    debug!("🔍 DEBUG: About to read request body");
     let body_bytes = req.body();
+    debug!("🔍 DEBUG: Body bytes length: {}", body_bytes.len());
 
     // Parse as SignedRequest structure
+    debug!("🔍 DEBUG: About to parse SignedRequest structure");
     let signed_request = match parse_signed_request(body_bytes) {
-        Ok(req) => req,
-        Err(response) => return Ok(response),
+        Ok(req) => {
+            debug!("✅ DEBUG: SignedRequest parsed successfully");
+            req
+        },
+        Err(response) => {
+            debug!("⚠️  DEBUG: SignedRequest parsing failed, returning error response");
+            return Ok(response);
+        },
     };
 
     // Use universal SignedRequest handler
-    generate_magic_link_signed(&req, &signed_request).await
+    debug!("🔍 DEBUG: About to call generate_magic_link_signed");
+    let result = generate_magic_link_signed(&req, &signed_request).await;
+
+    match &result {
+        Ok(_) => debug!("✅ DEBUG: generate_magic_link_signed returned Ok"),
+        Err(e) => error!("❌ DEBUG: generate_magic_link_signed returned Err: {}", e),
+    }
+
+    result
 }
 
 /// Parse and validate SignedRequest from body bytes

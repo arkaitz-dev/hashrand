@@ -55,31 +55,54 @@ pub async fn generate_magic_link_signed(
     debug!("📍 DEBUG: Magic link next parameter: '{}'", payload.next);
 
     // Step 1: Validate request (rate limiting and signed request)
+    debug!("🔍 DEBUG: Starting rate limiting check");
     if let Err(response) = MagicLinkRequestValidation::check_rate_limiting(req) {
+        debug!("⚠️  DEBUG: Rate limiting check failed");
         return Ok(response);
     }
+    debug!("✅ DEBUG: Rate limiting check passed");
 
+    debug!("🔍 DEBUG: Starting signed request validation");
     let pub_key_hex = match MagicLinkRequestValidation::validate_signed_request(req, signed_request)
     {
-        Ok(key) => key,
-        Err(response) => return Ok(response),
+        Ok(key) => {
+            debug!("✅ DEBUG: Signed request validation passed");
+            key
+        },
+        Err(response) => {
+            debug!("⚠️  DEBUG: Signed request validation failed");
+            return Ok(response);
+        },
     };
 
+    debug!("🔍 DEBUG: Starting email format validation");
     if let Err(response) = MagicLinkRequestValidation::validate_email_format(&payload.email) {
+        debug!("⚠️  DEBUG: Email format validation failed");
         return Ok(response);
     }
+    debug!("✅ DEBUG: Email format validation passed");
 
     // Step 2: Generate token and create magic link URL
+    debug!("🔍 DEBUG: Starting token generation");
     let token_result = match MagicLinkTokenGeneration::generate_complete_result(
         &payload.email,
         payload.ui_host.as_deref(),
         15, // 15 minutes expiration
     ) {
-        Ok(result) => result,
-        Err(response) => return Ok(response),
+        Ok(result) => {
+            debug!("✅ DEBUG: Token generation successful");
+            result
+        },
+        Err(response) => {
+            error!("⚠️  DEBUG: Token generation failed - Status: {}", response.status());
+            let body = String::from_utf8_lossy(response.body());
+            error!("⚠️  DEBUG: Token generation error body: {}", body);
+            return Ok(response);
+        },
     };
 
     // Step 3: Validate ui_host is provided (MANDATORY - no fallback)
+    debug!("🔍 DEBUG: Starting ui_host validation");
     let ui_host = match payload.ui_host.as_deref() {
         Some(host) if !host.is_empty() => {
             debug!("🔒 [SECURITY] ui_host MANDATORY received: '{}'", host);
@@ -126,9 +149,13 @@ pub async fn generate_magic_link_signed(
         db_index: &token_result.db_index,
     };
 
+    debug!("🔍 DEBUG: About to store magic link in database");
     match MagicLinkOperations::store_magic_link_encrypted(&storage_params) {
         Ok(_) => {
+            debug!("✅ DEBUG: Magic link stored in database successfully");
+
             // Send email with fallback to console logging
+            debug!("🔍 DEBUG: About to send email with fallback");
             let _ = MagicLinkEmailDelivery::send_with_fallback(
                 &payload.email,
                 &token_result.magic_link,
@@ -138,9 +165,12 @@ pub async fn generate_magic_link_signed(
                 token_result.magic_expires_at,
             )
             .await;
+            debug!("✅ DEBUG: Email send attempt completed");
 
             // Clean up expired sessions
+            debug!("🔍 DEBUG: Cleaning up expired sessions");
             let _ = MagicLinkOperations::cleanup_expired_links();
+            debug!("✅ DEBUG: Cleanup completed");
 
             // Create signed response with server public key (magic link creation scenario)
             match create_signed_magic_link_response(&payload.email, &pub_key_hex) {

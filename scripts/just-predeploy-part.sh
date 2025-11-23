@@ -38,8 +38,8 @@ fi
 
 # Start Tailscale serve for external access
 echo "Starting Tailscale serve for external access..."
-if command -v tailscale &> /dev/null; then
-tailscale serve --bg 3000
+if command -v distrobox-host-exec &> /dev/null && distrobox-host-exec tailscale version &> /dev/null 2>&1; then
+distrobox-host-exec tailscale serve --bg 3000
 echo "Tailscale serve started on port 3000"
 echo ""
 echo "Production deployment ready!"
